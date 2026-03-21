@@ -1,0 +1,9 @@
+{
+  "name": "the-forge-flow",
+  "owner": { "name": "MonsieurBarti" },
+  "plugins": [{
+    "name": "the-forge-flow",
+    "source": ".",
+    "description": "Autonomous coding agent orchestrator"
+  }]
+}

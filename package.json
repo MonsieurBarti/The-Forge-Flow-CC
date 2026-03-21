@@ -1,0 +1,30 @@
+{
+  "name": "the-forge-flow",
+  "version": "0.1.0",
+  "description": "Autonomous coding agent orchestrator for Claude Code",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tools/tsconfig.json"
+  },
+  "keywords": [
+    "claude-code",
+    "beads",
+    "plannotator",
+    "orchestration"
+  ],
+  "license": "MIT",
+  "author": "MonsieurBarti",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0",
+    "zod": "^4.3.6"
+  }
+}
