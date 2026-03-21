@@ -212,6 +212,7 @@ One `tff` project per git repo. Enforced at two levels:
   PROJECT.md
   REQUIREMENTS.md
   STATE.md                      ← derived, never edited
+  settings.yaml                 ← model profiles, quality gate config
   worktrees/
     M01-S01/                    ← git worktree per slice
     M01-S02/
@@ -291,7 +292,7 @@ Auto-classified by tooling, user-overridable via `--tier`.
 | F-lite (feature) | Yes | Optional | Plannotator | Always | Auto-detect | Yes |
 | F-full (complex) | Yes | Required | Plannotator | Always, multi-agent | Auto-detect | Yes |
 
-Classification heuristic: based on task count, estimated files touched, cross-module impact. Stored as `ComplexityTier` value object.
+Classification heuristic: initially set during discussing phase based on user description and scope signals (number of modules affected, external integrations, unknowns surfaced by brainstormer). Can be re-classified after planning if task decomposition reveals different complexity. User can override at any point via `--tier`. Stored as `ComplexityTier` value object.
 
 ---
 
@@ -537,11 +538,11 @@ For F-lite and F-full tiers:
 | Command | Purpose |
 |---|---|
 | `/tff:discuss` | Brainstormer challenges scope, surfaces unknowns |
-| `/tff:research [N]` | Research phase for slice N |
-| `/tff:plan [N]` | Plan slice, plannotator review |
-| `/tff:execute [N]` | Wave-based execution with TDD |
-| `/tff:verify [N]` | UAT verification, findings via plannotator |
-| `/tff:ship [N]` | Slice PR → plannotator code review → merge to milestone |
+| `/tff:research [slice-id]` | Research phase for slice N |
+| `/tff:plan [slice-id]` | Plan slice, plannotator review |
+| `/tff:execute [slice-id]` | Wave-based execution with TDD |
+| `/tff:verify [slice-id]` | UAT verification, findings via plannotator |
+| `/tff:ship [slice-id]` | Slice PR → plannotator code review → merge to milestone |
 
 **Milestone lifecycle:**
 
@@ -557,7 +558,7 @@ For F-lite and F-full tiers:
 | `/tff:add-slice` | Add slice to current milestone |
 | `/tff:insert-slice` | Insert between existing slices |
 | `/tff:remove-slice` | Remove future slice, renumber |
-| `/tff:rollback [N]` | Revert execution commits for slice N |
+| `/tff:rollback [slice-id]` | Revert execution commits for slice N |
 | `/tff:pause` | Save checkpoint |
 | `/tff:resume` | Restore from checkpoint |
 | `/tff:sync` | Manual bidirectional md ↔ beads reconciliation |
