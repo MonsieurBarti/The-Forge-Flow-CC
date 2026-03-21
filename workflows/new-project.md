@@ -31,4 +31,10 @@ If a) or b):
      auto-sync: true
    ```
 
+## Git Merge Driver
+Configure snapshot merge driver:
+```bash
+git config merge.tff-snapshot.driver "node ./tools/dist/tff-tools.cjs snapshot:merge %O %A %B"
+```
+
 6. NEXT: @references/next-steps.md
