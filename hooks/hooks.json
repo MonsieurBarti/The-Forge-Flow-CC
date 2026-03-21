@@ -10,17 +10,6 @@
           }
         ]
       }
-    ],
-    "PostToolUse": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node hooks/tff-context-monitor.js",
-            "timeout": 5000
-          }
-        ]
-      }
     ]
   }
 }
