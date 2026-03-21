@@ -4,8 +4,8 @@ export const MilestoneStatusSchema = z.enum(['open', 'in_progress', 'closed']);
 export type MilestoneStatus = z.infer<typeof MilestoneStatusSchema>;
 
 export const MilestoneSchema = z.object({
-  id: z.string().uuid(),
-  projectId: z.string().uuid(),
+  id: z.uuid(),
+  projectId: z.uuid(),
   name: z.string().min(1),
   number: z.number().int().min(1),
   status: MilestoneStatusSchema,
