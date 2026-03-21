@@ -47,6 +47,6 @@ export class BdCliAdapter implements BeadStore {
   async updateStatus(id: string, status: string): Promise<Result<void, DomainError>> { const r = await runBd(['update', id, '--status', status]); if (!r.ok) return r; return Ok(undefined); }
   async updateDesign(id: string, design: string): Promise<Result<void, DomainError>> { const r = await runBd(['update', id, '--design', design]); if (!r.ok) return r; return Ok(undefined); }
   async updateMetadata(id: string, key: string, value: string): Promise<Result<void, DomainError>> { const r = await runBd(['kv', 'set', `${id}.${key}`, value]); if (!r.ok) return r; return Ok(undefined); }
-  async addDependency(fromId: string, toId: string, type: 'blocks' | 'validates'): Promise<Result<void, DomainError>> { const r = await runBd(['link', fromId, toId, '--type', type]); if (!r.ok) return r; return Ok(undefined); }
+  async addDependency(fromId: string, toId: string, type: 'blocks' | 'validates'): Promise<Result<void, DomainError>> { const r = await runBd(['dep', 'add', fromId, toId, '--type', type]); if (!r.ok) return r; return Ok(undefined); }
   async close(id: string): Promise<Result<void, DomainError>> { const r = await runBd(['close', id]); if (!r.ok) return r; return Ok(undefined); }
 }
