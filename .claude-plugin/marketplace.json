@@ -1,9 +1,15 @@
 {
   "name": "the-forge-flow",
   "owner": { "name": "MonsieurBarti" },
-  "plugins": [{
-    "name": "the-forge-flow",
-    "source": ".",
-    "description": "Autonomous coding agent orchestrator"
-  }]
+  "plugins": [
+    {
+      "name": "the-forge-flow",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/MonsieurBarti/The-Forge-Flow-CC.git",
+        "sha": "af0b27e80c1b45d19ac3079d112fddb65d24d2e2"
+      },
+      "description": "Autonomous coding agent orchestrator with dual markdown+beads state, plannotator integration, and wave-based parallel execution"
+    }
+  ]
 }
