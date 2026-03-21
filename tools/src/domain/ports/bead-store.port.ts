@@ -1,0 +1,50 @@
+import { type Result } from '../result.js';
+import { type BeadLabel } from '../value-objects/bead-label.js';
+import { type DomainError } from '../errors/domain-error.js';
+
+export interface BeadData {
+  id: string;
+  label: string;
+  title: string;
+  status: string;
+  design?: string;
+  parentId?: string;
+  blocks?: string[];
+  validates?: string[];
+  metadata?: Record<string, string>;
+}
+
+export interface BeadStore {
+  create(input: {
+    label: BeadLabel;
+    title: string;
+    design?: string;
+    parentId?: string;
+  }): Promise<Result<BeadData, DomainError>>;
+
+  get(id: string): Promise<Result<BeadData, DomainError>>;
+
+  list(filter: {
+    label?: BeadLabel;
+    parentId?: string;
+    status?: string;
+  }): Promise<Result<BeadData[], DomainError>>;
+
+  updateStatus(id: string, status: string): Promise<Result<void, DomainError>>;
+
+  updateDesign(id: string, design: string): Promise<Result<void, DomainError>>;
+
+  updateMetadata(
+    id: string,
+    key: string,
+    value: string,
+  ): Promise<Result<void, DomainError>>;
+
+  addDependency(
+    fromId: string,
+    toId: string,
+    type: 'blocks' | 'validates',
+  ): Promise<Result<void, DomainError>>;
+
+  close(id: string): Promise<Result<void, DomainError>>;
+}
