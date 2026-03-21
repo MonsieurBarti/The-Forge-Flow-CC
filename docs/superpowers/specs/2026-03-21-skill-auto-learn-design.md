@@ -37,34 +37,66 @@ File: `hooks/tff-observe.js`
 
 Fires after every tool use. Checks if observation is enabled, then appends one JSON line to `.tff/observations/sessions.jsonl`.
 
-```javascript
-#!/usr/bin/env node
-'use strict';
-try {
-  const fs = require('fs');
-  // Check if observation is enabled
-  try {
-    const yaml = fs.readFileSync('.tff/settings.yaml', 'utf8');
-    if (!yaml.includes('enabled: true')) process.exit(0);
-  } catch { process.exit(0); }
+```bash
+#!/bin/bash
+# tff observation hook — appends tool use to sessions.jsonl
+# Exit 0 always. Never block. Never fail visibly.
 
-  // Read hook event from stdin (synchronous, non-blocking)
-  let input = '';
-  try { input = fs.readFileSync('/dev/stdin', 'utf8'); } catch { process.exit(0); }
-  if (!input) process.exit(0);
+# Check if observation is enabled (fast path: skip if no settings or disabled)
+SETTINGS=".tff/settings.yaml"
+if [ ! -f "$SETTINGS" ] || ! grep -q "enabled: true" "$SETTINGS" 2>/dev/null; then
+  exit 0
+fi
 
-  const data = JSON.parse(input);
-  const line = JSON.stringify({
-    ts: new Date().toISOString(),
-    tool: data.tool_name || 'unknown',
-    args: data.tool_input?.command || data.tool_input?.file_path || null,
-    project: process.cwd(),
-  });
+# Read hook event from stdin
+INPUT=$(cat)
+if [ -z "$INPUT" ]; then
+  exit 0
+fi
 
-  fs.mkdirSync('.tff/observations', { recursive: true });
-  fs.appendFileSync('.tff/observations/sessions.jsonl', line + '\n');
-} catch { /* hooks must never block */ }
+# Extract fields and append to JSONL
+TOOL=$(echo "$INPUT" | jq -r '.tool_name // "unknown"')
+ARGS=$(echo "$INPUT" | jq -r '.tool_input.command // .tool_input.file_path // empty')
+SESSION=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
+TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+mkdir -p .tff/observations
+echo "{\"ts\":\"$TS\",\"session\":\"$SESSION\",\"tool\":\"$TOOL\",\"args\":\"$ARGS\",\"project\":\"$(pwd)\"}" >> .tff/observations/sessions.jsonl
+
+# Suppress output so it doesn't clutter the conversation
+echo '{"suppressOutput":true}'
+exit 0
 ```
+
+**Why bash instead of Node.js:** The previous Node.js hooks caused errors due to stdin handling differences. Bash hooks are simpler, follow the official CC documentation examples exactly, and `cat` handles stdin reliably. `jq` is used for JSON parsing (available on macOS and most Linux).
+
+**Hook registration** in `hooks/hooks.json`:
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hooks/tff-observe.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Key details from the official CC hooks documentation:
+- **Input**: JSON on stdin (read with `cat`)
+- **Output**: JSON on stdout (exit 0), or stderr on exit 2 (blocking error)
+- **Exit 0**: success, stdout parsed as JSON
+- **Exit 2**: blocking error, stderr fed to Claude
+- **Other exit codes**: non-blocking error, shown only in verbose mode
+- **`suppressOutput: true`**: prevents the hook from adding context to the conversation
+- **Timeout**: 5 seconds (fast enough for a file append; default is 600s which is excessive)
 
 ### Activation Control
 
