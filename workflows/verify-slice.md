@@ -13,3 +13,13 @@ status = verifying
    - PASS → `tff-tools slice:transition <id> reviewing` → suggest `/tff:ship`
    - FAIL → ask user: fix (→ back to executing, replan) ∨ accept w/ exceptions (→ reviewing)
 4. NEXT: @references/next-steps.md
+
+## Auto-Transition
+Read `.tff/settings.yaml` → `autonomy.mode`.
+`plan-to-pr` ∧ ¬HUMAN_GATE → auto-invoke next workflow via `tff-tools workflow:next <status>`.
+`guided` → suggest next step, wait for user.
+Progress: `[tff] <slice-id>: verifying → reviewing`
+
+## Retry (plan-to-pr)
+FAIL ∧ attempts < 2 → `git revert`, reload checkpoint, re-execute from failed wave
+FAIL ∧ attempts ≥ 2 → `tff-tools` escalation task, pause chain

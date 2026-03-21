@@ -13,3 +13,9 @@ status = researching
    - Output → `.tff/slices/<slice-id>/RESEARCH.md`
 3. TRANSITION: `tff-tools slice:transition <id> planning`
 4. NEXT: @references/next-steps.md
+
+## Auto-Transition
+Read `.tff/settings.yaml` → `autonomy.mode`.
+`plan-to-pr` ∧ ¬HUMAN_GATE → auto-invoke next workflow via `tff-tools workflow:next <status>`.
+`guided` → suggest next step, wait for user.
+Progress: `[tff] <slice-id>: researching → planning`
