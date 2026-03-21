@@ -1,16 +1,22 @@
-# Skill: Test-Driven Development
+---
+name: Test-Driven Development
+description: TDD cycle and rules for feature implementation
+token-budget: critical
+---
+
+# Test-Driven Development
 
 ## When to Use
 
-Load this skill when implementing any feature or fix where TDD is required (F-lite and F-full complexity tiers). S-tier skips TDD.
+∀ features/fixes where TDD required (F-lite, F-full tiers). S-tier skips TDD.
 
-## The Absolute Law
+## LAW: ¬∃ production_code without failing_test
 
-**NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST.**
+## Cycle
 
-## The Cycle
+RED(write 1 test → run → observe FAIL) → GREEN(minimal code to pass) → REFACTOR(structure, tests stay green)
 
-### RED — Write one failing test
+### RED
 
 ```typescript
 it('should validate email format', () => {
@@ -19,15 +25,9 @@ it('should validate email format', () => {
 });
 ```
 
-Rules:
-- One behavior per test
-- Descriptive test name that reads like a sentence
-- Use `describe`/`it`/`expect` (never `test()`)
-- You MUST run the test and WATCH IT FAIL before proceeding
+Rules: 1 behavior/test | descriptive name | `describe`/`it`/`expect` (¬`test()`) | MUST run ∧ watch FAIL
 
-### GREEN — Write minimal code to pass
-
-Only write enough code to make the test pass. No more.
+### GREEN
 
 ```typescript
 export const validateEmail = (email: string): Result<string, Error> => {
@@ -36,49 +36,22 @@ export const validateEmail = (email: string): Result<string, Error> => {
 };
 ```
 
-### REFACTOR — Clean up while tests stay green
+Only enough code to pass. No more.
 
-Improve structure without changing behavior. Tests must still pass.
+### REFACTOR — improve structure, ¬change behavior, tests stay green
 
 ## Anti-Patterns
 
-### Testing Mock Behavior (not real behavior)
+| Pattern | Problem | Fix |
+|---|---|---|
+| Mock behavior testing | `expect(mock).toHaveBeenCalled()` tests mock, ¬code | Use in-memory adapters implementing real interface |
+| Tests after impl | Never verified test catches failures | Write test first → watch fail → implement |
+| Over-mocking | Mock everything, test nothing real | In-memory adapters: real interface, ¬I/O |
 
-BAD:
-```typescript
-const mock = vi.fn().mockReturnValue('data');
-expect(mock).toHaveBeenCalled(); // Tests the mock, not real code
-```
+## Gate (∀ must be true before DONE)
 
-GOOD:
-```typescript
-const store = new InMemoryBeadStore();
-const result = await initProject({ name: 'app', vision: 'v' }, { beadStore: store });
-expect(isOk(result)).toBe(true); // Tests real behavior
-```
-
-### Writing Tests After Implementation
-
-BAD: Write code first, then write tests that pass immediately.
-WHY: You never verified the test catches failures. It might always pass.
-FIX: Always write the test first. Watch it fail. Then implement.
-
-### Over-Mocking
-
-BAD: Mock every dependency, test nothing real.
-GOOD: Use in-memory adapters that implement the real interface. They behave like the real thing but without I/O.
-
-## Gate Function
-
-Before reporting any test work as DONE:
-1. Did every test fail before implementation? (mandatory)
-2. Did I run the test suite and see all pass? (mandatory)
-3. Am I testing behavior or mock existence? (if mock → stop)
-4. Would this test catch a regression? (if no → rewrite)
+1. ∀ tests failed before impl? 2. Suite passes? 3. Testing behavior ∨ mock? (mock → stop) 4. Catches regression? (¬ → rewrite)
 
 ## Framework
 
-- Vitest: `describe`, `it`, `expect`, `beforeEach`, `afterEach`
-- No `test()` alias
-- Colocated `.spec.ts` files
-- `globals: true` in vitest config
+Vitest: `describe`/`it`/`expect`/`beforeEach`/`afterEach` | ¬`test()` | colocated `.spec.ts` | `globals: true`

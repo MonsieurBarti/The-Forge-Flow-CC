@@ -1,56 +1,36 @@
-# Skill: Code Review Checklist
+---
+name: Code Review Checklist
+description: Two-stage review protocol for spec and code quality
+token-budget: critical
+---
+
+# Code Review Checklist
 
 ## When to Use
 
-Load this skill when performing any code review (spec compliance or code quality).
+∀ code reviews (spec compliance ∨ code quality).
 
-## Two-Stage Review Protocol
+## Two-Stage Protocol
 
-### Stage 1: Spec Compliance (tff-spec-reviewer)
+Stage 1 (spec compliance) MUST pass before Stage 2 (code quality) runs.
 
-Check ONLY whether the implementation matches the requirements:
+| Stage | Agent | Checks | Verdict |
+|---|---|---|---|
+| 1: Spec | tff-spec-reviewer | ∀ criteria implemented? Extra work? Correct interpretation? Reading actual code? | PASS ∨ FAIL |
+| 2: Quality | tff-code-reviewer | Correctness, tests (edge cases), patterns, YAGNI, readability | APPROVE ∨ REQUEST_CHANGES |
 
-| Check | Question |
-|---|---|
-| Coverage | Is every acceptance criterion implemented? |
-| Extra work | Was anything built that wasn't requested? |
-| Interpretation | Were requirements interpreted correctly? |
-| Evidence | Am I reading actual code, not trusting the report? |
+## Severity
 
-Verdict: PASS or FAIL. Nothing else matters at this stage.
-
-### Stage 2: Code Quality (tff-code-reviewer)
-
-Only runs AFTER spec compliance passes. Check:
-
-| Check | Question |
-|---|---|
-| Correctness | Does the code do what it claims? |
-| Tests | Are edge cases covered? Are tests meaningful? |
-| Patterns | Does it follow existing codebase conventions? |
-| YAGNI | Is there unnecessary complexity? |
-| Readability | Can someone understand this without the PR description? |
-
-Verdict: APPROVE or REQUEST_CHANGES with severity levels.
-
-## Severity Guide
-
-| Severity | Meaning | Blocks PR? |
+| Level | Meaning | Blocks? |
 |---|---|---|
-| Critical | Bug, security issue, data loss risk | Yes |
+| Critical | Bug, security, data loss | Yes |
 | Important | Pattern violation, missing tests, unclear logic | Yes |
-| Minor | Style preference, naming suggestion, comment | No |
+| Minor | Style, naming, comment | No |
 
 ## Calibration
 
-Only flag issues that would cause real problems. Ask yourself:
-- "Would this cause a bug in production?" → Critical
-- "Would this confuse the next developer?" → Important
-- "Would I notice this in a 1000-line diff?" → Probably minor, skip it
+Bug in prod? → Critical | Confuses next dev? → Important | ¬noticed in 1000-line diff? → skip
 
 ## Anti-Patterns
 
-- Trusting the implementer's report without reading code
-- Reviewing style when spec compliance hasn't passed yet
-- Flagging pre-existing issues (only review what THIS change introduced)
-- "Close enough" on spec compliance (criteria are binary: met or not met)
+- ¬read code, trust report | review style before spec passes | flag pre-existing issues | "close enough" on spec (binary: met ∨ ¬met)
