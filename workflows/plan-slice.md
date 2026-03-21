@@ -4,15 +4,85 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
 status = planning
+SPEC.md exists at `.tff/slices/<id>/SPEC.md`
 
 ## Steps
-1. DECOMPOSE: slice → tasks w/ acceptance criteria + dependencies (1 task = 1 commit)
-2. WRITE `.tff/slices/<slice-id>/PLAN.md`: goal, tasks[desc, criteria, deps], tier
-3. CREATE task beads w/ dependencies
-4. DETECT WAVES: `tff-tools waves:detect '<tasks-json>'` → show user
-5. SPAWN tff-architect (F-lite ∧ F-full): validate plan structure
-6. REVIEW: `plannotator annotate .tff/slices/<slice-id>/PLAN.md`
-   - feedback → revise → re-submit | approved → continue
-7. WORKTREE: `tff-tools worktree:create <slice-id>`
-8. TRANSITION: `tff-tools slice:transition <id> executing`
-9. NEXT: @references/next-steps.md
+
+### 1. Load Spec
+READ `.tff/slices/<id>/SPEC.md`
+READ `.tff/slices/<id>/RESEARCH.md` (if exists)
+
+### 2. File Structure
+Map files to create/modify BEFORE tasks.
+∀ file: one responsibility, follow existing codebase patterns.
+Present file map to user.
+
+### 3. Task Decomposition
+DECOMPOSE spec → tasks:
+- 1 task = 1 logical unit (may be multiple commits)
+- ∀ task: description, files (create/modify/test), acceptance criteria refs (AC1, AC2...), deps
+- TDD steps ∀ task:
+  1. Write failing test (exact code)
+  2. Run test (exact command + expected FAIL)
+  3. Write implementation (exact code)
+  4. Run test (exact command + expected PASS)
+  5. Commit (exact git command)
+- Exact file paths, not "add to the service"
+- Code snippets, not "implement validation"
+
+### 4. Write PLAN.md
+WRITE `.tff/slices/<id>/PLAN.md`:
+
+```
+# [Slice] Implementation Plan
+
+> For agentic workers: execute task-by-task with TDD.
+
+**Goal:** [from SPEC.md]
+**Architecture:** [from SPEC.md]
+**Tech Stack:** [relevant to slice]
+
+## File Structure
+[files to create/modify with responsibilities]
+
+---
+
+### Task N: [Component]
+**Files:** Create/Modify/Test with exact paths
+**Traces to:** AC1, AC3
+
+- [ ] Step 1: Write failing test [exact code]
+- [ ] Step 2: Run [exact command], verify FAIL
+- [ ] Step 3: Implement [exact code]
+- [ ] Step 4: Run [exact command], verify PASS
+- [ ] Step 5: Commit [exact git command]
+```
+
+### 5. Create Task Beads + Detect Waves
+CREATE beads: `tff-tools` ∀ task w/ deps
+DETECT: `tff-tools waves:detect '<tasks-json>'` → show user
+
+### 6. Architecture Review (F-lite ∧ F-full)
+SPAWN tff-architect: {plan_content, spec_content}
+- Validates boundaries, dependency direction, patterns
+- Issues → revise plan
+
+### 7. Plan Review — Subagent Loop
+DISPATCH anonymous reviewer via Agent tool (prompt from @skills/interactive-design.md § Plan Document Reviewer)
+Issues → fix, re-dispatch (max 3 iterations)
+
+### 8. Plannotator Review
+`plannotator annotate .tff/slices/<id>/PLAN.md`
+feedback → revise → loop ∨ approved → continue
+
+### 9. Worktree
+`tff-tools worktree:create <id>`
+
+### 10. Transition
+TRANSITION: `tff-tools slice:transition <id> executing`
+
+## Auto-Transition
+Read `.tff/settings.yaml` → `autonomy.mode`.
+`plan-to-pr` → auto-invoke execute workflow.
+`guided` → suggest `/tff:execute`.
+Progress: `[tff] <slice-id>: planning → executing`
