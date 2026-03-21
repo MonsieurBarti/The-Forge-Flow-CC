@@ -6,16 +6,25 @@ import { isOk } from '../../domain/result.js';
 
 export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
   const name = args[0];
-  const number = parseInt(args[1] ?? '1', 10);
-  const projectBeadId = args[2] ?? '';
 
   if (!name) {
-    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: milestone:create <name> [number] [project-bead-id]' } });
+    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: milestone:create <name>' } });
   }
 
   const beadStore = new BdCliAdapter();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
   const gitOps = new GitCliAdapter(process.cwd());
+
+  // Auto-detect project bead ID
+  const projectResult = await beadStore.list({ label: 'tff:project' });
+  if (!isOk(projectResult) || projectResult.data.length === 0) {
+    return JSON.stringify({ ok: false, error: { code: 'NOT_FOUND', message: 'No tff project found. Run /tff:new first.' } });
+  }
+  const projectBeadId = projectResult.data[0].id;
+
+  // Auto-number: count existing milestones + 1
+  const milestonesResult = await beadStore.list({ label: 'tff:milestone' });
+  const number = isOk(milestonesResult) ? milestonesResult.data.length + 1 : 1;
 
   const result = await createMilestoneUseCase(
     { projectBeadId, name, number },

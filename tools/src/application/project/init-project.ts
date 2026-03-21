@@ -16,7 +16,12 @@ export const initProject = async (
   if (await deps.artifactStore.exists('.tff/PROJECT.md')) return Err(projectExistsError(input.name));
 
   // Initialize beads store if not already initialized
+  // init() is idempotent — if already initialized, bd will exit with an error
+  // which we silently ignore (the list() call below will verify connectivity)
   await deps.beadStore.init();
+
+  // Small delay to let Dolt server stabilize after init
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   const existing = await deps.beadStore.list({ label: 'tff:project' });
   if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));

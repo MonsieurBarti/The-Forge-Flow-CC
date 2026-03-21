@@ -13821,6 +13821,7 @@ var createProject = (input) => {
 var initProject = async (input, deps) => {
   if (await deps.artifactStore.exists(".tff/PROJECT.md")) return Err(projectExistsError(input.name));
   await deps.beadStore.init();
+  await new Promise((resolve) => setTimeout(resolve, 2e3));
   const existing = await deps.beadStore.list({ label: "tff:project" });
   if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
   const project = createProject(input);
@@ -13878,8 +13879,7 @@ var parseJsonOutput = (output) => {
 };
 var BdCliAdapter = class {
   async init() {
-    const r = await runBd(["init"]);
-    if (!r.ok) return r;
+    await runBd(["init", "--quiet"]);
     return Ok(void 0);
   }
   async create(input) {
@@ -14176,14 +14176,19 @@ var GitCliAdapter = class {
 // tools/src/cli/commands/milestone-create.cmd.ts
 var milestoneCreateCmd = async (args) => {
   const name = args[0];
-  const number4 = parseInt(args[1] ?? "1", 10);
-  const projectBeadId = args[2] ?? "";
   if (!name) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: milestone:create <name> [number] [project-bead-id]" } });
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: milestone:create <name>" } });
   }
   const beadStore = new BdCliAdapter();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
   const gitOps = new GitCliAdapter(process.cwd());
+  const projectResult = await beadStore.list({ label: "tff:project" });
+  if (!isOk(projectResult) || projectResult.data.length === 0) {
+    return JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: "No tff project found. Run /tff:new first." } });
+  }
+  const projectBeadId = projectResult.data[0].id;
+  const milestonesResult = await beadStore.list({ label: "tff:milestone" });
+  const number4 = isOk(milestonesResult) ? milestonesResult.data.length + 1 : 1;
   const result = await createMilestoneUseCase(
     { projectBeadId, name, number: number4 },
     { beadStore, artifactStore, gitOps }
@@ -14327,14 +14332,24 @@ _Plan will be defined during /tff:plan._
 
 // tools/src/cli/commands/slice-create.cmd.ts
 var sliceCreateCmd = async (args) => {
-  const [milestoneBeadId, name, msNum, slNum] = args;
-  if (!milestoneBeadId || !name) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: slice:create <milestone-bead-id> <name> [milestone-number] [slice-number]" } });
+  const name = args[0];
+  if (!name) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: slice:create <name>" } });
   }
   const beadStore = new BdCliAdapter();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  const milestonesResult = await beadStore.list({ label: "tff:milestone" });
+  if (!isOk(milestonesResult) || milestonesResult.data.length === 0) {
+    return JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: "No milestone found. Run /tff:new-milestone first." } });
+  }
+  const openMilestones = milestonesResult.data.filter((m) => m.status !== "closed");
+  const milestone = openMilestones.length > 0 ? openMilestones[0] : milestonesResult.data[0];
+  const milestoneBeadId = milestone.id;
+  const milestoneNumber = milestonesResult.data.indexOf(milestone) + 1;
+  const slicesResult = await beadStore.list({ label: "tff:slice", parentId: milestoneBeadId });
+  const sliceNumber = isOk(slicesResult) ? slicesResult.data.length + 1 : 1;
   const result = await createSliceUseCase(
-    { milestoneBeadId, name, milestoneNumber: parseInt(msNum ?? "1", 10), sliceNumber: parseInt(slNum ?? "1", 10) },
+    { milestoneBeadId, name, milestoneNumber, sliceNumber },
     { beadStore, artifactStore }
   );
   if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
