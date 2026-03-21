@@ -21,7 +21,7 @@
 
 ## What is The Forge Flow?
 
-The Forge Flow (`tff`) is a Claude Code plugin that orchestrates AI agents through a structured software development lifecycle. It coordinates 12 specialized agents from project initialization to shipped code.
+The Forge Flow (`tff`) is a Claude Code plugin that orchestrates AI agents through a structured software development lifecycle. It coordinates 13 specialized agents from project initialization to shipped code.
 
 **Key features:**
 - **Dual state** -- markdown files for human-readable content, beads for status/dependencies
@@ -30,7 +30,10 @@ The Forge Flow (`tff`) is a Claude Code plugin that orchestrates AI agents throu
 - **Plannotator integration** -- all plan reviews, verification, and code reviews go through plannotator's interactive UI
 - **Complexity tiers** -- S (quick fix), F-lite (feature), F-full (complex) determine which phases are required
 - **Checkpoint/resumability** -- pause and resume execution across sessions
-- **Skill library** -- reusable knowledge fragments that agents load for consistent practices
+- **Skill library** -- reusable knowledge fragments with token-budget tiers that agents load for consistent practices
+- **Autonomous flow** -- `plan-to-pr` mode auto-runs from plan approval through PR creation, with escalation on failure
+- **Auto-learn pipeline** -- observes tool-use patterns, ranks candidates, drafts skills with bounded guardrails
+- **Agent personality** -- each agent has distinct methodology, communication style, and domain expertise
 
 ---
 
@@ -337,17 +340,27 @@ Skips brainstorming and research, goes straight to plan -> execute -> ship.
 | `/tff:map-codebase` | Analyze codebase and generate docs |
 | `/tff:help` | Show command reference |
 
+### Skill Auto-Learn
+
+| Command | Description |
+|---|---|
+| `/tff:detect-patterns` | Run pattern detection pipeline |
+| `/tff:suggest-skills` | Show ranked skill candidates |
+| `/tff:create-skill` | Draft skill from pattern or description |
+| `/tff:learn` | Detect skill divergences and propose refinements |
+| `/tff:compose` | Detect and bundle skill clusters |
+
 ## Architecture
 
 ```
 the-forge-flow/
   .claude-plugin/         # CC marketplace manifest
-  commands/tff/           # 24 slash commands (.md)
-  agents/                 # 12 agent definitions (.md)
+  commands/tff/           # 29 slash commands (.md)
+  agents/                 # 13 agent definitions (.md)
   skills/                 # 5 reusable knowledge skills (.md)
-  workflows/              # 17 orchestration workflows (.md)
-  references/             # 5 reference documents (.md)
-  hooks/                  # SessionStart + PostToolUse hooks (.js)
+  workflows/              # 22 orchestration workflows (.md)
+  references/             # 6 reference documents (.md)
+  hooks/                  # PostToolUse observation hook (.sh)
   tools/
     src/
       domain/             # Hexagonal domain layer (Zod, Result<T,E>)
@@ -381,6 +394,7 @@ the-forge-flow/
 | security-auditor | Security review on every PR | quality (opus) |
 | fixer | Apply accepted review findings | budget (sonnet) |
 | doc-writer | Codebase documentation and analysis | budget (sonnet) |
+| skill-drafter | Draft skills from observed patterns | quality (opus) |
 
 ## Skills
 
@@ -432,6 +446,23 @@ model-profiles:
     model: sonnet
   budget:
     model: sonnet
+
+autonomy:
+  mode: plan-to-pr    # "guided" | "plan-to-pr"
+
+auto-learn:
+  weights:
+    frequency: 0.25
+    breadth: 0.30
+    recency: 0.25
+    consistency: 0.20
+  guardrails:
+    min-corrections: 3
+    cooldown-days: 7
+    max-drift-pct: 20
+  clustering:
+    min-sessions: 3
+    min-patterns: 2
 ```
 
 ## License

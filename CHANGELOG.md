@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-03-21
+
+### Added
+
+**Agent Intelligence**
+- All 13 agents enriched with **Personality**, **Methodology**, and **Reads Before Acting** sections
+- `tff-skill-drafter` agent (13th agent, added in 0.2.0) now has full personality profile
+- `references/security-baseline.md` -- STRIDE threat categories and OWASP Top 10 quick reference for security-auditor
+
+**Smarter Context Management**
+- Token budget tiers (`critical` / `workflow` / `background`) on all 5 skill files
+- Workflow SPAWN instructions rewritten to pass role-specific context (not full slice context)
+
+**Auto-Learn Pipeline Hardening**
+- Refinement cooldown metadata (`canRefine`, `recordRefinement`) with configurable 7-day cooldown
+- Configurable scoring weights in `rankCandidates` (frequency, breadth, recency, consistency)
+- Density-based clustering with Jaccard distance (replaces simple 70% co-activation threshold)
+- Skill validation expansion: size limits, name collision detection, shell injection pattern warnings
+- Property-based tests for scoring weight stability (fast-check)
+
+**Autonomous Flow (plan-to-pr mode)**
+- `autonomy.mode` setting: `guided` (V2 behavior) or `plan-to-pr` (auto-run from plan approval to PR)
+- Workflow chaining: `nextWorkflow()` and `shouldAutoTransition()` use cases
+- Escalation tasks: blocked agents create structured escalation context instead of stalling
+- Auto-retry on verify failure (max 2, then escalate)
+- Auto-fix loop on review findings (max 2 cycles, then escalate)
+- Progress notifications: `[tff] M01-S02: <from> → <to>` at each transition
+- 2 new CLI commands: `workflow:next`, `workflow:should-auto`
+
+**Code Robustness**
+- Git adapter TTL cache for `getCurrentBranch`/`getHeadSha` with invalidation on writes
+- Beads adapter retry with exponential backoff (3 attempts, 500ms base, 4s max)
+- Observation hook dead-letter resilience (failed appends captured, replayed on next success)
+- Stricter beads `normalizeBeadData` validation (explicit checks for id/status fields)
+- Sync reconciliation decomposed into testable helpers: `resolveContentConflict`, `resolveStatusConflict`, `detectOrphans`
+- New status reconciliation behavior (bead wins for status -- previously only content was synced)
+- Wave detection cycle errors now name the specific tasks involved
+- Sort determinism documented in wave detection
+
+**Test Coverage**
+- 384 tests across 92 test files (up from ~300 in 0.2.0)
+- Property-based tests for scoring (fast-check)
+- Sync edge case tests (empty, partial, large orphan sets)
+- Autonomous flow integration test (validates chain against state machine)
+- Dead-letter shell test for observation hook
+- Beads adapter retry tests
+- Git adapter caching tests
+
+### Changed
+
+- All 13 agent `.md` files compressed with formal notation (∀, ∃, ∈, ∧, ∨, →) -- **45% character reduction**
+- All 5 skill `.md` files compressed -- **31% character reduction**
+- All 22 workflow `.md` files compressed -- **48% character reduction**
+- Total markdown compression: **76,566 → 42,860 chars (45% reduction)**
+- `detectClusters` API changed: accepts `Observation[]` instead of `CoActivation[]`
+- `normalizeBeadData` now returns `Result<BeadData, DomainError>` instead of raw `BeadData`
+- Auto-learn workflow CLI args now read from `.tff/settings.yaml`
+
+### Fixed
+
+- Configurable `minCount` in `aggregatePatterns` (was hardcoded default only)
+- `checkDrift` custom `maxDrift` parameter verified working for 0.2 override
+
 ## [0.2.0] - 2026-03-21
 
 ### Added
