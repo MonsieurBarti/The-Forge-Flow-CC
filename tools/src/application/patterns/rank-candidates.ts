@@ -1,11 +1,19 @@
 import { type Pattern } from '../../domain/value-objects/pattern.js';
 import { type Candidate } from '../../domain/value-objects/candidate.js';
 
+interface ScoringWeights {
+  frequency?: number;
+  breadth?: number;
+  recency?: number;
+  consistency?: number;
+}
+
 interface RankOptions {
   totalProjects: number;
   totalSessions: number;
   now: string;
   threshold?: number;
+  weights?: ScoringWeights;
 }
 
 export const rankCandidates = (
@@ -22,7 +30,12 @@ export const rankCandidates = (
     const recency = Math.exp(-ageDays * Math.LN2 / 14);
     const consistency = options.totalSessions > 0 ? p.sessions / options.totalSessions : 0;
 
-    const score = frequency * 0.25 + breadth * 0.30 + recency * 0.25 + consistency * 0.20;
+    const wF = options.weights?.frequency ?? 0.25;
+    const wB = options.weights?.breadth ?? 0.30;
+    const wR = options.weights?.recency ?? 0.25;
+    const wC = options.weights?.consistency ?? 0.20;
+
+    const score = frequency * wF + breadth * wB + recency * wR + consistency * wC;
 
     return {
       pattern: p.sequence,
