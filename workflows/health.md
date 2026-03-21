@@ -16,4 +16,11 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
    | Worktrees | OK/X orphans |
    ```
 5. issues found → offer `/tff:sync` to reconcile
+
+## Adapter Mode
+Check `bd --version`:
+- success → `beads: active`
+- fail → `beads: unavailable (markdown-only mode)`
+Report adapter mode to user.
+
 6. NEXT: @references/next-steps.md
