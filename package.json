@@ -24,6 +24,9 @@
   },
   "license": "MIT",
   "author": "MonsieurBarti",
+  "dependencies": {
+    "yaml": "^2.8.3"
+  },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "fast-check": "^4.6.0",

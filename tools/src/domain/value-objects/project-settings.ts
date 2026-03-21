@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { parse as parseYaml } from 'yaml';
 
 /**
  * Wraps a z.object schema so that `undefined` or `null` input is treated as `{}`
@@ -95,8 +96,7 @@ export function loadProjectSettings(yamlContent: string): ProjectSettings {
     return ProjectSettingsSchema.parse(undefined);
   }
   try {
-    const { parse } = require('yaml');
-    const parsed = parse(yamlContent);
+    const parsed = parseYaml(yamlContent);
     return parseProjectSettings(parsed);
   } catch (err) {
     console.warn('[tff] failed to parse settings.yaml, using defaults:', String(err));

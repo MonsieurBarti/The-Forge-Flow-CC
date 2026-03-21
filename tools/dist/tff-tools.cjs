@@ -22222,18 +22222,18 @@ function loadProjectSettings(yamlContent) {
     return ProjectSettingsSchema.parse(void 0);
   }
   try {
-    const { parse: parse3 } = require_dist();
-    const parsed = parse3(yamlContent);
+    const parsed = (0, import_yaml.parse)(yamlContent);
     return parseProjectSettings(parsed);
   } catch (err) {
     console.warn("[tff] failed to parse settings.yaml, using defaults:", String(err));
     return ProjectSettingsSchema.parse(void 0);
   }
 }
-var ModelProfileSchema, ModelProfilesSchema, AutonomySchema, AutoLearnWeightsSchema, AutoLearnGuardrailsSchema, AutoLearnClusteringSchema, AutoLearnSchema, DoltSchema, ProjectSettingsSchema;
+var import_yaml, ModelProfileSchema, ModelProfilesSchema, AutonomySchema, AutoLearnWeightsSchema, AutoLearnGuardrailsSchema, AutoLearnClusteringSchema, AutoLearnSchema, DoltSchema, ProjectSettingsSchema;
 var init_project_settings = __esm({
   "tools/src/domain/value-objects/project-settings.ts"() {
     init_zod();
+    import_yaml = __toESM(require_dist(), 1);
     ModelProfileSchema = withDefault(
       external_exports.object({
         model: external_exports.string().catch("sonnet")
