@@ -1,61 +1,26 @@
-# Workflow: Execute Slice
+# Execute Slice
 
-## Context
-
-Read the orchestrator pattern: @references/orchestrator-pattern.md
-Read conventions: @references/conventions.md
+Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
-- Slice is in `executing` status
-- Worktree exists at `.tff/worktrees/<slice-id>/`
+status = executing ∧ worktree exists at `.tff/worktrees/<slice-id>/`
 
 ## Steps
-
-### 1. Load checkpoint (if resuming)
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs checkpoint:load <slice-id>
+1. RESUME: `tff-tools checkpoint:load <slice-id>` → skip completed waves
+2. DETECT: `tff-tools waves:detect '<tasks-json>'`
+3. EXECUTE:
 ```
-If checkpoint exists, skip completed waves.
-
-### 2. Detect waves
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs waves:detect '<tasks-json>'
+∀ wave ∈ waves (sequential):
+  checkpoint:save <slice-id> '<data-json>'
+  tier ∈ {F-lite, F-full} → ∀ task: SPAWN tff-tester: {task.criteria, task.files}
+    tester writes failing .spec.ts + commits in worktree
+  ∀ task ∈ wave (parallel):
+    bd update <id> --claim
+    SPAWN executor_agent: {task.description, task.criteria, task.files, @references/conventions.md}
+    agent works in worktree → implement → tests pass → commit
+    record executor → bead metadata
+    bd close <id> --reason "Completed"
+  sync:state
 ```
-
-### 3. Execute waves
-For each wave (sequential):
-
-#### 3a. Save checkpoint
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs checkpoint:save <slice-id> '<data-json>'
-```
-
-#### 3b. TDD (F-lite and F-full only)
-For each task in the wave:
-- Spawn **tff-tester** agent in the slice worktree
-- Tester writes failing `.spec.ts` and commits
-
-#### 3c. Execute tasks (parallel within wave)
-For each task in the wave:
-- Claim the task atomically: `bd update <task-bead-id> --claim`
-- Spawn the appropriate domain agent (**tff-backend-dev**, **tff-frontend-dev**, or **tff-devops**) using the Agent tool
-- Agent works in the slice worktree
-- Agent implements, tests pass, commits atomically
-- Record executor in bead metadata
-- Close the task: `bd close <task-bead-id> --reason "Completed"`
-
-#### 3d. Sync state
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs sync:state
-```
-
-### 4. All waves complete
-Transition to verifying:
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs slice:transition <bead-id> verifying
-```
-Suggest `/tff:verify`.
-
-### Next Step
-
-Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.
+4. TRANSITION: `tff-tools slice:transition <id> verifying`
+5. NEXT: @references/next-steps.md

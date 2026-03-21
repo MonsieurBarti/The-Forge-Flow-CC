@@ -1,42 +1,17 @@
-# Workflow: Discuss Slice
+# Discuss Slice
 
-## Context
-
-Read the orchestrator pattern: @references/orchestrator-pattern.md
-Read conventions: @references/conventions.md
+Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
-- Slice exists and is in `discussing` status
+status = discussing
 
 ## Steps
-
-### 1. Load slice context
-Read the slice bead and any existing notes.
-
-### 2. Classify complexity
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs slice:classify '<signals-json>'
-```
-
-### 3. Spawn brainstormer (F-lite and F-full only)
-If tier is S, skip brainstorming and auto-transition to researching.
-
-For F-lite/F-full:
-- Use the Agent tool to spawn **tff-brainstormer** agent
-- Provide: slice description, project context, requirements
-- Brainstormer will challenge assumptions, surface unknowns, lock scope
-
-### 4. Spawn product-lead
-- Use the Agent tool to spawn **tff-product-lead** agent
-- Validate requirements and define acceptance criteria
-
-### 5. Transition to researching
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs slice:transition <bead-id> researching
-```
-
-Auto-continue to research phase or suggest `/tff:research`.
-
-### Next Step
-
-Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.
+1. CHECK: read slice bead + notes
+2. CLASSIFY: `tff-tools slice:classify '<signals>'`
+3. tier = S → auto-transition researching, skip brainstorm
+4. SPAWN tff-brainstormer: {slice_desc, project_context, requirements}
+   - Challenge assumptions, surface unknowns, lock scope
+5. SPAWN tff-product-lead: {requirements, acceptance_criteria}
+   - Validate requirements, define acceptance criteria
+6. TRANSITION: `tff-tools slice:transition <id> researching`
+7. NEXT: @references/next-steps.md
