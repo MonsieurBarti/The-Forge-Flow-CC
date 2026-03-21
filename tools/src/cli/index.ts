@@ -25,6 +25,7 @@ import { workflowNextCmd } from './commands/workflow-next.cmd.js';
 import { workflowShouldAutoCmd } from './commands/workflow-should-auto.cmd.js';
 import { snapshotSaveCmd } from './commands/snapshot-save.cmd.js';
 import { snapshotLoadCmd } from './commands/snapshot-load.cmd.js';
+import { snapshotMergeCmd } from './commands/snapshot-merge.cmd.js';
 
 type CommandFn = (args: string[]) => Promise<string>;
 
@@ -56,6 +57,7 @@ const commands: Record<string, CommandFn> = {
   'workflow:should-auto': workflowShouldAutoCmd,
   'snapshot:save': snapshotSaveCmd,
   'snapshot:load': snapshotLoadCmd,
+  'snapshot:merge': snapshotMergeCmd,
 };
 
 const main = async () => {
