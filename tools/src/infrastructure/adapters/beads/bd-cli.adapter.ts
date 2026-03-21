@@ -26,7 +26,8 @@ export class BdCliAdapter implements BeadStore {
   }
 
   async create(input: { label: BeadLabel; title: string; design?: string; parentId?: string; }): Promise<Result<BeadData, DomainError>> {
-    const args = ['create', '--label', input.label, '--title', input.title, '--json'];
+    // title is positional, labels use -l (plural --labels)
+    const args = ['create', input.title, '-l', input.label, '--json'];
     if (input.design) args.push('--design', input.design);
     if (input.parentId) args.push('--parent', input.parentId);
     const result = await runBd(args);
@@ -42,17 +43,42 @@ export class BdCliAdapter implements BeadStore {
 
   async list(filter: { label?: BeadLabel; parentId?: string; status?: string; }): Promise<Result<BeadData[], DomainError>> {
     const args = ['list', '--json'];
-    if (filter.label) args.push('--label', filter.label);
+    if (filter.label) args.push('-l', filter.label);
     if (filter.parentId) args.push('--parent', filter.parentId);
-    if (filter.status) args.push('--status', filter.status);
+    if (filter.status) args.push('-s', filter.status);
     const result = await runBd(args);
     if (!result.ok) return result;
     return parseJsonOutput<BeadData[]>(result.data);
   }
 
-  async updateStatus(id: string, status: string): Promise<Result<void, DomainError>> { const r = await runBd(['update', id, '--status', status]); if (!r.ok) return r; return Ok(undefined); }
-  async updateDesign(id: string, design: string): Promise<Result<void, DomainError>> { const r = await runBd(['update', id, '--design', design]); if (!r.ok) return r; return Ok(undefined); }
-  async updateMetadata(id: string, key: string, value: string): Promise<Result<void, DomainError>> { const r = await runBd(['kv', 'set', `${id}.${key}`, value]); if (!r.ok) return r; return Ok(undefined); }
-  async addDependency(fromId: string, toId: string, type: 'blocks' | 'validates'): Promise<Result<void, DomainError>> { const r = await runBd(['dep', 'add', fromId, toId, '--type', type]); if (!r.ok) return r; return Ok(undefined); }
-  async close(id: string): Promise<Result<void, DomainError>> { const r = await runBd(['close', id]); if (!r.ok) return r; return Ok(undefined); }
+  async updateStatus(id: string, status: string): Promise<Result<void, DomainError>> {
+    const r = await runBd(['update', id, '-s', status]);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
+
+  async updateDesign(id: string, design: string): Promise<Result<void, DomainError>> {
+    const r = await runBd(['update', id, '--design', design]);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
+
+  async updateMetadata(id: string, key: string, value: string): Promise<Result<void, DomainError>> {
+    // KV store is global, namespace by bead ID in the key
+    const r = await runBd(['kv', 'set', `${id}.${key}`, value]);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
+
+  async addDependency(fromId: string, toId: string, type: 'blocks' | 'validates'): Promise<Result<void, DomainError>> {
+    const r = await runBd(['dep', 'add', fromId, toId, '-t', type]);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
+
+  async close(id: string): Promise<Result<void, DomainError>> {
+    const r = await runBd(['close', id]);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
 }

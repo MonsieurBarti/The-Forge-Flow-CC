@@ -13865,7 +13865,7 @@ var BdCliAdapter = class {
     return Ok(void 0);
   }
   async create(input) {
-    const args = ["create", "--label", input.label, "--title", input.title, "--json"];
+    const args = ["create", input.title, "-l", input.label, "--json"];
     if (input.design) args.push("--design", input.design);
     if (input.parentId) args.push("--parent", input.parentId);
     const result = await runBd(args);
@@ -13879,15 +13879,15 @@ var BdCliAdapter = class {
   }
   async list(filter) {
     const args = ["list", "--json"];
-    if (filter.label) args.push("--label", filter.label);
+    if (filter.label) args.push("-l", filter.label);
     if (filter.parentId) args.push("--parent", filter.parentId);
-    if (filter.status) args.push("--status", filter.status);
+    if (filter.status) args.push("-s", filter.status);
     const result = await runBd(args);
     if (!result.ok) return result;
     return parseJsonOutput(result.data);
   }
   async updateStatus(id, status) {
-    const r = await runBd(["update", id, "--status", status]);
+    const r = await runBd(["update", id, "-s", status]);
     if (!r.ok) return r;
     return Ok(void 0);
   }
@@ -13902,7 +13902,7 @@ var BdCliAdapter = class {
     return Ok(void 0);
   }
   async addDependency(fromId, toId, type) {
-    const r = await runBd(["dep", "add", fromId, toId, "--type", type]);
+    const r = await runBd(["dep", "add", fromId, toId, "-t", type]);
     if (!r.ok) return r;
     return Ok(void 0);
   }
