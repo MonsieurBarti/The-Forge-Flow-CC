@@ -23,6 +23,8 @@ import { skillsDriftCmd } from './commands/skills-drift.cmd.js';
 import { skillsValidateCmd } from './commands/skills-validate.cmd.js';
 import { workflowNextCmd } from './commands/workflow-next.cmd.js';
 import { workflowShouldAutoCmd } from './commands/workflow-should-auto.cmd.js';
+import { snapshotSaveCmd } from './commands/snapshot-save.cmd.js';
+import { snapshotLoadCmd } from './commands/snapshot-load.cmd.js';
 
 type CommandFn = (args: string[]) => Promise<string>;
 
@@ -52,6 +54,8 @@ const commands: Record<string, CommandFn> = {
   'skills:validate': skillsValidateCmd,
   'workflow:next': workflowNextCmd,
   'workflow:should-auto': workflowShouldAutoCmd,
+  'snapshot:save': snapshotSaveCmd,
+  'snapshot:load': snapshotLoadCmd,
 };
 
 const main = async () => {
