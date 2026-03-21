@@ -32,6 +32,17 @@ export type { ArtifactStore } from './ports/artifact-store.port.js';
 export type { GitOps } from './ports/git-ops.port.js';
 export type { ReviewStore, ReviewRecord } from './ports/review-store.port.js';
 
+// Observation pipeline value objects
+export { ObservationSchema } from './value-objects/observation.js';
+export type { Observation } from './value-objects/observation.js';
+export { PatternSchema } from './value-objects/pattern.js';
+export type { Pattern } from './value-objects/pattern.js';
+export { CandidateSchema, CandidateEvidenceSchema } from './value-objects/candidate.js';
+export type { Candidate, CandidateEvidence } from './value-objects/candidate.js';
+
+// Observation store port
+export type { ObservationStore } from './ports/observation-store.port.js';
+
 // Errors
 export { DomainErrorSchema, createDomainError } from './errors/domain-error.js';
 export type { DomainError, DomainErrorCode } from './errors/domain-error.js';
