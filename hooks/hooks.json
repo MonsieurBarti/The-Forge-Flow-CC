@@ -1,3 +1,15 @@
 {
-  "hooks": {}
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hooks/tff-observe.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
 }
