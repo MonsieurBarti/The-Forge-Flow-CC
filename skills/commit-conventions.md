@@ -1,16 +1,16 @@
-# Skill: Commit Conventions
+---
+name: Commit Conventions
+description: Git commit format and rules for tff projects
+token-budget: workflow
+---
+
+# Commit Conventions
 
 ## When to Use
 
-Load this skill when making any git commit in a tff project.
+∀ git commits in tff projects.
 
-## Format
-
-```
-<type>(<scope>): <summary>
-```
-
-### Type
+## Format: `<type>(<scope>): <summary>`
 
 | Type | When |
 |---|---|
@@ -21,13 +21,8 @@ Load this skill when making any git commit in a tff project.
 | `docs` | Documentation changes |
 | `chore` | Tooling, config, dependencies |
 
-### Scope
+Scope: slice work → `S01/T03` | artifacts → `S01` | rollbacks → `S01/T03`
 
-For slice work: `S01/T03` (slice ref / task ref)
-For artifacts: `S01` (slice ref only)
-For rollbacks: `S01/T03` (what's being reverted)
-
-Examples:
 ```
 feat(S01/T03): add user validation
 fix(S01/T03): handle null email in signup
@@ -39,9 +34,8 @@ chore: update dependencies
 
 ## Rules
 
-1. **Atomic commits** — one logical change per commit
-2. **Stage specific files** — never `git add .` or `git add -A`
-3. **Never commit generated files** — node_modules, dist (except tff-tools.cjs which is intentionally shipped)
-4. **Never commit secrets** — .env, credentials, API keys
-5. **Summary is imperative** — "add validation" not "added validation"
-6. **Summary under 72 characters**
+1. Atomic: 1 logical change/commit
+2. Stage specific files (¬`git add .` ¬`git add -A`)
+3. ¬commit generated files (except tff-tools.cjs)
+4. ¬commit secrets (.env, credentials, API keys)
+5. Imperative summary ("add" ¬"added"), <72 chars

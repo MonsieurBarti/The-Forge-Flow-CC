@@ -1,37 +1,15 @@
-# Workflow: Verify Slice
+# Verify Slice
 
-## Context
-
-Read the orchestrator pattern: @references/orchestrator-pattern.md
-Read conventions: @references/conventions.md
+Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
-- Slice is in `verifying` status
+status = verifying
 
 ## Steps
-
-### 1. Spawn product-lead for verification
-Use the Agent tool to spawn **tff-product-lead** agent.
-- Provide: acceptance criteria from PLAN.md
-- Product lead verifies each criterion against the implementation
-
-### 2. Review findings via plannotator
-If findings exist, open them for user review:
-```bash
-plannotator annotate .tff/slices/<slice-id>/VERIFICATION.md
-```
-
-### 3. Handle verdict
-- **PASS** → transition to reviewing:
-  ```bash
-  node <plugin-path>/tools/dist/tff-tools.cjs slice:transition <bead-id> reviewing
-  ```
-  Suggest `/tff:ship`.
-
-- **FAIL** → ask user: fix and re-execute, or accept with known issues?
-  - Fix → transition back to executing, replan failed tasks
-  - Accept → transition to reviewing with noted exceptions
-
-### Next Step
-
-Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.
+1. SPAWN tff-product-lead: {acceptance_criteria from PLAN.md}
+   - Verify each criterion against implementation
+2. FINDINGS → `plannotator annotate .tff/slices/<slice-id>/VERIFICATION.md`
+3. VERDICT:
+   - PASS → `tff-tools slice:transition <id> reviewing` → suggest `/tff:ship`
+   - FAIL → ask user: fix (→ back to executing, replan) ∨ accept w/ exceptions (→ reviewing)
+4. NEXT: @references/next-steps.md

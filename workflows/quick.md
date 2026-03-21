@@ -1,37 +1,17 @@
-# Workflow: Quick (S-tier shortcut)
+# Quick (S-tier Shortcut)
 
-Skip discuss and research. Go straight to plan, execute, ship.
+Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
-## Context
-
-Read the orchestrator pattern: @references/orchestrator-pattern.md
-Read conventions: @references/conventions.md
+Skip discuss + research → straight to plan, execute, ship.
 
 ## Prerequisites
-- Active milestone exists
+active milestone exists
 
 ## Steps
-
-### 1. Create slice as S-tier
-Auto-classify as S. Create slice bead and worktree.
-
-### 2. Plan (lightweight)
-Ask user to describe the fix/change in 1-2 sentences.
-Create a single task in PLAN.md.
-Skip plannotator review for S-tier (too lightweight to review).
-
-### 3. Execute
-Single wave, single task. Spawn the appropriate domain agent.
-No TDD (S-tier skips TDD).
-
-### 4. Verify
-Quick sanity check — spawn product-lead to verify the fix.
-
-### 5. Ship
-Run fresh reviewer enforcement.
-Spec review + code review (but lightweight — S-tier).
-Create slice PR. User merges via GitHub.
-
-### Next Step
-
-Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.
+1. CREATE slice as S-tier: bead + worktree
+2. PLAN (lightweight): ask user for 1-2 sentence desc → single task in PLAN.md, skip plannotator
+3. EXECUTE: single wave, single task, spawn domain agent, no TDD (S-tier)
+4. VERIFY: spawn tff-product-lead for quick sanity check
+5. SHIP: fresh reviewer enforcement, spec + code review (lightweight), create slice PR
+   - user merges via GitHub
+6. NEXT: @references/next-steps.md
