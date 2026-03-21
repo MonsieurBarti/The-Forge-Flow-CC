@@ -37,10 +37,12 @@ For each task in the wave:
 
 #### 3c. Execute tasks (parallel within wave)
 For each task in the wave:
+- Claim the task atomically: `bd update <task-bead-id> --claim`
 - Spawn the appropriate domain agent (**tff-backend-dev**, **tff-frontend-dev**, or **tff-devops**) using the Agent tool
 - Agent works in the slice worktree
 - Agent implements, tests pass, commits atomically
 - Record executor in bead metadata
+- Close the task: `bd close <task-bead-id> --reason "Completed"`
 
 #### 3d. Sync state
 ```bash

@@ -21,6 +21,7 @@ export interface BeadStore {
     label: BeadLabel;
     title: string;
     design?: string;
+    description?: string;
     parentId?: string;
   }): Promise<Result<BeadData, DomainError>>;
 
@@ -32,7 +33,13 @@ export interface BeadStore {
     status?: string;
   }): Promise<Result<BeadData[], DomainError>>;
 
+  /** List unblocked tasks ready for work (bd ready) */
+  ready(): Promise<Result<BeadData[], DomainError>>;
+
   updateStatus(id: string, status: string): Promise<Result<void, DomainError>>;
+
+  /** Atomically claim a task (sets assignee + status to in_progress) */
+  claim(id: string): Promise<Result<void, DomainError>>;
 
   updateDesign(id: string, design: string): Promise<Result<void, DomainError>>;
 
@@ -48,5 +55,5 @@ export interface BeadStore {
     type: 'blocks' | 'validates',
   ): Promise<Result<void, DomainError>>;
 
-  close(id: string): Promise<Result<void, DomainError>>;
+  close(id: string, reason?: string): Promise<Result<void, DomainError>>;
 }

@@ -13843,9 +13843,12 @@ var import_node_child_process = require("child_process");
 var import_node_util = require("util");
 var exec = (0, import_node_util.promisify)(import_node_child_process.execFile);
 var bdError = (message, context) => createDomainError("SYNC_CONFLICT", message, context);
-var runBd = async (args) => {
+var runBd = async (args, stdin) => {
   try {
-    const { stdout } = await exec("bd", args, { timeout: 3e4 });
+    const options = { timeout: 3e4 };
+    if (stdin) options.input = stdin;
+    const proc = exec("bd", args, options);
+    const { stdout } = await proc;
     return Ok(stdout.trim());
   } catch (err) {
     return Err(bdError(`bd ${args.join(" ")} failed: ${err}`, { args }));
@@ -13877,8 +13880,16 @@ var BdCliAdapter = class {
   }
   async create(input) {
     const args = ["create", input.title, "-l", input.label, "--json"];
-    if (input.design) args.push("--design", input.design);
     if (input.parentId) args.push("--parent", input.parentId);
+    if (input.design) args.push("--design", input.design);
+    if (input.description) {
+      args.push("--stdin");
+      const result2 = await runBd(args, input.description);
+      if (!result2.ok) return result2;
+      const parsed2 = parseJsonOutput(result2.data);
+      if (!parsed2.ok) return parsed2;
+      return Ok(normalizeBeadData(parsed2.data));
+    }
     const result = await runBd(args);
     if (!result.ok) return result;
     const parsed = parseJsonOutput(result.data);
@@ -13906,8 +13917,20 @@ var BdCliAdapter = class {
     if (!parsed.ok) return parsed;
     return Ok(parsed.data.map(normalizeBeadData));
   }
+  async ready() {
+    const result = await runBd(["ready", "--json"]);
+    if (!result.ok) return result;
+    const parsed = parseJsonOutput(result.data);
+    if (!parsed.ok) return parsed;
+    return Ok(parsed.data.map(normalizeBeadData));
+  }
   async updateStatus(id, status) {
     const r = await runBd(["update", id, "-s", status]);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
+  async claim(id) {
+    const r = await runBd(["update", id, "--claim"]);
     if (!r.ok) return r;
     return Ok(void 0);
   }
@@ -13926,8 +13949,10 @@ var BdCliAdapter = class {
     if (!r.ok) return r;
     return Ok(void 0);
   }
-  async close(id) {
-    const r = await runBd(["close", id]);
+  async close(id, reason) {
+    const args = ["close", id];
+    if (reason) args.push("--reason", reason);
+    const r = await runBd(args);
     if (!r.ok) return r;
     return Ok(void 0);
   }

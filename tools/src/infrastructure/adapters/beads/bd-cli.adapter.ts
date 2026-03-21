@@ -9,9 +9,15 @@ const exec = promisify(execFile);
 const bdError = (message: string, context?: Record<string, unknown>): DomainError =>
   createDomainError('SYNC_CONFLICT', message, context);
 
-const runBd = async (args: string[]): Promise<Result<string, DomainError>> => {
+const runBd = async (
+  args: string[],
+  stdin?: string,
+): Promise<Result<string, DomainError>> => {
   try {
-    const { stdout } = await exec('bd', args, { timeout: 30_000 });
+    const options: { timeout: number; input?: string } = { timeout: 30_000 };
+    if (stdin) options.input = stdin;
+    const proc = exec('bd', args, options);
+    const { stdout } = await proc;
     return Ok(stdout.trim());
   } catch (err) {
     return Err(bdError(`bd ${args.join(' ')} failed: ${err}`, { args }));
@@ -19,7 +25,7 @@ const runBd = async (args: string[]): Promise<Result<string, DomainError>> => {
 };
 
 /**
- * Normalize beads JSON output (snake_case) to our BeadData interface (camelCase).
+ * Normalize beads JSON output (snake_case) to our BeadData interface.
  * bd returns snake_case fields: issue_type, created_at, parent_id, etc.
  */
 const normalizeBeadData = (raw: Record<string, unknown>): BeadData => ({
@@ -55,11 +61,25 @@ export class BdCliAdapter implements BeadStore {
     label: BeadLabel;
     title: string;
     design?: string;
+    description?: string;
     parentId?: string;
   }): Promise<Result<BeadData, DomainError>> {
     const args = ['create', input.title, '-l', input.label, '--json'];
-    if (input.design) args.push('--design', input.design);
     if (input.parentId) args.push('--parent', input.parentId);
+
+    // Use --stdin for design/description to avoid shell escaping issues
+    // with backticks, quotes, and special characters
+    if (input.design) args.push('--design', input.design);
+    if (input.description) {
+      // Pipe description via stdin to handle special chars safely
+      args.push('--stdin');
+      const result = await runBd(args, input.description);
+      if (!result.ok) return result;
+      const parsed = parseJsonOutput<Record<string, unknown>>(result.data);
+      if (!parsed.ok) return parsed;
+      return Ok(normalizeBeadData(parsed.data));
+    }
+
     const result = await runBd(args);
     if (!result.ok) return result;
     const parsed = parseJsonOutput<Record<string, unknown>>(result.data);
@@ -95,8 +115,23 @@ export class BdCliAdapter implements BeadStore {
     return Ok(parsed.data.map(normalizeBeadData));
   }
 
+  async ready(): Promise<Result<BeadData[], DomainError>> {
+    const result = await runBd(['ready', '--json']);
+    if (!result.ok) return result;
+    const parsed = parseJsonOutput<Record<string, unknown>[]>(result.data);
+    if (!parsed.ok) return parsed;
+    return Ok(parsed.data.map(normalizeBeadData));
+  }
+
   async updateStatus(id: string, status: string): Promise<Result<void, DomainError>> {
     const r = await runBd(['update', id, '-s', status]);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
+
+  async claim(id: string): Promise<Result<void, DomainError>> {
+    // Atomically sets assignee + status to in_progress
+    const r = await runBd(['update', id, '--claim']);
     if (!r.ok) return r;
     return Ok(undefined);
   }
@@ -123,8 +158,10 @@ export class BdCliAdapter implements BeadStore {
     return Ok(undefined);
   }
 
-  async close(id: string): Promise<Result<void, DomainError>> {
-    const r = await runBd(['close', id]);
+  async close(id: string, reason?: string): Promise<Result<void, DomainError>> {
+    const args = ['close', id];
+    if (reason) args.push('--reason', reason);
+    const r = await runBd(args);
     if (!r.ok) return r;
     return Ok(undefined);
   }

@@ -97,6 +97,47 @@ Special formats:
 | F-lite (feature) | Yes | Optional | Yes | Always |
 | F-full (complex) | Yes | Required | Yes | Always, multi-agent |
 
+## Beads Best Practices
+
+### Task Claiming
+
+Use `bd update <id> --claim` to atomically claim a task (sets assignee + status to in_progress). Never manually set status and assignee separately.
+
+### Finding Ready Work
+
+Use `bd ready --json` to list unblocked tasks. This respects the dependency graph — only tasks whose blockers are all resolved appear.
+
+### Descriptions with Special Characters
+
+Use `--stdin` for descriptions containing backticks, quotes, or special characters:
+```bash
+echo 'Description with `backticks` and "quotes"' | bd create "Title" --stdin
+```
+
+Or use `--body-file` for longer content:
+```bash
+bd create "Title" --body-file=description.md
+```
+
+### Closing with Reason
+
+Always close with a reason:
+```bash
+bd close <id> --reason "Completed — all acceptance criteria met"
+```
+
+### Agent Session Pattern
+
+```bash
+# Claim task atomically
+bd update <task-id> --claim
+
+# Do the work...
+
+# Close with reason
+bd close <task-id> --reason "Completed"
+```
+
 ## Tooling CLI
 
 All tooling calls: `node <plugin-path>/tools/dist/tff-tools.cjs <command> [args]`
