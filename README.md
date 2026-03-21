@@ -74,7 +74,18 @@ cd your-project
 bd init
 ```
 
-This creates a `.beads/` directory with a Dolt database. If you see connection warnings, run:
+This creates a `.beads/` directory with a Dolt database.
+
+**Recommended: Run Dolt as a persistent server.** Beads auto-starts Dolt on each command, but the ephemeral server can be slow and flaky. For a reliable experience, start Dolt in a separate terminal:
+
+```bash
+cd your-project
+dolt sql-server --port=3306
+```
+
+Leave it running while you work. Beads will connect to the existing server instead of auto-starting.
+
+If you see connection warnings, run:
 
 ```bash
 bd doctor --fix
