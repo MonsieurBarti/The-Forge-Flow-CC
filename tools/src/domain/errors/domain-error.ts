@@ -6,6 +6,7 @@ export const DomainErrorCodeSchema = z.enum([
   'SYNC_CONFLICT',
   'FRESH_REVIEWER_VIOLATION',
   'NOT_FOUND',
+  'VALIDATION_ERROR',
 ]);
 
 export type DomainErrorCode = z.infer<typeof DomainErrorCodeSchema>;
