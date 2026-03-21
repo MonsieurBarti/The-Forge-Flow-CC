@@ -13896,7 +13896,7 @@ var BdCliAdapter = class {
     return Ok(void 0);
   }
   async addDependency(fromId, toId, type) {
-    const r = await runBd(["link", fromId, toId, "--type", type]);
+    const r = await runBd(["dep", "add", fromId, toId, "--type", type]);
     if (!r.ok) return r;
     return Ok(void 0);
   }

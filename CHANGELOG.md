@@ -48,8 +48,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hooks: SessionStart dependency check, PostToolUse context monitor
 - CC marketplace manifest
 
+**Agent & Skill Improvements**
+- Agent status protocol (DONE/DONE_WITH_CONCERNS/BLOCKED/NEEDS_CONTEXT)
+- Orchestrator pattern reference for lightweight workflows
+- Next-step suggestions in all 16 workflows
+- Two-stage review in ship workflow (spec compliance then code quality)
+- tff-spec-reviewer agent for spec compliance verification
+- tff-doc-writer agent with parallel codebase mapping
+- Skill library: hexagonal-architecture, test-driven-development, code-review-checklist, commit-conventions, plannotator-usage
+- `/tff:map-codebase` command with parallel doc-writer agents
+- `/tff:quick` S-tier shortcut command
+- `/tff:status` lightweight status command
+- All 10 agents enriched with personas, guardrails, deliverables, and status protocol
+- Beads adapter fix: `bd dep add` instead of `bd link`
+
 ### Not Yet Implemented
 
 - `sync:reconcile` -- full bidirectional markdown/beads reconciliation (deferred)
 - Skill auto-learn pipeline
-- Doc-writer agent

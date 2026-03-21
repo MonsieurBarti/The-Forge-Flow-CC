@@ -114,6 +114,9 @@ The plugin ships pre-built -- no build step required.
 | `/tff:health` | Diagnose state consistency |
 | `/tff:settings` | Configure model profiles |
 | `/tff:help` | Show command reference |
+| `/tff:map-codebase` | Analyze codebase and generate docs |
+| `/tff:quick` | Fast-track S-tier changes |
+| `/tff:status` | Lightweight status with next step |
 
 ## Architecture
 
@@ -156,6 +159,20 @@ the-forge-flow/
 | code-reviewer | Code quality review (fresh reviewer) | quality (opus) |
 | security-auditor | Security review on every PR | quality (opus) |
 | fixer | Apply accepted review findings | budget (sonnet) |
+| doc-writer | Codebase documentation and analysis | budget (sonnet) |
+| spec-reviewer | Spec compliance verification | quality (opus) |
+
+## Skills
+
+Skills are reusable knowledge fragments that agents load via `@skills/<name>.md`. They teach HOW to do something — agents define WHO does it.
+
+| Skill | Used By |
+|---|---|
+| hexagonal-architecture | backend-dev, frontend-dev, devops, architect, doc-writer |
+| test-driven-development | tester, backend-dev, frontend-dev |
+| code-review-checklist | code-reviewer, spec-reviewer, architect |
+| commit-conventions | all executor agents, fixer |
+| plannotator-usage | plan, verify, ship workflows |
 
 ## Work Hierarchy
 
