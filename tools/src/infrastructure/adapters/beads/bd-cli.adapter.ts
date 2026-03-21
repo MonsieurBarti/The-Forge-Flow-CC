@@ -9,16 +9,59 @@ const exec = promisify(execFile);
 const bdError = (message: string, context?: Record<string, unknown>): DomainError =>
   createDomainError('SYNC_CONFLICT', message, context);
 
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  opts: { maxAttempts?: number; baseMs?: number; maxMs?: number } = {},
+): Promise<T> {
+  const maxAttempts = opts.maxAttempts ?? 3;
+  const baseMs = opts.baseMs ?? 500;
+  const maxMs = opts.maxMs ?? 4000;
+  let lastError: Error;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err as Error;
+      if (attempt < maxAttempts) {
+        const delay = Math.min(baseMs * Math.pow(2, attempt - 1), maxMs);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw lastError!;
+}
+
+/** Raw CLI call that throws on failure (used with withRetry). */
+const execBd = async (
+  args: string[],
+  stdin?: string,
+): Promise<string> => {
+  const options: { timeout: number; input?: string } = { timeout: 30_000 };
+  if (stdin) options.input = stdin;
+  const { stdout } = await exec('bd', args, options);
+  return stdout.trim();
+};
+
 const runBd = async (
   args: string[],
   stdin?: string,
 ): Promise<Result<string, DomainError>> => {
   try {
-    const options: { timeout: number; input?: string } = { timeout: 30_000 };
-    if (stdin) options.input = stdin;
-    const proc = exec('bd', args, options);
-    const { stdout } = await proc;
-    return Ok(stdout.trim());
+    const result = await execBd(args, stdin);
+    return Ok(result);
+  } catch (err) {
+    return Err(bdError(`bd ${args.join(' ')} failed: ${err}`, { args }));
+  }
+};
+
+/** runBd with exponential backoff retry for critical operations. */
+const runBdRetry = async (
+  args: string[],
+  stdin?: string,
+): Promise<Result<string, DomainError>> => {
+  try {
+    const result = await withRetry(() => execBd(args, stdin), { maxAttempts: 3 });
+    return Ok(result);
   } catch (err) {
     return Err(bdError(`bd ${args.join(' ')} failed: ${err}`, { args }));
   }
@@ -76,14 +119,14 @@ export class BdCliAdapter implements BeadStore {
     if (input.description) {
       // Pipe description via stdin to handle special chars safely
       args.push('--stdin');
-      const result = await runBd(args, input.description);
+      const result = await runBdRetry(args, input.description);
       if (!result.ok) return result;
       const parsed = parseJsonOutput<Record<string, unknown>>(result.data);
       if (!parsed.ok) return parsed;
       return Ok(normalizeBeadData(parsed.data));
     }
 
-    const result = await runBd(args);
+    const result = await runBdRetry(args);
     if (!result.ok) return result;
     const parsed = parseJsonOutput<Record<string, unknown>>(result.data);
     if (!parsed.ok) return parsed;
@@ -91,7 +134,7 @@ export class BdCliAdapter implements BeadStore {
   }
 
   async get(id: string): Promise<Result<BeadData, DomainError>> {
-    const result = await runBd(['show', id, '--json']);
+    const result = await runBdRetry(['show', id, '--json']);
     if (!result.ok) return result;
     // bd show returns an array even for a single ID
     const parsed = parseJsonOutput<Record<string, unknown>[]>(result.data);
@@ -111,7 +154,7 @@ export class BdCliAdapter implements BeadStore {
     if (filter.label) args.push('-l', filter.label);
     if (filter.parentId) args.push('--parent', filter.parentId);
     if (filter.status) args.push('-s', filter.status);
-    const result = await runBd(args);
+    const result = await runBdRetry(args);
     if (!result.ok) return result;
     const parsed = parseJsonOutput<Record<string, unknown>[]>(result.data);
     if (!parsed.ok) return parsed;
@@ -119,7 +162,7 @@ export class BdCliAdapter implements BeadStore {
   }
 
   async ready(): Promise<Result<BeadData[], DomainError>> {
-    const result = await runBd(['ready', '--json']);
+    const result = await runBdRetry(['ready', '--json']);
     if (!result.ok) return result;
     const parsed = parseJsonOutput<Record<string, unknown>[]>(result.data);
     if (!parsed.ok) return parsed;
@@ -134,7 +177,7 @@ export class BdCliAdapter implements BeadStore {
 
   async claim(id: string): Promise<Result<void, DomainError>> {
     // Atomically sets assignee + status to in_progress
-    const r = await runBd(['update', id, '--claim']);
+    const r = await runBdRetry(['update', id, '--claim']);
     if (!r.ok) return r;
     return Ok(undefined);
   }
