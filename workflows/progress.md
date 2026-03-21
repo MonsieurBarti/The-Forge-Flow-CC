@@ -1,33 +1,12 @@
-# Workflow: Progress
+# Progress
 
-## Context
-
-Read the orchestrator pattern: @references/orchestrator-pattern.md
-Read conventions: @references/conventions.md
+Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Steps
-
-### 1. Regenerate STATE.md
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs sync:state
-```
-
-### 2. Display dashboard
-Read `.tff/STATE.md` and present it to the user.
-
-Show:
-- Overall milestone progress (slices completed / total)
-- Per-slice status with task progress
-- Any blocked slices or tasks
-
-### 3. Suggest next action
-Based on current state:
-- If a slice is in `discussing` → suggest `/tff:discuss`
-- If a slice is in `planning` → suggest `/tff:plan`
-- If a slice is in `executing` → suggest `/tff:execute`
-- If a slice is in `verifying` → suggest `/tff:verify`
-- If all slices closed → suggest `/tff:complete-milestone`
-
-### Next Step
-
-Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.
+1. SYNC: `tff-tools sync:state`
+2. DISPLAY `.tff/STATE.md`: milestone progress (slices done/total), per-slice status + tasks, blocked items
+3. ROUTE by current state:
+   - discussing → `/tff:discuss` | planning → `/tff:plan`
+   - executing → `/tff:execute` | verifying → `/tff:verify`
+   - all closed → `/tff:complete-milestone`
+4. NEXT: @references/next-steps.md

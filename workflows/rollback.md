@@ -1,30 +1,11 @@
-# Workflow: Rollback
+# Rollback
 
-## Context
-
-Read the orchestrator pattern: @references/orchestrator-pattern.md
-Read conventions: @references/conventions.md
+Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Steps
-
-### 1. Load checkpoint
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs checkpoint:load <slice-id>
-```
-
-### 2. Identify commits to revert
-From the checkpoint, get the list of execution commits (after base commit).
-
-### 3. Revert commits
-For each execution commit (in reverse order):
-```bash
-git revert --no-edit <sha>
-```
-Only revert code commits, not artifact commits (docs).
-
-### 4. Update state
-Reset completed tasks to `open` status. Update checkpoint.
-
-### Next Step
-
-Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.
+1. LOAD: `tff-tools checkpoint:load <slice-id>`
+2. IDENTIFY execution commits (after base commit) from checkpoint
+3. REVERT each (reverse order): `git revert --no-edit <sha>`
+   - only code commits, not artifact commits (docs)
+4. UPDATE: reset completed tasks → `open`, update checkpoint
+5. NEXT: @references/next-steps.md

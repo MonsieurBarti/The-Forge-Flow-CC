@@ -1,19 +1,14 @@
-# Workflow: Help
+# Help
 
-## Context
+Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
-Read the orchestrator pattern: @references/orchestrator-pattern.md
-Read conventions: @references/conventions.md
-
-Display the tff command reference.
-
-## Commands
+Display tff command reference:
 
 ### Project Lifecycle
 | Command | Description |
 |---|---|
-| `/tff:new` | Initialize a new tff project |
-| `/tff:new-milestone` | Start a new milestone |
+| `/tff:new` | Initialize new tff project |
+| `/tff:new-milestone` | Start new milestone |
 | `/tff:progress` | Show status dashboard |
 
 ### Slice Lifecycle
@@ -41,7 +36,7 @@ Display the tff command reference.
 | `/tff:rollback [slice-id]` | Revert slice commits |
 | `/tff:pause` | Save checkpoint |
 | `/tff:resume` | Restore from checkpoint |
-| `/tff:sync` | Sync markdown ↔ beads |
+| `/tff:sync` | Sync markdown <> beads |
 | `/tff:health` | Diagnose state consistency |
 | `/tff:settings` | Configure model profiles |
 | `/tff:detect-patterns` | Extract and rank tool-use patterns |
