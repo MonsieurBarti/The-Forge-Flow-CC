@@ -8,8 +8,8 @@ export const TaskStatusSchema = z.enum(['open', 'in_progress', 'closed']);
 export type TaskStatus = z.infer<typeof TaskStatusSchema>;
 
 export const TaskSchema = z.object({
-  id: z.uuid(),
-  sliceId: z.uuid(),
+  id: z.string().min(1),
+  sliceId: z.string().min(1),
   sliceRef: z.string(),
   name: z.string().min(1),
   taskRef: z.string(),

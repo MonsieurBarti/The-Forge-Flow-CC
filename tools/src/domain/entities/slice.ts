@@ -8,8 +8,8 @@ import { sliceStatusChangedEvent } from '../events/slice-status-changed.event.js
 import { type DomainEvent } from '../events/domain-event.js';
 
 export const SliceSchema = z.object({
-  id: z.uuid(),
-  milestoneId: z.uuid(),
+  id: z.string().min(1),
+  milestoneId: z.string().min(1),
   name: z.string().min(1),
   sliceId: z.string(),
   status: SliceStatusSchema,

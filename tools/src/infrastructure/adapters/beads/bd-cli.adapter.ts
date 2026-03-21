@@ -28,11 +28,13 @@ const runBd = async (
  * Normalize beads JSON output (snake_case) to our BeadData interface.
  * bd returns snake_case fields: issue_type, created_at, parent_id, etc.
  */
-const normalizeBeadData = (raw: Record<string, unknown>): BeadData => ({
+const normalizeBeadData = (raw: Record<string, unknown>): BeadData => {
+  const labels = Array.isArray(raw.labels) ? raw.labels as string[] : [];
+  // Find the tff: label (the one that matters for our type system)
+  const tffLabel = labels.find((l) => l.startsWith('tff:')) ?? (raw.issue_type as string ?? 'task');
+  return {
   id: raw.id as string,
-  label: Array.isArray(raw.labels) && raw.labels.length > 0
-    ? (raw.labels as string[])[0]
-    : (raw.issue_type as string ?? 'task'),
+  label: tffLabel,
   title: raw.title as string,
   status: raw.status as string,
   design: raw.design as string | undefined,
@@ -40,7 +42,8 @@ const normalizeBeadData = (raw: Record<string, unknown>): BeadData => ({
   blocks: raw.blocks as string[] | undefined,
   validates: raw.validates as string[] | undefined,
   metadata: raw.metadata as Record<string, string> | undefined,
-});
+};
+};
 
 const parseJsonOutput = <T>(output: string): Result<T, DomainError> => {
   try {
@@ -64,7 +67,7 @@ export class BdCliAdapter implements BeadStore {
     description?: string;
     parentId?: string;
   }): Promise<Result<BeadData, DomainError>> {
-    const args = ['create', input.title, '-l', input.label, '--json'];
+    const args = ['create', input.title, '-l', input.label, '--no-inherit-labels', '--json'];
     if (input.parentId) args.push('--parent', input.parentId);
 
     // Use --stdin for design/description to avoid shell escaping issues

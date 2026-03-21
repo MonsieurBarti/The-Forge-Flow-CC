@@ -11,7 +11,6 @@ import { syncReconcileCmd } from './commands/sync-reconcile.cmd.js';
 import { worktreeCreateCmd } from './commands/worktree-create.cmd.js';
 import { worktreeDeleteCmd } from './commands/worktree-delete.cmd.js';
 import { worktreeListCmd } from './commands/worktree-list.cmd.js';
-import { reviewRecordCmd } from './commands/review-record.cmd.js';
 import { reviewCheckFreshCmd } from './commands/review-check-fresh.cmd.js';
 import { checkpointSaveCmd } from './commands/checkpoint-save.cmd.js';
 import { checkpointLoadCmd } from './commands/checkpoint-load.cmd.js';
@@ -32,7 +31,6 @@ const commands: Record<string, CommandFn> = {
   'worktree:create': worktreeCreateCmd,
   'worktree:delete': worktreeDeleteCmd,
   'worktree:list': worktreeListCmd,
-  'review:record': reviewRecordCmd,
   'review:check-fresh': reviewCheckFreshCmd,
   'checkpoint:save': checkpointSaveCmd,
   'checkpoint:load': checkpointLoadCmd,

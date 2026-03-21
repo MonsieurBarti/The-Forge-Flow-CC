@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const ProjectSchema = z.object({
-  id: z.uuid(),
+  id: z.string().min(1),
   name: z.string().min(1),
   vision: z.string().min(1),
   createdAt: z.date(),

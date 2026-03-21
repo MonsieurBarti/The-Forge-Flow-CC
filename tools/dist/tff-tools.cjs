@@ -13802,7 +13802,7 @@ var projectExistsError = (projectName) => createDomainError(
 
 // tools/src/domain/entities/project.ts
 var ProjectSchema = external_exports.object({
-  id: external_exports.uuid(),
+  id: external_exports.string().min(1),
   name: external_exports.string().min(1),
   vision: external_exports.string().min(1),
   createdAt: external_exports.date()
@@ -13854,17 +13854,21 @@ var runBd = async (args, stdin) => {
     return Err(bdError(`bd ${args.join(" ")} failed: ${err}`, { args }));
   }
 };
-var normalizeBeadData = (raw) => ({
-  id: raw.id,
-  label: Array.isArray(raw.labels) && raw.labels.length > 0 ? raw.labels[0] : raw.issue_type ?? "task",
-  title: raw.title,
-  status: raw.status,
-  design: raw.design,
-  parentId: raw.parent_id ?? raw.parentId,
-  blocks: raw.blocks,
-  validates: raw.validates,
-  metadata: raw.metadata
-});
+var normalizeBeadData = (raw) => {
+  const labels = Array.isArray(raw.labels) ? raw.labels : [];
+  const tffLabel = labels.find((l) => l.startsWith("tff:")) ?? (raw.issue_type ?? "task");
+  return {
+    id: raw.id,
+    label: tffLabel,
+    title: raw.title,
+    status: raw.status,
+    design: raw.design,
+    parentId: raw.parent_id ?? raw.parentId,
+    blocks: raw.blocks,
+    validates: raw.validates,
+    metadata: raw.metadata
+  };
+};
 var parseJsonOutput = (output) => {
   try {
     return Ok(JSON.parse(output));
@@ -13879,7 +13883,7 @@ var BdCliAdapter = class {
     return Ok(void 0);
   }
   async create(input) {
-    const args = ["create", input.title, "-l", input.label, "--json"];
+    const args = ["create", input.title, "-l", input.label, "--no-inherit-labels", "--json"];
     if (input.parentId) args.push("--parent", input.parentId);
     if (input.design) args.push("--design", input.design);
     if (input.description) {
@@ -14048,8 +14052,8 @@ var projectGetCmd = async (_args) => {
 // tools/src/domain/entities/milestone.ts
 var MilestoneStatusSchema = external_exports.enum(["open", "in_progress", "closed"]);
 var MilestoneSchema = external_exports.object({
-  id: external_exports.uuid(),
-  projectId: external_exports.uuid(),
+  id: external_exports.string().min(1),
+  projectId: external_exports.string().min(1),
   name: external_exports.string().min(1),
   number: external_exports.number().int().min(1),
   status: MilestoneStatusSchema,
@@ -14265,8 +14269,8 @@ var sliceStatusChangedEvent = (sliceId, from, to) => createDomainEvent("SLICE_ST
 
 // tools/src/domain/entities/slice.ts
 var SliceSchema = external_exports.object({
-  id: external_exports.uuid(),
-  milestoneId: external_exports.uuid(),
+  id: external_exports.string().min(1),
+  milestoneId: external_exports.string().min(1),
   name: external_exports.string().min(1),
   sliceId: external_exports.string(),
   status: SliceStatusSchema,
@@ -14500,12 +14504,124 @@ var syncStateCmd = async (args) => {
   return JSON.stringify({ ok: false, error: result.error });
 };
 
-// tools/src/cli/commands/sync-reconcile.cmd.ts
-var syncReconcileCmd = async (_args) => {
-  return JSON.stringify({
-    ok: false,
-    error: { code: "NOT_IMPLEMENTED", message: "Full reconciliation not yet implemented. Use sync:state for beads\u2192markdown sync." }
+// tools/src/domain/value-objects/sync-report.ts
+var SyncCreatedSchema = external_exports.object({
+  entityId: external_exports.string(),
+  source: external_exports.enum(["markdown", "beads"])
+});
+var SyncUpdatedSchema = external_exports.object({
+  entityId: external_exports.string(),
+  field: external_exports.string(),
+  source: external_exports.enum(["markdown", "beads"])
+});
+var SyncConflictSchema = external_exports.object({
+  entityId: external_exports.string(),
+  field: external_exports.string(),
+  winner: external_exports.enum(["markdown", "beads"]),
+  mdValue: external_exports.string(),
+  beadValue: external_exports.string()
+});
+var SyncOrphanSchema = external_exports.object({
+  entityId: external_exports.string(),
+  location: external_exports.enum(["markdown", "beads"])
+});
+var SyncReportSchema = external_exports.object({
+  created: external_exports.array(SyncCreatedSchema),
+  updated: external_exports.array(SyncUpdatedSchema),
+  conflicts: external_exports.array(SyncConflictSchema),
+  orphans: external_exports.array(SyncOrphanSchema)
+});
+var emptySyncReport = () => ({
+  created: [],
+  updated: [],
+  conflicts: [],
+  orphans: []
+});
+
+// tools/src/application/sync/reconcile-state.ts
+var reconcileState = async (input, deps) => {
+  const report = emptySyncReport();
+  const slicesResult = await deps.beadStore.list({
+    label: "tff:slice",
+    parentId: input.milestoneId
   });
+  if (!isOk(slicesResult)) return slicesResult;
+  const sliceBeads = slicesResult.data;
+  const sliceFilesResult = await deps.artifactStore.list(".tff/slices");
+  const sliceFiles = isOk(sliceFilesResult) ? sliceFilesResult.data : [];
+  const prefix = ".tff/slices/";
+  const mdSliceIds = new Set(
+    sliceFiles.filter((f) => f.startsWith(prefix)).map((f) => {
+      const rest = f.slice(prefix.length);
+      const slashIdx = rest.indexOf("/");
+      return slashIdx > 0 ? rest.slice(0, slashIdx) : rest;
+    }).filter((id) => id.length > 0)
+  );
+  for (const bead of sliceBeads) {
+    const sliceDir = `.tff/slices/${bead.title}`;
+    const planPath = `${sliceDir}/PLAN.md`;
+    if (!await deps.artifactStore.exists(planPath)) {
+      await deps.artifactStore.mkdir(sliceDir);
+      const content = `# Plan \u2014 ${bead.title}
+
+${bead.design ?? "_No plan yet._"}
+`;
+      await deps.artifactStore.write(planPath, content);
+      report.created.push({ entityId: bead.id, source: "beads" });
+    } else {
+      const mdResult = await deps.artifactStore.read(planPath);
+      if (isOk(mdResult)) {
+        const mdContent = mdResult.data;
+        const beadDesign = bead.design ?? "";
+        if (mdContent !== beadDesign && mdContent.length > 0) {
+          await deps.beadStore.updateDesign(bead.id, mdContent);
+          report.updated.push({
+            entityId: bead.id,
+            field: "design",
+            source: "markdown"
+          });
+        }
+      }
+    }
+    mdSliceIds.delete(bead.title);
+  }
+  for (const sliceId of mdSliceIds) {
+    const planPath = `.tff/slices/${sliceId}/PLAN.md`;
+    if (await deps.artifactStore.exists(planPath)) {
+      const mdResult = await deps.artifactStore.read(planPath);
+      const design = isOk(mdResult) ? mdResult.data : "";
+      const beadResult = await deps.beadStore.create({
+        label: "tff:slice",
+        title: sliceId,
+        design,
+        parentId: input.milestoneId
+      });
+      if (isOk(beadResult)) {
+        report.created.push({ entityId: beadResult.data.id, source: "markdown" });
+      }
+    }
+  }
+  await generateState(input, deps);
+  return Ok(report);
+};
+
+// tools/src/cli/commands/sync-reconcile.cmd.ts
+var syncReconcileCmd = async (args) => {
+  const [milestoneId, milestoneName] = args;
+  if (!milestoneId) {
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: sync:reconcile <milestone-bead-id> [milestone-name]" }
+    });
+  }
+  const beadStore = new BdCliAdapter();
+  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  const result = await reconcileState(
+    { milestoneId, milestoneName: milestoneName ?? "Milestone" },
+    { beadStore, artifactStore }
+  );
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
 };
 
 // tools/src/application/worktree/create-worktree.ts
@@ -14556,14 +14672,19 @@ var worktreeListCmd = async (_args) => {
   return JSON.stringify({ ok: false, error: result.error });
 };
 
-// tools/src/application/review/record-review.ts
-var recordReviewUseCase = async (input, deps) => {
-  return deps.reviewStore.record({
-    sliceId: input.sliceId,
-    reviewerAgent: input.reviewerAgent,
-    status: input.status,
-    reviewedAt: /* @__PURE__ */ new Date()
-  });
+// tools/src/domain/errors/fresh-reviewer-violation.error.ts
+var freshReviewerViolationError = (sliceId, agentRole) => createDomainError(
+  "FRESH_REVIEWER_VIOLATION",
+  `Agent "${agentRole}" cannot review slice "${sliceId}" \u2014 was the executor`,
+  { sliceId, agentRole }
+);
+
+// tools/src/application/review/enforce-fresh-reviewer.ts
+var enforceFreshReviewer = async (input, deps) => {
+  const executorsResult = await deps.reviewStore.getExecutorsForSlice(input.sliceId);
+  if (!isOk(executorsResult)) return executorsResult;
+  if (executorsResult.data.includes(input.reviewerAgent)) return Err(freshReviewerViolationError(input.sliceId, input.reviewerAgent));
+  return Ok(void 0);
 };
 
 // tools/src/infrastructure/adapters/review/review-metadata.adapter.ts
@@ -14596,37 +14717,6 @@ var ReviewMetadataAdapter = class {
     }
     return Ok(reviews);
   }
-};
-
-// tools/src/cli/commands/review-record.cmd.ts
-var reviewRecordCmd = async (args) => {
-  const [sliceId, agent, status] = args;
-  if (!sliceId || !agent || !status) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: review:record <slice-id> <agent> <approved|changes_requested>" } });
-  }
-  const beadStore = new BdCliAdapter();
-  const reviewStore = new ReviewMetadataAdapter(beadStore);
-  const result = await recordReviewUseCase(
-    { sliceId, reviewerAgent: agent, status },
-    { reviewStore }
-  );
-  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-  return JSON.stringify({ ok: false, error: result.error });
-};
-
-// tools/src/domain/errors/fresh-reviewer-violation.error.ts
-var freshReviewerViolationError = (sliceId, agentRole) => createDomainError(
-  "FRESH_REVIEWER_VIOLATION",
-  `Agent "${agentRole}" cannot review slice "${sliceId}" \u2014 was the executor`,
-  { sliceId, agentRole }
-);
-
-// tools/src/application/review/enforce-fresh-reviewer.ts
-var enforceFreshReviewer = async (input, deps) => {
-  const executorsResult = await deps.reviewStore.getExecutorsForSlice(input.sliceId);
-  if (!isOk(executorsResult)) return executorsResult;
-  if (executorsResult.data.includes(input.reviewerAgent)) return Err(freshReviewerViolationError(input.sliceId, input.reviewerAgent));
-  return Ok(void 0);
 };
 
 // tools/src/cli/commands/review-check-fresh.cmd.ts
@@ -14714,7 +14804,6 @@ var commands = {
   "worktree:create": worktreeCreateCmd,
   "worktree:delete": worktreeDeleteCmd,
   "worktree:list": worktreeListCmd,
-  "review:record": reviewRecordCmd,
   "review:check-fresh": reviewCheckFreshCmd,
   "checkpoint:save": checkpointSaveCmd,
   "checkpoint:load": checkpointLoadCmd
