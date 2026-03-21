@@ -1,15 +1,3 @@
 {
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node hooks/tff-dependency-check.js",
-            "timeout": 30000
-          }
-        ]
-      }
-    ]
-  }
+  "hooks": {}
 }
