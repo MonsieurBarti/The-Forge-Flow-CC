@@ -14,6 +14,13 @@ import { worktreeListCmd } from './commands/worktree-list.cmd.js';
 import { reviewCheckFreshCmd } from './commands/review-check-fresh.cmd.js';
 import { checkpointSaveCmd } from './commands/checkpoint-save.cmd.js';
 import { checkpointLoadCmd } from './commands/checkpoint-load.cmd.js';
+import { observeRecordCmd } from './commands/observe-record.cmd.js';
+import { patternsExtractCmd } from './commands/patterns-extract.cmd.js';
+import { patternsAggregateCmd } from './commands/patterns-aggregate.cmd.js';
+import { patternsRankCmd } from './commands/patterns-rank.cmd.js';
+import { composeDetectCmd } from './commands/compose-detect.cmd.js';
+import { skillsDriftCmd } from './commands/skills-drift.cmd.js';
+import { skillsValidateCmd } from './commands/skills-validate.cmd.js';
 
 type CommandFn = (args: string[]) => Promise<string>;
 
@@ -34,6 +41,13 @@ const commands: Record<string, CommandFn> = {
   'review:check-fresh': reviewCheckFreshCmd,
   'checkpoint:save': checkpointSaveCmd,
   'checkpoint:load': checkpointLoadCmd,
+  'observe:record': observeRecordCmd,
+  'patterns:extract': patternsExtractCmd,
+  'patterns:aggregate': patternsAggregateCmd,
+  'patterns:rank': patternsRankCmd,
+  'compose:detect': composeDetectCmd,
+  'skills:drift': skillsDriftCmd,
+  'skills:validate': skillsValidateCmd,
 };
 
 const main = async () => {

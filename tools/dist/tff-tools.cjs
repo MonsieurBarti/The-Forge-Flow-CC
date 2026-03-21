@@ -13784,7 +13784,8 @@ var DomainErrorCodeSchema = external_exports.enum([
   "INVALID_TRANSITION",
   "SYNC_CONFLICT",
   "FRESH_REVIEWER_VIOLATION",
-  "NOT_FOUND"
+  "NOT_FOUND",
+  "VALIDATION_ERROR"
 ]);
 var DomainErrorSchema = external_exports.object({
   code: DomainErrorCodeSchema,
@@ -14804,6 +14805,273 @@ var checkpointLoadCmd = async (args) => {
   return JSON.stringify({ ok: false, error: result.error });
 };
 
+// tools/src/domain/value-objects/observation.ts
+var ObservationSchema = external_exports.object({
+  ts: external_exports.string(),
+  session: external_exports.string(),
+  tool: external_exports.string().min(1),
+  args: external_exports.string().nullable(),
+  project: external_exports.string()
+});
+
+// tools/src/infrastructure/adapters/jsonl/jsonl-store.adapter.ts
+var import_promises2 = require("fs/promises");
+var import_node_path2 = require("path");
+var JsonlStoreAdapter = class {
+  sessionsPath;
+  patternsPath;
+  candidatesPath;
+  constructor(basePath) {
+    this.sessionsPath = (0, import_node_path2.join)(basePath, "sessions.jsonl");
+    this.patternsPath = (0, import_node_path2.join)(basePath, "patterns.jsonl");
+    this.candidatesPath = (0, import_node_path2.join)(basePath, "candidates.jsonl");
+  }
+  async appendObservation(obs) {
+    await (0, import_promises2.mkdir)((0, import_node_path2.join)(this.sessionsPath, ".."), { recursive: true });
+    await (0, import_promises2.appendFile)(this.sessionsPath, JSON.stringify(obs) + "\n");
+    return Ok(void 0);
+  }
+  async readObservations() {
+    return this.readJsonl(this.sessionsPath);
+  }
+  async writePatterns(patterns) {
+    return this.writeJsonl(this.patternsPath, patterns);
+  }
+  async readPatterns() {
+    return this.readJsonl(this.patternsPath);
+  }
+  async writeCandidates(candidates) {
+    return this.writeJsonl(this.candidatesPath, candidates);
+  }
+  async readCandidates() {
+    return this.readJsonl(this.candidatesPath);
+  }
+  async readJsonl(path) {
+    try {
+      const content = await (0, import_promises2.readFile)(path, "utf-8");
+      const lines = content.trim().split("\n").filter((l) => l.length > 0);
+      return Ok(lines.map((l) => JSON.parse(l)));
+    } catch {
+      return Ok([]);
+    }
+  }
+  async writeJsonl(path, items) {
+    await (0, import_promises2.mkdir)((0, import_node_path2.join)(path, ".."), { recursive: true });
+    const content = items.map((i) => JSON.stringify(i)).join("\n") + "\n";
+    await (0, import_promises2.writeFile)(path, content);
+    return Ok(void 0);
+  }
+};
+
+// tools/src/cli/commands/observe-record.cmd.ts
+var observeRecordCmd = async (args) => {
+  const input = args[0];
+  if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: observe:record <json>" } });
+  try {
+    const obs = ObservationSchema.parse(JSON.parse(input));
+    const store = new JsonlStoreAdapter(".tff/observations");
+    const result = await store.appendObservation(obs);
+    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+    return JSON.stringify({ ok: false, error: result.error });
+  } catch (e) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: String(e) } });
+  }
+};
+
+// tools/src/application/patterns/extract-ngrams.ts
+var extractNgrams = (observations, n) => {
+  if (observations.length < n) return [];
+  const sessions = /* @__PURE__ */ new Map();
+  for (const obs of observations) {
+    const list = sessions.get(obs.session) ?? [];
+    list.push(obs);
+    sessions.set(obs.session, list);
+  }
+  const ngramMap = /* @__PURE__ */ new Map();
+  for (const [sessionId, sessionObs] of sessions) {
+    for (let i = 0; i <= sessionObs.length - n; i++) {
+      const sequence = sessionObs.slice(i, i + n).map((o) => o.tool);
+      const key = sequence.join("\u2192");
+      const existing = ngramMap.get(key);
+      const lastTs = sessionObs[i + n - 1].ts;
+      if (existing) {
+        existing.count++;
+        existing.sessionSet.add(sessionId);
+        existing.projectSet.add(sessionObs[i].project);
+        if (lastTs > existing.lastSeen) existing.lastSeen = lastTs;
+      } else {
+        ngramMap.set(key, {
+          sequence,
+          count: 1,
+          sessionSet: /* @__PURE__ */ new Set([sessionId]),
+          projectSet: /* @__PURE__ */ new Set([sessionObs[i].project]),
+          lastSeen: lastTs
+        });
+      }
+    }
+  }
+  return [...ngramMap.values()].map((v) => ({
+    sequence: v.sequence,
+    count: v.count,
+    sessions: v.sessionSet.size,
+    projects: v.projectSet.size,
+    lastSeen: v.lastSeen
+  }));
+};
+
+// tools/src/cli/commands/patterns-extract.cmd.ts
+var patternsExtractCmd = async (_args) => {
+  const store = new JsonlStoreAdapter(".tff/observations");
+  const obsResult = await store.readObservations();
+  if (!isOk(obsResult)) return JSON.stringify({ ok: false, error: obsResult.error });
+  const bigrams = extractNgrams(obsResult.data, 2);
+  const trigrams = extractNgrams(obsResult.data, 3);
+  const all = [...bigrams, ...trigrams];
+  await store.writePatterns(all);
+  return JSON.stringify({ ok: true, data: all });
+};
+
+// tools/src/application/patterns/aggregate-patterns.ts
+var aggregatePatterns = (patterns, options = {}) => {
+  const minCount = options.minCount ?? 3;
+  const totalSessions = options.totalSessions ?? 0;
+  const noiseThreshold = options.noiseThreshold ?? 0.8;
+  return patterns.filter((p) => {
+    if (p.count < minCount) return false;
+    if (totalSessions > 0 && p.sessions / totalSessions >= noiseThreshold) return false;
+    return true;
+  });
+};
+
+// tools/src/cli/commands/patterns-aggregate.cmd.ts
+var patternsAggregateCmd = async (args) => {
+  const store = new JsonlStoreAdapter(".tff/observations");
+  const patternsResult = await store.readPatterns();
+  if (!isOk(patternsResult)) return JSON.stringify({ ok: false, error: patternsResult.error });
+  const minCount = parseInt(args[0] ?? "3", 10);
+  const result = aggregatePatterns(patternsResult.data, { minCount });
+  await store.writePatterns(result);
+  return JSON.stringify({ ok: true, data: result });
+};
+
+// tools/src/application/patterns/rank-candidates.ts
+var rankCandidates = (patterns, options) => {
+  const threshold = options.threshold ?? 0;
+  const nowMs = new Date(options.now).getTime();
+  const scored = patterns.map((p) => {
+    const frequency = Math.min(Math.log2(p.count + 1) / 10, 1);
+    const breadth = options.totalProjects > 0 ? p.projects / options.totalProjects : 0;
+    const ageDays = (nowMs - new Date(p.lastSeen).getTime()) / (24 * 60 * 60 * 1e3);
+    const recency = Math.exp(-ageDays * Math.LN2 / 14);
+    const consistency = options.totalSessions > 0 ? p.sessions / options.totalSessions : 0;
+    const score = frequency * 0.25 + breadth * 0.3 + recency * 0.25 + consistency * 0.2;
+    return {
+      pattern: p.sequence,
+      score: Math.round(score * 100) / 100,
+      evidence: { count: p.count, sessions: p.sessions, projects: p.projects }
+    };
+  });
+  return scored.filter((c) => c.score >= threshold).sort((a, b) => b.score - a.score);
+};
+
+// tools/src/cli/commands/patterns-rank.cmd.ts
+var patternsRankCmd = async (args) => {
+  const store = new JsonlStoreAdapter(".tff/observations");
+  const patternsResult = await store.readPatterns();
+  if (!isOk(patternsResult)) return JSON.stringify({ ok: false, error: patternsResult.error });
+  const obsResult = await store.readObservations();
+  const totalSessions = isOk(obsResult) ? new Set(obsResult.data.map((o) => o.session)).size : 1;
+  const totalProjects = isOk(obsResult) ? new Set(obsResult.data.map((o) => o.project)).size : 1;
+  const threshold = parseFloat(args[0] ?? "0.5");
+  const candidates = rankCandidates(patternsResult.data, {
+    totalProjects,
+    totalSessions,
+    now: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
+    threshold
+  });
+  await store.writeCandidates(candidates);
+  return JSON.stringify({ ok: true, data: candidates });
+};
+
+// tools/src/application/compose/detect-clusters.ts
+var detectClusters = (coActivations, options) => {
+  const threshold = options.threshold ?? 0.7;
+  return coActivations.filter((ca) => ca.skills.length >= 2).map((ca) => ({
+    skills: ca.skills.sort(),
+    coActivationRate: options.totalSessions > 0 ? ca.sessions / options.totalSessions : 0,
+    sessions: ca.sessions
+  })).filter((c) => c.coActivationRate >= threshold).sort((a, b) => b.coActivationRate - a.coActivationRate);
+};
+
+// tools/src/cli/commands/compose-detect.cmd.ts
+var composeDetectCmd = async (args) => {
+  const input = args[0];
+  if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: compose:detect <co-activations-json>" } });
+  try {
+    const data = JSON.parse(input);
+    const totalSessions = parseInt(args[1] ?? "20", 10);
+    const result = detectClusters(data, { totalSessions });
+    return JSON.stringify({ ok: true, data: result });
+  } catch {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON" } });
+  }
+};
+
+// tools/src/application/skills/check-drift.ts
+var checkDrift = (original, current, options = {}) => {
+  const maxDrift = options.maxDrift ?? 0.6;
+  if (original === current) return { driftScore: 0, overThreshold: false };
+  const maxLen = Math.max(original.length, current.length);
+  if (maxLen === 0) return { driftScore: 0, overThreshold: false };
+  let changes = 0;
+  for (let i = 0; i < maxLen; i++) {
+    if (original[i] !== current[i]) changes++;
+  }
+  const driftScore = Math.round(changes / maxLen * 100) / 100;
+  return { driftScore, overThreshold: driftScore > maxDrift };
+};
+
+// tools/src/cli/commands/skills-drift.cmd.ts
+var skillsDriftCmd = async (args) => {
+  const [original, current] = args;
+  if (!original || !current) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: skills:drift <original-content> <current-content>" } });
+  const result = checkDrift(original, current);
+  return JSON.stringify({ ok: true, data: result });
+};
+
+// tools/src/application/skills/validate-skill.ts
+var NAME_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
+var validateSkill = (input) => {
+  const warnings = [];
+  if (input.name.length === 0 || input.name.length > 64) {
+    return Err(createDomainError("VALIDATION_ERROR", `Skill name must be 1-64 characters, got ${input.name.length}`));
+  }
+  if (!NAME_REGEX.test(input.name)) {
+    return Err(createDomainError("VALIDATION_ERROR", `Skill name "${input.name}" must be lowercase letters, numbers, and single hyphens only`));
+  }
+  if (input.name.includes("--")) {
+    return Err(createDomainError("VALIDATION_ERROR", "Skill name must not contain consecutive hyphens"));
+  }
+  if (!input.description.toLowerCase().startsWith("use when")) {
+    warnings.push('Description should start with "Use when"');
+  }
+  return Ok({ valid: true, warnings });
+};
+
+// tools/src/cli/commands/skills-validate.cmd.ts
+var skillsValidateCmd = async (args) => {
+  const input = args[0];
+  if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: skills:validate <json>" } });
+  try {
+    const data = JSON.parse(input);
+    const result = validateSkill(data);
+    if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+    return JSON.stringify({ ok: false, error: result.error });
+  } catch {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON" } });
+  }
+};
+
 // tools/src/cli/index.ts
 var commands = {
   "project:init": projectInitCmd,
@@ -14821,7 +15089,14 @@ var commands = {
   "worktree:list": worktreeListCmd,
   "review:check-fresh": reviewCheckFreshCmd,
   "checkpoint:save": checkpointSaveCmd,
-  "checkpoint:load": checkpointLoadCmd
+  "checkpoint:load": checkpointLoadCmd,
+  "observe:record": observeRecordCmd,
+  "patterns:extract": patternsExtractCmd,
+  "patterns:aggregate": patternsAggregateCmd,
+  "patterns:rank": patternsRankCmd,
+  "compose:detect": composeDetectCmd,
+  "skills:drift": skillsDriftCmd,
+  "skills:validate": skillsValidateCmd
 };
 var main = async () => {
   const [command, ...args] = process.argv.slice(2);
