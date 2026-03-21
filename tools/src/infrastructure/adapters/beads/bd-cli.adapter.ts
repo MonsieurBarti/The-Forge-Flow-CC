@@ -19,6 +19,12 @@ const parseJsonOutput = <T>(output: string): Result<T, DomainError> => {
 };
 
 export class BdCliAdapter implements BeadStore {
+  async init(): Promise<Result<void, DomainError>> {
+    const r = await runBd(['init']);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
+
   async create(input: { label: BeadLabel; title: string; design?: string; parentId?: string; }): Promise<Result<BeadData, DomainError>> {
     const args = ['create', '--label', input.label, '--title', input.title, '--json'];
     if (input.design) args.push('--design', input.design);

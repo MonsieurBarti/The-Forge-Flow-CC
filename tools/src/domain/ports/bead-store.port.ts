@@ -15,6 +15,8 @@ export interface BeadData {
 }
 
 export interface BeadStore {
+  init(): Promise<Result<void, DomainError>>;
+
   create(input: {
     label: BeadLabel;
     title: string;

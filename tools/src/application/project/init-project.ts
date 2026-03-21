@@ -15,6 +15,9 @@ export const initProject = async (
 ): Promise<Result<InitProjectOutput, DomainError>> => {
   if (await deps.artifactStore.exists('.tff/PROJECT.md')) return Err(projectExistsError(input.name));
 
+  // Initialize beads store if not already initialized
+  await deps.beadStore.init();
+
   const existing = await deps.beadStore.list({ label: 'tff:project' });
   if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
 

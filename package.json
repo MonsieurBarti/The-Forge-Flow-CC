@@ -7,7 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup --config tools/tsup.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tools/tsconfig.json"

@@ -7,6 +7,10 @@ export class InMemoryBeadStore implements BeadStore {
   private beads = new Map<string, BeadData>();
   private nextId = 1;
 
+  async init(): Promise<Result<void, DomainError>> {
+    return Ok(undefined);
+  }
+
   async create(input: { label: BeadLabel; title: string; design?: string; parentId?: string; }): Promise<Result<BeadData, DomainError>> {
     const id = `bead-${this.nextId++}`;
     const bead: BeadData = { id, label: input.label, title: input.title, status: 'open', design: input.design, parentId: input.parentId };

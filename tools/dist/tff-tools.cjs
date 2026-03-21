@@ -13820,6 +13820,7 @@ var createProject = (input) => {
 // tools/src/application/project/init-project.ts
 var initProject = async (input, deps) => {
   if (await deps.artifactStore.exists(".tff/PROJECT.md")) return Err(projectExistsError(input.name));
+  await deps.beadStore.init();
   const existing = await deps.beadStore.list({ label: "tff:project" });
   if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
   const project = createProject(input);
@@ -13858,6 +13859,11 @@ var parseJsonOutput = (output) => {
   }
 };
 var BdCliAdapter = class {
+  async init() {
+    const r = await runBd(["init"]);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
   async create(input) {
     const args = ["create", "--label", input.label, "--title", input.title, "--json"];
     if (input.design) args.push("--design", input.design);
