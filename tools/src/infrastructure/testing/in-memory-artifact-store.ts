@@ -1,0 +1,28 @@
+import { type ArtifactStore } from '../../domain/ports/artifact-store.port.js';
+import { type Result, Ok, Err } from '../../domain/result.js';
+import { type DomainError, createDomainError } from '../../domain/errors/domain-error.js';
+
+export class InMemoryArtifactStore implements ArtifactStore {
+  private files = new Map<string, string>();
+
+  async read(path: string): Promise<Result<string, DomainError>> {
+    const content = this.files.get(path);
+    if (content === undefined) return Err(createDomainError('PROJECT_EXISTS', `File not found: ${path}`, { path }));
+    return Ok(content);
+  }
+
+  async write(path: string, content: string): Promise<Result<void, DomainError>> { this.files.set(path, content); return Ok(undefined); }
+  async exists(path: string): Promise<boolean> { return this.files.has(path); }
+
+  async list(directory: string): Promise<Result<string[], DomainError>> {
+    const prefix = directory.endsWith('/') ? directory : `${directory}/`;
+    const matches = [...this.files.keys()].filter((k) => k.startsWith(prefix));
+    return Ok(matches);
+  }
+
+  async mkdir(_path: string): Promise<Result<void, DomainError>> { return Ok(undefined); }
+
+  reset(): void { this.files.clear(); }
+  seed(files: Record<string, string>): void { for (const [path, content] of Object.entries(files)) { this.files.set(path, content); } }
+  getAll(): Map<string, string> { return new Map(this.files); }
+}
