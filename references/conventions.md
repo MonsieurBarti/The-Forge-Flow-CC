@@ -75,6 +75,7 @@ Special formats:
   settings.yaml           ← model profiles, quality gates
   slices/
     M01-S01/
+      SPEC.md             ← design spec (produced during discuss)
       PLAN.md             ← slice plan and task descriptions
       RESEARCH.md         ← research notes
       CHECKPOINT.md       ← resumability data
