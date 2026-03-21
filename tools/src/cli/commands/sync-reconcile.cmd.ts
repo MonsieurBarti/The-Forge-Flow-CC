@@ -1,5 +1,5 @@
 import { reconcileState } from '../../application/sync/reconcile-state.js';
-import { BdCliAdapter } from '../../infrastructure/adapters/beads/bd-cli.adapter.js';
+import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { isOk } from '../../domain/result.js';
 
@@ -12,7 +12,7 @@ export const syncReconcileCmd = async (args: string[]): Promise<string> => {
     });
   }
 
-  const beadStore = new BdCliAdapter();
+  const { store: beadStore } = await createBeadAdapter();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
 
   const result = await reconcileState(

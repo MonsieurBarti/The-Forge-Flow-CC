@@ -1,12 +1,12 @@
 import { isOk } from '../../domain/result.js';
-import { BdCliAdapter } from '../../infrastructure/adapters/beads/bd-cli.adapter.js';
+import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { hydrateSnapshot } from '../../application/snapshot/hydrate-snapshot.js';
 import { readFile } from 'node:fs/promises';
 
 const SNAPSHOT_PATH = '.tff/beads-snapshot.jsonl';
 
 export async function snapshotLoadCmd(args: string[]) {
-  const beadStore = new BdCliAdapter();
+  const { store: beadStore } = await createBeadAdapter();
   await beadStore.init();
 
   let snapshotContent = '';

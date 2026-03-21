@@ -1,5 +1,5 @@
 import { createSliceUseCase } from '../../application/slice/create-slice.js';
-import { BdCliAdapter } from '../../infrastructure/adapters/beads/bd-cli.adapter.js';
+import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { isOk } from '../../domain/result.js';
 
@@ -10,7 +10,7 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
     return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: slice:create <name>' } });
   }
 
-  const beadStore = new BdCliAdapter();
+  const { store: beadStore } = await createBeadAdapter();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
 
   // Auto-detect active milestone (most recent open one)

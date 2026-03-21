@@ -1,5 +1,5 @@
 import { transitionSliceUseCase } from '../../application/lifecycle/transition-slice.js';
-import { BdCliAdapter } from '../../infrastructure/adapters/beads/bd-cli.adapter.js';
+import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { type SliceStatus, SliceStatusSchema } from '../../domain/value-objects/slice-status.js';
 import { isOk } from '../../domain/result.js';
 
@@ -25,7 +25,7 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
     createdAt: new Date(),
   };
 
-  const beadStore = new BdCliAdapter();
+  const { store: beadStore } = await createBeadAdapter();
   const result = await transitionSliceUseCase(
     { slice, beadId, targetStatus: targetStatus as SliceStatus },
     { beadStore },
