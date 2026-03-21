@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-21
+
+### Added
+
+**Team Portability (Plan C)**
+- Beads-to-git snapshot serialization (`snapshot:save`, `snapshot:load`, `snapshot:merge`)
+- Delta-based JSONL snapshots with periodic compaction on `/tff:sync`
+- Auto-snapshot on every slice transition
+- `MarkdownBeadAdapter` -- full `BeadStore` implementation for graceful degradation without Dolt
+- `bead-adapter-factory` -- auto-detects bd availability, falls back to markdown-only mode
+- 12 CLI commands migrated from hardcoded `BdCliAdapter` to factory
+- 3-way entity-level snapshot merge with git merge driver (`.gitattributes`)
+- Field-level conflict resolution: status (latest ts), design (flag conflict), deps (union), kvs (latest ts)
+- `CONFLICT.md` generated for design conflicts requiring human resolution
+- Clone-and-go: `/tff:init` hydrates beads from existing snapshot
+- Dolt remote sync utilities (`doltPush`, `doltPull`, `shouldAutoSync`)
+- Auto-push to Dolt remote on transitions when configured
+- Guided Dolt remote setup during `/tff:new` (DoltHub, self-hosted, or skip)
+- Git merge driver setup in `/tff:new` workflow
+- Health check reports adapter mode (`beads: active` vs `beads: unavailable (markdown-only)`)
+- `BeadStore` port contract tests (18 tests, reusable across adapters)
+- `BeadSnapshot` value object with `createSnapshot`, `latestById`
+
+**Interactive Design & Granular Planning (Plan D)**
+- New `interactive-design` skill -- conversation methodology, spec templates (F-lite/F-full), spec-document-reviewer and plan-document-reviewer prompt templates
+- Discuss workflow rewritten: orchestrator drives Q&A via AskUserQuestion → produces `SPEC.md`
+- Brainstormer repurposed as spec challenger (F-full only), spawned after spec is drafted
+- Product-lead validates acceptance criteria (∀ criterion: testable ∧ binary)
+- Anonymous spec-document-reviewer dispatched via Agent tool (max 3 iterations)
+- User gate before transition to researching
+- Plan workflow rewritten: reads SPEC.md, maps file structure, produces bite-sized TDD tasks with exact code/paths/commands
+- Task-to-acceptance-criteria traceability (AC1, AC2...)
+- Anonymous plan-document-reviewer dispatched via Agent tool (max 3 iterations)
+- Orchestrator pattern updated with conversation-driven workflow exception
+- `SPEC.md` added to project directory conventions
+
+### Changed
+
+- Brainstormer agent: now purely spec challenger (removed legacy discussion driver mode)
+- Beads positioned as essential: degraded mode warns users with clear install guidance
+- All new content compressed with V3 formal notation style
+
+### Fixed
+
+- Marketplace.json: removed `version` field (not needed for CC plugin updates, caused stale cache)
+
 ## [0.3.1] - 2026-03-21
 
 ### Fixed

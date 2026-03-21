@@ -357,7 +357,7 @@ the-forge-flow/
   .claude-plugin/         # CC marketplace manifest
   commands/tff/           # 29 slash commands (.md)
   agents/                 # 13 agent definitions (.md)
-  skills/                 # 5 reusable knowledge skills (.md)
+  skills/                 # 6 reusable knowledge skills (.md)
   workflows/              # 22 orchestration workflows (.md)
   references/             # 6 reference documents (.md)
   hooks/                  # PostToolUse observation hook (.sh)
@@ -407,6 +407,7 @@ Skills are reusable knowledge fragments that agents load via `@skills/<name>.md`
 | code-review-checklist | code-reviewer, spec-reviewer, architect |
 | commit-conventions | all executor agents, fixer |
 | plannotator-usage | plan, verify, ship workflows |
+| interactive-design | discuss workflow (conversation methodology, spec templates, reviewer prompts) |
 
 ## Work Hierarchy
 
