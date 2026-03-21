@@ -7,7 +7,7 @@
       "source": {
         "source": "url",
         "url": "https://github.com/MonsieurBarti/The-Forge-Flow-CC.git",
-        "sha": "af0b27e80c1b45d19ac3079d112fddb65d24d2e2"
+        "sha": "97b5de669212139fac1928a8a3286107e65b89c5"
       },
       "description": "Autonomous coding agent orchestrator with dual markdown+beads state, plannotator integration, and wave-based parallel execution"
     }
