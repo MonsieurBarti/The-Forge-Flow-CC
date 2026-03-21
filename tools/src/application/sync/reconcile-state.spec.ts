@@ -161,3 +161,27 @@ describe('detectOrphans', () => {
     expect(orphans.beadOnly).toEqual(['M01-S02']);
   });
 });
+
+describe('reconcileState - edge cases', () => {
+  it('should handle empty markdown file', () => {
+    const orphans = detectOrphans([], []);
+    expect(orphans.markdownOnly).toHaveLength(0);
+    expect(orphans.beadOnly).toHaveLength(0);
+  });
+
+  it('should detect orphans with many entities', () => {
+    const markdownIds = Array.from({ length: 50 }, (_, i) => `M01-S${String(i + 1).padStart(2, '0')}`);
+    const beadIds = markdownIds.slice(0, 40);
+    const orphans = detectOrphans(markdownIds, beadIds);
+    expect(orphans.markdownOnly).toHaveLength(10);
+    expect(orphans.beadOnly).toHaveLength(0);
+  });
+
+  it('should handle resolveContentConflict with both empty', () => {
+    expect(resolveContentConflict('', '')).toBe('');
+  });
+
+  it('should handle resolveStatusConflict with same status', () => {
+    expect(resolveStatusConflict('executing', 'executing')).toBe('executing');
+  });
+});
