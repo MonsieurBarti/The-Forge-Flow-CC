@@ -7,6 +7,10 @@ Run pattern detection pipeline: extract → aggregate → rank.
 ## Prerequisites
 observation enabled in `.tff/settings.yaml` ∧ `.tff/observations/sessions.jsonl` exists
 
+## Settings
+Read `.tff/settings.yaml` → `auto-learn.weights`.
+Pass to: `tff-tools patterns:rank --weights '<json>'`
+
 ## Steps
 1. EXTRACT: `tff-tools patterns:extract`
 2. AGGREGATE: `tff-tools patterns:aggregate`
