@@ -30,6 +30,13 @@ tff workflows are orchestrators. They coordinate — they don't do heavy work.
 - Making architecture decisions in the workflow (that's the architect's job)
 - Long workflow files with complex logic (break into agent spawns)
 
+## Exception: Conversation-Driven Workflows
+
+discuss workflow: orchestrator drives Q&A directly via AskUserQuestion (rule 2 exception).
+Reason: multi-turn user context ¬delegable to subagent.
+Agents spawned for independent tasks only (challenge, validate, review).
+∀ other workflows: standard pattern applies.
+
 ## Template
 
 Every workflow step should be one of:

@@ -6,15 +6,53 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 status = discussing
 
 ## Steps
-1. CHECK: read slice bead + notes
-2. CLASSIFY: `tff-tools slice:classify '<signals>'`
-3. tier = S → auto-transition researching, skip brainstorm
-4. SPAWN tff-brainstormer: {slice_desc, project_context, requirements}
-   - Challenge assumptions, surface unknowns, lock scope
-5. SPAWN tff-product-lead: {requirements, acceptance_criteria}
-   - Validate requirements, define acceptance criteria
-6. TRANSITION: `tff-tools slice:transition <id> researching`
-7. NEXT: @references/next-steps.md
+
+### 1. Load Context
+CHECK: read slice bead + notes
+CLASSIFY: `tff-tools slice:classify '<signals>'`
+tier = S → auto-transition researching, skip discuss
+
+### 2. Interactive Design (F-lite ∧ F-full)
+LOAD @skills/interactive-design.md
+
+**Phase 1 — Scope** (2-4 questions via AskUserQuestion)
+- What problem does this solve? Who benefits?
+- What constraints? (time, tech, dependencies)
+- What does success look like?
+- (F-full) What are the known unknowns?
+
+**Phase 2 — Approach** (1 message)
+- Propose 2-3 approaches w/ trade-offs
+- Recommend one, explain why
+- User picks via AskUserQuestion
+
+**Phase 3 — Design** (section by section)
+- Present each section per tier template from @skills/interactive-design.md
+- ∀ section: ask "does this look right?" via AskUserQuestion
+- Revise until approved, then next section
+
+### 3. Write Spec
+WRITE `.tff/slices/<id>/SPEC.md` w/ validated design
+UPDATE bead design field: `beadStore.updateDesign(id, spec_content)`
+
+### 4. Challenge Spec (F-full only)
+SPAWN tff-brainstormer: {spec_content}
+REVISE → critical issues → loop Phase 3 (max 2) ∨ escalate
+APPROVE → note concerns in spec, proceed
+
+### 5. Validate AC
+SPAWN tff-product-lead: {spec_content, acceptance_criteria}
+∀ criterion: testable ∧ binary — gaps → revise via AskUserQuestion
+
+### 6. Spec Review
+DISPATCH anonymous reviewer via Agent tool (prompt: @skills/interactive-design.md)
+Issues → fix, re-dispatch (max 3)
+
+### 7. User Gate
+AskUserQuestion: "Spec at `.tff/slices/<id>/SPEC.md`. Approve?"
+
+### 8. Transition
+`tff-tools slice:transition <id> researching`
 
 ## Auto-Transition
 Read `.tff/settings.yaml` → `autonomy.mode`.
