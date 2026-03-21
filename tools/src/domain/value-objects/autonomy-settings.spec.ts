@@ -11,7 +11,7 @@ describe('autonomy-settings', () => {
   it('should reject invalid mode', () => {
     expect(AutonomySettingsSchema.safeParse({ mode: 'yolo' }).success).toBe(false);
   });
-  it('should default to plan-to-pr', () => {
-    expect(parseAutonomyMode(undefined)).toBe('plan-to-pr');
+  it('should default to guided', () => {
+    expect(parseAutonomyMode(undefined)).toBe('guided');
   });
 });

@@ -4,6 +4,6 @@ export const AutonomySettingsSchema = z.object({ mode: z.enum(['guided', 'plan-t
 export type AutonomySettings = z.infer<typeof AutonomySettingsSchema>;
 
 export function parseAutonomyMode(raw: unknown): 'guided' | 'plan-to-pr' {
-  if (raw === 'guided') return 'guided';
-  return 'plan-to-pr';
+  if (raw === 'plan-to-pr') return 'plan-to-pr';
+  return 'guided';
 }
