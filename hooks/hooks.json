@@ -1,22 +1,26 @@
-[
-  {
-    "event": "SessionStart",
-    "hooks": [
+{
+  "hooks": {
+    "SessionStart": [
       {
-        "type": "command",
-        "command": "node hooks/tff-dependency-check.js",
-        "timeout": 30000
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node hooks/tff-dependency-check.js",
+            "timeout": 30000
+          }
+        ]
       }
-    ]
-  },
-  {
-    "event": "PostToolUse",
-    "hooks": [
+    ],
+    "PostToolUse": [
       {
-        "type": "command",
-        "command": "node hooks/tff-context-monitor.js",
-        "timeout": 5000
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node hooks/tff-context-monitor.js",
+            "timeout": 5000
+          }
+        ]
       }
     ]
   }
-]
+}
