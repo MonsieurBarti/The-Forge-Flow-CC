@@ -44,3 +44,8 @@ Display the tff command reference.
 | `/tff:sync` | Sync markdown ↔ beads |
 | `/tff:health` | Diagnose state consistency |
 | `/tff:settings` | Configure model profiles |
+| `/tff:detect-patterns` | Extract and rank tool-use patterns |
+| `/tff:suggest-skills` | Show pattern candidates with summaries |
+| `/tff:create-skill` | Draft a skill from a pattern |
+| `/tff:learn` | Propose refinements to existing skills |
+| `/tff:compose` | Propose skill bundles or agents |
