@@ -1,5 +1,10 @@
 # Workflow: Progress
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Steps
 
 ### 1. Regenerate STATE.md
@@ -22,3 +27,7 @@ Based on current state:
 - If a slice is in `executing` → suggest `/tff:execute`
 - If a slice is in `verifying` → suggest `/tff:verify`
 - If all slices closed → suggest `/tff:complete-milestone`
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.

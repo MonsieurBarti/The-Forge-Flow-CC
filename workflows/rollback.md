@@ -1,5 +1,10 @@
 # Workflow: Rollback
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Steps
 
 ### 1. Load checkpoint
@@ -19,3 +24,7 @@ Only revert code commits, not artifact commits (docs).
 
 ### 4. Update state
 Reset completed tasks to `open` status. Update checkpoint.
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.

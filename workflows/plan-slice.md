@@ -1,5 +1,10 @@
 # Workflow: Plan Slice
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Prerequisites
 - Slice is in `planning` status
 
@@ -46,3 +51,7 @@ node <plugin-path>/tools/dist/tff-tools.cjs worktree:create <slice-id>
 ```bash
 node <plugin-path>/tools/dist/tff-tools.cjs slice:transition <bead-id> executing
 ```
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.

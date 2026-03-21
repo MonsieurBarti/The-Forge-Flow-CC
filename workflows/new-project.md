@@ -1,5 +1,10 @@
 # Workflow: New Project
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Prerequisites
 - No existing tff project in this repo
 
@@ -31,3 +36,7 @@ Show the user what was created:
 - `.tff/REQUIREMENTS.md`
 - First milestone with its branch
 - Suggest: "Use `/tff:discuss` to start discussing the first slice."
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.

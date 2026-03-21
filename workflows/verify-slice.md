@@ -1,5 +1,10 @@
 # Workflow: Verify Slice
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Prerequisites
 - Slice is in `verifying` status
 
@@ -26,3 +31,7 @@ plannotator annotate .tff/slices/<slice-id>/VERIFICATION.md
 - **FAIL** → ask user: fix and re-execute, or accept with known issues?
   - Fix → transition back to executing, replan failed tasks
   - Accept → transition to reviewing with noted exceptions
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.

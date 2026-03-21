@@ -1,5 +1,10 @@
 # Workflow: Help
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 Display the tff command reference.
 
 ## Commands

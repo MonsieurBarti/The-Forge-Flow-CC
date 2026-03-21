@@ -1,5 +1,10 @@
 # Workflow: Ship Slice
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Prerequisites
 - Slice is in `reviewing` status
 
@@ -35,3 +40,7 @@ After PR approval:
 - Delete worktree
 - Close slice bead
 - Transition to completing → closed
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.

@@ -1,5 +1,10 @@
 # Workflow: New Milestone
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Steps
 
 ### 1. Gather milestone information
@@ -26,3 +31,7 @@ For each slice, create a `tff:slice` bead with dependencies.
 ### 5. Summary
 Show the created milestone structure with slice ordering.
 Suggest: "Use `/tff:discuss` to start with the first slice."
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.

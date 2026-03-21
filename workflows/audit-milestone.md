@@ -1,5 +1,10 @@
 # Workflow: Audit Milestone
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Steps
 
 ### 1. Load milestone state
@@ -23,3 +28,7 @@ Read all slice statuses and requirement coverage.
 ### 4. Suggest next step
 - READY → suggest `/tff:complete-milestone`
 - NOT_READY → show what's missing, suggest actions
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.

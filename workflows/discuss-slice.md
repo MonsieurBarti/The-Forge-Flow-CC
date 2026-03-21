@@ -1,5 +1,10 @@
 # Workflow: Discuss Slice
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Prerequisites
 - Slice exists and is in `discussing` status
 
@@ -31,3 +36,7 @@ node <plugin-path>/tools/dist/tff-tools.cjs slice:transition <bead-id> researchi
 ```
 
 Auto-continue to research phase or suggest `/tff:research`.
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.

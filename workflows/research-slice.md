@@ -1,5 +1,10 @@
 # Workflow: Research Slice
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Prerequisites
 - Slice is in `researching` status
 
@@ -22,3 +27,7 @@ node <plugin-path>/tools/dist/tff-tools.cjs slice:transition <bead-id> planning
 ```
 
 Auto-continue to plan phase or suggest `/tff:plan`.
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.

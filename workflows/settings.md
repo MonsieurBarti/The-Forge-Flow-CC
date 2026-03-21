@@ -1,5 +1,10 @@
 # Workflow: Settings
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Steps
 
 ### 1. Read current settings
@@ -16,3 +21,7 @@ User can modify:
 
 ### 4. Save settings
 Write updated `.tff/settings.yaml`.
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.

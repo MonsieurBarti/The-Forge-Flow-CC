@@ -1,5 +1,10 @@
 # Workflow: Execute Slice
 
+## Context
+
+Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read conventions: @references/conventions.md
+
 ## Prerequisites
 - Slice is in `executing` status
 - Worktree exists at `.tff/worktrees/<slice-id>/`
@@ -48,3 +53,7 @@ Transition to verifying:
 node <plugin-path>/tools/dist/tff-tools.cjs slice:transition <bead-id> verifying
 ```
 Suggest `/tff:verify`.
+
+### Next Step
+
+Based on the current slice/milestone state, suggest the appropriate next command from @references/next-steps.md.
