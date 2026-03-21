@@ -6,6 +6,25 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 ∄ `.tff/PROJECT.md` — if exists → "Use `/tff:new-milestone`" ∧ stop
 
 ## Steps
+0. CHECK beads: `bd --version`
+   - fail → warn user:
+     ```
+     ⚠️  Beads (bd) is not installed. tff will run in degraded markdown-only mode.
+
+     Beads is the coordination backbone of tff — it provides:
+     • Atomic task claiming (prevents two agents grabbing the same work)
+     • Dependency graphs for wave-based parallel execution
+     • Real-time team state via Dolt remotes
+     • bd ready — "what should I work on next?" for agents
+
+     Strongly recommended:
+       npm install -g @beads/bd
+       brew install dolt
+
+     Continue without beads? (y/N)
+     ```
+   - If user declines → stop, let them install
+   - If user continues → proceed in markdown-only mode
 1. ASK user: project name (required), vision statement
 2. INIT: `tff-tools project:init "<name>" "<vision>"`
 3. CREATE `.tff/REQUIREMENTS.md`: ask user for requirements → structured doc
