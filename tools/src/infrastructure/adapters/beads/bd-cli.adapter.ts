@@ -71,21 +71,38 @@ const runBdRetry = async (
  * Normalize beads JSON output (snake_case) to our BeadData interface.
  * bd returns snake_case fields: issue_type, created_at, parent_id, etc.
  */
-const normalizeBeadData = (raw: Record<string, unknown>): BeadData => {
+const normalizeBeadData = (raw: Record<string, unknown>): Result<BeadData, DomainError> => {
+  if (!raw.id || typeof raw.id !== 'string') {
+    return Err(createDomainError('VALIDATION_ERROR', "Malformed bead: missing 'id'"));
+  }
+  if (!raw.status || typeof raw.status !== 'string') {
+    return Err(createDomainError('VALIDATION_ERROR', `Malformed bead: missing 'status' for ${raw.id}`));
+  }
   const labels = Array.isArray(raw.labels) ? raw.labels as string[] : [];
   // Find the tff: label (the one that matters for our type system)
   const tffLabel = labels.find((l) => l.startsWith('tff:')) ?? (raw.issue_type as string ?? 'task');
-  return {
-  id: raw.id as string,
-  label: tffLabel,
-  title: raw.title as string,
-  status: raw.status as string,
-  design: raw.design as string | undefined,
-  parentId: (raw.parent_id ?? raw.parentId) as string | undefined,
-  blocks: raw.blocks as string[] | undefined,
-  validates: raw.validates as string[] | undefined,
-  metadata: raw.metadata as Record<string, string> | undefined,
+  return Ok({
+    id: raw.id,
+    label: tffLabel,
+    title: raw.title as string,
+    status: raw.status,
+    design: raw.design as string | undefined,
+    parentId: (raw.parent_id ?? raw.parentId) as string | undefined,
+    blocks: raw.blocks as string[] | undefined,
+    validates: raw.validates as string[] | undefined,
+    metadata: raw.metadata as Record<string, string> | undefined,
+  });
 };
+
+/** Map an array of raw records through normalizeBeadData, short-circuiting on first error. */
+const collectBeads = (items: Record<string, unknown>[]): Result<BeadData[], DomainError> => {
+  const beads: BeadData[] = [];
+  for (const item of items) {
+    const r = normalizeBeadData(item);
+    if (!r.ok) return r;
+    beads.push(r.data);
+  }
+  return Ok(beads);
 };
 
 const parseJsonOutput = <T>(output: string): Result<T, DomainError> => {
@@ -123,14 +140,14 @@ export class BdCliAdapter implements BeadStore {
       if (!result.ok) return result;
       const parsed = parseJsonOutput<Record<string, unknown>>(result.data);
       if (!parsed.ok) return parsed;
-      return Ok(normalizeBeadData(parsed.data));
+      return normalizeBeadData(parsed.data);
     }
 
     const result = await runBdRetry(args);
     if (!result.ok) return result;
     const parsed = parseJsonOutput<Record<string, unknown>>(result.data);
     if (!parsed.ok) return parsed;
-    return Ok(normalizeBeadData(parsed.data));
+    return normalizeBeadData(parsed.data);
   }
 
   async get(id: string): Promise<Result<BeadData, DomainError>> {
@@ -142,7 +159,7 @@ export class BdCliAdapter implements BeadStore {
     if (parsed.data.length === 0) {
       return Err(bdError(`Bead "${id}" not found`, { id }));
     }
-    return Ok(normalizeBeadData(parsed.data[0]));
+    return normalizeBeadData(parsed.data[0]);
   }
 
   async list(filter: {
@@ -158,7 +175,7 @@ export class BdCliAdapter implements BeadStore {
     if (!result.ok) return result;
     const parsed = parseJsonOutput<Record<string, unknown>[]>(result.data);
     if (!parsed.ok) return parsed;
-    return Ok(parsed.data.map(normalizeBeadData));
+    return collectBeads(parsed.data);
   }
 
   async ready(): Promise<Result<BeadData[], DomainError>> {
@@ -166,7 +183,7 @@ export class BdCliAdapter implements BeadStore {
     if (!result.ok) return result;
     const parsed = parseJsonOutput<Record<string, unknown>[]>(result.data);
     if (!parsed.ok) return parsed;
-    return Ok(parsed.data.map(normalizeBeadData));
+    return collectBeads(parsed.data);
   }
 
   async updateStatus(id: string, status: string): Promise<Result<void, DomainError>> {
