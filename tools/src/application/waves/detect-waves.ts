@@ -40,6 +40,9 @@ export const detectWaves = (tasks: TaskDep[]): Result<Wave[], DomainError> => {
     waveIndex++;
   }
 
-  if (remaining > 0) return Err(createDomainError('INVALID_TRANSITION', 'Circular dependency detected in task graph', { remaining }));
+  if (remaining > 0) {
+    const cycleIds = [...inDegree.entries()].filter(([_, deg]) => deg > 0).map(([id]) => id).sort();
+    return Err(createDomainError('INVALID_TRANSITION', `Circular dependency detected among tasks: ${cycleIds.join(', ')}`, { remaining, cycleIds }));
+  }
   return Ok(waves);
 };

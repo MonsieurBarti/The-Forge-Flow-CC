@@ -26,6 +26,21 @@ describe('detectWaves', () => {
     expect(isErr(result)).toBe(true);
   });
 
+  it('should name specific tasks in cycle detection error', () => {
+    const tasks = [
+      { id: 'T01', dependsOn: ['T02'] },
+      { id: 'T02', dependsOn: ['T03'] },
+      { id: 'T03', dependsOn: ['T01'] },
+    ];
+    const result = detectWaves(tasks);
+    expect(isErr(result)).toBe(true);
+    if (isErr(result)) {
+      expect(result.error.message).toContain('T01');
+      expect(result.error.message).toContain('T02');
+      expect(result.error.message).toContain('T03');
+    }
+  });
+
   it('should handle empty input', () => {
     const result = detectWaves([]);
     expect(isOk(result)).toBe(true);
