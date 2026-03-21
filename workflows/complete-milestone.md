@@ -23,13 +23,15 @@ plannotator review
 ```
 
 ### 4. Handle review
-- Approved → merge PR, close milestone bead
+- Approved → inform user the PR is ready to merge on GitHub
 - Changes requested → fix and re-review
 
-### 5. Cleanup
-- Delete milestone branch (after merge)
+### 5. After PR is merged (by user via GitHub)
+- Close milestone bead
 - Update STATE.md
 - Suggest: "Milestone complete! Use `/tff:new-milestone` for the next one."
+
+**IMPORTANT: tff NEVER merges. Only create the PR. The user merges via GitHub.**
 
 ### Next Step
 

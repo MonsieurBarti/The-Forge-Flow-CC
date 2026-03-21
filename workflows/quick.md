@@ -30,7 +30,7 @@ Quick sanity check — spawn product-lead to verify the fix.
 ### 5. Ship
 Run fresh reviewer enforcement.
 Spec review + code review (but lightweight — S-tier).
-Create slice PR, merge to milestone.
+Create slice PR. User merges via GitHub.
 
 ### Next Step
 

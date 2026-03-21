@@ -43,12 +43,13 @@ User reviews the code changes in the slice worktree.
 ### 6. Create slice PR
 Create PR: `slice/<slice-id>` → `milestone/<milestone>`
 
-### 7. Merge and cleanup
-After PR approval:
-- Merge slice branch into milestone branch
+### 7. After PR is merged (by user via GitHub)
+Once the user merges the PR on GitHub:
 - Delete worktree
 - Close slice bead
 - Transition to completing → closed
+
+**IMPORTANT: tff NEVER merges. Only create the PR. The user merges via GitHub.**
 
 ### Next Step
 

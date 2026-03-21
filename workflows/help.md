@@ -24,13 +24,13 @@ Display the tff command reference.
 | `/tff:plan [slice-id]` | Plan and create tasks |
 | `/tff:execute [slice-id]` | Execute with wave parallelism |
 | `/tff:verify [slice-id]` | Verify acceptance criteria |
-| `/tff:ship [slice-id]` | PR review and merge slice |
+| `/tff:ship [slice-id]` | PR review and create slice PR |
 
 ### Milestone Lifecycle
 | Command | Description |
 |---|---|
 | `/tff:audit-milestone` | Audit against original intent |
-| `/tff:complete-milestone` | PR review and merge to main |
+| `/tff:complete-milestone` | PR review and create milestone PR |
 
 ### Management
 | Command | Description |
