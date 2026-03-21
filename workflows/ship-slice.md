@@ -16,25 +16,34 @@ node <plugin-path>/tools/dist/tff-tools.cjs review:check-fresh <slice-id> code-r
 node <plugin-path>/tools/dist/tff-tools.cjs review:check-fresh <slice-id> security-auditor
 ```
 
-### 2. Spawn review agents (parallel)
-- **tff-code-reviewer** — reviews code quality
-- **tff-security-auditor** — reviews security
-- **tff-architect** — reviews structural changes (if any)
+### 2. Stage 1: Spec Compliance Review
+Spawn **tff-spec-reviewer** agent.
+- Provide: acceptance criteria from PLAN.md, implementation code
+- If FAIL → spawn **tff-fixer** agent to fix gaps → re-run spec review
+- Loop until PASS
+- **Code quality review does NOT start until spec compliance passes**
 
-### 3. Code review via plannotator
+### 3. Stage 2: Code Quality Review
+Only after spec compliance PASS.
+Spawn **tff-code-reviewer** agent.
+- If REQUEST_CHANGES → spawn **tff-fixer** → re-run code quality review
+- Loop until APPROVE
+
+### 4. Security Audit
+Spawn **tff-security-auditor** agent.
+- Critical/high findings block the PR
+- If findings → spawn **tff-fixer** → re-audit
+
+### 5. Plannotator review
 ```bash
 plannotator review
 ```
 User reviews the code changes in the slice worktree.
 
-### 4. Handle review outcome
-- **Approved** → proceed to merge
-- **Changes requested** → spawn **tff-fixer** agent, then re-review
-
-### 5. Create slice PR
+### 6. Create slice PR
 Create PR: `slice/<slice-id>` → `milestone/<milestone>`
 
-### 6. Merge and cleanup
+### 7. Merge and cleanup
 After PR approval:
 - Merge slice branch into milestone branch
 - Delete worktree
