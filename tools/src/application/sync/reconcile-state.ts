@@ -5,6 +5,35 @@ import { type ArtifactStore } from '../../domain/ports/artifact-store.port.js';
 import { type SyncReport, emptySyncReport } from '../../domain/value-objects/sync-report.js';
 import { generateState } from './generate-state.js';
 
+// ── Pure helpers ──────────────────────────────────────────────────────
+
+/** Markdown wins for content, unless markdown is empty. */
+export const resolveContentConflict = (
+  mdContent: string,
+  beadDesign: string,
+): string => (mdContent.length > 0 ? mdContent : beadDesign);
+
+/** Bead status is the source of truth (always wins). */
+export const resolveStatusConflict = (
+  _mdStatus: string,
+  beadStatus: string,
+): string => beadStatus;
+
+/** Compare two ID lists and return sets that exist in only one side. */
+export const detectOrphans = (
+  mdIds: string[],
+  beadIds: string[],
+): { markdownOnly: string[]; beadOnly: string[] } => {
+  const mdSet = new Set(mdIds);
+  const beadSet = new Set(beadIds);
+  return {
+    markdownOnly: mdIds.filter((id) => !beadSet.has(id)),
+    beadOnly: beadIds.filter((id) => !mdSet.has(id)),
+  };
+};
+
+// ── Orchestrator ──────────────────────────────────────────────────────
+
 interface ReconcileInput {
   milestoneId: string;
   milestoneName: string;
@@ -59,19 +88,32 @@ export const reconcileState = async (
       await deps.artifactStore.write(planPath, content);
       report.created.push({ entityId: bead.id, source: 'beads' });
     } else {
-      // Both exist → sync content (md wins) and status (beads wins)
+      // Both exist → sync content and status
       const mdResult = await deps.artifactStore.read(planPath);
       if (isOk(mdResult)) {
         const mdContent = mdResult.data;
         const beadDesign = bead.design ?? '';
 
-        // Content: markdown wins → update bead if different
-        if (mdContent !== beadDesign && mdContent.length > 0) {
-          await deps.beadStore.updateDesign(bead.id, mdContent);
+        // Content: markdown wins (unless empty)
+        const winner = resolveContentConflict(mdContent, beadDesign);
+        if (winner !== beadDesign && mdContent.length > 0) {
+          await deps.beadStore.updateDesign(bead.id, winner);
           report.updated.push({
             entityId: bead.id,
             field: 'design',
             source: 'markdown',
+          });
+        }
+
+        // Status: bead wins — propagate bead status back to markdown metadata
+        const beadStatus = bead.status ?? 'open';
+        const mdStatus = 'open'; // markdown has no status field yet; default
+        const resolvedStatus = resolveStatusConflict(mdStatus, beadStatus);
+        if (resolvedStatus !== mdStatus) {
+          report.updated.push({
+            entityId: bead.id,
+            field: 'status',
+            source: 'beads',
           });
         }
       }

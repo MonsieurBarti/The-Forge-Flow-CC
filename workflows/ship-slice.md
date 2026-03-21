@@ -23,3 +23,13 @@ status = reviewing
 **tff NEVER merges — only creates PR.**
 
 8. NEXT: @references/next-steps.md
+
+## Auto-Transition
+Read `.tff/settings.yaml` → `autonomy.mode`.
+`plan-to-pr` ∧ ¬HUMAN_GATE → auto-invoke next workflow via `tff-tools workflow:next <status>`.
+`guided` → suggest next step, wait for user.
+Progress: `[tff] <slice-id>: reviewing → completing`
+
+## Auto-Fix (plan-to-pr)
+REQUEST_CHANGES ∧ cycles < 2 → SPAWN tff-fixer, re-review
+REQUEST_CHANGES ∧ cycles ≥ 2 → escalation task, pause chain

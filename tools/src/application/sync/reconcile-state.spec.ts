@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { reconcileState } from './reconcile-state.js';
+import {
+  reconcileState,
+  resolveContentConflict,
+  resolveStatusConflict,
+  detectOrphans,
+} from './reconcile-state.js';
 import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
 import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
 import { isOk } from '../../domain/result.js';
@@ -87,6 +92,28 @@ describe('reconcileState', () => {
     expect(await artifactStore.exists('.tff/STATE.md')).toBe(true);
   });
 
+  it('should prefer bead status when both exist and differ', async () => {
+    beadStore.seed([
+      { id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' },
+      { id: 's1', label: 'tff:slice', title: 'Auth', status: 'executing', design: 'Auth design', parentId: 'ms1' },
+    ]);
+    artifactStore.seed({
+      '.tff/slices/Auth/PLAN.md': 'Auth design',
+    });
+
+    const result = await reconcileState(
+      { milestoneId: 'ms1', milestoneName: 'MVP' },
+      { beadStore, artifactStore },
+    );
+
+    expect(isOk(result)).toBe(true);
+    if (isOk(result)) {
+      const statusUpdate = result.data.updated.find((u) => u.field === 'status');
+      expect(statusUpdate).toBeDefined();
+      expect(statusUpdate?.source).toBe('beads');
+    }
+  });
+
   it('should return empty report when everything is in sync', async () => {
     beadStore.seed([
       { id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' },
@@ -104,5 +131,57 @@ describe('reconcileState', () => {
       expect(result.data.conflicts).toHaveLength(0);
       expect(result.data.orphans).toHaveLength(0);
     }
+  });
+});
+
+describe('resolveContentConflict', () => {
+  it('should prefer markdown content over bead design', () => {
+    expect(resolveContentConflict('markdown content', 'bead design')).toBe('markdown content');
+  });
+  it('should return bead design when markdown is empty', () => {
+    expect(resolveContentConflict('', 'bead design')).toBe('bead design');
+  });
+});
+
+describe('resolveStatusConflict', () => {
+  it('should prefer bead status over markdown status', () => {
+    expect(resolveStatusConflict('planning', 'executing')).toBe('executing');
+  });
+});
+
+describe('detectOrphans', () => {
+  it('should find markdown-only entities', () => {
+    const orphans = detectOrphans(['M01-S01', 'M01-S02', 'M01-S03'], ['M01-S01', 'M01-S02']);
+    expect(orphans.markdownOnly).toEqual(['M01-S03']);
+    expect(orphans.beadOnly).toEqual([]);
+  });
+  it('should find bead-only entities', () => {
+    const orphans = detectOrphans(['M01-S01'], ['M01-S01', 'M01-S02']);
+    expect(orphans.markdownOnly).toEqual([]);
+    expect(orphans.beadOnly).toEqual(['M01-S02']);
+  });
+});
+
+describe('reconcileState - edge cases', () => {
+  it('should handle empty markdown file', () => {
+    const orphans = detectOrphans([], []);
+    expect(orphans.markdownOnly).toHaveLength(0);
+    expect(orphans.beadOnly).toHaveLength(0);
+  });
+
+  it('should detect orphans with many entities', () => {
+    const markdownIds = Array.from({ length: 50 }, (_, i) => `M01-S${String(i + 1).padStart(2, '0')}`);
+    const beadIds = markdownIds.slice(0, 40);
+    const orphans = detectOrphans(markdownIds, beadIds);
+    expect(orphans.markdownOnly).toHaveLength(10);
+    expect(orphans.beadOnly).toHaveLength(0);
+  });
+
+  it('should handle resolveContentConflict with both empty', () => {
+    expect(resolveContentConflict('', '')).toBe('');
+  });
+
+  it('should handle resolveStatusConflict with same status', () => {
+    expect(resolveStatusConflict('executing', 'executing')).toBe('executing');
   });
 });

@@ -7,6 +7,11 @@ Detect corrections to existing skills → propose refinements.
 ## Prerequisites
 observation enabled ∧ skills exist in `skills/` ∧ ≥3 corrections observed
 
+## Settings
+Read `.tff/settings.yaml` → `auto-learn.guardrails`.
+Check cooldown: read `.tff/drafts/metadata.jsonl`, verify canRefine().
+Pass maxDrift: `tff-tools skills:drift --max-drift 0.2`
+
 ## Steps
 1. DRIFT CHECK: for each skill, `tff-tools skills:drift "<original>" "<current>"`
 2. COMPARE actual sequences (sessions.jsonl) vs skill's documented steps → flag consistent deviations (≥3 occurrences)

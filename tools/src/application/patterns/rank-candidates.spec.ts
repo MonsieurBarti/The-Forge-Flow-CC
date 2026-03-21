@@ -32,6 +32,17 @@ describe('rankCandidates', () => {
     expect(result[0].score).toBeGreaterThan(result[1].score);
   });
 
+  it('should accept custom weights from settings', () => {
+    const patterns: Pattern[] = [
+      { sequence: ['Read', 'Edit'], count: 10, sessions: 5, projects: 3, lastSeen: new Date().toISOString() },
+    ];
+    const customWeights = { frequency: 0.5, breadth: 0.1, recency: 0.2, consistency: 0.2 };
+    const result = rankCandidates(patterns, { totalProjects: 5, totalSessions: 10, now: new Date().toISOString(), weights: customWeights });
+    expect(result).toHaveLength(1);
+    const defaultResult = rankCandidates(patterns, { totalProjects: 5, totalSessions: 10, now: new Date().toISOString() });
+    expect(result[0].score).not.toBe(defaultResult[0].score);
+  });
+
   it('should filter below threshold', () => {
     const patterns: Pattern[] = [
       { sequence: ['Read', 'Edit'], count: 1, sessions: 1, projects: 1, lastSeen: now },

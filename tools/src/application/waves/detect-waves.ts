@@ -22,6 +22,7 @@ export const detectWaves = (tasks: TaskDep[]): Result<Wave[], DomainError> => {
 
   const waves: Wave[] = [];
   let remaining = tasks.length;
+  // Sort for deterministic wave ordering (stable test assertions, reproducible plans)
   let currentWave = [...inDegree.entries()].filter(([_, deg]) => deg === 0).map(([id]) => id).sort();
   let waveIndex = 0;
 
@@ -36,10 +37,15 @@ export const detectWaves = (tasks: TaskDep[]): Result<Wave[], DomainError> => {
         if (newDeg === 0) nextWave.push(dependent);
       }
     }
+    // Sort for deterministic wave ordering (stable test assertions, reproducible plans)
     currentWave = nextWave.sort();
     waveIndex++;
   }
 
-  if (remaining > 0) return Err(createDomainError('INVALID_TRANSITION', 'Circular dependency detected in task graph', { remaining }));
+  if (remaining > 0) {
+    // Sort for deterministic wave ordering (stable test assertions, reproducible plans)
+    const cycleIds = [...inDegree.entries()].filter(([_, deg]) => deg > 0).map(([id]) => id).sort();
+    return Err(createDomainError('INVALID_TRANSITION', `Circular dependency detected among tasks: ${cycleIds.join(', ')}`, { remaining, cycleIds }));
+  }
   return Ok(waves);
 };

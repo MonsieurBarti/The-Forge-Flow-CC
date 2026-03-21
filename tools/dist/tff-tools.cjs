@@ -13845,21 +13845,56 @@ var import_node_child_process = require("child_process");
 var import_node_util = require("util");
 var exec = (0, import_node_util.promisify)(import_node_child_process.execFile);
 var bdError = (message, context) => createDomainError("SYNC_CONFLICT", message, context);
+async function withRetry(fn, opts = {}) {
+  const maxAttempts = opts.maxAttempts ?? 3;
+  const baseMs = opts.baseMs ?? 500;
+  const maxMs = opts.maxMs ?? 4e3;
+  let lastError;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxAttempts) {
+        const delay = Math.min(baseMs * Math.pow(2, attempt - 1), maxMs);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw lastError;
+}
+var execBd = async (args, stdin) => {
+  const options = { timeout: 3e4 };
+  if (stdin) options.input = stdin;
+  const { stdout } = await exec("bd", args, options);
+  return stdout.trim();
+};
 var runBd = async (args, stdin) => {
   try {
-    const options = { timeout: 3e4 };
-    if (stdin) options.input = stdin;
-    const proc = exec("bd", args, options);
-    const { stdout } = await proc;
-    return Ok(stdout.trim());
+    const result = await execBd(args, stdin);
+    return Ok(result);
+  } catch (err) {
+    return Err(bdError(`bd ${args.join(" ")} failed: ${err}`, { args }));
+  }
+};
+var runBdRetry = async (args, stdin) => {
+  try {
+    const result = await withRetry(() => execBd(args, stdin), { maxAttempts: 3 });
+    return Ok(result);
   } catch (err) {
     return Err(bdError(`bd ${args.join(" ")} failed: ${err}`, { args }));
   }
 };
 var normalizeBeadData = (raw) => {
+  if (!raw.id || typeof raw.id !== "string") {
+    return Err(createDomainError("VALIDATION_ERROR", "Malformed bead: missing 'id'"));
+  }
+  if (!raw.status || typeof raw.status !== "string") {
+    return Err(createDomainError("VALIDATION_ERROR", `Malformed bead: missing 'status' for ${raw.id}`));
+  }
   const labels = Array.isArray(raw.labels) ? raw.labels : [];
   const tffLabel = labels.find((l) => l.startsWith("tff:")) ?? (raw.issue_type ?? "task");
-  return {
+  return Ok({
     id: raw.id,
     label: tffLabel,
     title: raw.title,
@@ -13869,7 +13904,16 @@ var normalizeBeadData = (raw) => {
     blocks: raw.blocks,
     validates: raw.validates,
     metadata: raw.metadata
-  };
+  });
+};
+var collectBeads = (items) => {
+  const beads = [];
+  for (const item of items) {
+    const r = normalizeBeadData(item);
+    if (!r.ok) return r;
+    beads.push(r.data);
+  }
+  return Ok(beads);
 };
 var parseJsonOutput = (output) => {
   try {
@@ -13889,45 +13933,45 @@ var BdCliAdapter = class {
     if (input.design) args.push("--design", input.design);
     if (input.description) {
       args.push("--stdin");
-      const result2 = await runBd(args, input.description);
+      const result2 = await runBdRetry(args, input.description);
       if (!result2.ok) return result2;
       const parsed2 = parseJsonOutput(result2.data);
       if (!parsed2.ok) return parsed2;
-      return Ok(normalizeBeadData(parsed2.data));
+      return normalizeBeadData(parsed2.data);
     }
-    const result = await runBd(args);
+    const result = await runBdRetry(args);
     if (!result.ok) return result;
     const parsed = parseJsonOutput(result.data);
     if (!parsed.ok) return parsed;
-    return Ok(normalizeBeadData(parsed.data));
+    return normalizeBeadData(parsed.data);
   }
   async get(id) {
-    const result = await runBd(["show", id, "--json"]);
+    const result = await runBdRetry(["show", id, "--json"]);
     if (!result.ok) return result;
     const parsed = parseJsonOutput(result.data);
     if (!parsed.ok) return parsed;
     if (parsed.data.length === 0) {
       return Err(bdError(`Bead "${id}" not found`, { id }));
     }
-    return Ok(normalizeBeadData(parsed.data[0]));
+    return normalizeBeadData(parsed.data[0]);
   }
   async list(filter) {
     const args = ["list", "--json"];
     if (filter.label) args.push("-l", filter.label);
     if (filter.parentId) args.push("--parent", filter.parentId);
     if (filter.status) args.push("-s", filter.status);
-    const result = await runBd(args);
+    const result = await runBdRetry(args);
     if (!result.ok) return result;
     const parsed = parseJsonOutput(result.data);
     if (!parsed.ok) return parsed;
-    return Ok(parsed.data.map(normalizeBeadData));
+    return collectBeads(parsed.data);
   }
   async ready() {
-    const result = await runBd(["ready", "--json"]);
+    const result = await runBdRetry(["ready", "--json"]);
     if (!result.ok) return result;
     const parsed = parseJsonOutput(result.data);
     if (!parsed.ok) return parsed;
-    return Ok(parsed.data.map(normalizeBeadData));
+    return collectBeads(parsed.data);
   }
   async updateStatus(id, status) {
     const r = await runBd(["update", id, "-s", status]);
@@ -13935,7 +13979,7 @@ var BdCliAdapter = class {
     return Ok(void 0);
   }
   async claim(id) {
-    const r = await runBd(["update", id, "--claim"]);
+    const r = await runBdRetry(["update", id, "--claim"]);
     if (!r.ok) return r;
     return Ok(void 0);
   }
@@ -14122,9 +14166,26 @@ var GitCliAdapter = class {
   constructor(repoRoot) {
     this.repoRoot = repoRoot;
   }
+  cache = /* @__PURE__ */ new Map();
+  TTL_MS = 5e3;
+  getCached(key) {
+    const entry = this.cache.get(key);
+    if (!entry || Date.now() > entry.expiresAt) {
+      this.cache.delete(key);
+      return void 0;
+    }
+    return entry.value;
+  }
+  setCache(key, value) {
+    this.cache.set(key, { value, expiresAt: Date.now() + this.TTL_MS });
+  }
+  invalidateCache() {
+    this.cache.clear();
+  }
   async createBranch(name, from) {
     const r = await runGit(["branch", name, from], this.repoRoot);
     if (!r.ok) return r;
+    this.invalidateCache();
     return Ok(void 0);
   }
   async createWorktree(path, branch) {
@@ -14150,6 +14211,7 @@ var GitCliAdapter = class {
     if (!commitR.ok) return commitR;
     const shaR = await runGit(["rev-parse", "--short", "HEAD"], cwd);
     if (!shaR.ok) return shaR;
+    this.invalidateCache();
     return Ok({ sha: shaR.data, message });
   }
   async revert(commitSha, worktreePath) {
@@ -14167,10 +14229,22 @@ var GitCliAdapter = class {
     return Ok(void 0);
   }
   async getCurrentBranch(worktreePath) {
-    return runGit(["rev-parse", "--abbrev-ref", "HEAD"], worktreePath ?? this.repoRoot);
+    const cwd = worktreePath ?? this.repoRoot;
+    const cacheKey = `branch:${cwd}`;
+    const cached2 = this.getCached(cacheKey);
+    if (cached2) return Ok(cached2);
+    const r = await runGit(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
+    if (r.ok) this.setCache(cacheKey, r.data);
+    return r;
   }
   async getHeadSha(worktreePath) {
-    return runGit(["rev-parse", "--short", "HEAD"], worktreePath ?? this.repoRoot);
+    const cwd = worktreePath ?? this.repoRoot;
+    const cacheKey = `sha:${cwd}`;
+    const cached2 = this.getCached(cacheKey);
+    if (cached2) return Ok(cached2);
+    const r = await runGit(["rev-parse", "--short", "HEAD"], cwd);
+    if (r.ok) this.setCache(cacheKey, r.data);
+    return r;
   }
 };
 
@@ -14449,7 +14523,10 @@ var detectWaves = (tasks) => {
     currentWave = nextWave.sort();
     waveIndex++;
   }
-  if (remaining > 0) return Err(createDomainError("INVALID_TRANSITION", "Circular dependency detected in task graph", { remaining }));
+  if (remaining > 0) {
+    const cycleIds = [...inDegree.entries()].filter(([_, deg]) => deg > 0).map(([id]) => id).sort();
+    return Err(createDomainError("INVALID_TRANSITION", `Circular dependency detected among tasks: ${cycleIds.join(", ")}`, { remaining, cycleIds }));
+  }
   return Ok(waves);
 };
 
@@ -14555,6 +14632,8 @@ var emptySyncReport = () => ({
 });
 
 // tools/src/application/sync/reconcile-state.ts
+var resolveContentConflict = (mdContent, beadDesign) => mdContent.length > 0 ? mdContent : beadDesign;
+var resolveStatusConflict = (_mdStatus, beadStatus) => beadStatus;
 var reconcileState = async (input, deps) => {
   const report = emptySyncReport();
   const slicesResult = await deps.beadStore.list({
@@ -14589,12 +14668,23 @@ ${bead.design ?? "_No plan yet._"}
       if (isOk(mdResult)) {
         const mdContent = mdResult.data;
         const beadDesign = bead.design ?? "";
-        if (mdContent !== beadDesign && mdContent.length > 0) {
-          await deps.beadStore.updateDesign(bead.id, mdContent);
+        const winner = resolveContentConflict(mdContent, beadDesign);
+        if (winner !== beadDesign && mdContent.length > 0) {
+          await deps.beadStore.updateDesign(bead.id, winner);
           report.updated.push({
             entityId: bead.id,
             field: "design",
             source: "markdown"
+          });
+        }
+        const beadStatus = bead.status ?? "open";
+        const mdStatus = "open";
+        const resolvedStatus = resolveStatusConflict(mdStatus, beadStatus);
+        if (resolvedStatus !== mdStatus) {
+          report.updated.push({
+            entityId: bead.id,
+            field: "status",
+            source: "beads"
           });
         }
       }
@@ -14964,7 +15054,11 @@ var rankCandidates = (patterns, options) => {
     const ageDays = (nowMs - new Date(p.lastSeen).getTime()) / (24 * 60 * 60 * 1e3);
     const recency = Math.exp(-ageDays * Math.LN2 / 14);
     const consistency = options.totalSessions > 0 ? p.sessions / options.totalSessions : 0;
-    const score = frequency * 0.25 + breadth * 0.3 + recency * 0.25 + consistency * 0.2;
+    const wF = options.weights?.frequency ?? 0.25;
+    const wB = options.weights?.breadth ?? 0.3;
+    const wR = options.weights?.recency ?? 0.25;
+    const wC = options.weights?.consistency ?? 0.2;
+    const score = frequency * wF + breadth * wB + recency * wR + consistency * wC;
     return {
       pattern: p.sequence,
       score: Math.round(score * 100) / 100,
@@ -14994,23 +15088,82 @@ var patternsRankCmd = async (args) => {
 };
 
 // tools/src/application/compose/detect-clusters.ts
-var detectClusters = (coActivations, options) => {
-  const threshold = options.threshold ?? 0.7;
-  return coActivations.filter((ca) => ca.skills.length >= 2).map((ca) => ({
-    skills: ca.skills.sort(),
-    coActivationRate: options.totalSessions > 0 ? ca.sessions / options.totalSessions : 0,
-    sessions: ca.sessions
-  })).filter((c) => c.coActivationRate >= threshold).sort((a, b) => b.coActivationRate - a.coActivationRate);
-};
+function jaccardDistance(a, b) {
+  const intersection2 = new Set([...a].filter((x) => b.has(x)));
+  const union2 = /* @__PURE__ */ new Set([...a, ...b]);
+  if (union2.size === 0) return 1;
+  return 1 - intersection2.size / union2.size;
+}
+function detectClusters(observations, opts = {}) {
+  const minSessions = opts.minSessions ?? 3;
+  const minPatterns = opts.minPatterns ?? 2;
+  const maxDist = opts.maxJaccardDistance ?? 0.3;
+  const sessionTools = /* @__PURE__ */ new Map();
+  for (const obs of observations) {
+    if (!sessionTools.has(obs.session)) sessionTools.set(obs.session, /* @__PURE__ */ new Set());
+    sessionTools.get(obs.session).add(obs.tool);
+  }
+  if (sessionTools.size < minSessions) return [];
+  const allTools = [...new Set(observations.map((o) => o.tool))];
+  const toolSessionSets = /* @__PURE__ */ new Map();
+  for (const [session, tools] of sessionTools) {
+    for (const tool of tools) {
+      if (!toolSessionSets.has(tool)) toolSessionSets.set(tool, /* @__PURE__ */ new Set());
+      toolSessionSets.get(tool).add(session);
+    }
+  }
+  const coOccurrence = /* @__PURE__ */ new Map();
+  for (const ts of sessionTools.values()) {
+    const tools = [...ts];
+    for (let i = 0; i < tools.length; i++) {
+      for (let j = i + 1; j < tools.length; j++) {
+        const key = [tools[i], tools[j]].sort().join("|");
+        coOccurrence.set(key, (coOccurrence.get(key) ?? 0) + 1);
+      }
+    }
+  }
+  const clusters = [];
+  const visited = /* @__PURE__ */ new Set();
+  for (const tool of allTools) {
+    if (visited.has(tool)) continue;
+    const cluster = /* @__PURE__ */ new Set([tool]);
+    visited.add(tool);
+    for (const other of allTools) {
+      if (visited.has(other)) continue;
+      const dist = jaccardDistance(toolSessionSets.get(tool), toolSessionSets.get(other));
+      if (dist < maxDist) {
+        cluster.add(other);
+        visited.add(other);
+      }
+    }
+    if (cluster.size >= minPatterns) {
+      const clusterSessions = /* @__PURE__ */ new Set();
+      for (const t of cluster) {
+        for (const s of toolSessionSets.get(t)) clusterSessions.add(s);
+      }
+      if (clusterSessions.size >= minSessions) {
+        clusters.push({
+          tools: [...cluster].sort(),
+          sessions: clusterSessions.size,
+          activations: [...coOccurrence.entries()].filter(([key]) => {
+            const [a, b] = key.split("|");
+            return cluster.has(a) && cluster.has(b);
+          }).reduce((sum, [, count]) => sum + count, 0)
+        });
+      }
+    }
+  }
+  return clusters.sort((a, b) => b.activations - a.activations);
+}
 
 // tools/src/cli/commands/compose-detect.cmd.ts
 var composeDetectCmd = async (args) => {
   const input = args[0];
-  if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: compose:detect <co-activations-json>" } });
+  if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: compose:detect <observations-json> [options-json]" } });
   try {
-    const data = JSON.parse(input);
-    const totalSessions = parseInt(args[1] ?? "20", 10);
-    const result = detectClusters(data, { totalSessions });
+    const observations = JSON.parse(input);
+    const opts = args[1] ? JSON.parse(args[1]) : {};
+    const result = detectClusters(observations, opts);
     return JSON.stringify({ ok: true, data: result });
   } catch {
     return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON" } });
@@ -15055,7 +15208,19 @@ var validateSkill = (input) => {
   if (!input.description.toLowerCase().startsWith("use when")) {
     warnings.push('Description should start with "Use when"');
   }
-  return Ok({ valid: true, warnings });
+  let valid = true;
+  if (input.existingSkillNames?.includes(input.name)) {
+    valid = false;
+    warnings.push(`Name collision: skill "${input.name}" already exists`);
+  }
+  const maxSize = input.maxSize ?? 5e4;
+  if (input.content && input.content.length > maxSize) {
+    warnings.push(`Content size ${input.content.length} exceeds max size ${maxSize}`);
+  }
+  if (input.content?.match(/\$\(|;\s*(rm|curl|wget|eval)/)) {
+    warnings.push("Content contains potential shell injection patterns");
+  }
+  return Ok({ valid, warnings });
 };
 
 // tools/src/cli/commands/skills-validate.cmd.ts
@@ -15070,6 +15235,41 @@ var skillsValidateCmd = async (args) => {
   } catch {
     return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON" } });
   }
+};
+
+// tools/src/application/lifecycle/chain-workflow.ts
+var WORKFLOW_CHAIN = {
+  discussing: "research-slice",
+  researching: "plan-slice",
+  planning: null,
+  executing: "verify-slice",
+  verifying: "ship-slice",
+  reviewing: "ship-slice",
+  completing: null,
+  closed: null
+};
+var HUMAN_GATES = /* @__PURE__ */ new Set(["planning", "completing"]);
+function nextWorkflow(currentStatus) {
+  return WORKFLOW_CHAIN[currentStatus] ?? null;
+}
+function shouldAutoTransition(currentStatus, autonomyMode) {
+  if (autonomyMode === "guided") return false;
+  if (HUMAN_GATES.has(currentStatus)) return false;
+  return WORKFLOW_CHAIN[currentStatus] !== null;
+}
+
+// tools/src/cli/commands/workflow-next.cmd.ts
+var workflowNextCmd = async (args) => {
+  const status = args[0];
+  if (!status) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: workflow:next <status>" } });
+  return JSON.stringify({ ok: true, data: { next: nextWorkflow(status) } });
+};
+
+// tools/src/cli/commands/workflow-should-auto.cmd.ts
+var workflowShouldAutoCmd = async (args) => {
+  const [status, mode] = args;
+  if (!status || !mode) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: workflow:should-auto <status> <mode>" } });
+  return JSON.stringify({ ok: true, data: { autoTransition: shouldAutoTransition(status, mode) } });
 };
 
 // tools/src/cli/index.ts
@@ -15096,7 +15296,9 @@ var commands = {
   "patterns:rank": patternsRankCmd,
   "compose:detect": composeDetectCmd,
   "skills:drift": skillsDriftCmd,
-  "skills:validate": skillsValidateCmd
+  "skills:validate": skillsValidateCmd,
+  "workflow:next": workflowNextCmd,
+  "workflow:should-auto": workflowShouldAutoCmd
 };
 var main = async () => {
   const [command, ...args] = process.argv.slice(2);

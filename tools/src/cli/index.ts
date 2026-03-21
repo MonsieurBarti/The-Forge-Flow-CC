@@ -21,6 +21,8 @@ import { patternsRankCmd } from './commands/patterns-rank.cmd.js';
 import { composeDetectCmd } from './commands/compose-detect.cmd.js';
 import { skillsDriftCmd } from './commands/skills-drift.cmd.js';
 import { skillsValidateCmd } from './commands/skills-validate.cmd.js';
+import { workflowNextCmd } from './commands/workflow-next.cmd.js';
+import { workflowShouldAutoCmd } from './commands/workflow-should-auto.cmd.js';
 
 type CommandFn = (args: string[]) => Promise<string>;
 
@@ -48,6 +50,8 @@ const commands: Record<string, CommandFn> = {
   'compose:detect': composeDetectCmd,
   'skills:drift': skillsDriftCmd,
   'skills:validate': skillsValidateCmd,
+  'workflow:next': workflowNextCmd,
+  'workflow:should-auto': workflowShouldAutoCmd,
 };
 
 const main = async () => {

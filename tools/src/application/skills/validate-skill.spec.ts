@@ -50,4 +50,41 @@ describe('validateSkill', () => {
     });
     expect(isErr(result)).toBe(true);
   });
+
+  it('should warn on skills exceeding max size', () => {
+    const result = validateSkill({
+      name: 'valid-skill',
+      description: 'Use when testing',
+      content: 'x'.repeat(50001),
+    });
+    expect(isOk(result)).toBe(true);
+    if (isOk(result)) {
+      expect(result.data.warnings.some(w => w.includes('size'))).toBe(true);
+    }
+  });
+
+  it('should warn on names that collide with existing skills', () => {
+    const result = validateSkill({
+      name: 'hexagonal-architecture',
+      description: 'Use when testing',
+      existingSkillNames: ['hexagonal-architecture', 'test-driven-development'],
+    });
+    expect(isOk(result)).toBe(true);
+    if (isOk(result)) {
+      expect(result.data.valid).toBe(false);
+      expect(result.data.warnings.some(w => w.includes('collision'))).toBe(true);
+    }
+  });
+
+  it('should warn on shell injection patterns in content', () => {
+    const result = validateSkill({
+      name: 'safe-skill',
+      description: 'Use when testing',
+      content: 'Run this: $(rm -rf /)',
+    });
+    expect(isOk(result)).toBe(true);
+    if (isOk(result)) {
+      expect(result.data.warnings.some(w => w.includes('injection'))).toBe(true);
+    }
+  });
 });

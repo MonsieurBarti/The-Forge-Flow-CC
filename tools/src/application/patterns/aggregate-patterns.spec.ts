@@ -23,6 +23,16 @@ describe('aggregatePatterns', () => {
     expect(result[0].sequence).toEqual(['Read', 'Edit']);
   });
 
+  it('should filter patterns below configurable minCount', () => {
+    const patterns: Pattern[] = [
+      { sequence: ['Read', 'Edit'], count: 2, sessions: 2, projects: 1, lastSeen: new Date().toISOString() },
+      { sequence: ['Read', 'Write'], count: 5, sessions: 3, projects: 2, lastSeen: new Date().toISOString() },
+    ];
+    const result = aggregatePatterns(patterns, { minCount: 4 });
+    expect(result).toHaveLength(1);
+    expect(result[0].sequence).toEqual(['Read', 'Write']);
+  });
+
   it('should pass through patterns meeting all criteria', () => {
     const patterns: Pattern[] = [
       { sequence: ['Read', 'Grep', 'Edit'], count: 12, sessions: 8, projects: 3, lastSeen: '2026-03-21' },
