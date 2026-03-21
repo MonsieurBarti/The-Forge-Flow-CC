@@ -4,7 +4,6 @@
   "plugins": [
     {
       "name": "the-forge-flow",
-      "version": "0.3.0",
       "source": "./plugin",
       "description": "Autonomous coding agent orchestrator with dual markdown+beads state, plannotator integration, and wave-based parallel execution"
     }
