@@ -64,25 +64,20 @@ DETECT: `tff-tools waves:detect '<tasks-json>'` → show user
 
 ### 6. Architecture Review (F-lite ∧ F-full)
 SPAWN tff-architect: {plan_content, spec_content}
-- Validates boundaries, dependency direction, patterns
-- Issues → revise plan
+Issues → revise plan
 
-### 7. Plan Review — Subagent Loop
-DISPATCH anonymous reviewer via Agent tool (prompt from @skills/interactive-design.md § Plan Document Reviewer)
-Issues → fix, re-dispatch (max 3 iterations)
+### 7. Plan Review
+DISPATCH anonymous reviewer via Agent tool (prompt: @skills/interactive-design.md § Plan Document Reviewer)
+Issues → fix, re-dispatch (max 3)
 
 ### 8. Plannotator Review
 `plannotator annotate .tff/slices/<id>/PLAN.md`
-feedback → revise → loop ∨ approved → continue
+feedback → revise ∨ approved → continue
 
-### 9. Worktree
+### 9. Worktree + Transition
 `tff-tools worktree:create <id>`
-
-### 10. Transition
-TRANSITION: `tff-tools slice:transition <id> executing`
+`tff-tools slice:transition <id> executing`
 
 ## Auto-Transition
-Read `.tff/settings.yaml` → `autonomy.mode`.
-`plan-to-pr` → auto-invoke execute workflow.
-`guided` → suggest `/tff:execute`.
-Progress: `[tff] <slice-id>: planning → executing`
+`plan-to-pr` → auto-invoke execute | `guided` → suggest `/tff:execute`
+`[tff] <slice-id>: planning → executing`

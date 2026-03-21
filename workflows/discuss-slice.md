@@ -37,26 +37,22 @@ UPDATE bead design field: `beadStore.updateDesign(id, spec_content)`
 
 ### 4. Challenge Spec (F-full only)
 SPAWN tff-brainstormer: {spec_content}
-- Stress-tests assumptions, surfaces unknowns
-- Critical issues → revise spec (loop to Phase 3, max 2 iterations then escalate)
-- Minor concerns → note in spec, proceed
+REVISE → critical issues → loop Phase 3 (max 2) ∨ escalate
+APPROVE → note concerns in spec, proceed
 
-### 5. Validate Acceptance Criteria
+### 5. Validate AC
 SPAWN tff-product-lead: {spec_content, acceptance_criteria}
-- ∀ criterion: testable ∧ binary
-- Gaps → revise via AskUserQuestion
+∀ criterion: testable ∧ binary — gaps → revise via AskUserQuestion
 
 ### 6. Spec Review
-DISPATCH anonymous reviewer via Agent tool (prompt from @skills/interactive-design.md)
-- Checks: completeness, consistency, clarity, scope, YAGNI
-- Issues → fix, re-dispatch (max 3 iterations)
+DISPATCH anonymous reviewer via Agent tool (prompt: @skills/interactive-design.md)
+Issues → fix, re-dispatch (max 3)
 
 ### 7. User Gate
-AskUserQuestion: "Spec at `.tff/slices/<id>/SPEC.md`. Review and approve?"
-Wait for approval
+AskUserQuestion: "Spec at `.tff/slices/<id>/SPEC.md`. Approve?"
 
 ### 8. Transition
-TRANSITION: `tff-tools slice:transition <id> researching`
+`tff-tools slice:transition <id> researching`
 
 ## Auto-Transition
 Read `.tff/settings.yaml` → `autonomy.mode`.

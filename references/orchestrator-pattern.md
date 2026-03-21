@@ -32,9 +32,10 @@ tff workflows are orchestrators. They coordinate — they don't do heavy work.
 
 ## Exception: Conversation-Driven Workflows
 
-The discuss workflow is an exception to rule 2 ("agents do the heavy lifting"). Interactive Q&A requires maintaining conversation context with the user, which cannot be delegated to a subagent. The orchestrator drives the conversation directly via AskUserQuestion, then spawns agents for independent review tasks (challenge, validate, review).
-
-This exception applies ONLY to workflows that require multi-turn user interaction. All other workflows follow the standard orchestrator pattern.
+discuss workflow: orchestrator drives Q&A directly via AskUserQuestion (rule 2 exception).
+Reason: multi-turn user context ¬delegable to subagent.
+Agents spawned for independent tasks only (challenge, validate, review).
+∀ other workflows: standard pattern applies.
 
 ## Template
 
