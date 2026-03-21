@@ -4,7 +4,9 @@ import { type DomainError, createDomainError } from '../../domain/errors/domain-
 interface SkillInput {
   name: string;
   description: string;
-  content: string;
+  content?: string;
+  existingSkillNames?: string[];
+  maxSize?: number;
 }
 
 interface ValidationResult {
@@ -37,5 +39,23 @@ export const validateSkill = (
     warnings.push('Description should start with "Use when"');
   }
 
-  return Ok({ valid: true, warnings });
+  // Name collision check
+  let valid = true;
+  if (input.existingSkillNames?.includes(input.name)) {
+    valid = false;
+    warnings.push(`Name collision: skill "${input.name}" already exists`);
+  }
+
+  // Size limit check
+  const maxSize = input.maxSize ?? 50000;
+  if (input.content && input.content.length > maxSize) {
+    warnings.push(`Content size ${input.content.length} exceeds max size ${maxSize}`);
+  }
+
+  // Shell injection pattern check
+  if (input.content?.match(/\$\(|;\s*(rm|curl|wget|eval)/)) {
+    warnings.push('Content contains potential shell injection patterns');
+  }
+
+  return Ok({ valid, warnings });
 };
