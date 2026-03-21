@@ -13845,12 +13845,23 @@ var exec = (0, import_node_util.promisify)(import_node_child_process.execFile);
 var bdError = (message, context) => createDomainError("SYNC_CONFLICT", message, context);
 var runBd = async (args) => {
   try {
-    const { stdout } = await exec("bd", args, { timeout: 1e4 });
+    const { stdout } = await exec("bd", args, { timeout: 3e4 });
     return Ok(stdout.trim());
   } catch (err) {
     return Err(bdError(`bd ${args.join(" ")} failed: ${err}`, { args }));
   }
 };
+var normalizeBeadData = (raw) => ({
+  id: raw.id,
+  label: Array.isArray(raw.labels) && raw.labels.length > 0 ? raw.labels[0] : raw.issue_type ?? "task",
+  title: raw.title,
+  status: raw.status,
+  design: raw.design,
+  parentId: raw.parent_id ?? raw.parentId,
+  blocks: raw.blocks,
+  validates: raw.validates,
+  metadata: raw.metadata
+});
 var parseJsonOutput = (output) => {
   try {
     return Ok(JSON.parse(output));
@@ -13870,12 +13881,19 @@ var BdCliAdapter = class {
     if (input.parentId) args.push("--parent", input.parentId);
     const result = await runBd(args);
     if (!result.ok) return result;
-    return parseJsonOutput(result.data);
+    const parsed = parseJsonOutput(result.data);
+    if (!parsed.ok) return parsed;
+    return Ok(normalizeBeadData(parsed.data));
   }
   async get(id) {
     const result = await runBd(["show", id, "--json"]);
     if (!result.ok) return result;
-    return parseJsonOutput(result.data);
+    const parsed = parseJsonOutput(result.data);
+    if (!parsed.ok) return parsed;
+    if (parsed.data.length === 0) {
+      return Err(bdError(`Bead "${id}" not found`, { id }));
+    }
+    return Ok(normalizeBeadData(parsed.data[0]));
   }
   async list(filter) {
     const args = ["list", "--json"];
@@ -13884,7 +13902,9 @@ var BdCliAdapter = class {
     if (filter.status) args.push("-s", filter.status);
     const result = await runBd(args);
     if (!result.ok) return result;
-    return parseJsonOutput(result.data);
+    const parsed = parseJsonOutput(result.data);
+    if (!parsed.ok) return parsed;
+    return Ok(parsed.data.map(normalizeBeadData));
   }
   async updateStatus(id, status) {
     const r = await runBd(["update", id, "-s", status]);
