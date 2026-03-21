@@ -13783,7 +13783,8 @@ var DomainErrorCodeSchema = external_exports.enum([
   "PROJECT_EXISTS",
   "INVALID_TRANSITION",
   "SYNC_CONFLICT",
-  "FRESH_REVIEWER_VIOLATION"
+  "FRESH_REVIEWER_VIOLATION",
+  "NOT_FOUND"
 ]);
 var DomainErrorSchema = external_exports.object({
   code: DomainErrorCodeSchema,
@@ -13801,7 +13802,7 @@ var projectExistsError = (projectName) => createDomainError(
 
 // tools/src/domain/entities/project.ts
 var ProjectSchema = external_exports.object({
-  id: external_exports.string().uuid(),
+  id: external_exports.uuid(),
   name: external_exports.string().min(1),
   vision: external_exports.string().min(1),
   createdAt: external_exports.date()
@@ -13971,6 +13972,356 @@ var projectInitCmd = async (args) => {
   return JSON.stringify({ ok: false, error: result.error });
 };
 
+// tools/src/application/project/get-project.ts
+var getProject = async (deps) => {
+  const result = await deps.beadStore.list({ label: "tff:project" });
+  if (!isOk(result)) return result;
+  if (result.data.length === 0) {
+    return Err(createDomainError(
+      "NOT_FOUND",
+      "No tff project found in this repository. Run /tff:new to create one."
+    ));
+  }
+  return { ok: true, data: result.data[0] };
+};
+
+// tools/src/cli/commands/project-get.cmd.ts
+var projectGetCmd = async (_args) => {
+  const beadStore = new BdCliAdapter();
+  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  const result = await getProject({ beadStore, artifactStore });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/domain/entities/milestone.ts
+var MilestoneStatusSchema = external_exports.enum(["open", "in_progress", "closed"]);
+var MilestoneSchema = external_exports.object({
+  id: external_exports.uuid(),
+  projectId: external_exports.uuid(),
+  name: external_exports.string().min(1),
+  number: external_exports.number().int().min(1),
+  status: MilestoneStatusSchema,
+  createdAt: external_exports.date()
+});
+var createMilestone = (input) => {
+  const milestone = {
+    id: crypto.randomUUID(),
+    projectId: input.projectId,
+    name: input.name,
+    number: input.number,
+    status: "open",
+    createdAt: /* @__PURE__ */ new Date()
+  };
+  return MilestoneSchema.parse(milestone);
+};
+var formatMilestoneNumber = (n) => `M${n.toString().padStart(2, "0")}`;
+
+// tools/src/application/milestone/create-milestone.ts
+var createMilestoneUseCase = async (input, deps) => {
+  const milestone = createMilestone({
+    projectId: input.projectBeadId,
+    name: input.name,
+    number: input.number
+  });
+  const branchName = `milestone/${formatMilestoneNumber(input.number)}`;
+  const beadResult = await deps.beadStore.create({
+    label: "tff:milestone",
+    title: input.name,
+    design: `Milestone ${formatMilestoneNumber(input.number)}: ${input.name}`,
+    parentId: input.projectBeadId
+  });
+  if (!isOk(beadResult)) return beadResult;
+  await deps.gitOps.createBranch(branchName, "main");
+  if (!await deps.artifactStore.exists(".tff/REQUIREMENTS.md")) {
+    await deps.artifactStore.write(
+      ".tff/REQUIREMENTS.md",
+      `# Requirements \u2014 ${input.name}
+
+_Define your requirements here._
+`
+    );
+  }
+  return Ok({
+    milestone,
+    beadId: beadResult.data.id,
+    branchName
+  });
+};
+
+// tools/src/infrastructure/adapters/git/git-cli.adapter.ts
+var import_node_child_process2 = require("child_process");
+var import_node_util2 = require("util");
+var exec2 = (0, import_node_util2.promisify)(import_node_child_process2.execFile);
+var gitError = (message, context) => createDomainError("SYNC_CONFLICT", message, context);
+var runGit = async (args, cwd) => {
+  try {
+    const { stdout } = await exec2("git", args, { cwd, timeout: 3e4 });
+    return Ok(stdout.trim());
+  } catch (err) {
+    return Err(gitError(`git ${args.join(" ")} failed: ${err}`, { args }));
+  }
+};
+var GitCliAdapter = class {
+  constructor(repoRoot) {
+    this.repoRoot = repoRoot;
+  }
+  async createBranch(name, from) {
+    const r = await runGit(["branch", name, from], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
+  async createWorktree(path, branch) {
+    const r = await runGit(["worktree", "add", path, "-b", branch], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
+  async deleteWorktree(path) {
+    const r = await runGit(["worktree", "remove", path, "--force"], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
+  async listWorktrees() {
+    const r = await runGit(["worktree", "list", "--porcelain"], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(r.data.split("\n").filter((l) => l.startsWith("worktree ")).map((l) => l.replace("worktree ", "")));
+  }
+  async commit(message, files, worktreePath) {
+    const cwd = worktreePath ?? this.repoRoot;
+    const addR = await runGit(["add", ...files], cwd);
+    if (!addR.ok) return addR;
+    const commitR = await runGit(["commit", "-m", message], cwd);
+    if (!commitR.ok) return commitR;
+    const shaR = await runGit(["rev-parse", "--short", "HEAD"], cwd);
+    if (!shaR.ok) return shaR;
+    return Ok({ sha: shaR.data, message });
+  }
+  async revert(commitSha, worktreePath) {
+    const cwd = worktreePath ?? this.repoRoot;
+    const r = await runGit(["revert", "--no-edit", commitSha], cwd);
+    if (!r.ok) return r;
+    const shaR = await runGit(["rev-parse", "--short", "HEAD"], cwd);
+    if (!shaR.ok) return shaR;
+    return Ok({ sha: shaR.data, message: `Revert "${commitSha}"` });
+  }
+  async merge(source, target) {
+    await runGit(["checkout", target], this.repoRoot);
+    const r = await runGit(["merge", source, "--no-ff"], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
+  async getCurrentBranch(worktreePath) {
+    return runGit(["rev-parse", "--abbrev-ref", "HEAD"], worktreePath ?? this.repoRoot);
+  }
+  async getHeadSha(worktreePath) {
+    return runGit(["rev-parse", "--short", "HEAD"], worktreePath ?? this.repoRoot);
+  }
+};
+
+// tools/src/cli/commands/milestone-create.cmd.ts
+var milestoneCreateCmd = async (args) => {
+  const name = args[0];
+  const number4 = parseInt(args[1] ?? "1", 10);
+  const projectBeadId = args[2] ?? "";
+  if (!name) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: milestone:create <name> [number] [project-bead-id]" } });
+  }
+  const beadStore = new BdCliAdapter();
+  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  const gitOps = new GitCliAdapter(process.cwd());
+  const result = await createMilestoneUseCase(
+    { projectBeadId, name, number: number4 },
+    { beadStore, artifactStore, gitOps }
+  );
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/application/milestone/list-milestones.ts
+var listMilestones = async (deps) => {
+  return deps.beadStore.list({ label: "tff:milestone" });
+};
+
+// tools/src/cli/commands/milestone-list.cmd.ts
+var milestoneListCmd = async (_args) => {
+  const beadStore = new BdCliAdapter();
+  const result = await listMilestones({ beadStore });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/domain/value-objects/slice-status.ts
+var SliceStatusSchema = external_exports.enum([
+  "discussing",
+  "researching",
+  "planning",
+  "executing",
+  "verifying",
+  "reviewing",
+  "completing",
+  "closed"
+]);
+var transitions = {
+  discussing: ["researching"],
+  researching: ["planning"],
+  planning: ["planning", "executing"],
+  executing: ["verifying"],
+  verifying: ["reviewing", "executing"],
+  reviewing: ["completing", "executing"],
+  completing: ["closed"],
+  closed: []
+};
+var canTransition = (from, to) => transitions[from].includes(to);
+
+// tools/src/domain/value-objects/complexity-tier.ts
+var ComplexityTierSchema = external_exports.enum(["S", "F-lite", "F-full"]);
+var TierConfigSchema = external_exports.object({
+  brainstormer: external_exports.boolean(),
+  research: external_exports.enum(["skip", "optional", "required"]),
+  freshReviewer: external_exports.literal(true),
+  tdd: external_exports.boolean()
+});
+
+// tools/src/domain/errors/invalid-transition.error.ts
+var invalidTransitionError = (sliceId, from, to) => createDomainError(
+  "INVALID_TRANSITION",
+  `Cannot transition slice "${sliceId}" from "${from}" to "${to}"`,
+  { sliceId, from, to }
+);
+
+// tools/src/domain/events/domain-event.ts
+var DomainEventTypeSchema = external_exports.enum([
+  "SLICE_PLANNED",
+  "SLICE_STATUS_CHANGED",
+  "TASK_COMPLETED",
+  "SYNC_CONFLICT"
+]);
+var DomainEventSchema = external_exports.object({
+  id: external_exports.string(),
+  type: DomainEventTypeSchema,
+  occurredAt: external_exports.date(),
+  payload: external_exports.record(external_exports.string(), external_exports.unknown())
+});
+var createDomainEvent = (type, payload) => ({
+  id: crypto.randomUUID(),
+  type,
+  occurredAt: /* @__PURE__ */ new Date(),
+  payload
+});
+
+// tools/src/domain/events/slice-status-changed.event.ts
+var sliceStatusChangedEvent = (sliceId, from, to) => createDomainEvent("SLICE_STATUS_CHANGED", { sliceId, from, to });
+
+// tools/src/domain/entities/slice.ts
+var SliceSchema = external_exports.object({
+  id: external_exports.uuid(),
+  milestoneId: external_exports.uuid(),
+  name: external_exports.string().min(1),
+  sliceId: external_exports.string(),
+  status: SliceStatusSchema,
+  tier: ComplexityTierSchema.optional(),
+  createdAt: external_exports.date()
+});
+var createSlice = (input) => {
+  const slice = {
+    id: crypto.randomUUID(),
+    milestoneId: input.milestoneId,
+    name: input.name,
+    sliceId: formatSliceId(input.milestoneNumber, input.sliceNumber),
+    status: "discussing",
+    createdAt: /* @__PURE__ */ new Date()
+  };
+  return SliceSchema.parse(slice);
+};
+var formatSliceId = (milestoneNumber, sliceNumber) => `M${milestoneNumber.toString().padStart(2, "0")}-S${sliceNumber.toString().padStart(2, "0")}`;
+var transitionSlice = (slice, to) => {
+  if (!canTransition(slice.status, to)) {
+    return Err(invalidTransitionError(slice.sliceId, slice.status, to));
+  }
+  const updated = { ...slice, status: to };
+  const event = sliceStatusChangedEvent(slice.sliceId, slice.status, to);
+  return Ok({ slice: updated, events: [event] });
+};
+
+// tools/src/application/slice/create-slice.ts
+var createSliceUseCase = async (input, deps) => {
+  const slice = createSlice({
+    milestoneId: input.milestoneBeadId,
+    name: input.name,
+    milestoneNumber: input.milestoneNumber,
+    sliceNumber: input.sliceNumber
+  });
+  const beadResult = await deps.beadStore.create({
+    label: "tff:slice",
+    title: input.name,
+    design: `Slice ${slice.sliceId}: ${input.name}`,
+    parentId: input.milestoneBeadId
+  });
+  if (!isOk(beadResult)) return beadResult;
+  const sliceDir = `.tff/slices/${slice.sliceId}`;
+  await deps.artifactStore.mkdir(sliceDir);
+  await deps.artifactStore.write(
+    `${sliceDir}/PLAN.md`,
+    `# Plan \u2014 ${slice.sliceId}: ${input.name}
+
+_Plan will be defined during /tff:plan._
+`
+  );
+  return Ok({ slice, beadId: beadResult.data.id });
+};
+
+// tools/src/cli/commands/slice-create.cmd.ts
+var sliceCreateCmd = async (args) => {
+  const [milestoneBeadId, name, msNum, slNum] = args;
+  if (!milestoneBeadId || !name) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: slice:create <milestone-bead-id> <name> [milestone-number] [slice-number]" } });
+  }
+  const beadStore = new BdCliAdapter();
+  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  const result = await createSliceUseCase(
+    { milestoneBeadId, name, milestoneNumber: parseInt(msNum ?? "1", 10), sliceNumber: parseInt(slNum ?? "1", 10) },
+    { beadStore, artifactStore }
+  );
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/application/lifecycle/transition-slice.ts
+var transitionSliceUseCase = async (input, deps) => {
+  const result = transitionSlice(input.slice, input.targetStatus);
+  if (!isOk(result)) return result;
+  await deps.beadStore.updateStatus(input.beadId, input.targetStatus);
+  return result;
+};
+
+// tools/src/cli/commands/slice-transition.cmd.ts
+var sliceTransitionCmd = async (args) => {
+  const [beadId, targetStatus, currentStatus, sliceId] = args;
+  if (!beadId || !targetStatus) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: slice:transition <bead-id> <target-status> [current-status] [slice-id]" } });
+  }
+  try {
+    SliceStatusSchema.parse(targetStatus);
+  } catch {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: `Invalid status: ${targetStatus}` } });
+  }
+  const slice = {
+    id: crypto.randomUUID(),
+    milestoneId: crypto.randomUUID(),
+    name: "slice",
+    sliceId: sliceId ?? "unknown",
+    status: currentStatus ?? "discussing",
+    createdAt: /* @__PURE__ */ new Date()
+  };
+  const beadStore = new BdCliAdapter();
+  const result = await transitionSliceUseCase(
+    { slice, beadId, targetStatus },
+    { beadStore }
+  );
+  if (isOk(result)) return JSON.stringify({ ok: true, data: { status: result.data.slice.status } });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
 // tools/src/application/lifecycle/classify-complexity.ts
 var classifyComplexity = (signals) => {
   if (signals.hasExternalIntegrations) return "F-full";
@@ -14045,19 +14396,123 @@ var wavesDetectCmd = async (args) => {
   }
 };
 
-// tools/src/domain/errors/fresh-reviewer-violation.error.ts
-var freshReviewerViolationError = (sliceId, agentRole) => createDomainError(
-  "FRESH_REVIEWER_VIOLATION",
-  `Agent "${agentRole}" cannot review slice "${sliceId}" \u2014 was the executor`,
-  { sliceId, agentRole }
-);
-
-// tools/src/application/review/enforce-fresh-reviewer.ts
-var enforceFreshReviewer = async (input, deps) => {
-  const executorsResult = await deps.reviewStore.getExecutorsForSlice(input.sliceId);
-  if (!isOk(executorsResult)) return executorsResult;
-  if (executorsResult.data.includes(input.reviewerAgent)) return Err(freshReviewerViolationError(input.sliceId, input.reviewerAgent));
+// tools/src/application/sync/generate-state.ts
+var generateState = async (input, deps) => {
+  const slicesResult = await deps.beadStore.list({ label: "tff:slice", parentId: input.milestoneId });
+  if (!isOk(slicesResult)) return slicesResult;
+  const slices = slicesResult.data;
+  const sliceStats = [];
+  let totalTasks = 0;
+  let closedTasks = 0;
+  for (const slice of slices) {
+    const tasksResult = await deps.beadStore.list({ label: "tff:task", parentId: slice.id });
+    const tasks = isOk(tasksResult) ? tasksResult.data : [];
+    const sliceClosed = tasks.filter((t) => t.status === "closed").length;
+    sliceStats.push({ title: slice.title, status: slice.status, totalTasks: tasks.length, closedTasks: sliceClosed });
+    totalTasks += tasks.length;
+    closedTasks += sliceClosed;
+  }
+  const closedSlices = slices.filter((s) => s.status === "closed").length;
+  const lines = [
+    `# State \u2014 ${input.milestoneName}`,
+    "",
+    "## Progress",
+    `- Slices: ${closedSlices}/${slices.length} completed`,
+    `- Tasks: ${closedTasks}/${totalTasks} completed`,
+    ""
+  ];
+  if (sliceStats.length > 0) {
+    lines.push("## Slices", "| Slice | Status | Tasks | Progress |", "|---|---|---|---|");
+    for (const stat of sliceStats) {
+      const pct = stat.totalTasks > 0 ? Math.round(stat.closedTasks / stat.totalTasks * 100) : 0;
+      lines.push(`| ${stat.title} | ${stat.status} | ${stat.closedTasks}/${stat.totalTasks} | ${pct}% |`);
+    }
+  }
+  lines.push("");
+  await deps.artifactStore.write(".tff/STATE.md", lines.join("\n"));
   return Ok(void 0);
+};
+
+// tools/src/cli/commands/sync-state.cmd.ts
+var syncStateCmd = async (args) => {
+  const [milestoneId, milestoneName] = args;
+  if (!milestoneId) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: sync:state <milestone-bead-id> [milestone-name]" } });
+  }
+  const beadStore = new BdCliAdapter();
+  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  const result = await generateState(
+    { milestoneId, milestoneName: milestoneName ?? "Milestone" },
+    { beadStore, artifactStore }
+  );
+  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/cli/commands/sync-reconcile.cmd.ts
+var syncReconcileCmd = async (_args) => {
+  return JSON.stringify({
+    ok: false,
+    error: { code: "NOT_IMPLEMENTED", message: "Full reconciliation not yet implemented. Use sync:state for beads\u2192markdown sync." }
+  });
+};
+
+// tools/src/application/worktree/create-worktree.ts
+var createWorktreeUseCase = async (input, deps) => {
+  const worktreePath = `.tff/worktrees/${input.sliceId}`;
+  const branchName = `slice/${input.sliceId}`;
+  const result = await deps.gitOps.createWorktree(worktreePath, branchName);
+  if (!isOk(result)) return result;
+  return Ok({ worktreePath, branchName });
+};
+
+// tools/src/cli/commands/worktree-create.cmd.ts
+var worktreeCreateCmd = async (args) => {
+  const [sliceId] = args;
+  if (!sliceId) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: worktree:create <slice-id>" } });
+  const gitOps = new GitCliAdapter(process.cwd());
+  const result = await createWorktreeUseCase({ sliceId }, { gitOps });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/application/worktree/delete-worktree.ts
+var deleteWorktreeUseCase = async (input, deps) => {
+  const worktreePath = `.tff/worktrees/${input.sliceId}`;
+  return deps.gitOps.deleteWorktree(worktreePath);
+};
+
+// tools/src/cli/commands/worktree-delete.cmd.ts
+var worktreeDeleteCmd = async (args) => {
+  const [sliceId] = args;
+  if (!sliceId) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: worktree:delete <slice-id>" } });
+  const gitOps = new GitCliAdapter(process.cwd());
+  const result = await deleteWorktreeUseCase({ sliceId }, { gitOps });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/application/worktree/list-worktrees.ts
+var listWorktreesUseCase = async (deps) => {
+  return deps.gitOps.listWorktrees();
+};
+
+// tools/src/cli/commands/worktree-list.cmd.ts
+var worktreeListCmd = async (_args) => {
+  const gitOps = new GitCliAdapter(process.cwd());
+  const result = await listWorktreesUseCase({ gitOps });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/application/review/record-review.ts
+var recordReviewUseCase = async (input, deps) => {
+  return deps.reviewStore.record({
+    sliceId: input.sliceId,
+    reviewerAgent: input.reviewerAgent,
+    status: input.status,
+    reviewedAt: /* @__PURE__ */ new Date()
+  });
 };
 
 // tools/src/infrastructure/adapters/review/review-metadata.adapter.ts
@@ -14092,6 +14547,37 @@ var ReviewMetadataAdapter = class {
   }
 };
 
+// tools/src/cli/commands/review-record.cmd.ts
+var reviewRecordCmd = async (args) => {
+  const [sliceId, agent, status] = args;
+  if (!sliceId || !agent || !status) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: review:record <slice-id> <agent> <approved|changes_requested>" } });
+  }
+  const beadStore = new BdCliAdapter();
+  const reviewStore = new ReviewMetadataAdapter(beadStore);
+  const result = await recordReviewUseCase(
+    { sliceId, reviewerAgent: agent, status },
+    { reviewStore }
+  );
+  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/domain/errors/fresh-reviewer-violation.error.ts
+var freshReviewerViolationError = (sliceId, agentRole) => createDomainError(
+  "FRESH_REVIEWER_VIOLATION",
+  `Agent "${agentRole}" cannot review slice "${sliceId}" \u2014 was the executor`,
+  { sliceId, agentRole }
+);
+
+// tools/src/application/review/enforce-fresh-reviewer.ts
+var enforceFreshReviewer = async (input, deps) => {
+  const executorsResult = await deps.reviewStore.getExecutorsForSlice(input.sliceId);
+  if (!isOk(executorsResult)) return executorsResult;
+  if (executorsResult.data.includes(input.reviewerAgent)) return Err(freshReviewerViolationError(input.sliceId, input.reviewerAgent));
+  return Ok(void 0);
+};
+
 // tools/src/cli/commands/review-check-fresh.cmd.ts
 var reviewCheckFreshCmd = async (args) => {
   const [sliceId, agent] = args;
@@ -14103,47 +14589,109 @@ var reviewCheckFreshCmd = async (args) => {
   return JSON.stringify({ ok: false, error: result.error });
 };
 
+// tools/src/application/checkpoint/save-checkpoint.ts
+var saveCheckpoint = async (data, deps) => {
+  const lines = [
+    `# Checkpoint \u2014 ${data.sliceId}`,
+    `- Base commit: ${data.baseCommit}`,
+    `- Current wave: ${data.currentWave}`,
+    `- Completed waves: [${data.completedWaves.join(", ")}]`,
+    `- Completed tasks: [${data.completedTasks.join(", ")}]`,
+    `- Executor log: ${data.executorLog.map((e) => `${e.agent}\u2192${e.taskRef}`).join(", ")}`,
+    "",
+    `<!-- checkpoint-json: ${JSON.stringify(data)} -->`,
+    ""
+  ];
+  const path = `.tff/slices/${data.sliceId}/CHECKPOINT.md`;
+  await deps.artifactStore.mkdir(`.tff/slices/${data.sliceId}`);
+  await deps.artifactStore.write(path, lines.join("\n"));
+  return Ok(void 0);
+};
+
+// tools/src/cli/commands/checkpoint-save.cmd.ts
+var checkpointSaveCmd = async (args) => {
+  const [dataJson] = args;
+  if (!dataJson) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: checkpoint:save <checkpoint-data-json>" } });
+  }
+  try {
+    const data = JSON.parse(dataJson);
+    const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+    const result = await saveCheckpoint(data, { artifactStore });
+    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+    return JSON.stringify({ ok: false, error: result.error });
+  } catch {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON input" } });
+  }
+};
+
+// tools/src/application/checkpoint/load-checkpoint.ts
+var loadCheckpoint = async (sliceId, deps) => {
+  const path = `.tff/slices/${sliceId}/CHECKPOINT.md`;
+  const contentResult = await deps.artifactStore.read(path);
+  if (!isOk(contentResult)) return Err(createDomainError("PROJECT_EXISTS", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
+  const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);
+  if (!match) return Err(createDomainError("SYNC_CONFLICT", `Checkpoint file for "${sliceId}" is corrupted`, { sliceId }));
+  const data = JSON.parse(match[1]);
+  return Ok(data);
+};
+
+// tools/src/cli/commands/checkpoint-load.cmd.ts
+var checkpointLoadCmd = async (args) => {
+  const [sliceId] = args;
+  if (!sliceId) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: checkpoint:load <slice-id>" } });
+  }
+  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  const result = await loadCheckpoint(sliceId, { artifactStore });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
 // tools/src/cli/index.ts
 var commands = {
   "project:init": projectInitCmd,
+  "project:get": projectGetCmd,
+  "milestone:create": milestoneCreateCmd,
+  "milestone:list": milestoneListCmd,
+  "slice:create": sliceCreateCmd,
+  "slice:transition": sliceTransitionCmd,
   "slice:classify": sliceClassifyCmd,
   "waves:detect": wavesDetectCmd,
-  "review:check-fresh": reviewCheckFreshCmd
+  "sync:state": syncStateCmd,
+  "sync:reconcile": syncReconcileCmd,
+  "worktree:create": worktreeCreateCmd,
+  "worktree:delete": worktreeDeleteCmd,
+  "worktree:list": worktreeListCmd,
+  "review:record": reviewRecordCmd,
+  "review:check-fresh": reviewCheckFreshCmd,
+  "checkpoint:save": checkpointSaveCmd,
+  "checkpoint:load": checkpointLoadCmd
 };
-var allCommands = [
-  "project:init",
-  "project:get",
-  "milestone:create",
-  "milestone:list",
-  "slice:create",
-  "slice:transition",
-  "slice:classify",
-  "waves:detect",
-  "sync:reconcile",
-  "sync:state",
-  "worktree:create",
-  "worktree:delete",
-  "worktree:list",
-  "review:record",
-  "review:check-fresh",
-  "checkpoint:save",
-  "checkpoint:load"
-];
 var main = async () => {
   const [command, ...args] = process.argv.slice(2);
   if (!command || command === "--help" || command === "-h") {
-    console.log(JSON.stringify({ ok: true, data: { name: "tff-tools", version: "0.1.0", commands: allCommands } }));
+    console.log(JSON.stringify({
+      ok: true,
+      data: { name: "tff-tools", version: "0.1.0", commands: Object.keys(commands) }
+    }));
     return;
   }
   const handler = commands[command];
   if (!handler) {
-    console.log(JSON.stringify({ ok: false, error: { code: "NOT_IMPLEMENTED", message: `Command "${command}" not yet implemented` } }));
+    console.log(JSON.stringify({
+      ok: false,
+      error: { code: "UNKNOWN_COMMAND", message: `Unknown command "${command}". Run --help for available commands.` }
+    }));
     return;
   }
   const output = await handler(args);
   console.log(output);
 };
 main().catch((err) => {
-  console.log(JSON.stringify({ ok: false, error: { code: "INTERNAL_ERROR", message: String(err) } }));
+  console.log(JSON.stringify({
+    ok: false,
+    error: { code: "INTERNAL_ERROR", message: String(err) }
+  }));
   process.exit(1);
 });

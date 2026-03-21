@@ -1,8 +1,13 @@
 export { initProject } from './project/init-project.js';
+export { getProject } from './project/get-project.js';
+export { createMilestoneUseCase } from './milestone/create-milestone.js';
+export { listMilestones } from './milestone/list-milestones.js';
+export { createSliceUseCase } from './slice/create-slice.js';
 export { classifyComplexity } from './lifecycle/classify-complexity.js';
 export { transitionSliceUseCase } from './lifecycle/transition-slice.js';
 export { detectWaves } from './waves/detect-waves.js';
 export { enforceFreshReviewer } from './review/enforce-fresh-reviewer.js';
+export { recordReviewUseCase } from './review/record-review.js';
 export { generateState } from './sync/generate-state.js';
 export { saveCheckpoint, type CheckpointData } from './checkpoint/save-checkpoint.js';
 export { loadCheckpoint } from './checkpoint/load-checkpoint.js';
