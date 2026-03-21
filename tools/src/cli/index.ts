@@ -60,7 +60,7 @@ const main = async () => {
   if (!command || command === '--help' || command === '-h') {
     console.log(JSON.stringify({
       ok: true,
-      data: { name: 'tff-tools', version: '0.2.0', commands: Object.keys(commands) },
+      data: { name: 'tff-tools', version: '0.3.0', commands: Object.keys(commands) },
     }));
     return;
   }
