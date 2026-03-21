@@ -1,5 +1,5 @@
 import { reconcileState } from '../../application/sync/reconcile-state.js';
-import { BdCliAdapter } from '../../infrastructure/adapters/beads/bd-cli.adapter.js';
+import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { isOk } from '../../domain/result.js';
 
@@ -12,7 +12,7 @@ export const syncReconcileCmd = async (args: string[]): Promise<string> => {
     });
   }
 
-  const beadStore = new BdCliAdapter();
+  const { store: beadStore } = await createBeadAdapter();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
 
   const result = await reconcileState(
@@ -20,6 +20,17 @@ export const syncReconcileCmd = async (args: string[]): Promise<string> => {
     { beadStore, artifactStore },
   );
 
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  if (isOk(result)) {
+    // Compact snapshot after reconciliation
+    try {
+      const { readFile, writeFile } = await import('node:fs/promises');
+      const { compactSnapshot } = await import('../../application/snapshot/compact-snapshot.js');
+      const content = await readFile('.tff/beads-snapshot.jsonl', 'utf-8');
+      const compacted = compactSnapshot(content);
+      await writeFile('.tff/beads-snapshot.jsonl', compacted, 'utf-8');
+    } catch { /* compact failure is non-blocking */ }
+
+    return JSON.stringify({ ok: true, data: result.data });
+  }
   return JSON.stringify({ ok: false, error: result.error });
 };

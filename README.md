@@ -39,7 +39,7 @@ The Forge Flow (`tff`) is a Claude Code plugin that orchestrates AI agents throu
 
 ## Setup Guide
 
-The Forge Flow requires three dependencies: **Dolt** (database for beads), **beads** (issue tracker CLI), and **plannotator** (interactive review UI). Follow these steps in order.
+The Forge Flow is built on three pillars: **beads** (AI-native issue tracker), **Dolt** (version-controlled database), and **plannotator** (interactive review UI). While tff can run in a degraded markdown-only mode without beads, you'll lose the features that make it powerful: atomic task claiming, dependency-aware wave parallelism, team state sync, and `bd ready` ("what should I work on next?"). **Install all three for the full experience.**
 
 ### Step 1: Install Dolt
 
