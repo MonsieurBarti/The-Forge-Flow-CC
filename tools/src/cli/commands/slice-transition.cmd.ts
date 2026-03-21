@@ -31,6 +31,14 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
     { beadStore },
   );
 
-  if (isOk(result)) return JSON.stringify({ ok: true, data: { status: result.data.slice.status } });
+  if (isOk(result)) {
+    // Auto-snapshot after successful transition
+    try {
+      const { snapshotSaveCmd } = await import('./snapshot-save.cmd.js');
+      await snapshotSaveCmd([]);
+    } catch { /* snapshot failure is non-blocking */ }
+
+    return JSON.stringify({ ok: true, data: { status: result.data.slice.status } });
+  }
   return JSON.stringify({ ok: false, error: result.error });
 };
