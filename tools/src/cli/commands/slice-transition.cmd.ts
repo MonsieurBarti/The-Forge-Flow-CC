@@ -38,6 +38,19 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
       await snapshotSaveCmd([]);
     } catch { /* snapshot failure is non-blocking */ }
 
+    // Auto-sync to Dolt remote if configured
+    try {
+      const { readFile } = await import('node:fs/promises');
+      const { doltPush } = await import('../../infrastructure/adapters/dolt/dolt-sync.js');
+      const settingsYaml = await readFile('.tff/settings.yaml', 'utf-8');
+      // Simple YAML parsing for dolt section
+      const autoSync = settingsYaml.includes('auto-sync: true');
+      const remoteMatch = settingsYaml.match(/remote:\s*(\S+)/);
+      if (autoSync && remoteMatch) {
+        await doltPush(remoteMatch[1]);
+      }
+    } catch { /* dolt sync failure is non-blocking */ }
+
     return JSON.stringify({ ok: true, data: { status: result.data.slice.status } });
   }
   return JSON.stringify({ ok: false, error: result.error });
