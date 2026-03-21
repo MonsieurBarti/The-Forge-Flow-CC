@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-03-22
+
+### Added
+
+**Debug Flow**
+- `/tff:debug` command — two-phase diagnose→fix workflow for systematic bug investigation
+- `debugging-methodology` skill — Track A (reproducible error) and Track B (symptom-based) diagnostic methodology
+- Phase 1 (diagnose) runs without creating a slice; Phase 2 creates S-tier slice only after root cause confirmed
+- External root cause detection — exits with diagnostic report and workaround suggestions instead of entering fix phase
+
+**Existing-Repo Onboarding**
+- `/tff:new` detects existing source files via common extension heuristic (23 extensions)
+- Consent-gated codebase analysis — runs `map-codebase` only with user approval
+- Synthesizes proposed project name, vision, and requirements from generated docs
+- Pre-fills project setup with user-validated values; graceful fallback on analysis failure
+- `map-codebase` prerequisite relaxed to allow running before project init
+
+**Settings UX**
+- Default `settings.yaml` generated during `/tff:new` with inline YAML comments explaining every field
+- `references/settings-template.md` — canonical commented template (single source of truth)
+- `/tff:settings` expanded to manage all sections: model-profiles, autonomy, auto-learn, dolt
+- Missing-field detection — offers to add new fields with defaults to existing configs
+- `ProjectSettingsSchema` — full-file Zod schema with resilient per-field defaults via `.catch()`
+- `loadProjectSettings()` — end-to-end YAML string → settings with graceful corruption handling
+
+### Changed
+
+- Autonomy default changed from `plan-to-pr` to `guided` (safest for new projects)
+- `/tff:settings` description updated to reflect expanded scope
+
+### Fixed
+
+- Dolt auto-sync in `slice-transition.cmd.ts` replaced naive `includes('auto-sync: true')` substring matching with proper parsed settings — commented-out dolt config no longer falsely triggers sync
+
 ## [0.4.0] - 2026-03-21
 
 ### Added

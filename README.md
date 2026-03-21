@@ -282,15 +282,21 @@ Creates the milestone PR (`milestone/M01` -> `main`), runs a final security audi
 
 **Next step suggested:** `/tff:new-milestone` for the next milestone.
 
-### Quick fixes during development
+### Quick fixes and debugging
 
-Found a bug while working on a later slice? Use the S-tier shortcut:
+Found a bug while working on a later slice? Two options:
 
+**If you know the fix:**
 ```
 /tff:quick "Fix null pointer in user validation"
 ```
-
 Skips brainstorming and research, goes straight to plan -> execute -> ship.
+
+**If you need to investigate:**
+```
+/tff:debug "Users getting 500 on login after password reset"
+```
+Systematically diagnoses the issue first (no slice created), then fixes via S-tier slice once root cause is confirmed.
 
 ---
 
@@ -316,6 +322,7 @@ Skips brainstorming and research, goes straight to plan -> execute -> ship.
 | `/tff:verify [slice-id]` | Verify acceptance criteria |
 | `/tff:ship [slice-id]` | PR review and merge slice |
 | `/tff:quick <description>` | Fast-track S-tier changes |
+| `/tff:debug <error or symptom>` | Diagnose and fix a bug systematically |
 
 ### Milestone Lifecycle
 
@@ -336,7 +343,7 @@ Skips brainstorming and research, goes straight to plan -> execute -> ship.
 | `/tff:resume` | Restore from checkpoint |
 | `/tff:sync` | Sync markdown and beads |
 | `/tff:health` | Diagnose state consistency |
-| `/tff:settings` | Configure model profiles |
+| `/tff:settings` | View and modify all project settings |
 | `/tff:map-codebase` | Analyze codebase and generate docs |
 | `/tff:help` | Show command reference |
 
@@ -355,11 +362,11 @@ Skips brainstorming and research, goes straight to plan -> execute -> ship.
 ```
 the-forge-flow/
   .claude-plugin/         # CC marketplace manifest
-  commands/tff/           # 29 slash commands (.md)
+  commands/tff/           # 30 slash commands (.md)
   agents/                 # 13 agent definitions (.md)
-  skills/                 # 6 reusable knowledge skills (.md)
-  workflows/              # 22 orchestration workflows (.md)
-  references/             # 6 reference documents (.md)
+  skills/                 # 7 reusable knowledge skills (.md)
+  workflows/              # 23 orchestration workflows (.md)
+  references/             # 7 reference documents (.md)
   hooks/                  # PostToolUse observation hook (.sh)
   tools/
     src/
@@ -408,6 +415,7 @@ Skills are reusable knowledge fragments that agents load via `@skills/<name>.md`
 | commit-conventions | all executor agents, fixer |
 | plannotator-usage | plan, verify, ship workflows |
 | interactive-design | discuss workflow (conversation methodology, spec templates, reviewer prompts) |
+| debugging-methodology | debug workflow (Track A: reproducible errors, Track B: symptom-based diagnosis) |
 
 ## Work Hierarchy
 
@@ -437,19 +445,19 @@ main
 
 ## Configuration
 
-Project settings live in `.tff/settings.yaml`:
+Project settings live in `.tff/settings.yaml`. Generated automatically by `/tff:new` with inline comments. Manage interactively with `/tff:settings`.
 
 ```yaml
 model-profiles:
   quality:
-    model: opus
+    model: opus       # brainstormer, architect, code-reviewer, security-auditor
   balanced:
-    model: sonnet
+    model: sonnet     # product-lead, tester
   budget:
-    model: sonnet
+    model: sonnet     # frontend-dev, backend-dev, devops, fixer, doc-writer
 
 autonomy:
-  mode: plan-to-pr    # "guided" | "plan-to-pr"
+  mode: guided        # "guided" (pause at every step) | "plan-to-pr" (auto-transition)
 
 auto-learn:
   weights:
@@ -464,7 +472,13 @@ auto-learn:
   clustering:
     min-sessions: 3
     min-patterns: 2
+
+# dolt:               # Uncomment after: dolt remote add origin <url>
+#   remote: origin
+#   auto-sync: true
 ```
+
+Settings are resilient: corrupted or partial files fall back to defaults per field. Run `/tff:settings` to detect and add missing fields.
 
 ## License
 
