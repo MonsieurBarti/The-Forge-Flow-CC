@@ -1,8 +1,0 @@
-{
-  "name": "the-forge-flow",
-  "description": "Autonomous coding agent orchestrator with dual markdown+beads state, plannotator integration, and wave-based parallel execution",
-  "version": "0.2.0",
-  "author": { "name": "MonsieurBarti" },
-  "repository": "https://github.com/MonsieurBarti/The-Forge-Flow-CC",
-  "keywords": ["orchestration", "beads", "plannotator", "agents", "tdd"]
-}
