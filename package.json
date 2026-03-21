@@ -18,6 +18,10 @@
     "plannotator",
     "orchestration"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MonsieurBarti/The-Forge-Flow-CC.git"
+  },
   "license": "MIT",
   "author": "MonsieurBarti",
   "devDependencies": {

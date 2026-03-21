@@ -131,14 +131,14 @@ All CLI commands return JSON to stdout:
   "description": "Autonomous coding agent orchestrator with dual markdown+beads state, plannotator integration, and wave-based parallel execution",
   "version": "0.1.0",
   "author": { "name": "MonsieurBarti" },
-  "repository": "https://github.com/MonsieurBarti/the-forge-flow",
+  "repository": "https://github.com/MonsieurBarti/The-Forge-Flow-CC",
   "keywords": ["orchestration", "beads", "plannotator", "agents", "tdd"]
 }
 ```
 
 **Installation:**
 ```
-claude /plugin marketplace add MonsieurBarti/the-forge-flow
+claude /plugin marketplace add MonsieurBarti/The-Forge-Flow-CC
 claude /plugin install the-forge-flow@the-forge-flow
 ```
 
