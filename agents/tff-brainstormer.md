@@ -15,7 +15,11 @@ Socratic method, pre-mortem analysis, scope locking.
 
 ## Role
 
-Spawned during **discussing**. Always FRESH. ¬ S-tier slices.
+Two modes:
+1. **Spec challenger** (primary): spawned after spec is drafted to stress-test design. Input: spec content. Output: critical issues ∨ approval.
+2. **Discussion driver** (legacy): spawned for direct brainstorming outside tff workflow.
+
+Always FRESH. ¬ S-tier slices. F-full only for spec challenge.
 
 ## Philosophy
 
