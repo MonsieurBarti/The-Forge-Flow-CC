@@ -5,7 +5,7 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 Analyze codebase → structured docs via parallel doc-writer agents.
 
 ## Prerequisites
-tff project exists
+`.tff/docs/` output dir exists (created by caller)
 
 ## Steps
 1. `mkdir -p .tff/docs`
