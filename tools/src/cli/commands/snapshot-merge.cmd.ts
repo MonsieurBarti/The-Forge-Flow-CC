@@ -23,7 +23,7 @@ export async function snapshotMergeCmd(args: string[]) {
   if (result.conflicts.length > 0) {
     await mkdir('.tff', { recursive: true });
     const conflictMd = result.conflicts.map(c => [
-      `## Conflict: ${c.entityId}`,
+      `## Conflict: ${c.id}`,
       '### Ours',
       '```', c.ours, '```',
       '### Theirs',
