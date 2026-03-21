@@ -1,43 +1,16 @@
-# Workflow: Detect Patterns
+# Detect Patterns
 
-Run the pattern detection pipeline: extract n-grams, aggregate, rank.
+Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
-## Context
-
-Read the orchestrator pattern: @references/orchestrator-pattern.md
-Read conventions: @references/conventions.md
+Run pattern detection pipeline: extract → aggregate → rank.
 
 ## Prerequisites
-
-- Observation is enabled in `.tff/settings.yaml`
-- `.tff/observations/sessions.jsonl` exists with data
+observation enabled in `.tff/settings.yaml` ∧ `.tff/observations/sessions.jsonl` exists
 
 ## Steps
-
-### 1. Extract n-grams
-
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs patterns:extract
-```
-
-### 2. Aggregate patterns
-
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs patterns:aggregate
-```
-
-### 3. Rank candidates
-
-```bash
-node <plugin-path>/tools/dist/tff-tools.cjs patterns:rank
-```
-
-### 4. Show results
-
-Read `.tff/observations/candidates.jsonl` and display ranked candidates to the user with scores and pattern sequences.
-
-If no candidates found above threshold, inform user and suggest lowering threshold or collecting more observations.
-
-### Next Step
-
-Suggest `/tff:suggest-skills` to see candidates with human-readable summaries, or `/tff:create-skill` to create a skill from a specific candidate.
+1. EXTRACT: `tff-tools patterns:extract`
+2. AGGREGATE: `tff-tools patterns:aggregate`
+3. RANK: `tff-tools patterns:rank`
+4. DISPLAY `.tff/observations/candidates.jsonl`: ranked candidates w/ scores + sequences
+   - ∅ candidates above threshold → inform user, suggest lower threshold or more observations
+5. NEXT: suggest `/tff:suggest-skills` or `/tff:create-skill`
