@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "The_Forge_Flow_CC",
+  "project_id": "de11d54b-e05c-4f95-934d-84baf202cf9b"
+}

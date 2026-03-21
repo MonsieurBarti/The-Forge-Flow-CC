@@ -3,3 +3,7 @@ node_modules/
 .tff/worktrees/
 .claude/
 docs/
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
