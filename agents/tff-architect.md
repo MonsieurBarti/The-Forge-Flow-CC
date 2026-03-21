@@ -75,6 +75,12 @@ Report BLOCKED if:
 - No circular dependencies introduced
 - Patterns are consistent across the codebase
 
+## Skills
+
+Load these skills for this task:
+- @skills/hexagonal-architecture.md
+- @skills/code-review-checklist.md
+
 ## Status Protocol
 
 Follow @references/agent-status-protocol.md

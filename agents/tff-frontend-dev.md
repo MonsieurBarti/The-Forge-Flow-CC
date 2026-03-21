@@ -66,6 +66,12 @@ Report NEEDS_CONTEXT if:
 - Accessible and responsive — keyboard navigation works, no accessibility violations
 - Clean, atomic commits with descriptive messages
 
+## Skills
+
+Load these skills for this task:
+- @skills/hexagonal-architecture.md
+- @skills/commit-conventions.md
+
 ## Status Protocol
 
 Follow @references/agent-status-protocol.md

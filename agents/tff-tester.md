@@ -64,6 +64,12 @@ Report NEEDS_CONTEXT if:
 - Failure messages are meaningful — they explain what's missing, not just that something failed
 - Tests are committed and the domain agent can immediately start making them green
 
+## Skills
+
+Load these skills for this task:
+- @skills/test-driven-development.md
+- @skills/commit-conventions.md
+
 ## Status Protocol
 
 Follow @references/agent-status-protocol.md

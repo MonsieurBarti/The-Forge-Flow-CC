@@ -74,6 +74,11 @@ Report NEEDS_CONTEXT if:
 - Each fix is atomic and traceable to its finding
 - No unrelated code was modified
 
+## Skills
+
+Load these skills for this task:
+- @skills/commit-conventions.md
+
 ## Status Protocol
 
 Follow @references/agent-status-protocol.md

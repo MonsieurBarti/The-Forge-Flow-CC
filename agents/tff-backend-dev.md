@@ -61,6 +61,12 @@ Report NEEDS_CONTEXT if:
 - All tests pass after implementation
 - Clean, atomic commits with descriptive messages
 
+## Skills
+
+Load these skills for this task:
+- @skills/hexagonal-architecture.md
+- @skills/commit-conventions.md
+
 ## Status Protocol
 
 Follow @references/agent-status-protocol.md

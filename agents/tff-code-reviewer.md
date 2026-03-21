@@ -80,6 +80,11 @@ Report BLOCKED if:
 - Strengths are acknowledged — balanced feedback is better feedback
 - Zero scope creep into requirements or security territory
 
+## Skills
+
+Load these skills for this task:
+- @skills/code-review-checklist.md
+
 ## Status Protocol
 
 Follow @references/agent-status-protocol.md

@@ -73,6 +73,12 @@ Report NEEDS_CONTEXT if:
 - Configuration syntax is valid and passes linting
 - Clean, atomic commits with descriptive messages
 
+## Skills
+
+Load these skills for this task:
+- @skills/hexagonal-architecture.md
+- @skills/commit-conventions.md
+
 ## Status Protocol
 
 Follow @references/agent-status-protocol.md

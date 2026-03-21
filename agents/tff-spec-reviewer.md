@@ -83,3 +83,8 @@ You are spawned during **slice PR review**, BEFORE the code-reviewer. You are al
 - 100% of acceptance criteria are verified against actual code
 - Zero false PASS verdicts (you never say COVERED for something that isn't)
 - Clear, actionable feedback for every MISSING item
+
+## Skills
+
+Load these skills for this task:
+- @skills/code-review-checklist.md
