@@ -1,0 +1,36 @@
+import { transitionSliceUseCase } from '../../application/lifecycle/transition-slice.js';
+import { BdCliAdapter } from '../../infrastructure/adapters/beads/bd-cli.adapter.js';
+import { type SliceStatus, SliceStatusSchema } from '../../domain/value-objects/slice-status.js';
+import { isOk } from '../../domain/result.js';
+
+export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
+  const [beadId, targetStatus, currentStatus, sliceId] = args;
+  if (!beadId || !targetStatus) {
+    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: slice:transition <bead-id> <target-status> [current-status] [slice-id]' } });
+  }
+
+  try {
+    SliceStatusSchema.parse(targetStatus);
+  } catch {
+    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: `Invalid status: ${targetStatus}` } });
+  }
+
+  // Build a minimal slice object from the args
+  const slice = {
+    id: crypto.randomUUID(),
+    milestoneId: crypto.randomUUID(),
+    name: 'slice',
+    sliceId: sliceId ?? 'unknown',
+    status: (currentStatus ?? 'discussing') as SliceStatus,
+    createdAt: new Date(),
+  };
+
+  const beadStore = new BdCliAdapter();
+  const result = await transitionSliceUseCase(
+    { slice, beadId, targetStatus: targetStatus as SliceStatus },
+    { beadStore },
+  );
+
+  if (isOk(result)) return JSON.stringify({ ok: true, data: { status: result.data.slice.status } });
+  return JSON.stringify({ ok: false, error: result.error });
+};
