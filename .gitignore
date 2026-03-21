@@ -2,3 +2,4 @@ node_modules/
 *.tsbuildinfo
 .tff/worktrees/
 .claude/
+docs/

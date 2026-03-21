@@ -12,7 +12,12 @@ Read conventions: @references/conventions.md
 ## Steps
 
 ### 1. Create milestone PR
-Create PR: `milestone/<milestone>` → `main`
+Create PR: `milestone/<milestone>` → `main` using `gh pr create`.
+
+**ALWAYS show the PR URL to the user.** Example:
+```
+PR created: https://github.com/owner/repo/pull/42
+```
 
 ### 2. Security audit on milestone
 Spawn **tff-security-auditor** for milestone-level review.

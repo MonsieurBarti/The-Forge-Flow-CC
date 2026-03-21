@@ -41,7 +41,12 @@ plannotator review
 User reviews the code changes in the slice worktree.
 
 ### 6. Create slice PR
-Create PR: `slice/<slice-id>` → `milestone/<milestone>`
+Create PR: `slice/<slice-id>` → `milestone/<milestone>` using `gh pr create`.
+
+**ALWAYS show the PR URL to the user.** Example:
+```
+PR created: https://github.com/owner/repo/pull/42
+```
 
 ### 7. After PR is merged (by user via GitHub)
 Once the user merges the PR on GitHub:
