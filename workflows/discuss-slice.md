@@ -2,6 +2,8 @@
 
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
+**Autonomy**: check `.tff/settings.yaml` → `autonomy.mode` before pausing.
+
 ## Prerequisites
 status = discussing
 
@@ -55,7 +57,10 @@ AskUserQuestion: "Spec at `.tff/slices/<id>/SPEC.md`. Approve?"
 `tff-tools slice:transition <id> researching`
 
 ## Auto-Transition
-Read `.tff/settings.yaml` → `autonomy.mode`.
-`plan-to-pr` ∧ ¬HUMAN_GATE → auto-invoke next workflow via `tff-tools workflow:next <status>`.
-`guided` → suggest next step, wait for user.
-Progress: `[tff] <slice-id>: discussing → researching`
+After completing all steps above:
+1. READ `.tff/settings.yaml` → check `autonomy.mode`
+2. IF `plan-to-pr`:
+   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
+   - Human gates (plan approval, spec approval, completion): pause and ask
+3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
+4. Log: `[tff] <slice-id>: discussing → researching`
