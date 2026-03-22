@@ -8,7 +8,7 @@ all slices closed ∧ milestone audit passed
 ## Steps
 1. PR: `gh pr create` milestone/<milestone> → main — **ALWAYS show PR URL**
 2. SPAWN tff-security-auditor: milestone-level review
-3. REVIEW: `plannotator review`
+3. REVIEW: invoke Skill `plannotator-review` for interactive milestone review
 4. HANDLE: approved → inform ready to merge | changes → fix ∧ re-review
 5. AFTER MERGE (user merges via GitHub):
    - close milestone bead, update STATE.md
