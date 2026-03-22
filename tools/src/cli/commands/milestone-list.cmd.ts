@@ -1,6 +1,6 @@
 import { listMilestones } from '../../application/milestone/list-milestones.js';
-import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { isOk } from '../../domain/result.js';
+import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 
 export const milestoneListCmd = async (_args: string[]): Promise<string> => {
   const { store: beadStore } = await createBeadAdapter();

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { deleteWorktreeUseCase } from './delete-worktree.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { isErr, isOk } from '../../domain/result.js';
 import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
-import { isOk, isErr } from '../../domain/result.js';
+import { deleteWorktreeUseCase } from './delete-worktree.js';
 
 describe('deleteWorktreeUseCase', () => {
   let gitOps: InMemoryGitOps;

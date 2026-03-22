@@ -1,5 +1,5 @@
-import { type Observation } from '../../domain/value-objects/observation.js';
-import { type Pattern } from '../../domain/value-objects/pattern.js';
+import type { Observation } from '../../domain/value-objects/observation.js';
+import type { Pattern } from '../../domain/value-objects/pattern.js';
 
 export const extractNgrams = (observations: Observation[], n: number): Pattern[] => {
   if (observations.length < n) return [];
@@ -13,13 +13,16 @@ export const extractNgrams = (observations: Observation[], n: number): Pattern[]
   }
 
   // Extract n-grams per session, track counts
-  const ngramMap = new Map<string, {
-    sequence: string[];
-    count: number;
-    sessionSet: Set<string>;
-    projectSet: Set<string>;
-    lastSeen: string;
-  }>();
+  const ngramMap = new Map<
+    string,
+    {
+      sequence: string[];
+      count: number;
+      sessionSet: Set<string>;
+      projectSet: Set<string>;
+      lastSeen: string;
+    }
+  >();
 
   for (const [sessionId, sessionObs] of sessions) {
     for (let i = 0; i <= sessionObs.length - n; i++) {

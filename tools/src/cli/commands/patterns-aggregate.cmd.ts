@@ -1,6 +1,6 @@
 import { aggregatePatterns } from '../../application/patterns/aggregate-patterns.js';
-import { JsonlStoreAdapter } from '../../infrastructure/adapters/jsonl/jsonl-store.adapter.js';
 import { isOk } from '../../domain/result.js';
+import { JsonlStoreAdapter } from '../../infrastructure/adapters/jsonl/jsonl-store.adapter.js';
 
 export const patternsAggregateCmd = async (args: string[]): Promise<string> => {
   const store = new JsonlStoreAdapter('.tff/observations');

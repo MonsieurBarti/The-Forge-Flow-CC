@@ -1,7 +1,7 @@
 import { reconcileState } from '../../application/sync/reconcile-state.js';
+import { isOk } from '../../domain/result.js';
 import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
-import { isOk } from '../../domain/result.js';
 
 export const syncReconcileCmd = async (args: string[]): Promise<string> => {
   const [milestoneId, milestoneName] = args;
@@ -28,7 +28,9 @@ export const syncReconcileCmd = async (args: string[]): Promise<string> => {
       const content = await readFile('.tff/beads-snapshot.jsonl', 'utf-8');
       const compacted = compactSnapshot(content);
       await writeFile('.tff/beads-snapshot.jsonl', compacted, 'utf-8');
-    } catch { /* compact failure is non-blocking */ }
+    } catch {
+      /* compact failure is non-blocking */
+    }
 
     return JSON.stringify({ ok: true, data: result.data });
   }

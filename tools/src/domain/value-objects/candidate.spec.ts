@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { CandidateSchema } from './candidate.js';
 
 describe('Candidate', () => {
@@ -12,18 +12,22 @@ describe('Candidate', () => {
   });
 
   it('should reject score above 1', () => {
-    expect(() => CandidateSchema.parse({
-      pattern: ['Read'],
-      score: 1.5,
-      evidence: { count: 1, sessions: 1, projects: 1 },
-    })).toThrow();
+    expect(() =>
+      CandidateSchema.parse({
+        pattern: ['Read'],
+        score: 1.5,
+        evidence: { count: 1, sessions: 1, projects: 1 },
+      }),
+    ).toThrow();
   });
 
   it('should reject negative score', () => {
-    expect(() => CandidateSchema.parse({
-      pattern: ['Read'],
-      score: -0.1,
-      evidence: { count: 1, sessions: 1, projects: 1 },
-    })).toThrow();
+    expect(() =>
+      CandidateSchema.parse({
+        pattern: ['Read'],
+        score: -0.1,
+        evidence: { count: 1, sessions: 1, projects: 1 },
+      }),
+    ).toThrow();
   });
 });

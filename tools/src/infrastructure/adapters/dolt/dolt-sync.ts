@@ -39,12 +39,16 @@ export async function doltPush(remote: string): Promise<void> {
   try {
     validateRemote(remote);
     await exec('dolt', ['push', remote], { timeout: 30000, cwd: process.cwd() });
-  } catch { /* non-blocking */ }
+  } catch {
+    /* non-blocking */
+  }
 }
 
 export async function doltPull(remote: string): Promise<void> {
   try {
     validateRemote(remote);
     await exec('dolt', ['pull', remote], { timeout: 30000, cwd: process.cwd() });
-  } catch { /* non-blocking */ }
+  } catch {
+    /* non-blocking */
+  }
 }

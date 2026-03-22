@@ -1,13 +1,16 @@
 import { transitionSliceUseCase } from '../../application/lifecycle/transition-slice.js';
+import { isOk } from '../../domain/result.js';
+import { type SliceStatus, SliceStatusSchema } from '../../domain/value-objects/slice-status.js';
 import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { tffWarn } from '../../infrastructure/adapters/logging/warn.js';
-import { type SliceStatus, SliceStatusSchema } from '../../domain/value-objects/slice-status.js';
-import { isOk } from '../../domain/result.js';
 
 export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
   const [beadId, targetStatus] = args;
   if (!beadId || !targetStatus) {
-    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: slice:transition <bead-id> <target-status>' } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: 'INVALID_ARGS', message: 'Usage: slice:transition <bead-id> <target-status>' },
+    });
   }
 
   try {
@@ -29,11 +32,17 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
   // Validate bead status is a valid slice status
   const parsedStatus = SliceStatusSchema.safeParse(bead.status);
   if (!parsedStatus.success) {
-    return JSON.stringify({ ok: false, error: { code: 'VALIDATION_ERROR', message: `Bead has invalid slice status: "${bead.status}"` } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: 'VALIDATION_ERROR', message: `Bead has invalid slice status: "${bead.status}"` },
+    });
   }
 
   if (!bead.parentId) {
-    return JSON.stringify({ ok: false, error: { code: 'VALIDATION_ERROR', message: `Bead "${beadId}" has no parent milestone` } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: 'VALIDATION_ERROR', message: `Bead "${beadId}" has no parent milestone` },
+    });
   }
 
   // Extract slice ID from bead design field (format: "Slice M01-S01: ...")
@@ -59,7 +68,9 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
     try {
       const { snapshotSaveCmd } = await import('./snapshot-save.cmd.js');
       await snapshotSaveCmd([]);
-    } catch (e) { tffWarn('snapshot failed', { error: String(e) }); }
+    } catch (e) {
+      tffWarn('snapshot failed', { error: String(e) });
+    }
 
     // Auto-sync to Dolt remote if configured
     try {
@@ -71,13 +82,17 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
       if (settings.dolt?.['auto-sync'] && settings.dolt.remote) {
         await doltPush(settings.dolt.remote);
       }
-    } catch (e) { tffWarn('dolt sync failed', { error: String(e) }); }
+    } catch (e) {
+      tffWarn('dolt sync failed', { error: String(e) });
+    }
 
     // Auto-regenerate STATE.md
     try {
       const { syncStateCmd } = await import('./sync-state.cmd.js');
       await syncStateCmd([bead.parentId ?? '']);
-    } catch (e) { tffWarn('state sync failed', { error: String(e) }); }
+    } catch (e) {
+      tffWarn('state sync failed', { error: String(e) });
+    }
 
     // Auto-save CHECKPOINT.md
     try {
@@ -91,7 +106,9 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
         executorLog: [],
       });
       await checkpointSaveCmd([checkpointData]);
-    } catch (e) { tffWarn('checkpoint save failed', { error: String(e) }); }
+    } catch (e) {
+      tffWarn('checkpoint save failed', { error: String(e) });
+    }
 
     return JSON.stringify({ ok: true, data: { status: result.data.slice.status } });
   }

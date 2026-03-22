@@ -14,13 +14,9 @@ export const Ok = <T>(data: T): OkResult<T> => ({ ok: true, data });
 
 export const Err = <E>(error: E): ErrResult<E> => ({ ok: false, error });
 
-export const isOk = <T, E>(result: Result<T, E>): result is OkResult<T> =>
-  result.ok === true;
+export const isOk = <T, E>(result: Result<T, E>): result is OkResult<T> => result.ok === true;
 
-export const isErr = <T, E>(result: Result<T, E>): result is ErrResult<E> =>
-  result.ok === false;
+export const isErr = <T, E>(result: Result<T, E>): result is ErrResult<E> => result.ok === false;
 
-export const match = <T, E, R>(
-  result: Result<T, E>,
-  handlers: { onOk: (data: T) => R; onErr: (error: E) => R },
-): R => (result.ok ? handlers.onOk(result.data) : handlers.onErr(result.error));
+export const match = <T, E, R>(result: Result<T, E>, handlers: { onOk: (data: T) => R; onErr: (error: E) => R }): R =>
+  result.ok ? handlers.onOk(result.data) : handlers.onErr(result.error);

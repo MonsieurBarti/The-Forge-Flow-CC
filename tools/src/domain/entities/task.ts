@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { type Result, Ok, Err } from '../result.js';
-import { type DomainError, createDomainError } from '../errors/domain-error.js';
+import { createDomainError, type DomainError } from '../errors/domain-error.js';
+import type { DomainEvent } from '../events/domain-event.js';
 import { taskCompletedEvent } from '../events/task-completed.event.js';
-import { type DomainEvent } from '../events/domain-event.js';
+import { Err, Ok, type Result } from '../result.js';
 
 export const TaskStatusSchema = z.enum(['open', 'in_progress', 'closed']);
 export type TaskStatus = z.infer<typeof TaskStatusSchema>;
@@ -49,9 +49,7 @@ export const createTask = (input: {
   return TaskSchema.parse(task);
 };
 
-export const startTask = (
-  task: Task,
-): Result<Task, DomainError> => {
+export const startTask = (task: Task): Result<Task, DomainError> => {
   if (task.status !== 'open') {
     return Err(
       createDomainError(

@@ -8,17 +8,12 @@ export const RefinementMetadataSchema = z.object({
 
 export type RefinementMetadata = z.infer<typeof RefinementMetadataSchema>;
 
-export function canRefine(
-  skillName: string,
-  metadata: RefinementMetadata[],
-  opts: { cooldownDays: number },
-): boolean {
+export function canRefine(skillName: string, metadata: RefinementMetadata[], opts: { cooldownDays: number }): boolean {
   const lastRefinement = metadata
-    .filter(m => m.skillName === skillName)
+    .filter((m) => m.skillName === skillName)
     .sort((a, b) => new Date(b.refinedAt).getTime() - new Date(a.refinedAt).getTime())[0];
   if (!lastRefinement) return true;
-  const daysSince =
-    (Date.now() - new Date(lastRefinement.refinedAt).getTime()) / (1000 * 60 * 60 * 24);
+  const daysSince = (Date.now() - new Date(lastRefinement.refinedAt).getTime()) / (1000 * 60 * 60 * 24);
   return daysSince >= opts.cooldownDays;
 }
 

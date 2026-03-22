@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { nextWorkflow, shouldAutoTransition } from './chain-workflow.js';
+import { describe, expect, it } from 'vitest';
 import { canTransition, type SliceStatus } from '../../domain/value-objects/slice-status.js';
+import { nextWorkflow, shouldAutoTransition } from './chain-workflow.js';
 
 describe('autonomous flow - integration', () => {
   it('should produce valid transitions from discussing to first gate', () => {

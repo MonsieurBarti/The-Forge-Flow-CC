@@ -1,7 +1,7 @@
-import { type ReviewStore, type ReviewRecord } from '../../../domain/ports/review-store.port.js';
-import { type Result, Ok, isOk } from '../../../domain/result.js';
-import { type DomainError } from '../../../domain/errors/domain-error.js';
-import { type BeadStore } from '../../../domain/ports/bead-store.port.js';
+import type { DomainError } from '../../../domain/errors/domain-error.js';
+import type { BeadStore } from '../../../domain/ports/bead-store.port.js';
+import type { ReviewRecord, ReviewStore } from '../../../domain/ports/review-store.port.js';
+import { isOk, Ok, type Result } from '../../../domain/result.js';
 
 export class ReviewMetadataAdapter implements ReviewStore {
   constructor(private readonly beadStore: BeadStore) {}
@@ -28,7 +28,12 @@ export class ReviewMetadataAdapter implements ReviewStore {
       if (key.startsWith('review.')) {
         const parts = key.split('.');
         const parsed = JSON.parse(value);
-        reviews.push({ sliceId, reviewerAgent: parts[1], status: parsed.status, reviewedAt: new Date(parsed.reviewedAt) });
+        reviews.push({
+          sliceId,
+          reviewerAgent: parts[1],
+          status: parsed.status,
+          reviewedAt: new Date(parsed.reviewedAt),
+        });
       }
     }
     return Ok(reviews);

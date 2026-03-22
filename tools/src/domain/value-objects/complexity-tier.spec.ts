@@ -1,9 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import {
-  ComplexityTierSchema,
-  type ComplexityTier,
-  tierConfig,
-} from './complexity-tier.js';
+import { describe, expect, it } from 'vitest';
+import { ComplexityTierSchema, tierConfig } from './complexity-tier.js';
 
 describe('ComplexityTier', () => {
   it('should accept valid tiers', () => {

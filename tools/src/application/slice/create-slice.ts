@@ -1,8 +1,8 @@
-import { type Result, Ok, isOk } from '../../domain/result.js';
-import { type DomainError } from '../../domain/errors/domain-error.js';
 import { createSlice, type Slice } from '../../domain/entities/slice.js';
-import { type BeadStore } from '../../domain/ports/bead-store.port.js';
-import { type ArtifactStore } from '../../domain/ports/artifact-store.port.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
+import type { BeadStore } from '../../domain/ports/bead-store.port.js';
+import { isOk, Ok, type Result } from '../../domain/result.js';
 
 interface CreateSliceInput {
   milestoneBeadId: string;

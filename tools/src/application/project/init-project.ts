@@ -1,13 +1,22 @@
-import { type Result, Ok, Err, isOk } from '../../domain/result.js';
-import { type DomainError } from '../../domain/errors/domain-error.js';
-import { projectExistsError } from '../../domain/errors/project-exists.error.js';
 import { createProject, type Project } from '../../domain/entities/project.js';
-import { type BeadStore } from '../../domain/ports/bead-store.port.js';
-import { type ArtifactStore } from '../../domain/ports/artifact-store.port.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import { projectExistsError } from '../../domain/errors/project-exists.error.js';
+import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
+import type { BeadStore } from '../../domain/ports/bead-store.port.js';
+import { Err, isOk, Ok, type Result } from '../../domain/result.js';
 
-interface InitProjectInput { name: string; vision: string; }
-interface InitProjectDeps { beadStore: BeadStore; artifactStore: ArtifactStore; }
-interface InitProjectOutput { project: Project; beadId: string; }
+interface InitProjectInput {
+  name: string;
+  vision: string;
+}
+interface InitProjectDeps {
+  beadStore: BeadStore;
+  artifactStore: ArtifactStore;
+}
+interface InitProjectOutput {
+  project: Project;
+  beadId: string;
+}
 
 export const initProject = async (
   input: InitProjectInput,
@@ -22,8 +31,13 @@ export const initProject = async (
 
   // Register tff slice lifecycle statuses as custom bd statuses
   const regResult = await deps.beadStore.registerStatuses([
-    'discussing', 'researching', 'planning', 'executing',
-    'verifying', 'reviewing', 'completing',
+    'discussing',
+    'researching',
+    'planning',
+    'executing',
+    'verifying',
+    'reviewing',
+    'completing',
   ]);
   if (!isOk(regResult)) return regResult;
 

@@ -1,15 +1,17 @@
-import { describe, it, expect } from 'vitest';
-import {
-  SliceStatusSchema,
-  canTransition,
-  validTransitionsFrom,
-} from './slice-status.js';
+import { describe, expect, it } from 'vitest';
+import { canTransition, SliceStatusSchema, validTransitionsFrom } from './slice-status.js';
 
 describe('SliceStatus', () => {
   it('should accept all valid statuses', () => {
     const statuses = [
-      'discussing', 'researching', 'planning', 'executing',
-      'verifying', 'reviewing', 'completing', 'closed',
+      'discussing',
+      'researching',
+      'planning',
+      'executing',
+      'verifying',
+      'reviewing',
+      'completing',
+      'closed',
     ];
     for (const s of statuses) {
       expect(SliceStatusSchema.parse(s)).toBe(s);

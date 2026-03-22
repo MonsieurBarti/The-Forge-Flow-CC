@@ -1,9 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import {
-  createMilestone,
-  MilestoneSchema,
-  formatMilestoneNumber,
-} from './milestone.js';
+import { describe, expect, it } from 'vitest';
+import { createMilestone, formatMilestoneNumber, MilestoneSchema } from './milestone.js';
 
 describe('Milestone', () => {
   it('should create a milestone with name and project ID', () => {

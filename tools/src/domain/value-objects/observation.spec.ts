@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { ObservationSchema, type Observation } from './observation.js';
+import { describe, expect, it } from 'vitest';
+import { ObservationSchema } from './observation.js';
 
 describe('Observation', () => {
   it('should accept a valid observation', () => {
@@ -25,10 +25,12 @@ describe('Observation', () => {
   });
 
   it('should reject missing tool', () => {
-    expect(() => ObservationSchema.parse({
-      ts: '2026-03-21T14:30:00Z',
-      session: 'abc123',
-      project: '/path/to/project',
-    })).toThrow();
+    expect(() =>
+      ObservationSchema.parse({
+        ts: '2026-03-21T14:30:00Z',
+        session: 'abc123',
+        project: '/path/to/project',
+      }),
+    ).toThrow();
   });
 });

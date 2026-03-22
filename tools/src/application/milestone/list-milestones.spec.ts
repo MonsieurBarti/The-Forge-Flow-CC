@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { listMilestones } from './list-milestones.js';
-import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
+import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { listMilestones } from './list-milestones.js';
 
 describe('listMilestones', () => {
   let beadStore: InMemoryBeadStore;

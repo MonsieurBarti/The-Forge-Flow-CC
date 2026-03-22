@@ -1,7 +1,7 @@
 import { getProject } from '../../application/project/get-project.js';
+import { isOk } from '../../domain/result.js';
 import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
-import { isOk } from '../../domain/result.js';
 
 export const projectGetCmd = async (_args: string[]): Promise<string> => {
   const { store: beadStore } = await createBeadAdapter();

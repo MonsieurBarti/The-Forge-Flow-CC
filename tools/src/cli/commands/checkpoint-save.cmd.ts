@@ -1,11 +1,14 @@
 import { saveCheckpoint } from '../../application/checkpoint/save-checkpoint.js';
-import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { isOk } from '../../domain/result.js';
+import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 
 export const checkpointSaveCmd = async (args: string[]): Promise<string> => {
   const [dataJson] = args;
   if (!dataJson) {
-    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: checkpoint:save <checkpoint-data-json>' } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: 'INVALID_ARGS', message: 'Usage: checkpoint:save <checkpoint-data-json>' },
+    });
   }
   try {
     const data = JSON.parse(dataJson);

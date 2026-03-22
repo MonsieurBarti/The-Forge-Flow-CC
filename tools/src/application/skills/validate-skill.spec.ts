@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { isErr, isOk } from '../../domain/result.js';
 import { validateSkill } from './validate-skill.js';
-import { isOk, isErr } from '../../domain/result.js';
 
 describe('validateSkill', () => {
   it('should accept a valid skill', () => {
@@ -59,7 +59,7 @@ describe('validateSkill', () => {
     });
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
-      expect(result.data.warnings.some(w => w.includes('size'))).toBe(true);
+      expect(result.data.warnings.some((w) => w.includes('size'))).toBe(true);
     }
   });
 
@@ -72,7 +72,7 @@ describe('validateSkill', () => {
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
       expect(result.data.valid).toBe(false);
-      expect(result.data.warnings.some(w => w.includes('collision'))).toBe(true);
+      expect(result.data.warnings.some((w) => w.includes('collision'))).toBe(true);
     }
   });
 
@@ -84,7 +84,7 @@ describe('validateSkill', () => {
     });
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
-      expect(result.data.warnings.some(w => w.includes('injection'))).toBe(true);
+      expect(result.data.warnings.some((w) => w.includes('injection'))).toBe(true);
     }
   });
 });

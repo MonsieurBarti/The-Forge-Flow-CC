@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { withRetry } from './bd-cli.adapter.js';
 
 describe('withRetry', () => {
@@ -15,7 +15,9 @@ describe('withRetry', () => {
   });
 
   it('should fail after max retries exhausted', async () => {
-    const alwaysFails = async () => { throw new Error('permanent'); };
+    const alwaysFails = async () => {
+      throw new Error('permanent');
+    };
     await expect(withRetry(alwaysFails, { maxAttempts: 3, baseMs: 10 })).rejects.toThrow('permanent');
   });
 

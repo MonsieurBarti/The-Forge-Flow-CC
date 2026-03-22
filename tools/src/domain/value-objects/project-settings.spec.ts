@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { parseProjectSettings, loadProjectSettings, ProjectSettingsSchema, type ProjectSettings } from './project-settings';
+import { describe, expect, it, vi } from 'vitest';
+import { loadProjectSettings, ProjectSettingsSchema, parseProjectSettings } from './project-settings';
 
 describe('ProjectSettingsSchema', () => {
   it('should parse a complete valid settings object', () => {
@@ -11,7 +11,7 @@ describe('ProjectSettingsSchema', () => {
       },
       autonomy: { mode: 'plan-to-pr' },
       'auto-learn': {
-        weights: { frequency: 0.25, breadth: 0.30, recency: 0.25, consistency: 0.20 },
+        weights: { frequency: 0.25, breadth: 0.3, recency: 0.25, consistency: 0.2 },
         guardrails: { 'min-corrections': 3, 'cooldown-days': 7, 'max-drift-pct': 20 },
         clustering: { 'min-sessions': 3, 'min-patterns': 2 },
       },
@@ -67,7 +67,7 @@ describe('parseProjectSettings', () => {
     const settings = parseProjectSettings({ autonomy: { mode: 'plan-to-pr' } });
     expect(settings.autonomy.mode).toBe('plan-to-pr');
     expect(settings['model-profiles'].quality.model).toBe('opus');
-    expect(settings['auto-learn'].weights.breadth).toBe(0.30);
+    expect(settings['auto-learn'].weights.breadth).toBe(0.3);
   });
 
   it('should fall back invalid fields to defaults while preserving valid siblings', () => {
@@ -84,7 +84,7 @@ describe('parseProjectSettings', () => {
       'auto-learn': { weights: { frequency: 0.5 } },
     });
     expect(settings['auto-learn'].weights.frequency).toBe(0.5);
-    expect(settings['auto-learn'].weights.breadth).toBe(0.30);
+    expect(settings['auto-learn'].weights.breadth).toBe(0.3);
     expect(settings['auto-learn'].guardrails['min-corrections']).toBe(3);
   });
 
@@ -110,10 +110,7 @@ describe('loadProjectSettings', () => {
   it('should log a warning for corrupted YAML', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     loadProjectSettings('{ broken: yaml: [["');
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[tff]'),
-      expect.any(String),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('[tff]'), expect.any(String));
     warnSpy.mockRestore();
   });
 

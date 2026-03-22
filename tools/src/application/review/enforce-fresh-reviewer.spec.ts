@@ -1,11 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { enforceFreshReviewer } from './enforce-fresh-reviewer.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { isErr, isOk } from '../../domain/result.js';
 import { InMemoryReviewStore } from '../../infrastructure/testing/in-memory-review-store.js';
-import { isOk, isErr } from '../../domain/result.js';
+import { enforceFreshReviewer } from './enforce-fresh-reviewer.js';
 
 describe('enforceFreshReviewer', () => {
   let reviewStore: InMemoryReviewStore;
-  beforeEach(() => { reviewStore = new InMemoryReviewStore(); });
+  beforeEach(() => {
+    reviewStore = new InMemoryReviewStore();
+  });
 
   it('should allow review when reviewer was not an executor', async () => {
     reviewStore.seedExecutors('M01-S01', ['backend-dev']);

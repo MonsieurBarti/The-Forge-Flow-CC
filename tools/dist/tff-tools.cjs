@@ -32,16 +32,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// tools/src/domain/result.ts
-var Ok, Err, isOk;
-var init_result = __esm({
-  "tools/src/domain/result.ts"() {
-    Ok = (data) => ({ ok: true, data });
-    Err = (error48) => ({ ok: false, error: error48 });
-    isOk = (result) => result.ok === true;
-  }
-});
-
 // node_modules/zod/v4/core/core.js
 // @__NO_SIDE_EFFECTS__
 function $constructor(name, initializer3, params) {
@@ -14379,6 +14369,152 @@ var init_domain_error = __esm({
   }
 });
 
+// tools/src/domain/result.ts
+var Ok, Err, isOk;
+var init_result = __esm({
+  "tools/src/domain/result.ts"() {
+    Ok = (data) => ({ ok: true, data });
+    Err = (error48) => ({ ok: false, error: error48 });
+    isOk = (result) => result.ok === true;
+  }
+});
+
+// tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts
+var import_promises, import_node_path, MarkdownArtifactAdapter;
+var init_markdown_artifact_adapter = __esm({
+  "tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts"() {
+    import_promises = require("fs/promises");
+    import_node_path = require("path");
+    init_domain_error();
+    init_result();
+    MarkdownArtifactAdapter = class {
+      constructor(basePath) {
+        this.basePath = basePath;
+      }
+      resolve(path) {
+        const resolved = (0, import_node_path.resolve)((0, import_node_path.join)(this.basePath, path));
+        const base = (0, import_node_path.resolve)(this.basePath);
+        if (!resolved.startsWith(`${base}/`) && resolved !== base) {
+          throw new Error(`Path traversal rejected: ${path}`);
+        }
+        return resolved;
+      }
+      async read(path) {
+        try {
+          return Ok(await (0, import_promises.readFile)(this.resolve(path), "utf-8"));
+        } catch {
+          return Err(createDomainError("NOT_FOUND", `File not found: ${path}`, { path }));
+        }
+      }
+      async write(path, content) {
+        try {
+          const fullPath = this.resolve(path);
+          await (0, import_promises.mkdir)((0, import_node_path.dirname)(fullPath), { recursive: true });
+          await (0, import_promises.writeFile)(fullPath, content, "utf-8");
+          return Ok(void 0);
+        } catch (err) {
+          return Err(createDomainError("VALIDATION_ERROR", `Failed to write: ${path}`, { path, error: String(err) }));
+        }
+      }
+      async exists(path) {
+        try {
+          await (0, import_promises.access)(this.resolve(path));
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      async list(directory) {
+        try {
+          const entries = await (0, import_promises.readdir)(this.resolve(directory));
+          return Ok(entries.map((e) => (0, import_node_path.join)(directory, e)));
+        } catch {
+          return Ok([]);
+        }
+      }
+      async mkdir(path) {
+        try {
+          await (0, import_promises.mkdir)(this.resolve(path), { recursive: true });
+          return Ok(void 0);
+        } catch (err) {
+          return Err(createDomainError("VALIDATION_ERROR", `Failed to mkdir: ${path}`, { path, error: String(err) }));
+        }
+      }
+    };
+  }
+});
+
+// tools/src/application/checkpoint/save-checkpoint.ts
+var saveCheckpoint;
+var init_save_checkpoint = __esm({
+  "tools/src/application/checkpoint/save-checkpoint.ts"() {
+    init_result();
+    saveCheckpoint = async (data, deps) => {
+      const lines = [
+        `# Checkpoint \u2014 ${data.sliceId}`,
+        `- Base commit: ${data.baseCommit}`,
+        `- Current wave: ${data.currentWave}`,
+        `- Completed waves: [${data.completedWaves.join(", ")}]`,
+        `- Completed tasks: [${data.completedTasks.join(", ")}]`,
+        `- Executor log: ${data.executorLog.map((e) => `${e.agent}\u2192${e.taskRef}`).join(", ")}`,
+        "",
+        `<!-- checkpoint-json: ${JSON.stringify(data)} -->`,
+        ""
+      ];
+      const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
+      const path = `.tff/milestones/${milestoneId}/slices/${data.sliceId}/CHECKPOINT.md`;
+      await deps.artifactStore.mkdir(`.tff/milestones/${milestoneId}/slices/${data.sliceId}`);
+      await deps.artifactStore.write(path, lines.join("\n"));
+      return Ok(void 0);
+    };
+  }
+});
+
+// tools/src/cli/commands/checkpoint-save.cmd.ts
+var checkpoint_save_cmd_exports = {};
+__export(checkpoint_save_cmd_exports, {
+  checkpointSaveCmd: () => checkpointSaveCmd
+});
+var checkpointSaveCmd;
+var init_checkpoint_save_cmd = __esm({
+  "tools/src/cli/commands/checkpoint-save.cmd.ts"() {
+    init_save_checkpoint();
+    init_result();
+    init_markdown_artifact_adapter();
+    checkpointSaveCmd = async (args) => {
+      const [dataJson] = args;
+      if (!dataJson) {
+        return JSON.stringify({
+          ok: false,
+          error: { code: "INVALID_ARGS", message: "Usage: checkpoint:save <checkpoint-data-json>" }
+        });
+      }
+      try {
+        const data = JSON.parse(dataJson);
+        const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+        const result = await saveCheckpoint(data, { artifactStore });
+        if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+        return JSON.stringify({ ok: false, error: result.error });
+      } catch {
+        return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON input" } });
+      }
+    };
+  }
+});
+
+// tools/src/infrastructure/adapters/logging/warn.ts
+function tffWarn(message, context) {
+  if (context !== void 0) {
+    console.warn("[tff]", message, context);
+  } else {
+    console.warn("[tff]", message);
+  }
+}
+var init_warn = __esm({
+  "tools/src/infrastructure/adapters/logging/warn.ts"() {
+  }
+});
+
 // tools/src/infrastructure/adapters/beads/bd-cli.adapter.ts
 async function withRetry(fn, opts = {}) {
   const maxAttempts = opts.maxAttempts ?? 3;
@@ -14391,7 +14527,7 @@ async function withRetry(fn, opts = {}) {
     } catch (err) {
       lastError = err;
       if (attempt < maxAttempts) {
-        const delay = Math.min(baseMs * Math.pow(2, attempt - 1), maxMs);
+        const delay = Math.min(baseMs * 2 ** (attempt - 1), maxMs);
         await new Promise((resolve2) => setTimeout(resolve2, delay));
       }
     }
@@ -14403,8 +14539,8 @@ var init_bd_cli_adapter = __esm({
   "tools/src/infrastructure/adapters/beads/bd-cli.adapter.ts"() {
     import_node_child_process = require("child_process");
     import_node_util = require("util");
-    init_result();
     init_domain_error();
+    init_result();
     exec = (0, import_node_util.promisify)(import_node_child_process.execFile);
     bdError = (message, context) => createDomainError("SYNC_CONFLICT", message, context);
     execBd = async (args, stdin) => {
@@ -14437,7 +14573,7 @@ var init_bd_cli_adapter = __esm({
         return Err(createDomainError("VALIDATION_ERROR", `Malformed bead: missing 'status' for ${raw.id}`));
       }
       const labels = Array.isArray(raw.labels) ? raw.labels : [];
-      const tffLabel = labels.find((l) => l.startsWith("tff:")) ?? (raw.issue_type ?? "task");
+      const tffLabel = labels.find((l) => l.startsWith("tff:")) ?? raw.issue_type ?? "task";
       return Ok({
         id: raw.id,
         label: tffLabel,
@@ -14506,6 +14642,7 @@ var init_bd_cli_adapter = __esm({
       }
       async list(filter) {
         const args = ["list", "--json"];
+        if (filter.includeAll) args.push("--all");
         if (filter.label) args.push("-l", filter.label);
         if (filter.parentId) args.push("--parent", filter.parentId);
         if (filter.status) args.push("-s", filter.status);
@@ -14559,22 +14696,22 @@ var init_bd_cli_adapter = __esm({
 });
 
 // tools/src/infrastructure/adapters/beads/markdown-bead.adapter.ts
-var import_node_crypto, import_promises, import_node_path, MarkdownBeadAdapter;
+var import_node_crypto, import_promises2, import_node_path2, MarkdownBeadAdapter;
 var init_markdown_bead_adapter = __esm({
   "tools/src/infrastructure/adapters/beads/markdown-bead.adapter.ts"() {
     import_node_crypto = require("crypto");
-    import_promises = require("fs/promises");
-    import_node_path = require("path");
-    init_result();
+    import_promises2 = require("fs/promises");
+    import_node_path2 = require("path");
     init_domain_error();
+    init_result();
     MarkdownBeadAdapter = class {
       constructor(basePath) {
         this.basePath = basePath;
-        this.beadsDir = (0, import_node_path.join)(basePath, ".tff", "beads");
+        this.beadsDir = (0, import_node_path2.join)(basePath, ".tff", "beads");
       }
       beadsDir;
       async init() {
-        await (0, import_promises.mkdir)(this.beadsDir, { recursive: true });
+        await (0, import_promises2.mkdir)(this.beadsDir, { recursive: true });
         return Ok(void 0);
       }
       async registerStatuses(_statuses) {
@@ -14590,12 +14727,12 @@ var init_markdown_bead_adapter = __esm({
           design: input.design,
           parentId: input.parentId
         };
-        await (0, import_promises.writeFile)(this.filePath(id), JSON.stringify(bead, null, 2));
+        await (0, import_promises2.writeFile)(this.filePath(id), JSON.stringify(bead, null, 2));
         return Ok(bead);
       }
       async get(id) {
         try {
-          const raw = await (0, import_promises.readFile)(this.filePath(id), "utf-8");
+          const raw = await (0, import_promises2.readFile)(this.filePath(id), "utf-8");
           return Ok(JSON.parse(raw));
         } catch {
           return Err(createDomainError("NOT_FOUND", `Bead "${id}" not found`, { id }));
@@ -14655,18 +14792,18 @@ var init_markdown_bead_adapter = __esm({
         return this.updateStatus(id, "closed");
       }
       filePath(id) {
-        return (0, import_node_path.join)(this.beadsDir, `${id}.json`);
+        return (0, import_node_path2.join)(this.beadsDir, `${id}.json`);
       }
       async writeBead(bead) {
-        await (0, import_promises.writeFile)(this.filePath(bead.id), JSON.stringify(bead, null, 2));
+        await (0, import_promises2.writeFile)(this.filePath(bead.id), JSON.stringify(bead, null, 2));
       }
       async readAll() {
         try {
-          const files = await (0, import_promises.readdir)(this.beadsDir);
+          const files = await (0, import_promises2.readdir)(this.beadsDir);
           const beads = [];
           for (const file2 of files) {
             if (!file2.endsWith(".json")) continue;
-            const raw = await (0, import_promises.readFile)((0, import_node_path.join)(this.beadsDir, file2), "utf-8");
+            const raw = await (0, import_promises2.readFile)((0, import_node_path2.join)(this.beadsDir, file2), "utf-8");
             beads.push(JSON.parse(raw));
           }
           return Ok(beads);
@@ -14675,19 +14812,6 @@ var init_markdown_bead_adapter = __esm({
         }
       }
     };
-  }
-});
-
-// tools/src/infrastructure/adapters/logging/warn.ts
-function tffWarn(message, context) {
-  if (context !== void 0) {
-    console.warn("[tff]", message, context);
-  } else {
-    console.warn("[tff]", message);
-  }
-}
-var init_warn = __esm({
-  "tools/src/infrastructure/adapters/logging/warn.ts"() {
   }
 });
 
@@ -14713,77 +14837,12 @@ async function createBeadAdapter(opts = {}) {
 var import_node_child_process2, import_node_util2, exec2;
 var init_bead_adapter_factory = __esm({
   "tools/src/infrastructure/adapters/beads/bead-adapter-factory.ts"() {
-    init_bd_cli_adapter();
-    init_markdown_bead_adapter();
-    init_warn();
     import_node_child_process2 = require("child_process");
     import_node_util2 = require("util");
+    init_warn();
+    init_bd_cli_adapter();
+    init_markdown_bead_adapter();
     exec2 = (0, import_node_util2.promisify)(import_node_child_process2.execFile);
-  }
-});
-
-// tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts
-var import_promises2, import_node_path2, MarkdownArtifactAdapter;
-var init_markdown_artifact_adapter = __esm({
-  "tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts"() {
-    import_promises2 = require("fs/promises");
-    import_node_path2 = require("path");
-    init_result();
-    init_domain_error();
-    MarkdownArtifactAdapter = class {
-      constructor(basePath) {
-        this.basePath = basePath;
-      }
-      resolve(path) {
-        const resolved = (0, import_node_path2.resolve)((0, import_node_path2.join)(this.basePath, path));
-        const base = (0, import_node_path2.resolve)(this.basePath);
-        if (!resolved.startsWith(base + "/") && resolved !== base) {
-          throw new Error(`Path traversal rejected: ${path}`);
-        }
-        return resolved;
-      }
-      async read(path) {
-        try {
-          return Ok(await (0, import_promises2.readFile)(this.resolve(path), "utf-8"));
-        } catch {
-          return Err(createDomainError("NOT_FOUND", `File not found: ${path}`, { path }));
-        }
-      }
-      async write(path, content) {
-        try {
-          const fullPath = this.resolve(path);
-          await (0, import_promises2.mkdir)((0, import_node_path2.dirname)(fullPath), { recursive: true });
-          await (0, import_promises2.writeFile)(fullPath, content, "utf-8");
-          return Ok(void 0);
-        } catch (err) {
-          return Err(createDomainError("VALIDATION_ERROR", `Failed to write: ${path}`, { path, error: String(err) }));
-        }
-      }
-      async exists(path) {
-        try {
-          await (0, import_promises2.access)(this.resolve(path));
-          return true;
-        } catch {
-          return false;
-        }
-      }
-      async list(directory) {
-        try {
-          const entries = await (0, import_promises2.readdir)(this.resolve(directory));
-          return Ok(entries.map((e) => (0, import_node_path2.join)(directory, e)));
-        } catch {
-          return Ok([]);
-        }
-      }
-      async mkdir(path) {
-        try {
-          await (0, import_promises2.mkdir)(this.resolve(path), { recursive: true });
-          return Ok(void 0);
-        } catch (err) {
-          return Err(createDomainError("VALIDATION_ERROR", `Failed to mkdir: ${path}`, { path, error: String(err) }));
-        }
-      }
-    };
   }
 });
 
@@ -14860,9 +14919,7 @@ async function hydrateSnapshot(deps) {
   for (const line of lines) {
     const result = BeadSnapshotSchema.safeParse(JSON.parse(line));
     if (!result.success) {
-      return Err(
-        createDomainError("VALIDATION_ERROR", `Invalid snapshot line: ${result.error.message}`)
-      );
+      return Err(createDomainError("VALIDATION_ERROR", `Invalid snapshot line: ${result.error.message}`));
     }
     parsed.push(result.data);
   }
@@ -14891,8 +14948,8 @@ async function hydrateSnapshot(deps) {
 }
 var init_hydrate_snapshot = __esm({
   "tools/src/application/snapshot/hydrate-snapshot.ts"() {
-    init_result();
     init_domain_error();
+    init_result();
     init_bead_snapshot();
   }
 });
@@ -14946,8 +15003,8 @@ async function serializeSnapshot(input) {
 }
 var init_serialize_snapshot = __esm({
   "tools/src/application/snapshot/serialize-snapshot.ts"() {
-    init_result();
     init_domain_error();
+    init_result();
     init_bead_snapshot();
   }
 });
@@ -14957,30 +15014,31 @@ var snapshot_save_cmd_exports = {};
 __export(snapshot_save_cmd_exports, {
   snapshotSaveCmd: () => snapshotSaveCmd
 });
-async function snapshotSaveCmd(args) {
+async function snapshotSaveCmd(_args) {
   const { store: beadStore } = await createBeadAdapter();
   let existingSnapshot = "";
   try {
-    existingSnapshot = await (0, import_promises3.readFile)(SNAPSHOT_PATH, "utf-8");
+    existingSnapshot = await (0, import_promises4.readFile)(SNAPSHOT_PATH, "utf-8");
   } catch {
   }
   const result = await serializeSnapshot({ beadStore, existingSnapshot });
   if (!isOk(result)) return JSON.stringify({ ok: false, error: result.error });
   if (result.data) {
-    await (0, import_promises3.mkdir)(".tff", { recursive: true });
-    const content = existingSnapshot ? existingSnapshot + "\n" + result.data : result.data;
-    await (0, import_promises3.writeFile)(SNAPSHOT_PATH, content, "utf-8");
+    await (0, import_promises4.mkdir)(".tff", { recursive: true });
+    const content = existingSnapshot ? `${existingSnapshot}
+${result.data}` : result.data;
+    await (0, import_promises4.writeFile)(SNAPSHOT_PATH, content, "utf-8");
   }
   const lines = result.data.split("\n").filter(Boolean);
   return JSON.stringify({ ok: true, data: { path: SNAPSHOT_PATH, entries: lines.length } });
 }
-var import_promises3, SNAPSHOT_PATH;
+var import_promises4, SNAPSHOT_PATH;
 var init_snapshot_save_cmd = __esm({
   "tools/src/cli/commands/snapshot-save.cmd.ts"() {
+    import_promises4 = require("fs/promises");
+    init_serialize_snapshot();
     init_result();
     init_bead_adapter_factory();
-    init_serialize_snapshot();
-    import_promises3 = require("fs/promises");
     SNAPSHOT_PATH = ".tff/beads-snapshot.jsonl";
   }
 });
@@ -22321,8 +22379,8 @@ function loadProjectSettings(yamlContent) {
 var import_yaml, ModelProfileSchema, ModelProfilesSchema, AutonomySchema, AutoLearnWeightsSchema, AutoLearnGuardrailsSchema, AutoLearnClusteringSchema, AutoLearnSchema, DoltSchema, ProjectSettingsSchema;
 var init_project_settings = __esm({
   "tools/src/domain/value-objects/project-settings.ts"() {
-    init_zod();
     import_yaml = __toESM(require_dist(), 1);
+    init_zod();
     ModelProfileSchema = withDefault(
       external_exports.object({
         model: external_exports.string().catch("sonnet")
@@ -22480,13 +22538,16 @@ var syncStateCmd;
 var init_sync_state_cmd = __esm({
   "tools/src/cli/commands/sync-state.cmd.ts"() {
     init_generate_state();
+    init_result();
     init_bead_adapter_factory();
     init_markdown_artifact_adapter();
-    init_result();
     syncStateCmd = async (args) => {
       const [milestoneId, milestoneName] = args;
       if (!milestoneId) {
-        return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: sync:state <milestone-bead-id> [milestone-name]" } });
+        return JSON.stringify({
+          ok: false,
+          error: { code: "INVALID_ARGS", message: "Usage: sync:state <milestone-bead-id> [milestone-name]" }
+        });
       }
       const { store: beadStore } = await createBeadAdapter();
       const artifactStore = new MarkdownArtifactAdapter(process.cwd());
@@ -22496,61 +22557,6 @@ var init_sync_state_cmd = __esm({
       );
       if (isOk(result)) return JSON.stringify({ ok: true, data: null });
       return JSON.stringify({ ok: false, error: result.error });
-    };
-  }
-});
-
-// tools/src/application/checkpoint/save-checkpoint.ts
-var saveCheckpoint;
-var init_save_checkpoint = __esm({
-  "tools/src/application/checkpoint/save-checkpoint.ts"() {
-    init_result();
-    saveCheckpoint = async (data, deps) => {
-      const lines = [
-        `# Checkpoint \u2014 ${data.sliceId}`,
-        `- Base commit: ${data.baseCommit}`,
-        `- Current wave: ${data.currentWave}`,
-        `- Completed waves: [${data.completedWaves.join(", ")}]`,
-        `- Completed tasks: [${data.completedTasks.join(", ")}]`,
-        `- Executor log: ${data.executorLog.map((e) => `${e.agent}\u2192${e.taskRef}`).join(", ")}`,
-        "",
-        `<!-- checkpoint-json: ${JSON.stringify(data)} -->`,
-        ""
-      ];
-      const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-      const path = `.tff/milestones/${milestoneId}/slices/${data.sliceId}/CHECKPOINT.md`;
-      await deps.artifactStore.mkdir(`.tff/milestones/${milestoneId}/slices/${data.sliceId}`);
-      await deps.artifactStore.write(path, lines.join("\n"));
-      return Ok(void 0);
-    };
-  }
-});
-
-// tools/src/cli/commands/checkpoint-save.cmd.ts
-var checkpoint_save_cmd_exports = {};
-__export(checkpoint_save_cmd_exports, {
-  checkpointSaveCmd: () => checkpointSaveCmd
-});
-var checkpointSaveCmd;
-var init_checkpoint_save_cmd = __esm({
-  "tools/src/cli/commands/checkpoint-save.cmd.ts"() {
-    init_save_checkpoint();
-    init_markdown_artifact_adapter();
-    init_result();
-    checkpointSaveCmd = async (args) => {
-      const [dataJson] = args;
-      if (!dataJson) {
-        return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: checkpoint:save <checkpoint-data-json>" } });
-      }
-      try {
-        const data = JSON.parse(dataJson);
-        const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-        const result = await saveCheckpoint(data, { artifactStore });
-        if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-        return JSON.stringify({ ok: false, error: result.error });
-      } catch {
-        return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON input" } });
-      }
     };
   }
 });
@@ -22573,123 +22579,125 @@ var init_compact_snapshot = __esm({
   }
 });
 
-// tools/src/application/project/init-project.ts
-init_result();
-
-// tools/src/domain/errors/project-exists.error.ts
+// tools/src/application/checkpoint/load-checkpoint.ts
 init_domain_error();
-var projectExistsError = (projectName) => createDomainError(
-  "PROJECT_EXISTS",
-  `Project "${projectName}" already exists in this repository`,
-  { projectName }
-);
-
-// tools/src/domain/entities/project.ts
-init_zod();
-var ProjectSchema = external_exports.object({
-  id: external_exports.string().min(1),
-  name: external_exports.string().min(1),
-  vision: external_exports.string().min(1),
-  createdAt: external_exports.date()
-});
-var createProject = (input) => {
-  const project = {
-    id: crypto.randomUUID(),
-    name: input.name,
-    vision: input.vision,
-    createdAt: /* @__PURE__ */ new Date()
-  };
-  return ProjectSchema.parse(project);
-};
-
-// tools/src/application/project/init-project.ts
-var initProject = async (input, deps) => {
-  if (await deps.artifactStore.exists(".tff/PROJECT.md")) return Err(projectExistsError(input.name));
-  await deps.beadStore.init();
-  const regResult = await deps.beadStore.registerStatuses([
-    "discussing",
-    "researching",
-    "planning",
-    "executing",
-    "verifying",
-    "reviewing",
-    "completing"
-  ]);
-  if (!isOk(regResult)) return regResult;
-  let existing = await deps.beadStore.list({ label: "tff:project" });
-  for (let attempt = 1; attempt < 5 && !isOk(existing); attempt++) {
-    await new Promise((resolve2) => setTimeout(resolve2, 500));
-    existing = await deps.beadStore.list({ label: "tff:project" });
-  }
-  if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
-  const project = createProject(input);
-  const beadResult = await deps.beadStore.create({ label: "tff:project", title: project.name, design: project.vision });
-  if (!isOk(beadResult)) return beadResult;
-  await deps.artifactStore.mkdir(".tff");
-  await deps.artifactStore.mkdir(".tff/milestones");
-  const projectMd = `# ${project.name}
-
-## Vision
-
-${project.vision}
-`;
-  await deps.artifactStore.write(".tff/PROJECT.md", projectMd);
-  return Ok({ project, beadId: beadResult.data.id });
-};
-
-// tools/src/cli/commands/project-init.cmd.ts
-init_bead_adapter_factory();
-init_markdown_artifact_adapter();
 init_result();
-var projectInitCmd = async (args) => {
-  const name = args[0];
-  const vision = args.slice(1).join(" ") || name;
-  if (!name) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: project:init <name> [vision]" } });
-  const { store: beadStore } = await createBeadAdapter();
+var loadCheckpoint = async (sliceId, deps) => {
+  const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
+  const path = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
+  const contentResult = await deps.artifactStore.read(path);
+  if (!isOk(contentResult))
+    return Err(createDomainError("NOT_FOUND", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
+  const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);
+  if (!match)
+    return Err(createDomainError("VALIDATION_ERROR", `Checkpoint file for "${sliceId}" is corrupted`, { sliceId }));
+  const data = JSON.parse(match[1]);
+  return Ok(data);
+};
+
+// tools/src/cli/commands/checkpoint-load.cmd.ts
+init_result();
+init_markdown_artifact_adapter();
+var checkpointLoadCmd = async (args) => {
+  const [sliceId] = args;
+  if (!sliceId) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: checkpoint:load <slice-id>" } });
+  }
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  try {
-    const { readFile: readFile7 } = await import("fs/promises");
-    const snapshotContent = await readFile7(".tff/beads-snapshot.jsonl", "utf-8");
-    if (snapshotContent.trim()) {
-      const { hydrateSnapshot: hydrateSnapshot2 } = await Promise.resolve().then(() => (init_hydrate_snapshot(), hydrate_snapshot_exports));
-      await hydrateSnapshot2({ beadStore, snapshotContent });
+  const result = await loadCheckpoint(sliceId, { artifactStore });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/cli/index.ts
+init_checkpoint_save_cmd();
+
+// tools/src/application/compose/detect-clusters.ts
+function jaccardDistance(a, b) {
+  const intersection2 = new Set([...a].filter((x) => b.has(x)));
+  const union2 = /* @__PURE__ */ new Set([...a, ...b]);
+  if (union2.size === 0) return 1;
+  return 1 - intersection2.size / union2.size;
+}
+function detectClusters(observations, opts = {}) {
+  const minSessions = opts.minSessions ?? 3;
+  const minPatterns = opts.minPatterns ?? 2;
+  const maxDist = opts.maxJaccardDistance ?? 0.3;
+  const sessionTools = /* @__PURE__ */ new Map();
+  for (const obs of observations) {
+    if (!sessionTools.has(obs.session)) sessionTools.set(obs.session, /* @__PURE__ */ new Set());
+    sessionTools.get(obs.session).add(obs.tool);
+  }
+  if (sessionTools.size < minSessions) return [];
+  const allTools = [...new Set(observations.map((o) => o.tool))];
+  const toolSessionSets = /* @__PURE__ */ new Map();
+  for (const [session, tools] of sessionTools) {
+    for (const tool of tools) {
+      if (!toolSessionSets.has(tool)) toolSessionSets.set(tool, /* @__PURE__ */ new Set());
+      toolSessionSets.get(tool).add(session);
     }
+  }
+  const coOccurrence = /* @__PURE__ */ new Map();
+  for (const ts of sessionTools.values()) {
+    const tools = [...ts];
+    for (let i = 0; i < tools.length; i++) {
+      for (let j = i + 1; j < tools.length; j++) {
+        const key = [tools[i], tools[j]].sort().join("|");
+        coOccurrence.set(key, (coOccurrence.get(key) ?? 0) + 1);
+      }
+    }
+  }
+  const clusters = [];
+  const visited = /* @__PURE__ */ new Set();
+  for (const tool of allTools) {
+    if (visited.has(tool)) continue;
+    const cluster = /* @__PURE__ */ new Set([tool]);
+    visited.add(tool);
+    for (const other of allTools) {
+      if (visited.has(other)) continue;
+      const dist = jaccardDistance(toolSessionSets.get(tool), toolSessionSets.get(other));
+      if (dist < maxDist) {
+        cluster.add(other);
+        visited.add(other);
+      }
+    }
+    if (cluster.size >= minPatterns) {
+      const clusterSessions = /* @__PURE__ */ new Set();
+      for (const t of cluster) {
+        for (const s of toolSessionSets.get(t)) clusterSessions.add(s);
+      }
+      if (clusterSessions.size >= minSessions) {
+        clusters.push({
+          tools: [...cluster].sort(),
+          sessions: clusterSessions.size,
+          activations: [...coOccurrence.entries()].filter(([key]) => {
+            const [a, b] = key.split("|");
+            return cluster.has(a) && cluster.has(b);
+          }).reduce((sum, [, count]) => sum + count, 0)
+        });
+      }
+    }
+  }
+  return clusters.sort((a, b) => b.activations - a.activations);
+}
+
+// tools/src/cli/commands/compose-detect.cmd.ts
+var composeDetectCmd = async (args) => {
+  const input = args[0];
+  if (!input)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: compose:detect <observations-json> [options-json]" }
+    });
+  try {
+    const observations = JSON.parse(input);
+    const opts = args[1] ? JSON.parse(args[1]) : {};
+    const result = detectClusters(observations, opts);
+    return JSON.stringify({ ok: true, data: result });
   } catch {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON" } });
   }
-  const result = await initProject({ name, vision }, { beadStore, artifactStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
 };
-
-// tools/src/application/project/get-project.ts
-init_result();
-init_domain_error();
-var getProject = async (deps) => {
-  const result = await deps.beadStore.list({ label: "tff:project" });
-  if (!isOk(result)) return result;
-  if (result.data.length === 0) {
-    return Err(createDomainError(
-      "NOT_FOUND",
-      "No tff project found in this repository. Run /tff:new to create one."
-    ));
-  }
-  return { ok: true, data: result.data[0] };
-};
-
-// tools/src/cli/commands/project-get.cmd.ts
-init_bead_adapter_factory();
-init_markdown_artifact_adapter();
-init_result();
-var projectGetCmd = async (_args) => {
-  const { store: beadStore } = await createBeadAdapter();
-  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  const result = await getProject({ beadStore, artifactStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
-};
-
-// tools/src/application/milestone/create-milestone.ts
-init_result();
 
 // tools/src/domain/entities/milestone.ts
 init_zod();
@@ -22716,6 +22724,7 @@ var createMilestone = (input) => {
 var formatMilestoneNumber = (n) => `M${n.toString().padStart(2, "0")}`;
 
 // tools/src/application/milestone/create-milestone.ts
+init_result();
 var createMilestoneUseCase = async (input, deps) => {
   const milestone = createMilestone({
     projectId: input.projectBeadId,
@@ -22748,14 +22757,15 @@ _Define your requirements here._
 };
 
 // tools/src/cli/commands/milestone-create.cmd.ts
+init_result();
 init_bead_adapter_factory();
 init_markdown_artifact_adapter();
 
 // tools/src/infrastructure/adapters/git/git-cli.adapter.ts
 var import_node_child_process3 = require("child_process");
 var import_node_util3 = require("util");
-init_result();
 init_domain_error();
+init_result();
 var exec3 = (0, import_node_util3.promisify)(import_node_child_process3.execFile);
 var gitError = (message, context) => createDomainError("SYNC_CONFLICT", message, context);
 var runGit = async (args, cwd) => {
@@ -22805,7 +22815,9 @@ var GitCliAdapter = class {
   async listWorktrees() {
     const r = await runGit(["worktree", "list", "--porcelain"], this.repoRoot);
     if (!r.ok) return r;
-    return Ok(r.data.split("\n").filter((l) => l.startsWith("worktree ")).map((l) => l.replace("worktree ", "")));
+    return Ok(
+      r.data.split("\n").filter((l) => l.startsWith("worktree ")).map((l) => l.replace("worktree ", ""))
+    );
   }
   async commit(message, files, worktreePath) {
     const cwd = worktreePath ?? this.repoRoot;
@@ -22853,7 +22865,6 @@ var GitCliAdapter = class {
 };
 
 // tools/src/cli/commands/milestone-create.cmd.ts
-init_result();
 var milestoneCreateCmd = async (args) => {
   const name = args[0];
   if (!name) {
@@ -22864,10 +22875,13 @@ var milestoneCreateCmd = async (args) => {
   const gitOps = new GitCliAdapter(process.cwd());
   const projectResult = await beadStore.list({ label: "tff:project" });
   if (!isOk(projectResult) || projectResult.data.length === 0) {
-    return JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: "No tff project found. Run /tff:new first." } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: "NOT_FOUND", message: "No tff project found. Run /tff:new first." }
+    });
   }
   const projectBeadId = projectResult.data[0].id;
-  const milestonesResult = await beadStore.list({ label: "tff:milestone" });
+  const milestonesResult = await beadStore.list({ label: "tff:milestone", includeAll: true });
   let maxMilestoneNumber = 0;
   if (isOk(milestonesResult)) {
     for (const m of milestonesResult.data) {
@@ -22879,10 +22893,7 @@ var milestoneCreateCmd = async (args) => {
     }
   }
   const number4 = maxMilestoneNumber + 1;
-  const result = await createMilestoneUseCase(
-    { projectBeadId, name, number: number4 },
-    { beadStore, artifactStore, gitOps }
-  );
+  const result = await createMilestoneUseCase({ projectBeadId, name, number: number4 }, { beadStore, artifactStore, gitOps });
   if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
   return JSON.stringify({ ok: false, error: result.error });
 };
@@ -22893,8 +22904,8 @@ var listMilestones = async (deps) => {
 };
 
 // tools/src/cli/commands/milestone-list.cmd.ts
-init_bead_adapter_factory();
 init_result();
+init_bead_adapter_factory();
 var milestoneListCmd = async (_args) => {
   const { store: beadStore } = await createBeadAdapter();
   const result = await listMilestones({ beadStore });
@@ -22902,54 +22913,512 @@ var milestoneListCmd = async (_args) => {
   return JSON.stringify({ ok: false, error: result.error });
 };
 
-// tools/src/application/slice/create-slice.ts
+// tools/src/cli/commands/observe-record.cmd.ts
 init_result();
+
+// tools/src/domain/value-objects/observation.ts
+init_zod();
+var ObservationSchema = external_exports.object({
+  ts: external_exports.string(),
+  session: external_exports.string(),
+  tool: external_exports.string().min(1),
+  args: external_exports.string().nullable(),
+  project: external_exports.string()
+});
+
+// tools/src/infrastructure/adapters/jsonl/jsonl-store.adapter.ts
+var import_promises3 = require("fs/promises");
+var import_node_path3 = require("path");
+init_result();
+var JsonlStoreAdapter = class {
+  sessionsPath;
+  patternsPath;
+  candidatesPath;
+  constructor(basePath) {
+    this.sessionsPath = (0, import_node_path3.join)(basePath, "sessions.jsonl");
+    this.patternsPath = (0, import_node_path3.join)(basePath, "patterns.jsonl");
+    this.candidatesPath = (0, import_node_path3.join)(basePath, "candidates.jsonl");
+  }
+  async appendObservation(obs) {
+    await (0, import_promises3.mkdir)((0, import_node_path3.join)(this.sessionsPath, ".."), { recursive: true });
+    await (0, import_promises3.appendFile)(this.sessionsPath, `${JSON.stringify(obs)}
+`);
+    return Ok(void 0);
+  }
+  async readObservations() {
+    return this.readJsonl(this.sessionsPath);
+  }
+  async writePatterns(patterns) {
+    return this.writeJsonl(this.patternsPath, patterns);
+  }
+  async readPatterns() {
+    return this.readJsonl(this.patternsPath);
+  }
+  async writeCandidates(candidates) {
+    return this.writeJsonl(this.candidatesPath, candidates);
+  }
+  async readCandidates() {
+    return this.readJsonl(this.candidatesPath);
+  }
+  async readJsonl(path) {
+    try {
+      const content = await (0, import_promises3.readFile)(path, "utf-8");
+      const lines = content.trim().split("\n").filter((l) => l.length > 0);
+      return Ok(lines.map((l) => JSON.parse(l)));
+    } catch {
+      return Ok([]);
+    }
+  }
+  async writeJsonl(path, items) {
+    await (0, import_promises3.mkdir)((0, import_node_path3.join)(path, ".."), { recursive: true });
+    const content = `${items.map((i) => JSON.stringify(i)).join("\n")}
+`;
+    await (0, import_promises3.writeFile)(path, content);
+    return Ok(void 0);
+  }
+};
+
+// tools/src/cli/commands/observe-record.cmd.ts
+var observeRecordCmd = async (args) => {
+  const input = args[0];
+  if (!input)
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: observe:record <json>" } });
+  try {
+    const obs = ObservationSchema.parse(JSON.parse(input));
+    const store = new JsonlStoreAdapter(".tff/observations");
+    const result = await store.appendObservation(obs);
+    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+    return JSON.stringify({ ok: false, error: result.error });
+  } catch (e) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: String(e) } });
+  }
+};
+
+// tools/src/application/patterns/aggregate-patterns.ts
+var aggregatePatterns = (patterns, options = {}) => {
+  const minCount = options.minCount ?? 3;
+  const totalSessions = options.totalSessions ?? 0;
+  const noiseThreshold = options.noiseThreshold ?? 0.8;
+  return patterns.filter((p) => {
+    if (p.count < minCount) return false;
+    if (totalSessions > 0 && p.sessions / totalSessions >= noiseThreshold) return false;
+    return true;
+  });
+};
+
+// tools/src/cli/commands/patterns-aggregate.cmd.ts
+init_result();
+var patternsAggregateCmd = async (args) => {
+  const store = new JsonlStoreAdapter(".tff/observations");
+  const patternsResult = await store.readPatterns();
+  if (!isOk(patternsResult)) return JSON.stringify({ ok: false, error: patternsResult.error });
+  const minCount = parseInt(args[0] ?? "3", 10);
+  const result = aggregatePatterns(patternsResult.data, { minCount });
+  await store.writePatterns(result);
+  return JSON.stringify({ ok: true, data: result });
+};
+
+// tools/src/application/patterns/extract-ngrams.ts
+var extractNgrams = (observations, n) => {
+  if (observations.length < n) return [];
+  const sessions = /* @__PURE__ */ new Map();
+  for (const obs of observations) {
+    const list = sessions.get(obs.session) ?? [];
+    list.push(obs);
+    sessions.set(obs.session, list);
+  }
+  const ngramMap = /* @__PURE__ */ new Map();
+  for (const [sessionId, sessionObs] of sessions) {
+    for (let i = 0; i <= sessionObs.length - n; i++) {
+      const sequence = sessionObs.slice(i, i + n).map((o) => o.tool);
+      const key = sequence.join("\u2192");
+      const existing = ngramMap.get(key);
+      const lastTs = sessionObs[i + n - 1].ts;
+      if (existing) {
+        existing.count++;
+        existing.sessionSet.add(sessionId);
+        existing.projectSet.add(sessionObs[i].project);
+        if (lastTs > existing.lastSeen) existing.lastSeen = lastTs;
+      } else {
+        ngramMap.set(key, {
+          sequence,
+          count: 1,
+          sessionSet: /* @__PURE__ */ new Set([sessionId]),
+          projectSet: /* @__PURE__ */ new Set([sessionObs[i].project]),
+          lastSeen: lastTs
+        });
+      }
+    }
+  }
+  return [...ngramMap.values()].map((v) => ({
+    sequence: v.sequence,
+    count: v.count,
+    sessions: v.sessionSet.size,
+    projects: v.projectSet.size,
+    lastSeen: v.lastSeen
+  }));
+};
+
+// tools/src/cli/commands/patterns-extract.cmd.ts
+init_result();
+var patternsExtractCmd = async (_args) => {
+  const store = new JsonlStoreAdapter(".tff/observations");
+  const obsResult = await store.readObservations();
+  if (!isOk(obsResult)) return JSON.stringify({ ok: false, error: obsResult.error });
+  const bigrams = extractNgrams(obsResult.data, 2);
+  const trigrams = extractNgrams(obsResult.data, 3);
+  const all = [...bigrams, ...trigrams];
+  await store.writePatterns(all);
+  return JSON.stringify({ ok: true, data: all });
+};
+
+// tools/src/application/patterns/rank-candidates.ts
+var rankCandidates = (patterns, options) => {
+  const threshold = options.threshold ?? 0;
+  const nowMs = new Date(options.now).getTime();
+  const scored = patterns.map((p) => {
+    const frequency = Math.min(Math.log2(p.count + 1) / 10, 1);
+    const breadth = options.totalProjects > 0 ? p.projects / options.totalProjects : 0;
+    const ageDays = (nowMs - new Date(p.lastSeen).getTime()) / (24 * 60 * 60 * 1e3);
+    const recency = Math.exp(-ageDays * Math.LN2 / 14);
+    const consistency = options.totalSessions > 0 ? p.sessions / options.totalSessions : 0;
+    const wF = options.weights?.frequency ?? 0.25;
+    const wB = options.weights?.breadth ?? 0.3;
+    const wR = options.weights?.recency ?? 0.25;
+    const wC = options.weights?.consistency ?? 0.2;
+    const score = frequency * wF + breadth * wB + recency * wR + consistency * wC;
+    return {
+      pattern: p.sequence,
+      score: Math.round(score * 100) / 100,
+      evidence: { count: p.count, sessions: p.sessions, projects: p.projects }
+    };
+  });
+  return scored.filter((c) => c.score >= threshold).sort((a, b) => b.score - a.score);
+};
+
+// tools/src/cli/commands/patterns-rank.cmd.ts
+init_result();
+var patternsRankCmd = async (args) => {
+  const store = new JsonlStoreAdapter(".tff/observations");
+  const patternsResult = await store.readPatterns();
+  if (!isOk(patternsResult)) return JSON.stringify({ ok: false, error: patternsResult.error });
+  const obsResult = await store.readObservations();
+  const totalSessions = isOk(obsResult) ? new Set(obsResult.data.map((o) => o.session)).size : 1;
+  const totalProjects = isOk(obsResult) ? new Set(obsResult.data.map((o) => o.project)).size : 1;
+  const threshold = parseFloat(args[0] ?? "0.5");
+  const candidates = rankCandidates(patternsResult.data, {
+    totalProjects,
+    totalSessions,
+    now: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
+    threshold
+  });
+  await store.writeCandidates(candidates);
+  return JSON.stringify({ ok: true, data: candidates });
+};
+
+// tools/src/application/project/get-project.ts
+init_domain_error();
+init_result();
+var getProject = async (deps) => {
+  const result = await deps.beadStore.list({ label: "tff:project" });
+  if (!isOk(result)) return result;
+  if (result.data.length === 0) {
+    return Err(createDomainError("NOT_FOUND", "No tff project found in this repository. Run /tff:new to create one."));
+  }
+  return { ok: true, data: result.data[0] };
+};
+
+// tools/src/cli/commands/project-get.cmd.ts
+init_result();
+init_bead_adapter_factory();
+init_markdown_artifact_adapter();
+var projectGetCmd = async (_args) => {
+  const { store: beadStore } = await createBeadAdapter();
+  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  const result = await getProject({ beadStore, artifactStore });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/domain/entities/project.ts
+init_zod();
+var ProjectSchema = external_exports.object({
+  id: external_exports.string().min(1),
+  name: external_exports.string().min(1),
+  vision: external_exports.string().min(1),
+  createdAt: external_exports.date()
+});
+var createProject = (input) => {
+  const project = {
+    id: crypto.randomUUID(),
+    name: input.name,
+    vision: input.vision,
+    createdAt: /* @__PURE__ */ new Date()
+  };
+  return ProjectSchema.parse(project);
+};
+
+// tools/src/domain/errors/project-exists.error.ts
+init_domain_error();
+var projectExistsError = (projectName) => createDomainError("PROJECT_EXISTS", `Project "${projectName}" already exists in this repository`, { projectName });
+
+// tools/src/application/project/init-project.ts
+init_result();
+var initProject = async (input, deps) => {
+  if (await deps.artifactStore.exists(".tff/PROJECT.md")) return Err(projectExistsError(input.name));
+  await deps.beadStore.init();
+  const regResult = await deps.beadStore.registerStatuses([
+    "discussing",
+    "researching",
+    "planning",
+    "executing",
+    "verifying",
+    "reviewing",
+    "completing"
+  ]);
+  if (!isOk(regResult)) return regResult;
+  let existing = await deps.beadStore.list({ label: "tff:project" });
+  for (let attempt = 1; attempt < 5 && !isOk(existing); attempt++) {
+    await new Promise((resolve2) => setTimeout(resolve2, 500));
+    existing = await deps.beadStore.list({ label: "tff:project" });
+  }
+  if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
+  const project = createProject(input);
+  const beadResult = await deps.beadStore.create({ label: "tff:project", title: project.name, design: project.vision });
+  if (!isOk(beadResult)) return beadResult;
+  await deps.artifactStore.mkdir(".tff");
+  await deps.artifactStore.mkdir(".tff/milestones");
+  const projectMd = `# ${project.name}
+
+## Vision
+
+${project.vision}
+`;
+  await deps.artifactStore.write(".tff/PROJECT.md", projectMd);
+  return Ok({ project, beadId: beadResult.data.id });
+};
+
+// tools/src/cli/commands/project-init.cmd.ts
+init_result();
+init_bead_adapter_factory();
+init_markdown_artifact_adapter();
+var projectInitCmd = async (args) => {
+  const name = args[0];
+  const vision = args.slice(1).join(" ") || name;
+  if (!name)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: project:init <name> [vision]" }
+    });
+  const { store: beadStore } = await createBeadAdapter();
+  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  try {
+    const { readFile: readFile7 } = await import("fs/promises");
+    const snapshotContent = await readFile7(".tff/beads-snapshot.jsonl", "utf-8");
+    if (snapshotContent.trim()) {
+      const { hydrateSnapshot: hydrateSnapshot2 } = await Promise.resolve().then(() => (init_hydrate_snapshot(), hydrate_snapshot_exports));
+      await hydrateSnapshot2({ beadStore, snapshotContent });
+    }
+  } catch {
+  }
+  const result = await initProject({ name, vision }, { beadStore, artifactStore });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/domain/errors/fresh-reviewer-violation.error.ts
+init_domain_error();
+var freshReviewerViolationError = (sliceId, agentRole) => createDomainError(
+  "FRESH_REVIEWER_VIOLATION",
+  `Agent "${agentRole}" cannot review slice "${sliceId}" \u2014 was the executor`,
+  { sliceId, agentRole }
+);
+
+// tools/src/application/review/enforce-fresh-reviewer.ts
+init_result();
+var enforceFreshReviewer = async (input, deps) => {
+  const executorsResult = await deps.reviewStore.getExecutorsForSlice(input.sliceId);
+  if (!isOk(executorsResult)) return executorsResult;
+  if (executorsResult.data.includes(input.reviewerAgent))
+    return Err(freshReviewerViolationError(input.sliceId, input.reviewerAgent));
+  return Ok(void 0);
+};
+
+// tools/src/cli/commands/review-check-fresh.cmd.ts
+init_result();
+init_bead_adapter_factory();
+
+// tools/src/infrastructure/adapters/review/review-metadata.adapter.ts
+init_result();
+var ReviewMetadataAdapter = class {
+  constructor(beadStore) {
+    this.beadStore = beadStore;
+  }
+  async record(review) {
+    const key = `review.${review.reviewerAgent}.${Date.now()}`;
+    const value = JSON.stringify({ status: review.status, reviewedAt: review.reviewedAt.toISOString() });
+    return this.beadStore.updateMetadata(review.sliceId, key, value);
+  }
+  async getExecutorsForSlice(sliceId) {
+    const tasksResult = await this.beadStore.list({ label: "tff:task", parentId: sliceId });
+    if (!isOk(tasksResult)) return tasksResult;
+    const executors = tasksResult.data.filter((t) => t.metadata?.executor).map((t) => t.metadata.executor);
+    return Ok([...new Set(executors)]);
+  }
+  async getReviewsForSlice(sliceId) {
+    const beadResult = await this.beadStore.get(sliceId);
+    if (!isOk(beadResult)) return beadResult;
+    const reviews = [];
+    const metadata = beadResult.data.metadata ?? {};
+    for (const [key, value] of Object.entries(metadata)) {
+      if (key.startsWith("review.")) {
+        const parts = key.split(".");
+        const parsed = JSON.parse(value);
+        reviews.push({
+          sliceId,
+          reviewerAgent: parts[1],
+          status: parsed.status,
+          reviewedAt: new Date(parsed.reviewedAt)
+        });
+      }
+    }
+    return Ok(reviews);
+  }
+};
+
+// tools/src/cli/commands/review-check-fresh.cmd.ts
+var reviewCheckFreshCmd = async (args) => {
+  const [sliceId, agent] = args;
+  if (!sliceId || !agent)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: review:check-fresh <slice-id> <agent>" }
+    });
+  const { store: beadStore } = await createBeadAdapter();
+  const reviewStore = new ReviewMetadataAdapter(beadStore);
+  const result = await enforceFreshReviewer({ sliceId, reviewerAgent: agent }, { reviewStore });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/application/skills/check-drift.ts
+var checkDrift = (original, current, options = {}) => {
+  const maxDrift = options.maxDrift ?? 0.6;
+  if (original === current) return { driftScore: 0, overThreshold: false };
+  const maxLen = Math.max(original.length, current.length);
+  if (maxLen === 0) return { driftScore: 0, overThreshold: false };
+  let changes = 0;
+  for (let i = 0; i < maxLen; i++) {
+    if (original[i] !== current[i]) changes++;
+  }
+  const driftScore = Math.round(changes / maxLen * 100) / 100;
+  return { driftScore, overThreshold: driftScore > maxDrift };
+};
+
+// tools/src/cli/commands/skills-drift.cmd.ts
+var skillsDriftCmd = async (args) => {
+  const [original, current] = args;
+  if (!original || !current)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: skills:drift <original-content> <current-content>" }
+    });
+  const result = checkDrift(original, current);
+  return JSON.stringify({ ok: true, data: result });
+};
+
+// tools/src/application/skills/validate-skill.ts
+init_domain_error();
+init_result();
+var NAME_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
+var validateSkill = (input) => {
+  const warnings = [];
+  if (input.name.length === 0 || input.name.length > 64) {
+    return Err(createDomainError("VALIDATION_ERROR", `Skill name must be 1-64 characters, got ${input.name.length}`));
+  }
+  if (!NAME_REGEX.test(input.name)) {
+    return Err(
+      createDomainError(
+        "VALIDATION_ERROR",
+        `Skill name "${input.name}" must be lowercase letters, numbers, and single hyphens only`
+      )
+    );
+  }
+  if (input.name.includes("--")) {
+    return Err(createDomainError("VALIDATION_ERROR", "Skill name must not contain consecutive hyphens"));
+  }
+  if (!input.description.toLowerCase().startsWith("use when")) {
+    warnings.push('Description should start with "Use when"');
+  }
+  let valid = true;
+  if (input.existingSkillNames?.includes(input.name)) {
+    valid = false;
+    warnings.push(`Name collision: skill "${input.name}" already exists`);
+  }
+  const maxSize = input.maxSize ?? 5e4;
+  if (input.content && input.content.length > maxSize) {
+    warnings.push(`Content size ${input.content.length} exceeds max size ${maxSize}`);
+  }
+  if (input.content?.match(/\$\(|;\s*(rm|curl|wget|eval)/)) {
+    warnings.push("Content contains potential shell injection patterns");
+  }
+  return Ok({ valid, warnings });
+};
+
+// tools/src/cli/commands/skills-validate.cmd.ts
+init_result();
+var skillsValidateCmd = async (args) => {
+  const input = args[0];
+  if (!input)
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: skills:validate <json>" } });
+  try {
+    const data = JSON.parse(input);
+    const result = validateSkill(data);
+    if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+    return JSON.stringify({ ok: false, error: result.error });
+  } catch {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON" } });
+  }
+};
+
+// tools/src/application/lifecycle/classify-complexity.ts
+var classifyComplexity = (signals) => {
+  if (signals.riskLevel === "high") return "F-full";
+  if (signals.hasExternalIntegrations) return "F-full";
+  if (signals.taskCount >= 8 || signals.modulesAffected >= 4) return "F-full";
+  if (signals.riskLevel === "medium") return "F-lite";
+  const isS = signals.estimatedFilesAffected <= 1 && signals.newFilesCreated === 0 && !signals.requiresInvestigation && !signals.architectureImpact && signals.unknownsSurfaced === 0;
+  if (isS) return "S";
+  return "F-lite";
+};
+
+// tools/src/cli/commands/slice-classify.cmd.ts
+var sliceClassifyCmd = async (args) => {
+  const input = args[0];
+  if (!input)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: slice:classify <json-signals>" }
+    });
+  try {
+    const signals = JSON.parse(input);
+    const tier = classifyComplexity(signals);
+    return JSON.stringify({ ok: true, data: { tier } });
+  } catch {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON input" } });
+  }
+};
 
 // tools/src/domain/entities/slice.ts
 init_zod();
-init_result();
-
-// tools/src/domain/value-objects/slice-status.ts
-init_zod();
-var SliceStatusSchema = external_exports.enum([
-  "discussing",
-  "researching",
-  "planning",
-  "executing",
-  "verifying",
-  "reviewing",
-  "completing",
-  "closed"
-]);
-var transitions = {
-  discussing: ["researching"],
-  researching: ["planning"],
-  planning: ["planning", "executing"],
-  executing: ["verifying"],
-  verifying: ["reviewing", "executing"],
-  reviewing: ["completing", "executing"],
-  completing: ["closed"],
-  closed: []
-};
-var canTransition = (from, to) => transitions[from].includes(to);
-
-// tools/src/domain/value-objects/complexity-tier.ts
-init_zod();
-var ComplexityTierSchema = external_exports.enum(["S", "F-lite", "F-full"]);
-var TierConfigSchema = external_exports.object({
-  brainstormer: external_exports.boolean(),
-  research: external_exports.enum(["skip", "optional", "required"]),
-  freshReviewer: external_exports.literal(true),
-  tdd: external_exports.boolean()
-});
 
 // tools/src/domain/errors/invalid-transition.error.ts
 init_domain_error();
-var invalidTransitionError = (sliceId, from, to) => createDomainError(
-  "INVALID_TRANSITION",
-  `Cannot transition slice "${sliceId}" from "${from}" to "${to}"`,
-  { sliceId, from, to }
-);
+var invalidTransitionError = (sliceId, from, to) => createDomainError("INVALID_TRANSITION", `Cannot transition slice "${sliceId}" from "${from}" to "${to}"`, {
+  sliceId,
+  from,
+  to
+});
 
 // tools/src/domain/events/domain-event.ts
 init_zod();
@@ -22974,6 +23443,43 @@ var createDomainEvent = (type, payload) => ({
 
 // tools/src/domain/events/slice-status-changed.event.ts
 var sliceStatusChangedEvent = (sliceId, from, to) => createDomainEvent("SLICE_STATUS_CHANGED", { sliceId, from, to });
+
+// tools/src/domain/entities/slice.ts
+init_result();
+
+// tools/src/domain/value-objects/complexity-tier.ts
+init_zod();
+var ComplexityTierSchema = external_exports.enum(["S", "F-lite", "F-full"]);
+var TierConfigSchema = external_exports.object({
+  brainstormer: external_exports.boolean(),
+  research: external_exports.enum(["skip", "optional", "required"]),
+  freshReviewer: external_exports.literal(true),
+  tdd: external_exports.boolean()
+});
+
+// tools/src/domain/value-objects/slice-status.ts
+init_zod();
+var SliceStatusSchema = external_exports.enum([
+  "discussing",
+  "researching",
+  "planning",
+  "executing",
+  "verifying",
+  "reviewing",
+  "completing",
+  "closed"
+]);
+var transitions = {
+  discussing: ["researching"],
+  researching: ["planning"],
+  planning: ["planning", "executing"],
+  executing: ["verifying"],
+  verifying: ["reviewing", "executing"],
+  reviewing: ["completing", "executing"],
+  completing: ["closed"],
+  closed: []
+};
+var canTransition = (from, to) => transitions[from].includes(to);
 
 // tools/src/domain/entities/slice.ts
 var SliceSchema = external_exports.object({
@@ -23007,6 +23513,7 @@ var transitionSlice = (slice, to) => {
 };
 
 // tools/src/application/slice/create-slice.ts
+init_result();
 var createSliceUseCase = async (input, deps) => {
   const slice = createSlice({
     milestoneId: input.milestoneBeadId,
@@ -23035,9 +23542,9 @@ _Plan will be defined during /tff:plan._
 };
 
 // tools/src/cli/commands/slice-create.cmd.ts
+init_result();
 init_bead_adapter_factory();
 init_markdown_artifact_adapter();
-init_result();
 var sliceCreateCmd = async (args) => {
   let name;
   for (let i = 0; i < args.length; i++) {
@@ -23054,19 +23561,26 @@ var sliceCreateCmd = async (args) => {
     }
   }
   if (!name) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: slice:create <name> or slice:create --title <name>" } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: slice:create <name> or slice:create --title <name>" }
+    });
   }
   const { store: beadStore } = await createBeadAdapter();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
   const milestonesResult = await beadStore.list({ label: "tff:milestone" });
   if (!isOk(milestonesResult) || milestonesResult.data.length === 0) {
-    return JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: "No milestone found. Run /tff:new-milestone first." } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: "NOT_FOUND", message: "No milestone found. Run /tff:new-milestone first." }
+    });
   }
   const openMilestones = milestonesResult.data.filter((m) => m.status !== "closed");
   const milestone = openMilestones.length > 0 ? openMilestones[0] : milestonesResult.data[0];
   const milestoneBeadId = milestone.id;
-  const milestoneNumber = milestonesResult.data.indexOf(milestone) + 1;
-  const slicesResult = await beadStore.list({ label: "tff:slice", parentId: milestoneBeadId });
+  const milestoneMatch = milestone.design?.match(/M(\d+)/);
+  const milestoneNumber = milestoneMatch ? parseInt(milestoneMatch[1], 10) : 1;
+  const slicesResult = await beadStore.list({ label: "tff:slice", parentId: milestoneBeadId, includeAll: true });
   let maxSliceNumber = 0;
   if (isOk(slicesResult)) {
     for (const s of slicesResult.data) {
@@ -23097,13 +23611,16 @@ var transitionSliceUseCase = async (input, deps) => {
 };
 
 // tools/src/cli/commands/slice-transition.cmd.ts
+init_result();
 init_bead_adapter_factory();
 init_warn();
-init_result();
 var sliceTransitionCmd = async (args) => {
   const [beadId, targetStatus] = args;
   if (!beadId || !targetStatus) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: slice:transition <bead-id> <target-status>" } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: slice:transition <bead-id> <target-status>" }
+    });
   }
   try {
     SliceStatusSchema.parse(targetStatus);
@@ -23118,10 +23635,16 @@ var sliceTransitionCmd = async (args) => {
   const bead = beadResult.data;
   const parsedStatus = SliceStatusSchema.safeParse(bead.status);
   if (!parsedStatus.success) {
-    return JSON.stringify({ ok: false, error: { code: "VALIDATION_ERROR", message: `Bead has invalid slice status: "${bead.status}"` } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: "VALIDATION_ERROR", message: `Bead has invalid slice status: "${bead.status}"` }
+    });
   }
   if (!bead.parentId) {
-    return JSON.stringify({ ok: false, error: { code: "VALIDATION_ERROR", message: `Bead "${beadId}" has no parent milestone` } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: "VALIDATION_ERROR", message: `Bead "${beadId}" has no parent milestone` }
+    });
   }
   const sliceIdMatch = bead.design?.match(/Slice (M\d+-S\d+)/);
   const sliceId = sliceIdMatch?.[1] ?? "unknown";
@@ -23181,88 +23704,160 @@ var sliceTransitionCmd = async (args) => {
   return JSON.stringify({ ok: false, error: result.error });
 };
 
-// tools/src/application/lifecycle/classify-complexity.ts
-var classifyComplexity = (signals) => {
-  if (signals.hasExternalIntegrations) return "F-full";
-  if (signals.taskCount >= 8 || signals.modulesAffected >= 4) return "F-full";
-  if (signals.taskCount >= 4 || signals.modulesAffected >= 2 || signals.estimatedFilesAffected >= 6 || signals.unknownsSurfaced >= 2) return "F-lite";
-  return "S";
-};
-
-// tools/src/cli/commands/slice-classify.cmd.ts
-var sliceClassifyCmd = async (args) => {
-  const input = args[0];
-  if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: slice:classify <json-signals>" } });
-  try {
-    const signals = JSON.parse(input);
-    const tier = classifyComplexity(signals);
-    return JSON.stringify({ ok: true, data: { tier } });
-  } catch {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON input" } });
-  }
-};
-
-// tools/src/application/waves/detect-waves.ts
+// tools/src/cli/commands/snapshot-load.cmd.ts
+var import_promises5 = require("fs/promises");
+init_hydrate_snapshot();
 init_result();
-init_domain_error();
-var detectWaves = (tasks) => {
-  if (tasks.length === 0) return Ok([]);
-  const inDegree = /* @__PURE__ */ new Map();
-  const dependents = /* @__PURE__ */ new Map();
-  for (const task of tasks) {
-    inDegree.set(task.id, 0);
-    dependents.set(task.id, []);
+init_bead_adapter_factory();
+var SNAPSHOT_PATH2 = ".tff/beads-snapshot.jsonl";
+async function snapshotLoadCmd(_args) {
+  const { store: beadStore } = await createBeadAdapter();
+  await beadStore.init();
+  let snapshotContent = "";
+  try {
+    snapshotContent = await (0, import_promises5.readFile)(SNAPSHOT_PATH2, "utf-8");
+  } catch {
+    return JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: `No snapshot at ${SNAPSHOT_PATH2}` } });
   }
-  for (const task of tasks) {
-    for (const dep of task.dependsOn) {
-      inDegree.set(task.id, (inDegree.get(task.id) ?? 0) + 1);
-      const deps = dependents.get(dep) ?? [];
-      deps.push(task.id);
-      dependents.set(dep, deps);
+  const result = await hydrateSnapshot({ beadStore, snapshotContent });
+  if (!isOk(result)) return JSON.stringify({ ok: false, error: result.error });
+  return JSON.stringify({ ok: true, data: result.data });
+}
+
+// tools/src/cli/commands/snapshot-merge.cmd.ts
+var import_promises6 = require("fs/promises");
+
+// tools/src/application/snapshot/merge-snapshot.ts
+init_bead_snapshot();
+function parseToMap(content) {
+  const lines = content.split("\n").filter(Boolean);
+  if (lines.length === 0) return /* @__PURE__ */ new Map();
+  const entries = lines.map((l) => JSON.parse(l));
+  const latest = latestById(entries);
+  const map2 = /* @__PURE__ */ new Map();
+  for (const e of latest) map2.set(e.id, e);
+  return map2;
+}
+function unionArray(a, b) {
+  return [.../* @__PURE__ */ new Set([...a, ...b])].sort();
+}
+function mergeEntry(id, base, ours, theirs, conflicts) {
+  if (!ours && theirs) return theirs;
+  if (!theirs && ours) return ours;
+  if (!ours && !theirs) throw new Error(`mergeEntry called with no ours/theirs for ${id}`);
+  const o = ours;
+  const t = theirs;
+  const oursNewer = o.snapshot_ts >= t.snapshot_ts;
+  const winner = oursNewer ? o : t;
+  const status = winner.status;
+  const baseDesign = base?.design ?? "";
+  const oursDesignChanged = o.design !== baseDesign;
+  const theirsDesignChanged = t.design !== baseDesign;
+  let design;
+  if (oursDesignChanged && theirsDesignChanged && o.design !== t.design) {
+    conflicts.push({ id, field: "design", ours: o.design, theirs: t.design });
+    design = winner.design;
+  } else if (theirsDesignChanged) {
+    design = t.design;
+  } else {
+    design = o.design;
+  }
+  const deps = {
+    blocks: unionArray(o.deps.blocks, t.deps.blocks),
+    validates: unionArray(o.deps.validates, t.deps.validates)
+  };
+  const allKeys = /* @__PURE__ */ new Set([...Object.keys(o.kvs), ...Object.keys(t.kvs)]);
+  const kvs = {};
+  for (const key of allKeys) {
+    const inOurs = key in o.kvs;
+    const inTheirs = key in t.kvs;
+    if (inOurs && inTheirs) {
+      kvs[key] = oursNewer ? o.kvs[key] : t.kvs[key];
+    } else if (inOurs) {
+      kvs[key] = o.kvs[key];
+    } else {
+      kvs[key] = t.kvs[key];
     }
   }
-  const waves = [];
-  let remaining = tasks.length;
-  let currentWave = [...inDegree.entries()].filter(([_, deg]) => deg === 0).map(([id]) => id).sort();
-  let waveIndex = 0;
-  while (currentWave.length > 0) {
-    waves.push({ index: waveIndex, taskIds: currentWave });
-    remaining -= currentWave.length;
-    const nextWave = [];
-    for (const taskId of currentWave) {
-      for (const dependent of dependents.get(taskId) ?? []) {
-        const newDeg = (inDegree.get(dependent) ?? 1) - 1;
-        inDegree.set(dependent, newDeg);
-        if (newDeg === 0) nextWave.push(dependent);
-      }
-    }
-    currentWave = nextWave.sort();
-    waveIndex++;
+  return {
+    id,
+    label: winner.label,
+    title: winner.title,
+    status,
+    design,
+    deps,
+    kvs,
+    snapshot_ts: winner.snapshot_ts
+  };
+}
+function mergeSnapshots(base, ours, theirs) {
+  const baseMap = parseToMap(base);
+  const oursMap = parseToMap(ours);
+  const theirsMap = parseToMap(theirs);
+  const allIds = /* @__PURE__ */ new Set([...baseMap.keys(), ...oursMap.keys(), ...theirsMap.keys()]);
+  const conflicts = [];
+  const merged = [];
+  for (const id of allIds) {
+    const b = baseMap.get(id);
+    const o = oursMap.get(id);
+    const t = theirsMap.get(id);
+    if (!o && !t) continue;
+    merged.push(mergeEntry(id, b, o, t, conflicts));
   }
-  if (remaining > 0) {
-    const cycleIds = [...inDegree.entries()].filter(([_, deg]) => deg > 0).map(([id]) => id).sort();
-    return Err(createDomainError("INVALID_TRANSITION", `Circular dependency detected among tasks: ${cycleIds.join(", ")}`, { remaining, cycleIds }));
-  }
-  return Ok(waves);
-};
+  const result = merged.sort((a, b) => a.id.localeCompare(b.id)).map((e) => JSON.stringify(e)).join("\n");
+  return { merged: result, conflicts };
+}
 
-// tools/src/cli/commands/waves-detect.cmd.ts
-init_result();
-var wavesDetectCmd = async (args) => {
-  const input = args[0];
-  if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: waves:detect <json-tasks>" } });
-  try {
-    const tasks = JSON.parse(input);
-    const result = detectWaves(tasks);
-    if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-    return JSON.stringify({ ok: false, error: result.error });
-  } catch {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON input" } });
+// tools/src/cli/commands/snapshot-merge.cmd.ts
+async function snapshotMergeCmd(args) {
+  const [basePath, oursPath, theirsPath] = args;
+  if (!basePath || !oursPath || !theirsPath) {
+    return JSON.stringify({
+      ok: false,
+      error: { code: "VALIDATION_ERROR", message: "Usage: snapshot:merge <base> <ours> <theirs>" }
+    });
   }
-};
+  const [base, ours, theirs] = await Promise.all([
+    (0, import_promises6.readFile)(basePath, "utf-8").catch(() => ""),
+    (0, import_promises6.readFile)(oursPath, "utf-8").catch(() => ""),
+    (0, import_promises6.readFile)(theirsPath, "utf-8").catch(() => "")
+  ]);
+  const result = mergeSnapshots(base, ours, theirs);
+  await (0, import_promises6.writeFile)(oursPath, result.merged, "utf-8");
+  if (result.conflicts.length > 0) {
+    await (0, import_promises6.mkdir)(".tff", { recursive: true });
+    const conflictMd = result.conflicts.map(
+      (c) => [
+        `## Conflict: ${c.id}`,
+        "### Ours",
+        "```",
+        c.ours,
+        "```",
+        "### Theirs",
+        "```",
+        c.theirs,
+        "```",
+        "### Resolution needed",
+        "Choose one version or merge manually, then run `/tff:sync` to hydrate beads."
+      ].join("\n")
+    ).join("\n\n---\n\n");
+    await (0, import_promises6.writeFile)(".tff/CONFLICT.md", conflictMd, "utf-8");
+    console.error(
+      JSON.stringify({
+        ok: false,
+        error: {
+          code: "SYNC_CONFLICT",
+          message: `${result.conflicts.length} design conflict(s) written to .tff/CONFLICT.md`
+        }
+      })
+    );
+    process.exit(1);
+  }
+  return JSON.stringify({ ok: true, data: { merged: result.merged.split("\n").filter(Boolean).length } });
+}
 
 // tools/src/cli/index.ts
-init_sync_state_cmd();
+init_snapshot_save_cmd();
 
 // tools/src/application/sync/reconcile-state.ts
 init_result();
@@ -23386,9 +23981,9 @@ ${bead.design ?? "_No plan yet._"}
 };
 
 // tools/src/cli/commands/sync-reconcile.cmd.ts
+init_result();
 init_bead_adapter_factory();
 init_markdown_artifact_adapter();
-init_result();
 var syncReconcileCmd = async (args) => {
   const [milestoneId, milestoneName] = args;
   if (!milestoneId) {
@@ -23417,504 +24012,71 @@ var syncReconcileCmd = async (args) => {
   return JSON.stringify({ ok: false, error: result.error });
 };
 
-// tools/src/application/worktree/create-worktree.ts
-init_result();
-var createWorktreeUseCase = async (input, deps) => {
-  const worktreePath = `.tff/worktrees/${input.sliceId}`;
-  const branchName = `slice/${input.sliceId}`;
-  const result = await deps.gitOps.createWorktree(worktreePath, branchName);
-  if (!isOk(result)) return result;
-  return Ok({ worktreePath, branchName });
-};
-
-// tools/src/cli/commands/worktree-create.cmd.ts
-init_result();
-var worktreeCreateCmd = async (args) => {
-  const [sliceId] = args;
-  if (!sliceId) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: worktree:create <slice-id>" } });
-  const gitOps = new GitCliAdapter(process.cwd());
-  const result = await createWorktreeUseCase({ sliceId }, { gitOps });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
-};
-
-// tools/src/application/worktree/delete-worktree.ts
-var deleteWorktreeUseCase = async (input, deps) => {
-  const worktreePath = `.tff/worktrees/${input.sliceId}`;
-  return deps.gitOps.deleteWorktree(worktreePath);
-};
-
-// tools/src/cli/commands/worktree-delete.cmd.ts
-init_result();
-var worktreeDeleteCmd = async (args) => {
-  const [sliceId] = args;
-  if (!sliceId) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: worktree:delete <slice-id>" } });
-  const gitOps = new GitCliAdapter(process.cwd());
-  const result = await deleteWorktreeUseCase({ sliceId }, { gitOps });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-  return JSON.stringify({ ok: false, error: result.error });
-};
-
-// tools/src/application/worktree/list-worktrees.ts
-var listWorktreesUseCase = async (deps) => {
-  return deps.gitOps.listWorktrees();
-};
-
-// tools/src/cli/commands/worktree-list.cmd.ts
-init_result();
-var worktreeListCmd = async (_args) => {
-  const gitOps = new GitCliAdapter(process.cwd());
-  const result = await listWorktreesUseCase({ gitOps });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
-};
-
-// tools/src/application/review/enforce-fresh-reviewer.ts
-init_result();
-
-// tools/src/domain/errors/fresh-reviewer-violation.error.ts
-init_domain_error();
-var freshReviewerViolationError = (sliceId, agentRole) => createDomainError(
-  "FRESH_REVIEWER_VIOLATION",
-  `Agent "${agentRole}" cannot review slice "${sliceId}" \u2014 was the executor`,
-  { sliceId, agentRole }
-);
-
-// tools/src/application/review/enforce-fresh-reviewer.ts
-var enforceFreshReviewer = async (input, deps) => {
-  const executorsResult = await deps.reviewStore.getExecutorsForSlice(input.sliceId);
-  if (!isOk(executorsResult)) return executorsResult;
-  if (executorsResult.data.includes(input.reviewerAgent)) return Err(freshReviewerViolationError(input.sliceId, input.reviewerAgent));
-  return Ok(void 0);
-};
-
-// tools/src/cli/commands/review-check-fresh.cmd.ts
-init_bead_adapter_factory();
-
-// tools/src/infrastructure/adapters/review/review-metadata.adapter.ts
-init_result();
-var ReviewMetadataAdapter = class {
-  constructor(beadStore) {
-    this.beadStore = beadStore;
-  }
-  async record(review) {
-    const key = `review.${review.reviewerAgent}.${Date.now()}`;
-    const value = JSON.stringify({ status: review.status, reviewedAt: review.reviewedAt.toISOString() });
-    return this.beadStore.updateMetadata(review.sliceId, key, value);
-  }
-  async getExecutorsForSlice(sliceId) {
-    const tasksResult = await this.beadStore.list({ label: "tff:task", parentId: sliceId });
-    if (!isOk(tasksResult)) return tasksResult;
-    const executors = tasksResult.data.filter((t) => t.metadata?.executor).map((t) => t.metadata.executor);
-    return Ok([...new Set(executors)]);
-  }
-  async getReviewsForSlice(sliceId) {
-    const beadResult = await this.beadStore.get(sliceId);
-    if (!isOk(beadResult)) return beadResult;
-    const reviews = [];
-    const metadata = beadResult.data.metadata ?? {};
-    for (const [key, value] of Object.entries(metadata)) {
-      if (key.startsWith("review.")) {
-        const parts = key.split(".");
-        const parsed = JSON.parse(value);
-        reviews.push({ sliceId, reviewerAgent: parts[1], status: parsed.status, reviewedAt: new Date(parsed.reviewedAt) });
-      }
-    }
-    return Ok(reviews);
-  }
-};
-
-// tools/src/cli/commands/review-check-fresh.cmd.ts
-init_result();
-var reviewCheckFreshCmd = async (args) => {
-  const [sliceId, agent] = args;
-  if (!sliceId || !agent) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: review:check-fresh <slice-id> <agent>" } });
-  const { store: beadStore } = await createBeadAdapter();
-  const reviewStore = new ReviewMetadataAdapter(beadStore);
-  const result = await enforceFreshReviewer({ sliceId, reviewerAgent: agent }, { reviewStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-  return JSON.stringify({ ok: false, error: result.error });
-};
-
 // tools/src/cli/index.ts
-init_checkpoint_save_cmd();
+init_sync_state_cmd();
 
-// tools/src/application/checkpoint/load-checkpoint.ts
-init_result();
+// tools/src/application/waves/detect-waves.ts
 init_domain_error();
-var loadCheckpoint = async (sliceId, deps) => {
-  const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-  const path = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
-  const contentResult = await deps.artifactStore.read(path);
-  if (!isOk(contentResult)) return Err(createDomainError("NOT_FOUND", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
-  const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);
-  if (!match) return Err(createDomainError("VALIDATION_ERROR", `Checkpoint file for "${sliceId}" is corrupted`, { sliceId }));
-  const data = JSON.parse(match[1]);
-  return Ok(data);
-};
-
-// tools/src/cli/commands/checkpoint-load.cmd.ts
-init_markdown_artifact_adapter();
 init_result();
-var checkpointLoadCmd = async (args) => {
-  const [sliceId] = args;
-  if (!sliceId) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: checkpoint:load <slice-id>" } });
+var detectWaves = (tasks) => {
+  if (tasks.length === 0) return Ok([]);
+  const inDegree = /* @__PURE__ */ new Map();
+  const dependents = /* @__PURE__ */ new Map();
+  for (const task of tasks) {
+    inDegree.set(task.id, 0);
+    dependents.set(task.id, []);
   }
-  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  const result = await loadCheckpoint(sliceId, { artifactStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
-};
-
-// tools/src/domain/value-objects/observation.ts
-init_zod();
-var ObservationSchema = external_exports.object({
-  ts: external_exports.string(),
-  session: external_exports.string(),
-  tool: external_exports.string().min(1),
-  args: external_exports.string().nullable(),
-  project: external_exports.string()
-});
-
-// tools/src/infrastructure/adapters/jsonl/jsonl-store.adapter.ts
-var import_promises4 = require("fs/promises");
-var import_node_path3 = require("path");
-init_result();
-var JsonlStoreAdapter = class {
-  sessionsPath;
-  patternsPath;
-  candidatesPath;
-  constructor(basePath) {
-    this.sessionsPath = (0, import_node_path3.join)(basePath, "sessions.jsonl");
-    this.patternsPath = (0, import_node_path3.join)(basePath, "patterns.jsonl");
-    this.candidatesPath = (0, import_node_path3.join)(basePath, "candidates.jsonl");
-  }
-  async appendObservation(obs) {
-    await (0, import_promises4.mkdir)((0, import_node_path3.join)(this.sessionsPath, ".."), { recursive: true });
-    await (0, import_promises4.appendFile)(this.sessionsPath, JSON.stringify(obs) + "\n");
-    return Ok(void 0);
-  }
-  async readObservations() {
-    return this.readJsonl(this.sessionsPath);
-  }
-  async writePatterns(patterns) {
-    return this.writeJsonl(this.patternsPath, patterns);
-  }
-  async readPatterns() {
-    return this.readJsonl(this.patternsPath);
-  }
-  async writeCandidates(candidates) {
-    return this.writeJsonl(this.candidatesPath, candidates);
-  }
-  async readCandidates() {
-    return this.readJsonl(this.candidatesPath);
-  }
-  async readJsonl(path) {
-    try {
-      const content = await (0, import_promises4.readFile)(path, "utf-8");
-      const lines = content.trim().split("\n").filter((l) => l.length > 0);
-      return Ok(lines.map((l) => JSON.parse(l)));
-    } catch {
-      return Ok([]);
+  for (const task of tasks) {
+    for (const dep of task.dependsOn) {
+      inDegree.set(task.id, (inDegree.get(task.id) ?? 0) + 1);
+      const deps = dependents.get(dep) ?? [];
+      deps.push(task.id);
+      dependents.set(dep, deps);
     }
   }
-  async writeJsonl(path, items) {
-    await (0, import_promises4.mkdir)((0, import_node_path3.join)(path, ".."), { recursive: true });
-    const content = items.map((i) => JSON.stringify(i)).join("\n") + "\n";
-    await (0, import_promises4.writeFile)(path, content);
-    return Ok(void 0);
+  const waves = [];
+  let remaining = tasks.length;
+  let currentWave = [...inDegree.entries()].filter(([_, deg]) => deg === 0).map(([id]) => id).sort();
+  let waveIndex = 0;
+  while (currentWave.length > 0) {
+    waves.push({ index: waveIndex, taskIds: currentWave });
+    remaining -= currentWave.length;
+    const nextWave = [];
+    for (const taskId of currentWave) {
+      for (const dependent of dependents.get(taskId) ?? []) {
+        const newDeg = (inDegree.get(dependent) ?? 1) - 1;
+        inDegree.set(dependent, newDeg);
+        if (newDeg === 0) nextWave.push(dependent);
+      }
+    }
+    currentWave = nextWave.sort();
+    waveIndex++;
   }
+  if (remaining > 0) {
+    const cycleIds = [...inDegree.entries()].filter(([_, deg]) => deg > 0).map(([id]) => id).sort();
+    return Err(
+      createDomainError("INVALID_TRANSITION", `Circular dependency detected among tasks: ${cycleIds.join(", ")}`, {
+        remaining,
+        cycleIds
+      })
+    );
+  }
+  return Ok(waves);
 };
 
-// tools/src/cli/commands/observe-record.cmd.ts
+// tools/src/cli/commands/waves-detect.cmd.ts
 init_result();
-var observeRecordCmd = async (args) => {
+var wavesDetectCmd = async (args) => {
   const input = args[0];
-  if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: observe:record <json>" } });
+  if (!input)
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: waves:detect <json-tasks>" } });
   try {
-    const obs = ObservationSchema.parse(JSON.parse(input));
-    const store = new JsonlStoreAdapter(".tff/observations");
-    const result = await store.appendObservation(obs);
-    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-    return JSON.stringify({ ok: false, error: result.error });
-  } catch (e) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: String(e) } });
-  }
-};
-
-// tools/src/application/patterns/extract-ngrams.ts
-var extractNgrams = (observations, n) => {
-  if (observations.length < n) return [];
-  const sessions = /* @__PURE__ */ new Map();
-  for (const obs of observations) {
-    const list = sessions.get(obs.session) ?? [];
-    list.push(obs);
-    sessions.set(obs.session, list);
-  }
-  const ngramMap = /* @__PURE__ */ new Map();
-  for (const [sessionId, sessionObs] of sessions) {
-    for (let i = 0; i <= sessionObs.length - n; i++) {
-      const sequence = sessionObs.slice(i, i + n).map((o) => o.tool);
-      const key = sequence.join("\u2192");
-      const existing = ngramMap.get(key);
-      const lastTs = sessionObs[i + n - 1].ts;
-      if (existing) {
-        existing.count++;
-        existing.sessionSet.add(sessionId);
-        existing.projectSet.add(sessionObs[i].project);
-        if (lastTs > existing.lastSeen) existing.lastSeen = lastTs;
-      } else {
-        ngramMap.set(key, {
-          sequence,
-          count: 1,
-          sessionSet: /* @__PURE__ */ new Set([sessionId]),
-          projectSet: /* @__PURE__ */ new Set([sessionObs[i].project]),
-          lastSeen: lastTs
-        });
-      }
-    }
-  }
-  return [...ngramMap.values()].map((v) => ({
-    sequence: v.sequence,
-    count: v.count,
-    sessions: v.sessionSet.size,
-    projects: v.projectSet.size,
-    lastSeen: v.lastSeen
-  }));
-};
-
-// tools/src/cli/commands/patterns-extract.cmd.ts
-init_result();
-var patternsExtractCmd = async (_args) => {
-  const store = new JsonlStoreAdapter(".tff/observations");
-  const obsResult = await store.readObservations();
-  if (!isOk(obsResult)) return JSON.stringify({ ok: false, error: obsResult.error });
-  const bigrams = extractNgrams(obsResult.data, 2);
-  const trigrams = extractNgrams(obsResult.data, 3);
-  const all = [...bigrams, ...trigrams];
-  await store.writePatterns(all);
-  return JSON.stringify({ ok: true, data: all });
-};
-
-// tools/src/application/patterns/aggregate-patterns.ts
-var aggregatePatterns = (patterns, options = {}) => {
-  const minCount = options.minCount ?? 3;
-  const totalSessions = options.totalSessions ?? 0;
-  const noiseThreshold = options.noiseThreshold ?? 0.8;
-  return patterns.filter((p) => {
-    if (p.count < minCount) return false;
-    if (totalSessions > 0 && p.sessions / totalSessions >= noiseThreshold) return false;
-    return true;
-  });
-};
-
-// tools/src/cli/commands/patterns-aggregate.cmd.ts
-init_result();
-var patternsAggregateCmd = async (args) => {
-  const store = new JsonlStoreAdapter(".tff/observations");
-  const patternsResult = await store.readPatterns();
-  if (!isOk(patternsResult)) return JSON.stringify({ ok: false, error: patternsResult.error });
-  const minCount = parseInt(args[0] ?? "3", 10);
-  const result = aggregatePatterns(patternsResult.data, { minCount });
-  await store.writePatterns(result);
-  return JSON.stringify({ ok: true, data: result });
-};
-
-// tools/src/application/patterns/rank-candidates.ts
-var rankCandidates = (patterns, options) => {
-  const threshold = options.threshold ?? 0;
-  const nowMs = new Date(options.now).getTime();
-  const scored = patterns.map((p) => {
-    const frequency = Math.min(Math.log2(p.count + 1) / 10, 1);
-    const breadth = options.totalProjects > 0 ? p.projects / options.totalProjects : 0;
-    const ageDays = (nowMs - new Date(p.lastSeen).getTime()) / (24 * 60 * 60 * 1e3);
-    const recency = Math.exp(-ageDays * Math.LN2 / 14);
-    const consistency = options.totalSessions > 0 ? p.sessions / options.totalSessions : 0;
-    const wF = options.weights?.frequency ?? 0.25;
-    const wB = options.weights?.breadth ?? 0.3;
-    const wR = options.weights?.recency ?? 0.25;
-    const wC = options.weights?.consistency ?? 0.2;
-    const score = frequency * wF + breadth * wB + recency * wR + consistency * wC;
-    return {
-      pattern: p.sequence,
-      score: Math.round(score * 100) / 100,
-      evidence: { count: p.count, sessions: p.sessions, projects: p.projects }
-    };
-  });
-  return scored.filter((c) => c.score >= threshold).sort((a, b) => b.score - a.score);
-};
-
-// tools/src/cli/commands/patterns-rank.cmd.ts
-init_result();
-var patternsRankCmd = async (args) => {
-  const store = new JsonlStoreAdapter(".tff/observations");
-  const patternsResult = await store.readPatterns();
-  if (!isOk(patternsResult)) return JSON.stringify({ ok: false, error: patternsResult.error });
-  const obsResult = await store.readObservations();
-  const totalSessions = isOk(obsResult) ? new Set(obsResult.data.map((o) => o.session)).size : 1;
-  const totalProjects = isOk(obsResult) ? new Set(obsResult.data.map((o) => o.project)).size : 1;
-  const threshold = parseFloat(args[0] ?? "0.5");
-  const candidates = rankCandidates(patternsResult.data, {
-    totalProjects,
-    totalSessions,
-    now: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
-    threshold
-  });
-  await store.writeCandidates(candidates);
-  return JSON.stringify({ ok: true, data: candidates });
-};
-
-// tools/src/application/compose/detect-clusters.ts
-function jaccardDistance(a, b) {
-  const intersection2 = new Set([...a].filter((x) => b.has(x)));
-  const union2 = /* @__PURE__ */ new Set([...a, ...b]);
-  if (union2.size === 0) return 1;
-  return 1 - intersection2.size / union2.size;
-}
-function detectClusters(observations, opts = {}) {
-  const minSessions = opts.minSessions ?? 3;
-  const minPatterns = opts.minPatterns ?? 2;
-  const maxDist = opts.maxJaccardDistance ?? 0.3;
-  const sessionTools = /* @__PURE__ */ new Map();
-  for (const obs of observations) {
-    if (!sessionTools.has(obs.session)) sessionTools.set(obs.session, /* @__PURE__ */ new Set());
-    sessionTools.get(obs.session).add(obs.tool);
-  }
-  if (sessionTools.size < minSessions) return [];
-  const allTools = [...new Set(observations.map((o) => o.tool))];
-  const toolSessionSets = /* @__PURE__ */ new Map();
-  for (const [session, tools] of sessionTools) {
-    for (const tool of tools) {
-      if (!toolSessionSets.has(tool)) toolSessionSets.set(tool, /* @__PURE__ */ new Set());
-      toolSessionSets.get(tool).add(session);
-    }
-  }
-  const coOccurrence = /* @__PURE__ */ new Map();
-  for (const ts of sessionTools.values()) {
-    const tools = [...ts];
-    for (let i = 0; i < tools.length; i++) {
-      for (let j = i + 1; j < tools.length; j++) {
-        const key = [tools[i], tools[j]].sort().join("|");
-        coOccurrence.set(key, (coOccurrence.get(key) ?? 0) + 1);
-      }
-    }
-  }
-  const clusters = [];
-  const visited = /* @__PURE__ */ new Set();
-  for (const tool of allTools) {
-    if (visited.has(tool)) continue;
-    const cluster = /* @__PURE__ */ new Set([tool]);
-    visited.add(tool);
-    for (const other of allTools) {
-      if (visited.has(other)) continue;
-      const dist = jaccardDistance(toolSessionSets.get(tool), toolSessionSets.get(other));
-      if (dist < maxDist) {
-        cluster.add(other);
-        visited.add(other);
-      }
-    }
-    if (cluster.size >= minPatterns) {
-      const clusterSessions = /* @__PURE__ */ new Set();
-      for (const t of cluster) {
-        for (const s of toolSessionSets.get(t)) clusterSessions.add(s);
-      }
-      if (clusterSessions.size >= minSessions) {
-        clusters.push({
-          tools: [...cluster].sort(),
-          sessions: clusterSessions.size,
-          activations: [...coOccurrence.entries()].filter(([key]) => {
-            const [a, b] = key.split("|");
-            return cluster.has(a) && cluster.has(b);
-          }).reduce((sum, [, count]) => sum + count, 0)
-        });
-      }
-    }
-  }
-  return clusters.sort((a, b) => b.activations - a.activations);
-}
-
-// tools/src/cli/commands/compose-detect.cmd.ts
-var composeDetectCmd = async (args) => {
-  const input = args[0];
-  if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: compose:detect <observations-json> [options-json]" } });
-  try {
-    const observations = JSON.parse(input);
-    const opts = args[1] ? JSON.parse(args[1]) : {};
-    const result = detectClusters(observations, opts);
-    return JSON.stringify({ ok: true, data: result });
-  } catch {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON" } });
-  }
-};
-
-// tools/src/application/skills/check-drift.ts
-var checkDrift = (original, current, options = {}) => {
-  const maxDrift = options.maxDrift ?? 0.6;
-  if (original === current) return { driftScore: 0, overThreshold: false };
-  const maxLen = Math.max(original.length, current.length);
-  if (maxLen === 0) return { driftScore: 0, overThreshold: false };
-  let changes = 0;
-  for (let i = 0; i < maxLen; i++) {
-    if (original[i] !== current[i]) changes++;
-  }
-  const driftScore = Math.round(changes / maxLen * 100) / 100;
-  return { driftScore, overThreshold: driftScore > maxDrift };
-};
-
-// tools/src/cli/commands/skills-drift.cmd.ts
-var skillsDriftCmd = async (args) => {
-  const [original, current] = args;
-  if (!original || !current) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: skills:drift <original-content> <current-content>" } });
-  const result = checkDrift(original, current);
-  return JSON.stringify({ ok: true, data: result });
-};
-
-// tools/src/application/skills/validate-skill.ts
-init_result();
-init_domain_error();
-var NAME_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
-var validateSkill = (input) => {
-  const warnings = [];
-  if (input.name.length === 0 || input.name.length > 64) {
-    return Err(createDomainError("VALIDATION_ERROR", `Skill name must be 1-64 characters, got ${input.name.length}`));
-  }
-  if (!NAME_REGEX.test(input.name)) {
-    return Err(createDomainError("VALIDATION_ERROR", `Skill name "${input.name}" must be lowercase letters, numbers, and single hyphens only`));
-  }
-  if (input.name.includes("--")) {
-    return Err(createDomainError("VALIDATION_ERROR", "Skill name must not contain consecutive hyphens"));
-  }
-  if (!input.description.toLowerCase().startsWith("use when")) {
-    warnings.push('Description should start with "Use when"');
-  }
-  let valid = true;
-  if (input.existingSkillNames?.includes(input.name)) {
-    valid = false;
-    warnings.push(`Name collision: skill "${input.name}" already exists`);
-  }
-  const maxSize = input.maxSize ?? 5e4;
-  if (input.content && input.content.length > maxSize) {
-    warnings.push(`Content size ${input.content.length} exceeds max size ${maxSize}`);
-  }
-  if (input.content?.match(/\$\(|;\s*(rm|curl|wget|eval)/)) {
-    warnings.push("Content contains potential shell injection patterns");
-  }
-  return Ok({ valid, warnings });
-};
-
-// tools/src/cli/commands/skills-validate.cmd.ts
-init_result();
-var skillsValidateCmd = async (args) => {
-  const input = args[0];
-  if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: skills:validate <json>" } });
-  try {
-    const data = JSON.parse(input);
-    const result = validateSkill(data);
+    const tasks = JSON.parse(input);
+    const result = detectWaves(tasks);
     if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
     return JSON.stringify({ ok: false, error: result.error });
   } catch {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON" } });
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON input" } });
   }
 };
 
@@ -23942,158 +24104,78 @@ function shouldAutoTransition(currentStatus, autonomyMode) {
 // tools/src/cli/commands/workflow-next.cmd.ts
 var workflowNextCmd = async (args) => {
   const status = args[0];
-  if (!status) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: workflow:next <status>" } });
+  if (!status)
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: workflow:next <status>" } });
   return JSON.stringify({ ok: true, data: { next: nextWorkflow(status) } });
 };
 
 // tools/src/cli/commands/workflow-should-auto.cmd.ts
 var workflowShouldAutoCmd = async (args) => {
   const [status, mode] = args;
-  if (!status || !mode) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: workflow:should-auto <status> <mode>" } });
-  return JSON.stringify({ ok: true, data: { autoTransition: shouldAutoTransition(status, mode) } });
+  if (!status || !mode)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: workflow:should-auto <status> <mode>" }
+    });
+  return JSON.stringify({
+    ok: true,
+    data: { autoTransition: shouldAutoTransition(status, mode) }
+  });
 };
 
-// tools/src/cli/index.ts
-init_snapshot_save_cmd();
-
-// tools/src/cli/commands/snapshot-load.cmd.ts
+// tools/src/application/worktree/create-worktree.ts
 init_result();
-init_bead_adapter_factory();
-init_hydrate_snapshot();
-var import_promises5 = require("fs/promises");
-var SNAPSHOT_PATH2 = ".tff/beads-snapshot.jsonl";
-async function snapshotLoadCmd(args) {
-  const { store: beadStore } = await createBeadAdapter();
-  await beadStore.init();
-  let snapshotContent = "";
-  try {
-    snapshotContent = await (0, import_promises5.readFile)(SNAPSHOT_PATH2, "utf-8");
-  } catch {
-    return JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: "No snapshot at " + SNAPSHOT_PATH2 } });
-  }
-  const result = await hydrateSnapshot({ beadStore, snapshotContent });
-  if (!isOk(result)) return JSON.stringify({ ok: false, error: result.error });
-  return JSON.stringify({ ok: true, data: result.data });
-}
+var createWorktreeUseCase = async (input, deps) => {
+  const worktreePath = `.tff/worktrees/${input.sliceId}`;
+  const branchName = `slice/${input.sliceId}`;
+  const result = await deps.gitOps.createWorktree(worktreePath, branchName);
+  if (!isOk(result)) return result;
+  return Ok({ worktreePath, branchName });
+};
 
-// tools/src/cli/commands/snapshot-merge.cmd.ts
-var import_promises6 = require("fs/promises");
+// tools/src/cli/commands/worktree-create.cmd.ts
+init_result();
+var worktreeCreateCmd = async (args) => {
+  const [sliceId] = args;
+  if (!sliceId)
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: worktree:create <slice-id>" } });
+  const gitOps = new GitCliAdapter(process.cwd());
+  const result = await createWorktreeUseCase({ sliceId }, { gitOps });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
 
-// tools/src/application/snapshot/merge-snapshot.ts
-init_bead_snapshot();
-function parseToMap(content) {
-  const lines = content.split("\n").filter(Boolean);
-  if (lines.length === 0) return /* @__PURE__ */ new Map();
-  const entries = lines.map((l) => JSON.parse(l));
-  const latest = latestById(entries);
-  const map2 = /* @__PURE__ */ new Map();
-  for (const e of latest) map2.set(e.id, e);
-  return map2;
-}
-function unionArray(a, b) {
-  return [.../* @__PURE__ */ new Set([...a, ...b])].sort();
-}
-function mergeEntry(id, base, ours, theirs, conflicts) {
-  if (!ours && theirs) return theirs;
-  if (!theirs && ours) return ours;
-  if (!ours && !theirs) throw new Error(`mergeEntry called with no ours/theirs for ${id}`);
-  const o = ours;
-  const t = theirs;
-  const oursNewer = o.snapshot_ts >= t.snapshot_ts;
-  const winner = oursNewer ? o : t;
-  const status = winner.status;
-  const baseDesign = base?.design ?? "";
-  const oursDesignChanged = o.design !== baseDesign;
-  const theirsDesignChanged = t.design !== baseDesign;
-  let design;
-  if (oursDesignChanged && theirsDesignChanged && o.design !== t.design) {
-    conflicts.push({ id, field: "design", ours: o.design, theirs: t.design });
-    design = winner.design;
-  } else if (theirsDesignChanged) {
-    design = t.design;
-  } else {
-    design = o.design;
-  }
-  const deps = {
-    blocks: unionArray(o.deps.blocks, t.deps.blocks),
-    validates: unionArray(o.deps.validates, t.deps.validates)
-  };
-  const allKeys = /* @__PURE__ */ new Set([...Object.keys(o.kvs), ...Object.keys(t.kvs)]);
-  const kvs = {};
-  for (const key of allKeys) {
-    const inOurs = key in o.kvs;
-    const inTheirs = key in t.kvs;
-    if (inOurs && inTheirs) {
-      kvs[key] = oursNewer ? o.kvs[key] : t.kvs[key];
-    } else if (inOurs) {
-      kvs[key] = o.kvs[key];
-    } else {
-      kvs[key] = t.kvs[key];
-    }
-  }
-  return {
-    id,
-    label: winner.label,
-    title: winner.title,
-    status,
-    design,
-    deps,
-    kvs,
-    snapshot_ts: winner.snapshot_ts
-  };
-}
-function mergeSnapshots(base, ours, theirs) {
-  const baseMap = parseToMap(base);
-  const oursMap = parseToMap(ours);
-  const theirsMap = parseToMap(theirs);
-  const allIds = /* @__PURE__ */ new Set([...baseMap.keys(), ...oursMap.keys(), ...theirsMap.keys()]);
-  const conflicts = [];
-  const merged = [];
-  for (const id of allIds) {
-    const b = baseMap.get(id);
-    const o = oursMap.get(id);
-    const t = theirsMap.get(id);
-    if (!o && !t) continue;
-    merged.push(mergeEntry(id, b, o, t, conflicts));
-  }
-  const result = merged.sort((a, b) => a.id.localeCompare(b.id)).map((e) => JSON.stringify(e)).join("\n");
-  return { merged: result, conflicts };
-}
+// tools/src/application/worktree/delete-worktree.ts
+var deleteWorktreeUseCase = async (input, deps) => {
+  const worktreePath = `.tff/worktrees/${input.sliceId}`;
+  return deps.gitOps.deleteWorktree(worktreePath);
+};
 
-// tools/src/cli/commands/snapshot-merge.cmd.ts
-async function snapshotMergeCmd(args) {
-  const [basePath, oursPath, theirsPath] = args;
-  if (!basePath || !oursPath || !theirsPath) {
-    return JSON.stringify({ ok: false, error: { code: "VALIDATION_ERROR", message: "Usage: snapshot:merge <base> <ours> <theirs>" } });
-  }
-  const [base, ours, theirs] = await Promise.all([
-    (0, import_promises6.readFile)(basePath, "utf-8").catch(() => ""),
-    (0, import_promises6.readFile)(oursPath, "utf-8").catch(() => ""),
-    (0, import_promises6.readFile)(theirsPath, "utf-8").catch(() => "")
-  ]);
-  const result = mergeSnapshots(base, ours, theirs);
-  await (0, import_promises6.writeFile)(oursPath, result.merged, "utf-8");
-  if (result.conflicts.length > 0) {
-    await (0, import_promises6.mkdir)(".tff", { recursive: true });
-    const conflictMd = result.conflicts.map((c) => [
-      `## Conflict: ${c.id}`,
-      "### Ours",
-      "```",
-      c.ours,
-      "```",
-      "### Theirs",
-      "```",
-      c.theirs,
-      "```",
-      "### Resolution needed",
-      "Choose one version or merge manually, then run `/tff:sync` to hydrate beads."
-    ].join("\n")).join("\n\n---\n\n");
-    await (0, import_promises6.writeFile)(".tff/CONFLICT.md", conflictMd, "utf-8");
-    console.error(JSON.stringify({ ok: false, error: { code: "SYNC_CONFLICT", message: `${result.conflicts.length} design conflict(s) written to .tff/CONFLICT.md` } }));
-    process.exit(1);
-  }
-  return JSON.stringify({ ok: true, data: { merged: result.merged.split("\n").filter(Boolean).length } });
-}
+// tools/src/cli/commands/worktree-delete.cmd.ts
+init_result();
+var worktreeDeleteCmd = async (args) => {
+  const [sliceId] = args;
+  if (!sliceId)
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: worktree:delete <slice-id>" } });
+  const gitOps = new GitCliAdapter(process.cwd());
+  const result = await deleteWorktreeUseCase({ sliceId }, { gitOps });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/application/worktree/list-worktrees.ts
+var listWorktreesUseCase = async (deps) => {
+  return deps.gitOps.listWorktrees();
+};
+
+// tools/src/cli/commands/worktree-list.cmd.ts
+init_result();
+var worktreeListCmd = async (_args) => {
+  const gitOps = new GitCliAdapter(process.cwd());
+  const result = await listWorktreesUseCase({ gitOps });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
 
 // tools/src/cli/index.ts
 var commands = {
@@ -24129,27 +24211,33 @@ var commands = {
 var main = async () => {
   const [command, ...args] = process.argv.slice(2);
   if (!command || command === "--help" || command === "-h") {
-    console.log(JSON.stringify({
-      ok: true,
-      data: { name: "tff-tools", version: "0.5.3", commands: Object.keys(commands) }
-    }));
+    console.log(
+      JSON.stringify({
+        ok: true,
+        data: { name: "tff-tools", version: "0.5.3", commands: Object.keys(commands) }
+      })
+    );
     return;
   }
   const handler = commands[command];
   if (!handler) {
-    console.log(JSON.stringify({
-      ok: false,
-      error: { code: "UNKNOWN_COMMAND", message: `Unknown command "${command}". Run --help for available commands.` }
-    }));
+    console.log(
+      JSON.stringify({
+        ok: false,
+        error: { code: "UNKNOWN_COMMAND", message: `Unknown command "${command}". Run --help for available commands.` }
+      })
+    );
     return;
   }
   const output = await handler(args);
   console.log(output);
 };
 main().catch((err) => {
-  console.log(JSON.stringify({
-    ok: false,
-    error: { code: "INTERNAL_ERROR", message: String(err) }
-  }));
+  console.log(
+    JSON.stringify({
+      ok: false,
+      error: { code: "INTERNAL_ERROR", message: String(err) }
+    })
+  );
   process.exit(1);
 });

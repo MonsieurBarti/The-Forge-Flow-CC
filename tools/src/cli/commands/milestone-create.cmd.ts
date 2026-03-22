@@ -1,8 +1,8 @@
 import { createMilestoneUseCase } from '../../application/milestone/create-milestone.js';
+import { isOk } from '../../domain/result.js';
 import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
-import { isOk } from '../../domain/result.js';
 
 export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
   const name = args[0];
@@ -18,12 +18,15 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
   // Auto-detect project bead ID
   const projectResult = await beadStore.list({ label: 'tff:project' });
   if (!isOk(projectResult) || projectResult.data.length === 0) {
-    return JSON.stringify({ ok: false, error: { code: 'NOT_FOUND', message: 'No tff project found. Run /tff:new first.' } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: 'NOT_FOUND', message: 'No tff project found. Run /tff:new first.' },
+    });
   }
   const projectBeadId = projectResult.data[0].id;
 
   // Auto-number: find highest existing milestone number and increment
-  const milestonesResult = await beadStore.list({ label: 'tff:milestone' });
+  const milestonesResult = await beadStore.list({ label: 'tff:milestone', includeAll: true });
   let maxMilestoneNumber = 0;
   if (isOk(milestonesResult)) {
     for (const m of milestonesResult.data) {
@@ -36,10 +39,7 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
   }
   const number = maxMilestoneNumber + 1;
 
-  const result = await createMilestoneUseCase(
-    { projectBeadId, name, number },
-    { beadStore, artifactStore, gitOps },
-  );
+  const result = await createMilestoneUseCase({ projectBeadId, name, number }, { beadStore, artifactStore, gitOps });
 
   if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
   return JSON.stringify({ ok: false, error: result.error });

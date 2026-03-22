@@ -1,5 +1,5 @@
-import { type Result, Ok, Err } from '../../domain/result.js';
-import { type DomainError, createDomainError } from '../../domain/errors/domain-error.js';
+import { createDomainError, type DomainError } from '../../domain/errors/domain-error.js';
+import { Err, Ok, type Result } from '../../domain/result.js';
 
 interface SkillInput {
   name: string;
@@ -16,9 +16,7 @@ interface ValidationResult {
 
 const NAME_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 
-export const validateSkill = (
-  input: SkillInput,
-): Result<ValidationResult, DomainError> => {
+export const validateSkill = (input: SkillInput): Result<ValidationResult, DomainError> => {
   const warnings: string[] = [];
 
   // Name validation
@@ -27,7 +25,12 @@ export const validateSkill = (
   }
 
   if (!NAME_REGEX.test(input.name)) {
-    return Err(createDomainError('VALIDATION_ERROR', `Skill name "${input.name}" must be lowercase letters, numbers, and single hyphens only`));
+    return Err(
+      createDomainError(
+        'VALIDATION_ERROR',
+        `Skill name "${input.name}" must be lowercase letters, numbers, and single hyphens only`,
+      ),
+    );
   }
 
   if (input.name.includes('--')) {

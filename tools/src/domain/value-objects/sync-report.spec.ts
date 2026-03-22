@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { SyncReportSchema, emptySyncReport } from './sync-report.js';
+import { describe, expect, it } from 'vitest';
+import { emptySyncReport, SyncReportSchema } from './sync-report.js';
 
 describe('SyncReport', () => {
   it('should create an empty sync report', () => {

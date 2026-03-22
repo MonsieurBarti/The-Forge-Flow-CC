@@ -1,9 +1,9 @@
-import { type ObservationStore } from '../../domain/ports/observation-store.port.js';
-import { type Observation } from '../../domain/value-objects/observation.js';
-import { type Pattern } from '../../domain/value-objects/pattern.js';
-import { type Candidate } from '../../domain/value-objects/candidate.js';
-import { type Result, Ok } from '../../domain/result.js';
-import { type DomainError } from '../../domain/errors/domain-error.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { ObservationStore } from '../../domain/ports/observation-store.port.js';
+import { Ok, type Result } from '../../domain/result.js';
+import type { Candidate } from '../../domain/value-objects/candidate.js';
+import type { Observation } from '../../domain/value-objects/observation.js';
+import type { Pattern } from '../../domain/value-objects/pattern.js';
 
 export class InMemoryObservationStore implements ObservationStore {
   private observations: Observation[] = [];

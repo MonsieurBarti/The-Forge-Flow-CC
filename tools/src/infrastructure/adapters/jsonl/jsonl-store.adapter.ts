@@ -1,11 +1,11 @@
-import { readFile, writeFile, appendFile, mkdir } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { type ObservationStore } from '../../../domain/ports/observation-store.port.js';
-import { type Observation } from '../../../domain/value-objects/observation.js';
-import { type Pattern } from '../../../domain/value-objects/pattern.js';
-import { type Candidate } from '../../../domain/value-objects/candidate.js';
-import { type Result, Ok } from '../../../domain/result.js';
-import { type DomainError } from '../../../domain/errors/domain-error.js';
+import type { DomainError } from '../../../domain/errors/domain-error.js';
+import type { ObservationStore } from '../../../domain/ports/observation-store.port.js';
+import { Ok, type Result } from '../../../domain/result.js';
+import type { Candidate } from '../../../domain/value-objects/candidate.js';
+import type { Observation } from '../../../domain/value-objects/observation.js';
+import type { Pattern } from '../../../domain/value-objects/pattern.js';
 
 export class JsonlStoreAdapter implements ObservationStore {
   private readonly sessionsPath: string;
@@ -20,7 +20,7 @@ export class JsonlStoreAdapter implements ObservationStore {
 
   async appendObservation(obs: Observation): Promise<Result<void, DomainError>> {
     await mkdir(join(this.sessionsPath, '..'), { recursive: true });
-    await appendFile(this.sessionsPath, JSON.stringify(obs) + '\n');
+    await appendFile(this.sessionsPath, `${JSON.stringify(obs)}\n`);
     return Ok(undefined);
   }
 
@@ -47,7 +47,10 @@ export class JsonlStoreAdapter implements ObservationStore {
   private async readJsonl<T>(path: string): Promise<Result<T[], DomainError>> {
     try {
       const content = await readFile(path, 'utf-8');
-      const lines = content.trim().split('\n').filter((l) => l.length > 0);
+      const lines = content
+        .trim()
+        .split('\n')
+        .filter((l) => l.length > 0);
       return Ok(lines.map((l) => JSON.parse(l) as T));
     } catch {
       return Ok([]);
@@ -56,7 +59,7 @@ export class JsonlStoreAdapter implements ObservationStore {
 
   private async writeJsonl<T>(path: string, items: T[]): Promise<Result<void, DomainError>> {
     await mkdir(join(path, '..'), { recursive: true });
-    const content = items.map((i) => JSON.stringify(i)).join('\n') + '\n';
+    const content = `${items.map((i) => JSON.stringify(i)).join('\n')}\n`;
     await writeFile(path, content);
     return Ok(undefined);
   }

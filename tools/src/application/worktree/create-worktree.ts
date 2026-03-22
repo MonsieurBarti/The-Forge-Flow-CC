@@ -1,10 +1,17 @@
-import { type Result, Ok, isOk } from '../../domain/result.js';
-import { type DomainError } from '../../domain/errors/domain-error.js';
-import { type GitOps } from '../../domain/ports/git-ops.port.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { GitOps } from '../../domain/ports/git-ops.port.js';
+import { isOk, Ok, type Result } from '../../domain/result.js';
 
-interface CreateWorktreeInput { sliceId: string; }
-interface CreateWorktreeDeps { gitOps: GitOps; }
-interface CreateWorktreeOutput { worktreePath: string; branchName: string; }
+interface CreateWorktreeInput {
+  sliceId: string;
+}
+interface CreateWorktreeDeps {
+  gitOps: GitOps;
+}
+interface CreateWorktreeOutput {
+  worktreePath: string;
+  branchName: string;
+}
 
 export const createWorktreeUseCase = async (
   input: CreateWorktreeInput,

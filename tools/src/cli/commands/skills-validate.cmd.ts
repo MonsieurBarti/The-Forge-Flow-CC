@@ -3,7 +3,8 @@ import { isOk } from '../../domain/result.js';
 
 export const skillsValidateCmd = async (args: string[]): Promise<string> => {
   const input = args[0];
-  if (!input) return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: skills:validate <json>' } });
+  if (!input)
+    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: skills:validate <json>' } });
   try {
     const data = JSON.parse(input);
     const result = validateSkill(data);

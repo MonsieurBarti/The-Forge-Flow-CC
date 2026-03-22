@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { JsonlStoreAdapter } from './jsonl-store.adapter.js';
-import { isOk } from '../../../domain/result.js';
 import { mkdtemp, rm } from 'node:fs/promises';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { isOk } from '../../../domain/result.js';
+import { JsonlStoreAdapter } from './jsonl-store.adapter.js';
 
 describe('JsonlStoreAdapter', () => {
   let adapter: JsonlStoreAdapter;

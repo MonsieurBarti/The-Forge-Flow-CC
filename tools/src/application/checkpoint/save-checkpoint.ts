@@ -1,17 +1,23 @@
-import { type Result, Ok } from '../../domain/result.js';
-import { type DomainError } from '../../domain/errors/domain-error.js';
-import { type ArtifactStore } from '../../domain/ports/artifact-store.port.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
+import { Ok, type Result } from '../../domain/result.js';
 
 export interface CheckpointData {
-  sliceId: string; baseCommit: string; currentWave: number;
-  completedWaves: number[]; completedTasks: string[];
+  sliceId: string;
+  baseCommit: string;
+  currentWave: number;
+  completedWaves: number[];
+  completedTasks: string[];
   executorLog: Array<{ taskRef: string; agent: string }>;
 }
 
-interface SaveCheckpointDeps { artifactStore: ArtifactStore; }
+interface SaveCheckpointDeps {
+  artifactStore: ArtifactStore;
+}
 
 export const saveCheckpoint = async (
-  data: CheckpointData, deps: SaveCheckpointDeps,
+  data: CheckpointData,
+  deps: SaveCheckpointDeps,
 ): Promise<Result<void, DomainError>> => {
   const lines: string[] = [
     `# Checkpoint — ${data.sliceId}`,
@@ -20,7 +26,9 @@ export const saveCheckpoint = async (
     `- Completed waves: [${data.completedWaves.join(', ')}]`,
     `- Completed tasks: [${data.completedTasks.join(', ')}]`,
     `- Executor log: ${data.executorLog.map((e) => `${e.agent}→${e.taskRef}`).join(', ')}`,
-    '', `<!-- checkpoint-json: ${JSON.stringify(data)} -->`, '',
+    '',
+    `<!-- checkpoint-json: ${JSON.stringify(data)} -->`,
+    '',
   ];
   const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? 'M01';
   const path = `.tff/milestones/${milestoneId}/slices/${data.sliceId}/CHECKPOINT.md`;

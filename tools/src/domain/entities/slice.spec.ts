@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { createSlice, transitionSlice, formatSliceId, SliceSchema } from './slice.js';
-import { isOk, isErr } from '../result.js';
+import { describe, expect, it } from 'vitest';
+import { isErr, isOk } from '../result.js';
+import { createSlice, formatSliceId, SliceSchema, transitionSlice } from './slice.js';
 
 describe('Slice', () => {
   const makeSlice = () =>

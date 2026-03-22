@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { initProject } from './init-project.js';
-import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { isErr, isOk } from '../../domain/result.js';
 import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
-import { isOk, isErr } from '../../domain/result.js';
+import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { initProject } from './init-project.js';
 
 describe('initProject', () => {
   let beadStore: InMemoryBeadStore;

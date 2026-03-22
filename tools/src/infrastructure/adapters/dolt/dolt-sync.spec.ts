@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { shouldAutoSync, parseDoltSettings } from './dolt-sync';
+import { describe, expect, it } from 'vitest';
+import { parseDoltSettings, shouldAutoSync } from './dolt-sync';
 
 describe('dolt-sync', () => {
   it('should detect auto-sync enabled', () => {
