@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "hooks/tff-observe.sh",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tff-observe.sh",
             "timeout": 5
           }
         ]
