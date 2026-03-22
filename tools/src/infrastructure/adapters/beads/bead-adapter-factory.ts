@@ -1,6 +1,7 @@
 import { BdCliAdapter } from './bd-cli.adapter.js';
 import { MarkdownBeadAdapter } from './markdown-bead.adapter.js';
 import type { BeadStore } from '../../../domain/ports/bead-store.port.js';
+import { tffWarn } from '../logging/warn.js';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -29,7 +30,9 @@ export async function createBeadAdapter(opts: FactoryOpts = {}): Promise<Adapter
   const checkBd = opts.checkBd ?? defaultCheckBd;
   const basePath = opts.basePath ?? process.cwd();
   if (await checkBd()) {
+    tffWarn('using beads adapter: bd-cli');
     return { store: new BdCliAdapter(), type: 'beads' };
   }
+  tffWarn('using beads adapter: markdown-fallback');
   return { store: new MarkdownBeadAdapter(basePath), type: 'markdown' };
 }
