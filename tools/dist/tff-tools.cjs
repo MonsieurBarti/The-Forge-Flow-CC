@@ -14444,7 +14444,7 @@ var init_bd_cli_adapter = __esm({
         title: raw.title,
         status: raw.status,
         design: raw.design,
-        parentId: raw.parent ?? raw.parent_id ?? raw.parentId,
+        parentId: raw.parent,
         blocks: raw.blocks,
         validates: raw.validates,
         metadata: raw.metadata
