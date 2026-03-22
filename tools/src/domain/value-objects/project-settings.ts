@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import { parse as parseYaml } from 'yaml';
+import { z } from 'zod';
 
 /**
  * Wraps a z.object schema so that `undefined` or `null` input is treated as `{}`
@@ -32,9 +32,9 @@ const AutonomySchema = withDefault(
 const AutoLearnWeightsSchema = withDefault(
   z.object({
     frequency: z.number().catch(0.25),
-    breadth: z.number().catch(0.30),
+    breadth: z.number().catch(0.3),
     recency: z.number().catch(0.25),
-    consistency: z.number().catch(0.20),
+    consistency: z.number().catch(0.2),
   }),
 );
 

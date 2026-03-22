@@ -1,12 +1,15 @@
-import { type ReviewStore, type ReviewRecord } from '../../domain/ports/review-store.port.js';
-import { type Result, Ok } from '../../domain/result.js';
-import { type DomainError } from '../../domain/errors/domain-error.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { ReviewRecord, ReviewStore } from '../../domain/ports/review-store.port.js';
+import { Ok, type Result } from '../../domain/result.js';
 
 export class InMemoryReviewStore implements ReviewStore {
   private reviews: ReviewRecord[] = [];
   private executors = new Map<string, string[]>();
 
-  async record(review: ReviewRecord): Promise<Result<void, DomainError>> { this.reviews.push(review); return Ok(undefined); }
+  async record(review: ReviewRecord): Promise<Result<void, DomainError>> {
+    this.reviews.push(review);
+    return Ok(undefined);
+  }
 
   async getExecutorsForSlice(sliceId: string): Promise<Result<string[], DomainError>> {
     return Ok(this.executors.get(sliceId) ?? []);
@@ -16,6 +19,11 @@ export class InMemoryReviewStore implements ReviewStore {
     return Ok(this.reviews.filter((r) => r.sliceId === sliceId));
   }
 
-  reset(): void { this.reviews = []; this.executors.clear(); }
-  seedExecutors(sliceId: string, agents: string[]): void { this.executors.set(sliceId, agents); }
+  reset(): void {
+    this.reviews = [];
+    this.executors.clear();
+  }
+  seedExecutors(sliceId: string, agents: string[]): void {
+    this.executors.set(sliceId, agents);
+  }
 }

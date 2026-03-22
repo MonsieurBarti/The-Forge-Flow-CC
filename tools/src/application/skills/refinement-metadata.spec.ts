@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { canRefine, recordRefinement, RefinementMetadata } from './refinement-metadata';
+import { describe, expect, it } from 'vitest';
+import { canRefine, type RefinementMetadata, recordRefinement } from './refinement-metadata';
 
 describe('refinement-metadata', () => {
   it('should allow refinement when no prior refinements exist', () => {

@@ -1,11 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { recordReviewUseCase } from './record-review.js';
-import { InMemoryReviewStore } from '../../infrastructure/testing/in-memory-review-store.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
+import { InMemoryReviewStore } from '../../infrastructure/testing/in-memory-review-store.js';
+import { recordReviewUseCase } from './record-review.js';
 
 describe('recordReviewUseCase', () => {
   let reviewStore: InMemoryReviewStore;
-  beforeEach(() => { reviewStore = new InMemoryReviewStore(); });
+  beforeEach(() => {
+    reviewStore = new InMemoryReviewStore();
+  });
 
   it('should record a review', async () => {
     const result = await recordReviewUseCase(

@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { createTask, startTask, completeTask, TaskSchema } from './task.js';
-import { isOk, isErr } from '../result.js';
+import { describe, expect, it } from 'vitest';
+import { isErr, isOk } from '../result.js';
+import { completeTask, createTask, startTask, TaskSchema } from './task.js';
 
 describe('Task', () => {
   const makeTask = () =>

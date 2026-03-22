@@ -1,10 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { classifyComplexity } from './classify-complexity.js';
 
 const base = {
-  taskCount: 1, estimatedFilesAffected: 1, newFilesCreated: 0,
-  modulesAffected: 1, hasExternalIntegrations: false,
-  requiresInvestigation: false, architectureImpact: false, unknownsSurfaced: 0,
+  taskCount: 1,
+  estimatedFilesAffected: 1,
+  newFilesCreated: 0,
+  modulesAffected: 1,
+  hasExternalIntegrations: false,
+  requiresInvestigation: false,
+  architectureImpact: false,
+  unknownsSurfaced: 0,
 };
 
 describe('classifyComplexity', () => {
@@ -45,10 +50,17 @@ describe('classifyComplexity', () => {
   });
 
   it('should default to F-lite for moderate scope', () => {
-    expect(classifyComplexity({
-      taskCount: 5, estimatedFilesAffected: 8, newFilesCreated: 2,
-      modulesAffected: 2, hasExternalIntegrations: false,
-      requiresInvestigation: true, architectureImpact: false, unknownsSurfaced: 1,
-    })).toBe('F-lite');
+    expect(
+      classifyComplexity({
+        taskCount: 5,
+        estimatedFilesAffected: 8,
+        newFilesCreated: 2,
+        modulesAffected: 2,
+        hasExternalIntegrations: false,
+        requiresInvestigation: true,
+        architectureImpact: false,
+        unknownsSurfaced: 1,
+      }),
+    ).toBe('F-lite');
   });
 });

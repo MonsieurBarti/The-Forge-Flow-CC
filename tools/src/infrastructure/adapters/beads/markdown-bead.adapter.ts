@@ -1,16 +1,15 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-
-import { type BeadStore, type BeadData } from '../../../domain/ports/bead-store.port.js';
-import { type BeadLabel } from '../../../domain/value-objects/bead-label.js';
-import { type Result, Ok, Err, isOk } from '../../../domain/result.js';
-import { type DomainError, createDomainError } from '../../../domain/errors/domain-error.js';
+import { createDomainError, type DomainError } from '../../../domain/errors/domain-error.js';
+import type { BeadData, BeadStore } from '../../../domain/ports/bead-store.port.js';
+import { Err, isOk, Ok, type Result } from '../../../domain/result.js';
+import type { BeadLabel } from '../../../domain/value-objects/bead-label.js';
 
 export class MarkdownBeadAdapter implements BeadStore {
   private readonly beadsDir: string;
 
-  constructor(private readonly basePath: string) {
+  constructor(readonly basePath: string) {
     this.beadsDir = join(basePath, '.tff', 'beads');
   }
 
@@ -103,11 +102,7 @@ export class MarkdownBeadAdapter implements BeadStore {
     return Ok(undefined);
   }
 
-  async addDependency(
-    fromId: string,
-    toId: string,
-    type: 'blocks' | 'validates',
-  ): Promise<Result<void, DomainError>> {
+  async addDependency(fromId: string, toId: string, type: 'blocks' | 'validates'): Promise<Result<void, DomainError>> {
     const result = await this.get(fromId);
     if (!isOk(result)) return result;
     const bead = result.data;

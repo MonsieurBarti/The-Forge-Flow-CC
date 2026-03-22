@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { ObservationSchema } from '../../domain/value-objects/observation.js';
+import type { z } from 'zod';
+import type { ObservationSchema } from '../../domain/value-objects/observation.js';
 
 type Observation = z.infer<typeof ObservationSchema>;
 
@@ -16,16 +16,13 @@ export interface Cluster {
 }
 
 function jaccardDistance(a: Set<string>, b: Set<string>): number {
-  const intersection = new Set([...a].filter(x => b.has(x)));
+  const intersection = new Set([...a].filter((x) => b.has(x)));
   const union = new Set([...a, ...b]);
   if (union.size === 0) return 1;
   return 1 - intersection.size / union.size;
 }
 
-export function detectClusters(
-  observations: Observation[],
-  opts: ClusterOpts = {},
-): Cluster[] {
+export function detectClusters(observations: Observation[], opts: ClusterOpts = {}): Cluster[] {
   const minSessions = opts.minSessions ?? 3;
   const minPatterns = opts.minPatterns ?? 2;
   const maxDist = opts.maxJaccardDistance ?? 0.3;
@@ -38,7 +35,7 @@ export function detectClusters(
 
   if (sessionTools.size < minSessions) return [];
 
-  const allTools = [...new Set(observations.map(o => o.tool))];
+  const allTools = [...new Set(observations.map((o) => o.tool))];
 
   const toolSessionSets = new Map<string, Set<string>>();
   for (const [session, tools] of sessionTools) {

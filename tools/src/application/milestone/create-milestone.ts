@@ -1,9 +1,9 @@
-import { type Result, Ok, isOk } from '../../domain/result.js';
-import { type DomainError } from '../../domain/errors/domain-error.js';
 import { createMilestone, formatMilestoneNumber, type Milestone } from '../../domain/entities/milestone.js';
-import { type BeadStore } from '../../domain/ports/bead-store.port.js';
-import { type ArtifactStore } from '../../domain/ports/artifact-store.port.js';
-import { type GitOps } from '../../domain/ports/git-ops.port.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
+import type { BeadStore } from '../../domain/ports/bead-store.port.js';
+import type { GitOps } from '../../domain/ports/git-ops.port.js';
+import { isOk, Ok, type Result } from '../../domain/result.js';
 
 interface CreateMilestoneInput {
   projectBeadId: string;

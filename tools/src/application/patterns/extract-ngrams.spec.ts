@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { Observation } from '../../domain/value-objects/observation.js';
 import { extractNgrams } from './extract-ngrams.js';
-import { type Observation } from '../../domain/value-objects/observation.js';
 
 describe('extractNgrams', () => {
   const obs: Observation[] = [

@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { Pattern } from '../../domain/value-objects/pattern.js';
 import { aggregatePatterns } from './aggregate-patterns.js';
-import { type Pattern } from '../../domain/value-objects/pattern.js';
 
 describe('aggregatePatterns', () => {
   it('should filter patterns below minimum count', () => {

@@ -1,4 +1,4 @@
-import { type Pattern } from '../../domain/value-objects/pattern.js';
+import type { Pattern } from '../../domain/value-objects/pattern.js';
 
 interface AggregateOptions {
   minCount?: number;
@@ -6,10 +6,7 @@ interface AggregateOptions {
   noiseThreshold?: number;
 }
 
-export const aggregatePatterns = (
-  patterns: Pattern[],
-  options: AggregateOptions = {},
-): Pattern[] => {
+export const aggregatePatterns = (patterns: Pattern[], options: AggregateOptions = {}): Pattern[] => {
   const minCount = options.minCount ?? 3;
   const totalSessions = options.totalSessions ?? 0;
   const noiseThreshold = options.noiseThreshold ?? 0.8;

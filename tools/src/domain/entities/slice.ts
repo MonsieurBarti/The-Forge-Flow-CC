@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { type Result, Ok, Err } from '../result.js';
-import { SliceStatusSchema, canTransition, type SliceStatus } from '../value-objects/slice-status.js';
-import { ComplexityTierSchema } from '../value-objects/complexity-tier.js';
-import { type DomainError } from '../errors/domain-error.js';
+import type { DomainError } from '../errors/domain-error.js';
 import { invalidTransitionError } from '../errors/invalid-transition.error.js';
+import type { DomainEvent } from '../events/domain-event.js';
 import { sliceStatusChangedEvent } from '../events/slice-status-changed.event.js';
-import { type DomainEvent } from '../events/domain-event.js';
+import { Err, Ok, type Result } from '../result.js';
+import { ComplexityTierSchema } from '../value-objects/complexity-tier.js';
+import { canTransition, type SliceStatus, SliceStatusSchema } from '../value-objects/slice-status.js';
 
 export const SliceSchema = z.object({
   id: z.string().min(1),

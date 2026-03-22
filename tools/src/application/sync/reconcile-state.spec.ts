@@ -1,13 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  reconcileState,
-  resolveContentConflict,
-  resolveStatusConflict,
-  detectOrphans,
-} from './reconcile-state.js';
-import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
-import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
+import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
+import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { detectOrphans, reconcileState, resolveContentConflict, resolveStatusConflict } from './reconcile-state.js';
 
 describe('reconcileState', () => {
   let beadStore: InMemoryBeadStore;
@@ -38,9 +33,7 @@ describe('reconcileState', () => {
   });
 
   it('should create beads for markdown without beads', async () => {
-    beadStore.seed([
-      { id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' },
-    ]);
+    beadStore.seed([{ id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' }]);
     artifactStore.seed({
       '.tff/milestones/M01/slices/NewSlice/PLAN.md': '# Plan — NewSlice\n\nNew slice content\n',
     });
@@ -80,14 +73,9 @@ describe('reconcileState', () => {
   });
 
   it('should regenerate STATE.md', async () => {
-    beadStore.seed([
-      { id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' },
-    ]);
+    beadStore.seed([{ id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' }]);
 
-    await reconcileState(
-      { milestoneId: 'ms1', milestoneName: 'M01: MVP' },
-      { beadStore, artifactStore },
-    );
+    await reconcileState({ milestoneId: 'ms1', milestoneName: 'M01: MVP' }, { beadStore, artifactStore });
 
     expect(await artifactStore.exists('.tff/STATE.md')).toBe(true);
   });
@@ -115,9 +103,7 @@ describe('reconcileState', () => {
   });
 
   it('should return empty report when everything is in sync', async () => {
-    beadStore.seed([
-      { id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' },
-    ]);
+    beadStore.seed([{ id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' }]);
 
     const result = await reconcileState(
       { milestoneId: 'ms1', milestoneName: 'M01: MVP' },

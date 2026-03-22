@@ -1,8 +1,8 @@
-import { type Result } from '../result.js';
-import { type DomainError } from '../errors/domain-error.js';
-import { type Observation } from '../value-objects/observation.js';
-import { type Pattern } from '../value-objects/pattern.js';
-import { type Candidate } from '../value-objects/candidate.js';
+import type { DomainError } from '../errors/domain-error.js';
+import type { Result } from '../result.js';
+import type { Candidate } from '../value-objects/candidate.js';
+import type { Observation } from '../value-objects/observation.js';
+import type { Pattern } from '../value-objects/pattern.js';
 
 export interface ObservationStore {
   appendObservation(obs: Observation): Promise<Result<void, DomainError>>;

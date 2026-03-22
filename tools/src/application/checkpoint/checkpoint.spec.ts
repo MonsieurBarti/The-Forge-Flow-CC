@@ -1,16 +1,21 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { saveCheckpoint } from './save-checkpoint.js';
-import { loadCheckpoint } from './load-checkpoint.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { isErr, isOk } from '../../domain/result.js';
 import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
-import { isOk, isErr } from '../../domain/result.js';
+import { loadCheckpoint } from './load-checkpoint.js';
+import { saveCheckpoint } from './save-checkpoint.js';
 
 describe('checkpoint', () => {
   let artifactStore: InMemoryArtifactStore;
-  beforeEach(() => { artifactStore = new InMemoryArtifactStore(); });
+  beforeEach(() => {
+    artifactStore = new InMemoryArtifactStore();
+  });
 
   const checkpointData = {
-    sliceId: 'M01-S01', baseCommit: 'abc1234', currentWave: 2,
-    completedWaves: [0, 1], completedTasks: ['T01', 'T02', 'T03'],
+    sliceId: 'M01-S01',
+    baseCommit: 'abc1234',
+    currentWave: 2,
+    completedWaves: [0, 1],
+    completedTasks: ['T01', 'T02', 'T03'],
     executorLog: [
       { taskRef: 'T01', agent: 'backend-dev' },
       { taskRef: 'T02', agent: 'frontend-dev' },

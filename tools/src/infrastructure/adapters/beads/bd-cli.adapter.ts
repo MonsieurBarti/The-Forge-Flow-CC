@@ -1,9 +1,9 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { type BeadStore, type BeadData } from '../../../domain/ports/bead-store.port.js';
-import { type BeadLabel } from '../../../domain/value-objects/bead-label.js';
-import { type Result, Ok, Err } from '../../../domain/result.js';
-import { type DomainError, createDomainError } from '../../../domain/errors/domain-error.js';
+import { createDomainError, type DomainError } from '../../../domain/errors/domain-error.js';
+import type { BeadData, BeadStore } from '../../../domain/ports/bead-store.port.js';
+import { Err, Ok, type Result } from '../../../domain/result.js';
+import type { BeadLabel } from '../../../domain/value-objects/bead-label.js';
 
 const exec = promisify(execFile);
 const bdError = (message: string, context?: Record<string, unknown>): DomainError =>
@@ -23,8 +23,8 @@ export async function withRetry<T>(
     } catch (err) {
       lastError = err as Error;
       if (attempt < maxAttempts) {
-        const delay = Math.min(baseMs * Math.pow(2, attempt - 1), maxMs);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        const delay = Math.min(baseMs * 2 ** (attempt - 1), maxMs);
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
@@ -32,10 +32,7 @@ export async function withRetry<T>(
 }
 
 /** Raw CLI call that throws on failure (used with withRetry). */
-const execBd = async (
-  args: string[],
-  stdin?: string,
-): Promise<string> => {
+const execBd = async (args: string[], stdin?: string): Promise<string> => {
   const options: { timeout: number; input?: string } = { timeout: 30_000 };
   if (stdin) options.input = stdin;
   // TODO(S09): When running inside a worktree (process.cwd() contains '.tff/worktrees/'),
@@ -45,10 +42,7 @@ const execBd = async (
   return stdout.trim();
 };
 
-const runBd = async (
-  args: string[],
-  stdin?: string,
-): Promise<Result<string, DomainError>> => {
+const runBd = async (args: string[], stdin?: string): Promise<Result<string, DomainError>> => {
   try {
     const result = await execBd(args, stdin);
     return Ok(result);
@@ -58,10 +52,7 @@ const runBd = async (
 };
 
 /** runBd with exponential backoff retry for critical operations. */
-const runBdRetry = async (
-  args: string[],
-  stdin?: string,
-): Promise<Result<string, DomainError>> => {
+const runBdRetry = async (args: string[], stdin?: string): Promise<Result<string, DomainError>> => {
   try {
     const result = await withRetry(() => execBd(args, stdin), { maxAttempts: 3 });
     return Ok(result);
@@ -81,9 +72,9 @@ const normalizeBeadData = (raw: Record<string, unknown>): Result<BeadData, Domai
   if (!raw.status || typeof raw.status !== 'string') {
     return Err(createDomainError('VALIDATION_ERROR', `Malformed bead: missing 'status' for ${raw.id}`));
   }
-  const labels = Array.isArray(raw.labels) ? raw.labels as string[] : [];
+  const labels = Array.isArray(raw.labels) ? (raw.labels as string[]) : [];
   // Find the tff: label (the one that matters for our type system)
-  const tffLabel = labels.find((l) => l.startsWith('tff:')) ?? (raw.issue_type as string ?? 'task');
+  const tffLabel = labels.find((l) => l.startsWith('tff:')) ?? (raw.issue_type as string) ?? 'task';
   return Ok({
     id: raw.id,
     label: tffLabel,
@@ -222,11 +213,7 @@ export class BdCliAdapter implements BeadStore {
     return Ok(undefined);
   }
 
-  async addDependency(
-    fromId: string,
-    toId: string,
-    type: 'blocks' | 'validates',
-  ): Promise<Result<void, DomainError>> {
+  async addDependency(fromId: string, toId: string, type: 'blocks' | 'validates'): Promise<Result<void, DomainError>> {
     const r = await runBd(['dep', 'add', fromId, toId, '-t', type]);
     if (!r.ok) return r;
     return Ok(undefined);

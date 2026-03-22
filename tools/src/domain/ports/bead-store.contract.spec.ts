@@ -1,12 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { isOk, isErr } from '../result.js';
-import type { BeadStore } from './bead-store.port.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { isErr, isOk } from '../result.js';
+import type { BeadStore } from './bead-store.port.js';
 
-export function runBeadStoreContractTests(
-  name: string,
-  createStore: () => Promise<BeadStore>,
-) {
+export function runBeadStoreContractTests(name: string, createStore: () => Promise<BeadStore>) {
   describe(`BeadStore contract: ${name}`, () => {
     let store: BeadStore;
 
@@ -81,10 +78,7 @@ export function runBeadStoreContractTests(
       });
       if (!isOk(created)) return;
 
-      const updateResult = await store.updateStatus(
-        created.data.id,
-        'executing',
-      );
+      const updateResult = await store.updateStatus(created.data.id, 'executing');
       expect(isOk(updateResult)).toBe(true);
 
       const fetched = await store.get(created.data.id);
@@ -98,10 +92,7 @@ export function runBeadStoreContractTests(
       });
       if (!isOk(created)) return;
 
-      const updateResult = await store.updateDesign(
-        created.data.id,
-        '# Updated plan',
-      );
+      const updateResult = await store.updateDesign(created.data.id, '# Updated plan');
       expect(isOk(updateResult)).toBe(true);
 
       const fetched = await store.get(created.data.id);
@@ -115,18 +106,11 @@ export function runBeadStoreContractTests(
       });
       if (!isOk(created)) return;
 
-      const updateResult = await store.updateMetadata(
-        created.data.id,
-        'pr',
-        'https://github.com/org/repo/pull/42',
-      );
+      const updateResult = await store.updateMetadata(created.data.id, 'pr', 'https://github.com/org/repo/pull/42');
       expect(isOk(updateResult)).toBe(true);
 
       const fetched = await store.get(created.data.id);
-      if (isOk(fetched))
-        expect(fetched.data.metadata?.pr).toBe(
-          'https://github.com/org/repo/pull/42',
-        );
+      if (isOk(fetched)) expect(fetched.data.metadata?.pr).toBe('https://github.com/org/repo/pull/42');
     });
 
     it('should claim a bead', async () => {
@@ -148,11 +132,7 @@ export function runBeadStoreContractTests(
       const b = await store.create({ label: 'tff:task', title: 'B' });
       if (!isOk(a) || !isOk(b)) return;
 
-      const depResult = await store.addDependency(
-        a.data.id,
-        b.data.id,
-        'blocks',
-      );
+      const depResult = await store.addDependency(a.data.id, b.data.id, 'blocks');
       expect(isOk(depResult)).toBe(true);
 
       const fetched = await store.get(a.data.id);
@@ -164,11 +144,7 @@ export function runBeadStoreContractTests(
       const b = await store.create({ label: 'tff:req', title: 'R01' });
       if (!isOk(a) || !isOk(b)) return;
 
-      const depResult = await store.addDependency(
-        a.data.id,
-        b.data.id,
-        'validates',
-      );
+      const depResult = await store.addDependency(a.data.id, b.data.id, 'validates');
       expect(isOk(depResult)).toBe(true);
 
       const fetched = await store.get(a.data.id);
@@ -252,7 +228,4 @@ export function runBeadStoreContractTests(
 }
 
 // Run contract tests against InMemoryBeadStore
-runBeadStoreContractTests(
-  'InMemoryBeadStore',
-  async () => new InMemoryBeadStore(),
-);
+runBeadStoreContractTests('InMemoryBeadStore', async () => new InMemoryBeadStore());

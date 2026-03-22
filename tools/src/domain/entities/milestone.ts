@@ -14,11 +14,7 @@ export const MilestoneSchema = z.object({
 
 export type Milestone = z.infer<typeof MilestoneSchema>;
 
-export const createMilestone = (input: {
-  projectId: string;
-  name: string;
-  number: number;
-}): Milestone => {
+export const createMilestone = (input: { projectId: string; name: string; number: number }): Milestone => {
   const milestone = {
     id: crypto.randomUUID(),
     projectId: input.projectId,
@@ -30,5 +26,4 @@ export const createMilestone = (input: {
   return MilestoneSchema.parse(milestone);
 };
 
-export const formatMilestoneNumber = (n: number): string =>
-  `M${n.toString().padStart(2, '0')}`;
+export const formatMilestoneNumber = (n: number): string => `M${n.toString().padStart(2, '0')}`;

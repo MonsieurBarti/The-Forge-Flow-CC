@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { BeadData } from '../../domain/ports/bead-store.port.js';
+import { isOk } from '../../domain/result.js';
 import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
 import { serializeSnapshot } from './serialize-snapshot.js';
-import { isOk } from '../../domain/result.js';
-import type { BeadData } from '../../domain/ports/bead-store.port.js';
 
 describe('serializeSnapshot', () => {
   let store: InMemoryBeadStore;
@@ -60,18 +60,33 @@ describe('serializeSnapshot', () => {
     // Existing snapshot has b1 unchanged, b2 with different status, b3 with different design
     const existingLines = [
       JSON.stringify({
-        id: 'b1', label: 'tff:task', title: 'Alpha', status: 'open',
-        design: '', deps: { blocks: [], validates: [] }, kvs: {},
+        id: 'b1',
+        label: 'tff:task',
+        title: 'Alpha',
+        status: 'open',
+        design: '',
+        deps: { blocks: [], validates: [] },
+        kvs: {},
         snapshot_ts: '2026-01-01T00:00:00.000Z',
       }),
       JSON.stringify({
-        id: 'b2', label: 'tff:task', title: 'Beta', status: 'open',
-        design: '', deps: { blocks: [], validates: [] }, kvs: {},
+        id: 'b2',
+        label: 'tff:task',
+        title: 'Beta',
+        status: 'open',
+        design: '',
+        deps: { blocks: [], validates: [] },
+        kvs: {},
         snapshot_ts: '2026-01-01T00:00:00.000Z',
       }),
       JSON.stringify({
-        id: 'b3', label: 'tff:task', title: 'Gamma', status: 'open',
-        design: 'old design', deps: { blocks: [], validates: [] }, kvs: {},
+        id: 'b3',
+        label: 'tff:task',
+        title: 'Gamma',
+        status: 'open',
+        design: 'old design',
+        deps: { blocks: [], validates: [] },
+        kvs: {},
         snapshot_ts: '2026-01-01T00:00:00.000Z',
       }),
     ];
@@ -93,13 +108,16 @@ describe('serializeSnapshot', () => {
   });
 
   it('detects deps changes in delta mode', async () => {
-    store.seed([
-      makeBead({ id: 'b1', title: 'Alpha', status: 'open', blocks: ['b2'] }),
-    ]);
+    store.seed([makeBead({ id: 'b1', title: 'Alpha', status: 'open', blocks: ['b2'] })]);
 
     const existingSnapshot = JSON.stringify({
-      id: 'b1', label: 'tff:task', title: 'Alpha', status: 'open',
-      design: '', deps: { blocks: [], validates: [] }, kvs: {},
+      id: 'b1',
+      label: 'tff:task',
+      title: 'Alpha',
+      status: 'open',
+      design: '',
+      deps: { blocks: [], validates: [] },
+      kvs: {},
       snapshot_ts: '2026-01-01T00:00:00.000Z',
     });
 
@@ -114,13 +132,16 @@ describe('serializeSnapshot', () => {
   });
 
   it('detects kvs changes in delta mode', async () => {
-    store.seed([
-      makeBead({ id: 'b1', title: 'Alpha', status: 'open', metadata: { key: 'val' } }),
-    ]);
+    store.seed([makeBead({ id: 'b1', title: 'Alpha', status: 'open', metadata: { key: 'val' } })]);
 
     const existingSnapshot = JSON.stringify({
-      id: 'b1', label: 'tff:task', title: 'Alpha', status: 'open',
-      design: '', deps: { blocks: [], validates: [] }, kvs: {},
+      id: 'b1',
+      label: 'tff:task',
+      title: 'Alpha',
+      status: 'open',
+      design: '',
+      deps: { blocks: [], validates: [] },
+      kvs: {},
       snapshot_ts: '2026-01-01T00:00:00.000Z',
     });
 

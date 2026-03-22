@@ -7,11 +7,7 @@ interface DriftResult {
   overThreshold: boolean;
 }
 
-export const checkDrift = (
-  original: string,
-  current: string,
-  options: DriftOptions = {},
-): DriftResult => {
+export const checkDrift = (original: string, current: string, options: DriftOptions = {}): DriftResult => {
   const maxDrift = options.maxDrift ?? 0.6;
 
   if (original === current) return { driftScore: 0, overThreshold: false };

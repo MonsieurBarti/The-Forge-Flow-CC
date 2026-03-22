@@ -1,8 +1,8 @@
-import { type BeadStore } from '../../domain/ports/bead-store.port.js';
-import { type Result, Ok, Err } from '../../domain/result.js';
-import { type DomainError, createDomainError } from '../../domain/errors/domain-error.js';
-import { BeadSnapshotSchema, latestById } from '../../domain/value-objects/bead-snapshot.js';
+import { createDomainError, type DomainError } from '../../domain/errors/domain-error.js';
+import type { BeadStore } from '../../domain/ports/bead-store.port.js';
+import { Err, Ok, type Result } from '../../domain/result.js';
 import type { BeadLabel } from '../../domain/value-objects/bead-label.js';
+import { BeadSnapshotSchema, latestById } from '../../domain/value-objects/bead-snapshot.js';
 
 export async function hydrateSnapshot(deps: {
   beadStore: BeadStore;
@@ -17,9 +17,7 @@ export async function hydrateSnapshot(deps: {
   for (const line of lines) {
     const result = BeadSnapshotSchema.safeParse(JSON.parse(line));
     if (!result.success) {
-      return Err(
-        createDomainError('VALIDATION_ERROR', `Invalid snapshot line: ${result.error.message}`),
-      );
+      return Err(createDomainError('VALIDATION_ERROR', `Invalid snapshot line: ${result.error.message}`));
     }
     parsed.push(result.data);
   }

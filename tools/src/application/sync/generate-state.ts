@@ -1,13 +1,20 @@
-import { type Result, Ok, isOk } from '../../domain/result.js';
-import { type DomainError } from '../../domain/errors/domain-error.js';
-import { type BeadStore } from '../../domain/ports/bead-store.port.js';
-import { type ArtifactStore } from '../../domain/ports/artifact-store.port.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
+import type { BeadStore } from '../../domain/ports/bead-store.port.js';
+import { isOk, Ok, type Result } from '../../domain/result.js';
 
-interface GenerateStateInput { milestoneId: string; milestoneName: string; }
-interface GenerateStateDeps { beadStore: BeadStore; artifactStore: ArtifactStore; }
+interface GenerateStateInput {
+  milestoneId: string;
+  milestoneName: string;
+}
+interface GenerateStateDeps {
+  beadStore: BeadStore;
+  artifactStore: ArtifactStore;
+}
 
 export const generateState = async (
-  input: GenerateStateInput, deps: GenerateStateDeps,
+  input: GenerateStateInput,
+  deps: GenerateStateDeps,
 ): Promise<Result<void, DomainError>> => {
   const slicesResult = await deps.beadStore.list({ label: 'tff:slice', parentId: input.milestoneId });
   if (!isOk(slicesResult)) return slicesResult;
@@ -28,10 +35,12 @@ export const generateState = async (
 
   const closedSlices = slices.filter((s) => s.status === 'closed').length;
   const lines: string[] = [
-    `# State — ${input.milestoneName}`, '',
+    `# State — ${input.milestoneName}`,
+    '',
     '## Progress',
     `- Slices: ${closedSlices}/${slices.length} completed`,
-    `- Tasks: ${closedTasks}/${totalTasks} completed`, '',
+    `- Tasks: ${closedTasks}/${totalTasks} completed`,
+    '',
   ];
 
   if (sliceStats.length > 0) {
