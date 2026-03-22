@@ -70,15 +70,17 @@ Special formats:
 ```
 .tff/
   PROJECT.md              ← project vision (markdown-authoritative)
-  REQUIREMENTS.md         ← requirements for active milestone (written during /tff:new-milestone)
   STATE.md                ← DERIVED, never edit manually
   settings.yaml           ← model profiles, quality gates
-  slices/
-    M01-S01/
-      SPEC.md             ← design spec (produced during discuss)
-      PLAN.md             ← slice plan and task descriptions
-      RESEARCH.md         ← research notes
-      CHECKPOINT.md       ← resumability data
+  milestones/
+    M01/
+      REQUIREMENTS.md     ← requirements scoped to this milestone
+      slices/
+        M01-S01/
+          SPEC.md         ← design spec (produced during discuss)
+          PLAN.md         ← slice plan and task descriptions
+          RESEARCH.md     ← research notes
+          CHECKPOINT.md   ← resumability data
   worktrees/
     M01-S01/              ← git worktree (gitignored)
 ```
@@ -92,11 +94,11 @@ Special formats:
 
 ## Complexity Tiers
 
-| Tier | Brainstormer | Research | TDD | Fresh Reviewer |
-|---|---|---|---|---|
-| S (quick fix) | Skip | Skip | Skip | Always |
-| F-lite (feature) | Yes | Optional | Yes | Always |
-| F-full (complex) | Yes | Required | Yes | Always, multi-agent |
+| Tier | Brainstormer | Research | Plan Review | TDD | Fresh Reviewer |
+|---|---|---|---|---|---|
+| S (quick fix) | Skip | Skip | Plannotator (lightweight) | Skip | Always |
+| F-lite (feature) | Yes | Optional | Plannotator | Yes | Always |
+| F-full (complex) | Yes | Required | Plannotator | Yes | Always, multi-agent |
 
 ## Beads Best Practices
 

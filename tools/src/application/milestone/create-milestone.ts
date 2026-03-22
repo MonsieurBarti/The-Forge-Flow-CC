@@ -47,13 +47,13 @@ export const createMilestoneUseCase = async (
   // Create branch
   await deps.gitOps.createBranch(branchName, 'main');
 
-  // Create REQUIREMENTS.md if it doesn't exist
-  if (!(await deps.artifactStore.exists('.tff/REQUIREMENTS.md'))) {
-    await deps.artifactStore.write(
-      '.tff/REQUIREMENTS.md',
-      `# Requirements — ${input.name}\n\n_Define your requirements here._\n`,
-    );
-  }
+  // Create milestone directory with REQUIREMENTS.md
+  const milestoneDir = `.tff/milestones/${formatMilestoneNumber(input.number)}`;
+  await deps.artifactStore.mkdir(`${milestoneDir}/slices`);
+  await deps.artifactStore.write(
+    `${milestoneDir}/REQUIREMENTS.md`,
+    `# Requirements — ${input.name}\n\n_Define your requirements here._\n`,
+  );
 
   return Ok({
     milestone,

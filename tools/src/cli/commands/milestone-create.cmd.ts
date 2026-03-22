@@ -22,9 +22,19 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
   }
   const projectBeadId = projectResult.data[0].id;
 
-  // Auto-number: count existing milestones + 1
+  // Auto-number: find highest existing milestone number and increment
   const milestonesResult = await beadStore.list({ label: 'tff:milestone' });
-  const number = isOk(milestonesResult) ? milestonesResult.data.length + 1 : 1;
+  let maxMilestoneNumber = 0;
+  if (isOk(milestonesResult)) {
+    for (const m of milestonesResult.data) {
+      const match = m.design?.match(/M(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxMilestoneNumber) maxMilestoneNumber = num;
+      }
+    }
+  }
+  const number = maxMilestoneNumber + 1;
 
   const result = await createMilestoneUseCase(
     { projectBeadId, name, number },

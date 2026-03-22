@@ -33,6 +33,6 @@ describe('createSliceUseCase', () => {
       { beadStore, artifactStore },
     );
 
-    expect(await artifactStore.exists('.tff/slices/M01-S01/PLAN.md')).toBe(true);
+    expect(await artifactStore.exists('.tff/milestones/M01/slices/M01-S01/PLAN.md')).toBe(true);
   });
 });

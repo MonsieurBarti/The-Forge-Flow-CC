@@ -8,7 +8,8 @@ interface LoadCheckpointDeps { artifactStore: ArtifactStore; }
 export const loadCheckpoint = async (
   sliceId: string, deps: LoadCheckpointDeps,
 ): Promise<Result<CheckpointData, DomainError>> => {
-  const path = `.tff/slices/${sliceId}/CHECKPOINT.md`;
+  const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? 'M01';
+  const path = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
   const contentResult = await deps.artifactStore.read(path);
   if (!isOk(contentResult)) return Err(createDomainError('NOT_FOUND', `No checkpoint found for slice "${sliceId}"`, { sliceId }));
 

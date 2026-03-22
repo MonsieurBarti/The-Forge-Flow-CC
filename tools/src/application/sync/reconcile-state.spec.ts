@@ -25,7 +25,7 @@ describe('reconcileState', () => {
     ]);
 
     const result = await reconcileState(
-      { milestoneId: 'ms1', milestoneName: 'MVP' },
+      { milestoneId: 'ms1', milestoneName: 'M01: MVP' },
       { beadStore, artifactStore },
     );
 
@@ -34,7 +34,7 @@ describe('reconcileState', () => {
       expect(result.data.created).toHaveLength(1);
       expect(result.data.created[0].source).toBe('beads');
     }
-    expect(await artifactStore.exists('.tff/slices/Auth/PLAN.md')).toBe(true);
+    expect(await artifactStore.exists('.tff/milestones/M01/slices/Auth/PLAN.md')).toBe(true);
   });
 
   it('should create beads for markdown without beads', async () => {
@@ -42,11 +42,11 @@ describe('reconcileState', () => {
       { id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' },
     ]);
     artifactStore.seed({
-      '.tff/slices/NewSlice/PLAN.md': '# Plan — NewSlice\n\nNew slice content\n',
+      '.tff/milestones/M01/slices/NewSlice/PLAN.md': '# Plan — NewSlice\n\nNew slice content\n',
     });
 
     const result = await reconcileState(
-      { milestoneId: 'ms1', milestoneName: 'MVP' },
+      { milestoneId: 'ms1', milestoneName: 'M01: MVP' },
       { beadStore, artifactStore },
     );
 
@@ -63,11 +63,11 @@ describe('reconcileState', () => {
       { id: 's1', label: 'tff:slice', title: 'Auth', status: 'open', design: 'Old design', parentId: 'ms1' },
     ]);
     artifactStore.seed({
-      '.tff/slices/Auth/PLAN.md': '# Updated plan content',
+      '.tff/milestones/M01/slices/Auth/PLAN.md': '# Updated plan content',
     });
 
     const result = await reconcileState(
-      { milestoneId: 'ms1', milestoneName: 'MVP' },
+      { milestoneId: 'ms1', milestoneName: 'M01: MVP' },
       { beadStore, artifactStore },
     );
 
@@ -85,7 +85,7 @@ describe('reconcileState', () => {
     ]);
 
     await reconcileState(
-      { milestoneId: 'ms1', milestoneName: 'MVP' },
+      { milestoneId: 'ms1', milestoneName: 'M01: MVP' },
       { beadStore, artifactStore },
     );
 
@@ -98,11 +98,11 @@ describe('reconcileState', () => {
       { id: 's1', label: 'tff:slice', title: 'Auth', status: 'executing', design: 'Auth design', parentId: 'ms1' },
     ]);
     artifactStore.seed({
-      '.tff/slices/Auth/PLAN.md': 'Auth design',
+      '.tff/milestones/M01/slices/Auth/PLAN.md': 'Auth design',
     });
 
     const result = await reconcileState(
-      { milestoneId: 'ms1', milestoneName: 'MVP' },
+      { milestoneId: 'ms1', milestoneName: 'M01: MVP' },
       { beadStore, artifactStore },
     );
 
@@ -120,7 +120,7 @@ describe('reconcileState', () => {
     ]);
 
     const result = await reconcileState(
-      { milestoneId: 'ms1', milestoneName: 'MVP' },
+      { milestoneId: 'ms1', milestoneName: 'M01: MVP' },
       { beadStore, artifactStore },
     );
 

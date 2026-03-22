@@ -6,13 +6,13 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
 status = planning
-SPEC.md exists at `.tff/slices/<id>/SPEC.md`
+SPEC.md exists at `.tff/milestones/<milestone>/slices/<id>/SPEC.md`
 
 ## Steps
 
 ### 1. Load Spec
-READ `.tff/slices/<id>/SPEC.md`
-READ `.tff/slices/<id>/RESEARCH.md` (if exists)
+READ `.tff/milestones/<milestone>/slices/<id>/SPEC.md`
+READ `.tff/milestones/<milestone>/slices/<id>/RESEARCH.md` (if exists)
 
 ### 2. File Structure
 Map files to create/modify BEFORE tasks.
@@ -33,7 +33,7 @@ DECOMPOSE spec → tasks:
 - Code snippets, not "implement validation"
 
 ### 4. Write PLAN.md
-WRITE `.tff/slices/<id>/PLAN.md`:
+WRITE `.tff/milestones/<milestone>/slices/<id>/PLAN.md`:
 
 ```
 # [Slice] Implementation Plan
@@ -73,12 +73,14 @@ DISPATCH anonymous reviewer via Agent tool (prompt: @skills/interactive-design.m
 Issues → fix, re-dispatch (max 3)
 
 ### 8. Plannotator Review
-invoke Skill `plannotator-annotate` with arg `.tff/slices/<id>/PLAN.md`
+invoke Skill `plannotator-annotate` with arg `.tff/milestones/<milestone>/slices/<id>/PLAN.md`
 feedback → revise ∨ approved → continue
 
 ### 9. Worktree + Transition
 `tff-tools worktree:create <id>`
+CHECK: `ok` = true → continue | `ok` = false → warn (worktree failure is non-blocking)
 `tff-tools slice:transition <id> executing`
+CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
 
 ## Auto-Transition
 After completing all steps above:

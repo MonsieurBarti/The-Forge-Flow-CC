@@ -14,8 +14,8 @@ token-budget: background
 
 | Point | Workflow | Command | Input |
 |---|---|---|---|
-| Plan review | /tff:plan | invoke Skill `plannotator-annotate` with arg `.tff/slices/<id>/PLAN.md` | PLAN.md |
-| Verification | /tff:verify | invoke Skill `plannotator-annotate` with arg `.tff/slices/<id>/VERIFICATION.md` | VERIFICATION.md |
+| Plan review | /tff:plan | invoke Skill `plannotator-annotate` with arg `.tff/milestones/<milestone>/slices/<id>/PLAN.md` | PLAN.md |
+| Verification | /tff:verify | invoke Skill `plannotator-annotate` with arg `.tff/milestones/<milestone>/slices/<id>/VERIFICATION.md` | VERIFICATION.md |
 | Code review | /tff:ship | invoke Skill `plannotator-review` | git diff |
 
 ∀ points: opens interactive UI → user annotates → feedback returns to stdout → agent processes

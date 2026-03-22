@@ -14392,7 +14392,7 @@ async function withRetry(fn, opts = {}) {
       lastError = err;
       if (attempt < maxAttempts) {
         const delay = Math.min(baseMs * Math.pow(2, attempt - 1), maxMs);
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await new Promise((resolve2) => setTimeout(resolve2, delay));
       }
     }
   }
@@ -14735,7 +14735,12 @@ var init_markdown_artifact_adapter = __esm({
         this.basePath = basePath;
       }
       resolve(path) {
-        return (0, import_node_path2.join)(this.basePath, path);
+        const resolved = (0, import_node_path2.resolve)((0, import_node_path2.join)(this.basePath, path));
+        const base = (0, import_node_path2.resolve)(this.basePath);
+        if (!resolved.startsWith(base + "/") && resolved !== base) {
+          throw new Error(`Path traversal rejected: ${path}`);
+        }
+        return resolved;
       }
       async read(path) {
         try {
@@ -22394,24 +22399,32 @@ function parseDoltSettings(settings) {
 function shouldAutoSync(settings) {
   return parseDoltSettings(settings)?.autoSync === true;
 }
+function validateRemote(remote) {
+  if (!VALID_REMOTE.test(remote)) {
+    throw new Error(`Invalid Dolt remote name: "${remote}". Must be alphanumeric, hyphens, or underscores only.`);
+  }
+}
 async function doltPush(remote) {
   try {
+    validateRemote(remote);
     await exec4("dolt", ["push", remote], { timeout: 3e4, cwd: process.cwd() });
   } catch {
   }
 }
 async function doltPull(remote) {
   try {
+    validateRemote(remote);
     await exec4("dolt", ["pull", remote], { timeout: 3e4, cwd: process.cwd() });
   } catch {
   }
 }
-var import_node_child_process4, import_node_util4, exec4;
+var import_node_child_process4, import_node_util4, exec4, VALID_REMOTE;
 var init_dolt_sync = __esm({
   "tools/src/infrastructure/adapters/dolt/dolt-sync.ts"() {
     import_node_child_process4 = require("child_process");
     import_node_util4 = require("util");
     exec4 = (0, import_node_util4.promisify)(import_node_child_process4.execFile);
+    VALID_REMOTE = /^[a-zA-Z0-9_-]+$/;
   }
 });
 
@@ -22504,8 +22517,9 @@ var init_save_checkpoint = __esm({
         `<!-- checkpoint-json: ${JSON.stringify(data)} -->`,
         ""
       ];
-      const path = `.tff/slices/${data.sliceId}/CHECKPOINT.md`;
-      await deps.artifactStore.mkdir(`.tff/slices/${data.sliceId}`);
+      const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
+      const path = `.tff/milestones/${milestoneId}/slices/${data.sliceId}/CHECKPOINT.md`;
+      await deps.artifactStore.mkdir(`.tff/milestones/${milestoneId}/slices/${data.sliceId}`);
       await deps.artifactStore.write(path, lines.join("\n"));
       return Ok(void 0);
     };
@@ -22604,7 +22618,7 @@ var initProject = async (input, deps) => {
   if (!isOk(regResult)) return regResult;
   let existing = await deps.beadStore.list({ label: "tff:project" });
   for (let attempt = 1; attempt < 5 && !isOk(existing); attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve2) => setTimeout(resolve2, 500));
     existing = await deps.beadStore.list({ label: "tff:project" });
   }
   if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
@@ -22612,7 +22626,7 @@ var initProject = async (input, deps) => {
   const beadResult = await deps.beadStore.create({ label: "tff:project", title: project.name, design: project.vision });
   if (!isOk(beadResult)) return beadResult;
   await deps.artifactStore.mkdir(".tff");
-  await deps.artifactStore.mkdir(".tff/slices");
+  await deps.artifactStore.mkdir(".tff/milestones");
   const projectMd = `# ${project.name}
 
 ## Vision
@@ -22717,15 +22731,15 @@ var createMilestoneUseCase = async (input, deps) => {
   });
   if (!isOk(beadResult)) return beadResult;
   await deps.gitOps.createBranch(branchName, "main");
-  if (!await deps.artifactStore.exists(".tff/REQUIREMENTS.md")) {
-    await deps.artifactStore.write(
-      ".tff/REQUIREMENTS.md",
-      `# Requirements \u2014 ${input.name}
+  const milestoneDir = `.tff/milestones/${formatMilestoneNumber(input.number)}`;
+  await deps.artifactStore.mkdir(`${milestoneDir}/slices`);
+  await deps.artifactStore.write(
+    `${milestoneDir}/REQUIREMENTS.md`,
+    `# Requirements \u2014 ${input.name}
 
 _Define your requirements here._
 `
-    );
-  }
+  );
   return Ok({
     milestone,
     beadId: beadResult.data.id,
@@ -22854,7 +22868,17 @@ var milestoneCreateCmd = async (args) => {
   }
   const projectBeadId = projectResult.data[0].id;
   const milestonesResult = await beadStore.list({ label: "tff:milestone" });
-  const number4 = isOk(milestonesResult) ? milestonesResult.data.length + 1 : 1;
+  let maxMilestoneNumber = 0;
+  if (isOk(milestonesResult)) {
+    for (const m of milestonesResult.data) {
+      const match = m.design?.match(/M(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxMilestoneNumber) maxMilestoneNumber = num;
+      }
+    }
+  }
+  const number4 = maxMilestoneNumber + 1;
   const result = await createMilestoneUseCase(
     { projectBeadId, name, number: number4 },
     { beadStore, artifactStore, gitOps }
@@ -22997,7 +23021,8 @@ var createSliceUseCase = async (input, deps) => {
     parentId: input.milestoneBeadId
   });
   if (!isOk(beadResult)) return beadResult;
-  const sliceDir = `.tff/slices/${slice.sliceId}`;
+  const milestoneDir = `.tff/milestones/M${String(input.milestoneNumber).padStart(2, "0")}`;
+  const sliceDir = `${milestoneDir}/slices/${slice.sliceId}`;
   await deps.artifactStore.mkdir(sliceDir);
   await deps.artifactStore.write(
     `${sliceDir}/PLAN.md`,
@@ -23289,9 +23314,11 @@ var reconcileState = async (input, deps) => {
   });
   if (!isOk(slicesResult)) return slicesResult;
   const sliceBeads = slicesResult.data;
-  const sliceFilesResult = await deps.artifactStore.list(".tff/slices");
+  const milestoneNum = input.milestoneName.match(/(M\d+)/)?.[1] ?? "M01";
+  const slicesDir = `.tff/milestones/${milestoneNum}/slices`;
+  const sliceFilesResult = await deps.artifactStore.list(slicesDir);
   const sliceFiles = isOk(sliceFilesResult) ? sliceFilesResult.data : [];
-  const prefix = ".tff/slices/";
+  const prefix = `${slicesDir}/`;
   const mdSliceIds = new Set(
     sliceFiles.filter((f) => f.startsWith(prefix)).map((f) => {
       const rest = f.slice(prefix.length);
@@ -23300,7 +23327,7 @@ var reconcileState = async (input, deps) => {
     }).filter((id) => id.length > 0)
   );
   for (const bead of sliceBeads) {
-    const sliceDir = `.tff/slices/${bead.title}`;
+    const sliceDir = `${slicesDir}/${bead.title}`;
     const planPath = `${sliceDir}/PLAN.md`;
     if (!await deps.artifactStore.exists(planPath)) {
       await deps.artifactStore.mkdir(sliceDir);
@@ -23339,7 +23366,7 @@ ${bead.design ?? "_No plan yet._"}
     mdSliceIds.delete(bead.title);
   }
   for (const sliceId of mdSliceIds) {
-    const planPath = `.tff/slices/${sliceId}/PLAN.md`;
+    const planPath = `${slicesDir}/${sliceId}/PLAN.md`;
     if (await deps.artifactStore.exists(planPath)) {
       const mdResult = await deps.artifactStore.read(planPath);
       const design = isOk(mdResult) ? mdResult.data : "";
@@ -23516,7 +23543,8 @@ init_checkpoint_save_cmd();
 init_result();
 init_domain_error();
 var loadCheckpoint = async (sliceId, deps) => {
-  const path = `.tff/slices/${sliceId}/CHECKPOINT.md`;
+  const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
+  const path = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
   const contentResult = await deps.artifactStore.read(path);
   if (!isOk(contentResult)) return Err(createDomainError("NOT_FOUND", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
   const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);

@@ -27,14 +27,24 @@ export function shouldAutoSync(settings: DoltAwareSettings | undefined): boolean
   return parseDoltSettings(settings)?.autoSync === true;
 }
 
+const VALID_REMOTE = /^[a-zA-Z0-9_-]+$/;
+
+function validateRemote(remote: string): void {
+  if (!VALID_REMOTE.test(remote)) {
+    throw new Error(`Invalid Dolt remote name: "${remote}". Must be alphanumeric, hyphens, or underscores only.`);
+  }
+}
+
 export async function doltPush(remote: string): Promise<void> {
   try {
+    validateRemote(remote);
     await exec('dolt', ['push', remote], { timeout: 30000, cwd: process.cwd() });
   } catch { /* non-blocking */ }
 }
 
 export async function doltPull(remote: string): Promise<void> {
   try {
+    validateRemote(remote);
     await exec('dolt', ['pull', remote], { timeout: 30000, cwd: process.cwd() });
   } catch { /* non-blocking */ }
 }
