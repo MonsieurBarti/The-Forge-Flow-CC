@@ -87,7 +87,7 @@ const normalizeBeadData = (raw: Record<string, unknown>): Result<BeadData, Domai
     title: raw.title as string,
     status: raw.status,
     design: raw.design as string | undefined,
-    parentId: (raw.parent_id ?? raw.parentId) as string | undefined,
+    parentId: (raw.parent ?? raw.parent_id ?? raw.parentId) as string | undefined,
     blocks: raw.blocks as string[] | undefined,
     validates: raw.validates as string[] | undefined,
     metadata: raw.metadata as Record<string, string> | undefined,

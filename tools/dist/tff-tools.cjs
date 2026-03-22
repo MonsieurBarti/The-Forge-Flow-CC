@@ -14444,7 +14444,7 @@ var init_bd_cli_adapter = __esm({
         title: raw.title,
         status: raw.status,
         design: raw.design,
-        parentId: raw.parent_id ?? raw.parentId,
+        parentId: raw.parent ?? raw.parent_id ?? raw.parentId,
         blocks: raw.blocks,
         validates: raw.validates,
         metadata: raw.metadata
@@ -22915,14 +22915,21 @@ var sliceTransitionCmd = async (args) => {
     return JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: `Bead "${beadId}" not found` } });
   }
   const bead = beadResult.data;
+  const parsedStatus = SliceStatusSchema.safeParse(bead.status);
+  if (!parsedStatus.success) {
+    return JSON.stringify({ ok: false, error: { code: "VALIDATION_ERROR", message: `Bead has invalid slice status: "${bead.status}"` } });
+  }
+  if (!bead.parentId) {
+    return JSON.stringify({ ok: false, error: { code: "VALIDATION_ERROR", message: `Bead "${beadId}" has no parent milestone` } });
+  }
   const sliceIdMatch = bead.design?.match(/Slice (M\d+-S\d+)/);
-  const sliceId = sliceIdMatch?.[1] ?? beadId;
+  const sliceId = sliceIdMatch?.[1] ?? "unknown";
   const slice = {
     id: bead.id,
-    milestoneId: bead.parentId ?? "",
+    milestoneId: bead.parentId,
     name: bead.title,
     sliceId,
-    status: bead.status,
+    status: parsedStatus.data,
     createdAt: /* @__PURE__ */ new Date()
   };
   const result = await transitionSliceUseCase(

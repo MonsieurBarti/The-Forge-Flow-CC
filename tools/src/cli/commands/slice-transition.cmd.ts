@@ -25,16 +25,26 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 
   const bead = beadResult.data;
 
+  // Validate bead status is a valid slice status
+  const parsedStatus = SliceStatusSchema.safeParse(bead.status);
+  if (!parsedStatus.success) {
+    return JSON.stringify({ ok: false, error: { code: 'VALIDATION_ERROR', message: `Bead has invalid slice status: "${bead.status}"` } });
+  }
+
+  if (!bead.parentId) {
+    return JSON.stringify({ ok: false, error: { code: 'VALIDATION_ERROR', message: `Bead "${beadId}" has no parent milestone` } });
+  }
+
   // Extract slice ID from bead design field (format: "Slice M01-S01: ...")
   const sliceIdMatch = bead.design?.match(/Slice (M\d+-S\d+)/);
-  const sliceId = sliceIdMatch?.[1] ?? beadId;
+  const sliceId = sliceIdMatch?.[1] ?? 'unknown';
 
   const slice = {
     id: bead.id,
-    milestoneId: bead.parentId ?? '',
+    milestoneId: bead.parentId,
     name: bead.title,
     sliceId,
-    status: bead.status as SliceStatus,
+    status: parsedStatus.data,
     createdAt: new Date(),
   };
 
