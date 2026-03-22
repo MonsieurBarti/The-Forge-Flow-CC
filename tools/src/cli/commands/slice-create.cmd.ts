@@ -4,10 +4,25 @@ import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesyste
 import { isOk } from '../../domain/result.js';
 
 export const sliceCreateCmd = async (args: string[]): Promise<string> => {
-  const name = args[0];
+  // Parse --title flag or fall back to positional arg
+  let name: string | undefined;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--title' && i + 1 < args.length) {
+      name = args[i + 1];
+      break;
+    }
+    if (!args[i].startsWith('--')) {
+      name = args[i];
+      break;
+    }
+    // Skip unknown flags with values (e.g. --milestone M01)
+    if (args[i].startsWith('--') && i + 1 < args.length && !args[i + 1].startsWith('--')) {
+      i++;
+    }
+  }
 
   if (!name) {
-    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: slice:create <name>' } });
+    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: slice:create <name> or slice:create --title <name>' } });
   }
 
   const { store: beadStore } = await createBeadAdapter();
