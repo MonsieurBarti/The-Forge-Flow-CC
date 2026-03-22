@@ -22391,7 +22391,7 @@ var initProject = async (input, deps) => {
   if (await deps.artifactStore.exists(".tff/PROJECT.md")) return Err(projectExistsError(input.name));
   await deps.beadStore.init();
   await new Promise((resolve) => setTimeout(resolve, 2e3));
-  await deps.beadStore.registerStatuses([
+  const regResult = await deps.beadStore.registerStatuses([
     "discussing",
     "researching",
     "planning",
@@ -22400,6 +22400,7 @@ var initProject = async (input, deps) => {
     "reviewing",
     "completing"
   ]);
+  if (!isOk(regResult)) return regResult;
   const existing = await deps.beadStore.list({ label: "tff:project" });
   if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
   const project = createProject(input);

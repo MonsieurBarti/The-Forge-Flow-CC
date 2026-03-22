@@ -24,10 +24,11 @@ export const initProject = async (
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
   // Register tff slice lifecycle statuses as custom bd statuses
-  await deps.beadStore.registerStatuses([
+  const regResult = await deps.beadStore.registerStatuses([
     'discussing', 'researching', 'planning', 'executing',
     'verifying', 'reviewing', 'completing',
   ]);
+  if (!isOk(regResult)) return regResult;
 
   const existing = await deps.beadStore.list({ label: 'tff:project' });
   if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
