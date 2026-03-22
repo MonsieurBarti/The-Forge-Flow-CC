@@ -12,7 +12,7 @@ status = discussing
 ### 1. Load Context
 CHECK: read slice bead + notes
 CLASSIFY: `tff-tools slice:classify '<signals>'`
-tier = S → auto-transition researching, skip discuss
+tier = S → auto-transition to planning, skip discuss + research (plan approval still required via plannotator)
 
 ### 2. Interactive Design (F-lite ∧ F-full)
 LOAD @skills/interactive-design.md

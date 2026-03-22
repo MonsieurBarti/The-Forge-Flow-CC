@@ -11,7 +11,9 @@ active milestone exists
 1. CREATE slice as S-tier:
    - Create slice bead via `tff-tools`
    - Create worktree: `tff-tools worktree:create <slice-id>` → worktree at `.tff/worktrees/<slice-id>/`
-2. PLAN (lightweight): ask user for 1-2 sentence desc → single task in PLAN.md, skip plannotator
+2. PLAN (lightweight): ask user for 1-2 sentence desc → single task in PLAN.md
+   REVIEW: invoke Skill `plannotator-annotate` with arg `.tff/milestones/<milestone>/slices/<id>/PLAN.md`
+   feedback → revise ∨ approved → continue
 3. EXECUTE: single wave, single task, spawn domain agent (working in `.tff/worktrees/<slice-id>/`), no TDD (S-tier)
 4. VERIFY: spawn tff-product-lead for quick sanity check
 5. SHIP: fresh reviewer enforcement, spec + code review (lightweight), create slice PR

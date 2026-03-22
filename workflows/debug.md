@@ -32,11 +32,14 @@ exploration, spawn Explore subagents and reason about their findings.
 6. CREATE slice as S-tier:
    - Create slice bead via `tff-tools`
    - Create worktree: `tff-tools worktree:create <slice-id>` → worktree at `.tff/worktrees/<slice-id>/`
-7. SPAWN domain agent (working in `.tff/worktrees/<slice-id>/`) with: root cause description, fix strategy, implicated files
-8. VERIFY: spawn tff-product-lead for sanity check
-9. SHIP: fresh reviewer enforcement, code-only review (no spec review — no SPEC.md), create slice PR
-   **Show PR URL to user**
-10. MERGE GATE: AskUserQuestion → "PR merged" or "PR needs changes"
+7. PLAN (lightweight): write fix strategy as single task in PLAN.md
+   REVIEW: invoke Skill `plannotator-annotate` with arg `.tff/milestones/<milestone>/slices/<id>/PLAN.md`
+   feedback → revise ∨ approved → continue
+8. SPAWN domain agent (working in `.tff/worktrees/<slice-id>/`) with: root cause description, fix strategy, implicated files
+9. VERIFY: spawn tff-product-lead for sanity check
+10. SHIP: fresh reviewer enforcement, code-only review (no spec review — no SPEC.md), create slice PR
+    **Show PR URL to user**
+11. MERGE GATE: AskUserQuestion → "PR merged" or "PR needs changes"
     - merged → `bd close <slice-bead-id> --reason "Slice PR merged"`
-    - needs changes → fix → push → go back to step 10
-11. NEXT: @references/next-steps.md
+    - needs changes → fix → push → go back to step 11
+12. NEXT: @references/next-steps.md
