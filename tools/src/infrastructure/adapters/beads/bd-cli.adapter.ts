@@ -120,6 +120,12 @@ export class BdCliAdapter implements BeadStore {
     return Ok(undefined);
   }
 
+  async registerStatuses(statuses: string[]): Promise<Result<void, DomainError>> {
+    const r = await runBd(['config', 'set', 'status.custom', statuses.join(',')]);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
+
   async create(input: {
     label: BeadLabel;
     title: string;
