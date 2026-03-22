@@ -94,11 +94,11 @@ Special formats:
 
 ## Complexity Tiers
 
-| Tier | Brainstormer | Research | TDD | Fresh Reviewer |
-|---|---|---|---|---|
-| S (quick fix) | Skip | Skip | Skip | Always |
-| F-lite (feature) | Yes | Optional | Yes | Always |
-| F-full (complex) | Yes | Required | Yes | Always, multi-agent |
+| Tier | Brainstormer | Research | Plan Review | TDD | Fresh Reviewer |
+|---|---|---|---|---|---|
+| S (quick fix) | Skip | Skip | Plannotator (lightweight) | Skip | Always |
+| F-lite (feature) | Yes | Optional | Plannotator | Yes | Always |
+| F-full (complex) | Yes | Required | Plannotator | Yes | Always, multi-agent |
 
 ## Beads Best Practices
 
