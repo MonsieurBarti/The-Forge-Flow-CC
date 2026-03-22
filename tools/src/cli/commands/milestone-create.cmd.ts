@@ -23,7 +23,7 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
   const projectBeadId = projectResult.data[0].id;
 
   // Auto-number: find highest existing milestone number and increment
-  const milestonesResult = await beadStore.list({ label: 'tff:milestone' });
+  const milestonesResult = await beadStore.list({ label: 'tff:milestone', includeAll: true });
   let maxMilestoneNumber = 0;
   if (isOk(milestonesResult)) {
     for (const m of milestonesResult.data) {

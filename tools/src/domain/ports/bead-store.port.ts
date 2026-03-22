@@ -34,6 +34,7 @@ export interface BeadStore {
     label?: BeadLabel;
     parentId?: string;
     status?: string;
+    includeAll?: boolean;
   }): Promise<Result<BeadData[], DomainError>>;
 
   /** List unblocked tasks ready for work (bd ready) */

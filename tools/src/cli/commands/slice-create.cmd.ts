@@ -38,11 +38,12 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
   const milestone = openMilestones.length > 0 ? openMilestones[0] : milestonesResult.data[0];
   const milestoneBeadId = milestone.id;
 
-  // Detect milestone number from title (e.g., "Milestone M02: ..." → 2) or count
-  const milestoneNumber = milestonesResult.data.indexOf(milestone) + 1;
+  // Detect milestone number from design field (e.g., "Milestone M02: ..." → 2)
+  const milestoneMatch = milestone.design?.match(/M(\d+)/);
+  const milestoneNumber = milestoneMatch ? parseInt(milestoneMatch[1], 10) : 1;
 
   // Auto-number slice: find highest existing slice number and increment from there
-  const slicesResult = await beadStore.list({ label: 'tff:slice', parentId: milestoneBeadId });
+  const slicesResult = await beadStore.list({ label: 'tff:slice', parentId: milestoneBeadId, includeAll: true });
   let maxSliceNumber = 0;
   if (isOk(slicesResult)) {
     for (const s of slicesResult.data) {
