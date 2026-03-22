@@ -38,6 +38,9 @@ const execBd = async (
 ): Promise<string> => {
   const options: { timeout: number; input?: string } = { timeout: 30_000 };
   if (stdin) options.input = stdin;
+  // TODO(S09): When running inside a worktree (process.cwd() contains '.tff/worktrees/'),
+  // bd commands should use '--sandbox' flag to prevent auto-sync and Dolt server conflicts
+  // with the main repo's Dolt server. Requires verifying that bd supports a '--sandbox' flag.
   const { stdout } = await exec('bd', args, options);
   return stdout.trim();
 };

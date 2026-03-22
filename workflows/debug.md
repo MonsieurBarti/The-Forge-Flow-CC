@@ -29,8 +29,10 @@ exploration, spawn Explore subagents and reason about their findings.
 
 ## Phase 2: Fix (slice + worktree, like quick)
 
-6. CREATE slice as S-tier: bead + worktree
-7. SPAWN domain agent with: root cause description, fix strategy, implicated files
+6. CREATE slice as S-tier:
+   - Create slice bead via `tff-tools`
+   - Create worktree: `tff-tools worktree:create <slice-id>` → worktree at `.tff/worktrees/<slice-id>/`
+7. SPAWN domain agent (working in `.tff/worktrees/<slice-id>/`) with: root cause description, fix strategy, implicated files
 8. VERIFY: spawn tff-product-lead for sanity check
 9. SHIP: fresh reviewer enforcement, code-only review (no spec review — no SPEC.md), create slice PR
    - user merges via GitHub
