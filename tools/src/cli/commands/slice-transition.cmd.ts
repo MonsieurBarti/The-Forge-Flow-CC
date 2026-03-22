@@ -4,9 +4,9 @@ import { type SliceStatus, SliceStatusSchema } from '../../domain/value-objects/
 import { isOk } from '../../domain/result.js';
 
 export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
-  const [beadId, targetStatus, currentStatus, sliceId] = args;
+  const [beadId, targetStatus] = args;
   if (!beadId || !targetStatus) {
-    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: slice:transition <bead-id> <target-status> [current-status] [slice-id]' } });
+    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: slice:transition <bead-id> <target-status>' } });
   }
 
   try {
@@ -15,17 +15,29 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
     return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: `Invalid status: ${targetStatus}` } });
   }
 
-  // Build a minimal slice object from the args
+  const { store: beadStore } = await createBeadAdapter();
+
+  // Read actual bead to get current status
+  const beadResult = await beadStore.get(beadId);
+  if (!isOk(beadResult)) {
+    return JSON.stringify({ ok: false, error: { code: 'NOT_FOUND', message: `Bead "${beadId}" not found` } });
+  }
+
+  const bead = beadResult.data;
+
+  // Extract slice ID from bead design field (format: "Slice M01-S01: ...")
+  const sliceIdMatch = bead.design?.match(/Slice (M\d+-S\d+)/);
+  const sliceId = sliceIdMatch?.[1] ?? beadId;
+
   const slice = {
-    id: crypto.randomUUID(),
-    milestoneId: crypto.randomUUID(),
-    name: 'slice',
-    sliceId: sliceId ?? 'unknown',
-    status: (currentStatus ?? 'discussing') as SliceStatus,
+    id: bead.id,
+    milestoneId: bead.parentId ?? '',
+    name: bead.title,
+    sliceId,
+    status: bead.status as SliceStatus,
     createdAt: new Date(),
   };
 
-  const { store: beadStore } = await createBeadAdapter();
   const result = await transitionSliceUseCase(
     { slice, beadId, targetStatus: targetStatus as SliceStatus },
     { beadStore },

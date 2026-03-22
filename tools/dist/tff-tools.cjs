@@ -22900,24 +22900,31 @@ var transitionSliceUseCase = async (input, deps) => {
 init_bead_adapter_factory();
 init_result();
 var sliceTransitionCmd = async (args) => {
-  const [beadId, targetStatus, currentStatus, sliceId] = args;
+  const [beadId, targetStatus] = args;
   if (!beadId || !targetStatus) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: slice:transition <bead-id> <target-status> [current-status] [slice-id]" } });
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: slice:transition <bead-id> <target-status>" } });
   }
   try {
     SliceStatusSchema.parse(targetStatus);
   } catch {
     return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: `Invalid status: ${targetStatus}` } });
   }
+  const { store: beadStore } = await createBeadAdapter();
+  const beadResult = await beadStore.get(beadId);
+  if (!isOk(beadResult)) {
+    return JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: `Bead "${beadId}" not found` } });
+  }
+  const bead = beadResult.data;
+  const sliceIdMatch = bead.design?.match(/Slice (M\d+-S\d+)/);
+  const sliceId = sliceIdMatch?.[1] ?? beadId;
   const slice = {
-    id: crypto.randomUUID(),
-    milestoneId: crypto.randomUUID(),
-    name: "slice",
-    sliceId: sliceId ?? "unknown",
-    status: currentStatus ?? "discussing",
+    id: bead.id,
+    milestoneId: bead.parentId ?? "",
+    name: bead.title,
+    sliceId,
+    status: bead.status,
     createdAt: /* @__PURE__ */ new Date()
   };
-  const { store: beadStore } = await createBeadAdapter();
   const result = await transitionSliceUseCase(
     { slice, beadId, targetStatus },
     { beadStore }
