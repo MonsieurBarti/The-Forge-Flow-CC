@@ -14,6 +14,7 @@ status = researching
    - Check dependencies + integration points
    - Output → `.tff/slices/<slice-id>/RESEARCH.md`
 3. TRANSITION: `tff-tools slice:transition <id> planning`
+   CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
 4. NEXT: @references/next-steps.md
 
 ## Auto-Transition

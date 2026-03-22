@@ -78,7 +78,9 @@ feedback → revise ∨ approved → continue
 
 ### 9. Worktree + Transition
 `tff-tools worktree:create <id>`
+CHECK: `ok` = true → continue | `ok` = false → warn (worktree failure is non-blocking)
 `tff-tools slice:transition <id> executing`
+CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
 
 ## Auto-Transition
 After completing all steps above:
