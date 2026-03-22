@@ -1,5 +1,6 @@
 import { transitionSliceUseCase } from '../../application/lifecycle/transition-slice.js';
 import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
+import { tffWarn } from '../../infrastructure/adapters/logging/warn.js';
 import { type SliceStatus, SliceStatusSchema } from '../../domain/value-objects/slice-status.js';
 import { isOk } from '../../domain/result.js';
 
@@ -58,7 +59,7 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
     try {
       const { snapshotSaveCmd } = await import('./snapshot-save.cmd.js');
       await snapshotSaveCmd([]);
-    } catch { /* snapshot failure is non-blocking */ }
+    } catch (e) { tffWarn('snapshot failed', { error: String(e) }); }
 
     // Auto-sync to Dolt remote if configured
     try {
@@ -70,7 +71,7 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
       if (settings.dolt?.['auto-sync'] && settings.dolt.remote) {
         await doltPush(settings.dolt.remote);
       }
-    } catch { /* dolt sync failure is non-blocking */ }
+    } catch (e) { tffWarn('dolt sync failed', { error: String(e) }); }
 
     return JSON.stringify({ ok: true, data: { status: result.data.slice.status } });
   }
