@@ -94,10 +94,14 @@ Special formats:
 
 ## Complexity Tiers
 
+Classification happens at end of discuss. User confirms the tier — no auto-routing.
+
+**S-tier criteria (ALL must be true):** ≤1 file affected, 0 new files, no investigation needed, no architecture impact, 0 unknowns.
+
 | Tier | Brainstormer | Research | Plan Review | TDD | Fresh Reviewer |
 |---|---|---|---|---|---|
-| S (quick fix) | Skip | Skip | Plannotator (lightweight) | Skip | Always |
-| F-lite (feature) | Yes | Optional | Plannotator | Yes | Always |
+| S (single-file fix) | Skip | Skip | Plannotator (lightweight) | Skip | Always |
+| F-lite (default) | Yes | Optional | Plannotator | Yes | Always |
 | F-full (complex) | Yes | Required | Plannotator | Yes | Always, multi-agent |
 
 ## Beads Best Practices
