@@ -2,7 +2,7 @@
 
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
-Diagnose first (no slice), fix second (slice + worktree).
+Diagnose first (no slice), fix second (converges on standard pipeline).
 
 ## Prerequisites
 active milestone exists — if ∄ milestone:
@@ -27,19 +27,17 @@ exploration, spawn Explore subagents and reason about their findings.
    - If root cause is external (dependency, system, infra) → exit with diagnostic report,
      suggest workaround options (patch, pin version, upstream issue), do not enter Phase 2
 
-## Phase 2: Fix (slice + worktree, like quick)
+## Phase 2: Fix (converges on standard pipeline)
 
-6. CREATE slice as S-tier:
+6. CREATE slice:
    - Create slice bead via `tff-tools`
    - Create worktree: `tff-tools worktree:create <slice-id>` → worktree at `.tff/worktrees/<slice-id>/`
-7. PLAN (lightweight): write fix strategy as single task in PLAN.md
-   REVIEW: invoke Skill `plannotator-annotate` with arg `.tff/milestones/<milestone>/slices/<id>/PLAN.md`
-   feedback → revise ∨ approved → continue
-8. SPAWN domain agent (working in `.tff/worktrees/<slice-id>/`) with: root cause description, fix strategy, implicated files
-9. VERIFY: spawn tff-product-lead for sanity check
-10. SHIP: fresh reviewer enforcement, code-only review (no spec review — no SPEC.md), create slice PR
-    **Show PR URL to user**
-11. MERGE GATE: AskUserQuestion → "PR merged" or "PR needs changes"
-    - merged → `bd close <slice-bead-id> --reason "Slice PR merged"`
-    - needs changes → fix → push → go back to step 11
-12. NEXT: @references/next-steps.md
+7. CLASSIFY: AskUserQuestion → user picks tier (S / F-lite / F-full)
+   - Default suggestion based on diagnosis: single-file root cause → S, multi-file → F-lite
+8. PLAN: write fix strategy + implicated files in PLAN.md
+   - Write to `.tff/milestones/<milestone>/slices/<id>/PLAN.md`
+9. HAND OFF to standard pipeline:
+   - invoke plan-slice workflow from step 8 (Plannotator Review) onward
+   - then: execute-slice → verify-slice → ship-slice (standard workflows)
+
+Debug Phase 2 is an entry point, not a parallel pipeline.
