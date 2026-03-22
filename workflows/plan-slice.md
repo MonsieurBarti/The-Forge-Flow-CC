@@ -71,7 +71,7 @@ DISPATCH anonymous reviewer via Agent tool (prompt: @skills/interactive-design.m
 Issues → fix, re-dispatch (max 3)
 
 ### 8. Plannotator Review
-`plannotator annotate .tff/slices/<id>/PLAN.md`
+invoke Skill `plannotator-annotate` with arg `.tff/slices/<id>/PLAN.md`
 feedback → revise ∨ approved → continue
 
 ### 9. Worktree + Transition

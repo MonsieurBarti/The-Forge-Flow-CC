@@ -14,7 +14,7 @@ status = reviewing
    REQUEST_CHANGES → SPAWN tff-fixer → loop until APPROVE
 4. Stage 3 (security) — SPAWN tff-security-auditor: {diff, @references/security-baseline.md}
    critical ∨ high → blocks PR → SPAWN tff-fixer → re-audit
-5. USER REVIEW: `plannotator review`
+5. USER REVIEW: invoke Skill `plannotator-review` for interactive code review of the diff
 6. PR: `gh pr create` — `slice/<slice-id>` → `milestone/<milestone>`
    **Show PR URL to user**
 7. POST-MERGE (user merges via GitHub):
