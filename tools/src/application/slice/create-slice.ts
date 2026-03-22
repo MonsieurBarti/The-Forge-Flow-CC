@@ -41,7 +41,8 @@ export const createSliceUseCase = async (
   if (!isOk(beadResult)) return beadResult;
 
   // Create slice directory with stub PLAN.md
-  const sliceDir = `.tff/slices/${slice.sliceId}`;
+  const milestoneDir = `.tff/milestones/M${String(input.milestoneNumber).padStart(2, '0')}`;
+  const sliceDir = `${milestoneDir}/slices/${slice.sliceId}`;
   await deps.artifactStore.mkdir(sliceDir);
   await deps.artifactStore.write(
     `${sliceDir}/PLAN.md`,

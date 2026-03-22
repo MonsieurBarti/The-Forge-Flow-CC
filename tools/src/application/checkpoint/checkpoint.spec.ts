@@ -21,7 +21,7 @@ describe('checkpoint', () => {
   it('should save checkpoint as CHECKPOINT.md', async () => {
     const result = await saveCheckpoint(checkpointData, { artifactStore });
     expect(isOk(result)).toBe(true);
-    expect(await artifactStore.exists('.tff/slices/M01-S01/CHECKPOINT.md')).toBe(true);
+    expect(await artifactStore.exists('.tff/milestones/M01/slices/M01-S01/CHECKPOINT.md')).toBe(true);
   });
 
   it('should load a saved checkpoint', async () => {

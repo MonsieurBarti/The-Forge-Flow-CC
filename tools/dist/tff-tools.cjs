@@ -22517,8 +22517,9 @@ var init_save_checkpoint = __esm({
         `<!-- checkpoint-json: ${JSON.stringify(data)} -->`,
         ""
       ];
-      const path = `.tff/slices/${data.sliceId}/CHECKPOINT.md`;
-      await deps.artifactStore.mkdir(`.tff/slices/${data.sliceId}`);
+      const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
+      const path = `.tff/milestones/${milestoneId}/slices/${data.sliceId}/CHECKPOINT.md`;
+      await deps.artifactStore.mkdir(`.tff/milestones/${milestoneId}/slices/${data.sliceId}`);
       await deps.artifactStore.write(path, lines.join("\n"));
       return Ok(void 0);
     };
@@ -22625,7 +22626,7 @@ var initProject = async (input, deps) => {
   const beadResult = await deps.beadStore.create({ label: "tff:project", title: project.name, design: project.vision });
   if (!isOk(beadResult)) return beadResult;
   await deps.artifactStore.mkdir(".tff");
-  await deps.artifactStore.mkdir(".tff/slices");
+  await deps.artifactStore.mkdir(".tff/milestones");
   const projectMd = `# ${project.name}
 
 ## Vision
@@ -22730,15 +22731,15 @@ var createMilestoneUseCase = async (input, deps) => {
   });
   if (!isOk(beadResult)) return beadResult;
   await deps.gitOps.createBranch(branchName, "main");
-  if (!await deps.artifactStore.exists(".tff/REQUIREMENTS.md")) {
-    await deps.artifactStore.write(
-      ".tff/REQUIREMENTS.md",
-      `# Requirements \u2014 ${input.name}
+  const milestoneDir = `.tff/milestones/${formatMilestoneNumber(input.number)}`;
+  await deps.artifactStore.mkdir(`${milestoneDir}/slices`);
+  await deps.artifactStore.write(
+    `${milestoneDir}/REQUIREMENTS.md`,
+    `# Requirements \u2014 ${input.name}
 
 _Define your requirements here._
 `
-    );
-  }
+  );
   return Ok({
     milestone,
     beadId: beadResult.data.id,
@@ -23020,7 +23021,8 @@ var createSliceUseCase = async (input, deps) => {
     parentId: input.milestoneBeadId
   });
   if (!isOk(beadResult)) return beadResult;
-  const sliceDir = `.tff/slices/${slice.sliceId}`;
+  const milestoneDir = `.tff/milestones/M${String(input.milestoneNumber).padStart(2, "0")}`;
+  const sliceDir = `${milestoneDir}/slices/${slice.sliceId}`;
   await deps.artifactStore.mkdir(sliceDir);
   await deps.artifactStore.write(
     `${sliceDir}/PLAN.md`,
@@ -23312,9 +23314,11 @@ var reconcileState = async (input, deps) => {
   });
   if (!isOk(slicesResult)) return slicesResult;
   const sliceBeads = slicesResult.data;
-  const sliceFilesResult = await deps.artifactStore.list(".tff/slices");
+  const milestoneNum = input.milestoneName.match(/(M\d+)/)?.[1] ?? "M01";
+  const slicesDir = `.tff/milestones/${milestoneNum}/slices`;
+  const sliceFilesResult = await deps.artifactStore.list(slicesDir);
   const sliceFiles = isOk(sliceFilesResult) ? sliceFilesResult.data : [];
-  const prefix = ".tff/slices/";
+  const prefix = `${slicesDir}/`;
   const mdSliceIds = new Set(
     sliceFiles.filter((f) => f.startsWith(prefix)).map((f) => {
       const rest = f.slice(prefix.length);
@@ -23323,7 +23327,7 @@ var reconcileState = async (input, deps) => {
     }).filter((id) => id.length > 0)
   );
   for (const bead of sliceBeads) {
-    const sliceDir = `.tff/slices/${bead.title}`;
+    const sliceDir = `${slicesDir}/${bead.title}`;
     const planPath = `${sliceDir}/PLAN.md`;
     if (!await deps.artifactStore.exists(planPath)) {
       await deps.artifactStore.mkdir(sliceDir);
@@ -23362,7 +23366,7 @@ ${bead.design ?? "_No plan yet._"}
     mdSliceIds.delete(bead.title);
   }
   for (const sliceId of mdSliceIds) {
-    const planPath = `.tff/slices/${sliceId}/PLAN.md`;
+    const planPath = `${slicesDir}/${sliceId}/PLAN.md`;
     if (await deps.artifactStore.exists(planPath)) {
       const mdResult = await deps.artifactStore.read(planPath);
       const design = isOk(mdResult) ? mdResult.data : "";
@@ -23539,7 +23543,8 @@ init_checkpoint_save_cmd();
 init_result();
 init_domain_error();
 var loadCheckpoint = async (sliceId, deps) => {
-  const path = `.tff/slices/${sliceId}/CHECKPOINT.md`;
+  const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
+  const path = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
   const contentResult = await deps.artifactStore.read(path);
   if (!isOk(contentResult)) return Err(createDomainError("NOT_FOUND", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
   const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);

@@ -41,7 +41,7 @@ export const initProject = async (
   if (!isOk(beadResult)) return beadResult;
 
   await deps.artifactStore.mkdir('.tff');
-  await deps.artifactStore.mkdir('.tff/slices');
+  await deps.artifactStore.mkdir('.tff/milestones');
 
   const projectMd = `# ${project.name}\n\n## Vision\n\n${project.vision}\n`;
   await deps.artifactStore.write('.tff/PROJECT.md', projectMd);

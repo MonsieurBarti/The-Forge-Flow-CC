@@ -23,7 +23,7 @@ token-budget: critical
 3. DESIGN: section-by-section, user approves each via AskUserQuestion
    - F-lite: problem, approach, acceptance criteria, non-goals (~1 page)
    - F-full: + constraints, architecture, error handling, testing strategy (~3 pages)
-4. WRITE: `.tff/slices/<id>/SPEC.md`
+4. WRITE: `.tff/milestones/<milestone>/slices/<id>/SPEC.md`
 5. CHALLENGE: spawn tff-brainstormer (F-full only, max 2 iterations)
 6. VALIDATE: spawn tff-product-lead → ∀ criterion: testable ∧ binary
 7. REVIEW: dispatch anonymous spec-document-reviewer (max 3 iterations)

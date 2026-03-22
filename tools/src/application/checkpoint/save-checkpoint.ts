@@ -22,8 +22,9 @@ export const saveCheckpoint = async (
     `- Executor log: ${data.executorLog.map((e) => `${e.agent}→${e.taskRef}`).join(', ')}`,
     '', `<!-- checkpoint-json: ${JSON.stringify(data)} -->`, '',
   ];
-  const path = `.tff/slices/${data.sliceId}/CHECKPOINT.md`;
-  await deps.artifactStore.mkdir(`.tff/slices/${data.sliceId}`);
+  const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? 'M01';
+  const path = `.tff/milestones/${milestoneId}/slices/${data.sliceId}/CHECKPOINT.md`;
+  await deps.artifactStore.mkdir(`.tff/milestones/${milestoneId}/slices/${data.sliceId}`);
   await deps.artifactStore.write(path, lines.join('\n'));
   return Ok(undefined);
 };
