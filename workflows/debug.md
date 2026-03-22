@@ -35,5 +35,8 @@ exploration, spawn Explore subagents and reason about their findings.
 7. SPAWN domain agent (working in `.tff/worktrees/<slice-id>/`) with: root cause description, fix strategy, implicated files
 8. VERIFY: spawn tff-product-lead for sanity check
 9. SHIP: fresh reviewer enforcement, code-only review (no spec review — no SPEC.md), create slice PR
-   - user merges via GitHub
-10. NEXT: @references/next-steps.md
+   **Show PR URL to user**
+10. MERGE GATE: AskUserQuestion → "PR merged" or "PR needs changes"
+    - merged → `bd close <slice-bead-id> --reason "Slice PR merged"`
+    - needs changes → fix → push → go back to step 10
+11. NEXT: @references/next-steps.md
