@@ -19,8 +19,11 @@ milestone audit passed
 5. MERGE GATE: AskUserQuestion → "PR merged" or "PR needs changes"
    - merged → continue to step 6
    - needs changes → fix → push → go back to step 5
-6. CLOSE MILESTONE:
+6. CLOSE MILESTONE + CLEANUP:
    - `bd close <milestone-bead-id> --reason "Milestone merged to main"`
    - update STATE.md: `tff-tools sync:state`
+   - delete stale slice branches: `∀ slice branch → git push origin --delete slice/<id>`
+   - delete milestone branch: `git push origin --delete milestone/<milestone>`
+   - delete local branches: `git branch -d milestone/<milestone>`
    - suggest `/tff:new-milestone`
-8. NEXT: @references/next-steps.md
+7. NEXT: @references/next-steps.md
