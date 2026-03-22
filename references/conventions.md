@@ -106,6 +106,14 @@ Special formats:
 
 Use `bd update <id> --claim` to atomically claim a task (sets assignee + status to in_progress). Never manually set status and assignee separately.
 
+### Adding Dependencies
+
+Use `bd dep add` to create blocking dependencies between slices or tasks:
+```bash
+bd dep add <from-id> <to-id> -t blocks
+```
+This means `<from-id>` depends on (is blocked by) `<to-id>`. Do NOT use `bd link` — it does not exist.
+
 ### Finding Ready Work
 
 Use `bd ready --json` to list unblocked tasks. This respects the dependency graph — only tasks whose blockers are all resolved appear.
