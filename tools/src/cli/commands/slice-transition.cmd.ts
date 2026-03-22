@@ -73,6 +73,26 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
       }
     } catch (e) { tffWarn('dolt sync failed', { error: String(e) }); }
 
+    // Auto-regenerate STATE.md
+    try {
+      const { syncStateCmd } = await import('./sync-state.cmd.js');
+      await syncStateCmd([bead.parentId ?? '']);
+    } catch (e) { tffWarn('state sync failed', { error: String(e) }); }
+
+    // Auto-save CHECKPOINT.md
+    try {
+      const { checkpointSaveCmd } = await import('./checkpoint-save.cmd.js');
+      const checkpointData = JSON.stringify({
+        sliceId,
+        baseCommit: '',
+        currentWave: 0,
+        completedWaves: [],
+        completedTasks: [],
+        executorLog: [],
+      });
+      await checkpointSaveCmd([checkpointData]);
+    } catch (e) { tffWarn('checkpoint save failed', { error: String(e) }); }
+
     return JSON.stringify({ ok: true, data: { status: result.data.slice.status } });
   }
   return JSON.stringify({ ok: false, error: result.error });
