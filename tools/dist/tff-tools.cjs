@@ -24103,7 +24103,7 @@ var main = async () => {
   if (!command || command === "--help" || command === "-h") {
     console.log(JSON.stringify({
       ok: true,
-      data: { name: "tff-tools", version: "0.5.1", commands: Object.keys(commands) }
+      data: { name: "tff-tools", version: "0.5.2", commands: Object.keys(commands) }
     }));
     return;
   }

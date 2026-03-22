@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-03-22
+
+### Changed
+
+- Project init (`/tff:new`) no longer creates requirements or first milestone — just PROJECT.md + settings.yaml, then suggests `/tff:new-milestone`
+- Requirements are now scoped per-milestone, written during `/tff:new-milestone`
+
+### Fixed
+
+- All shipping workflows (ship, quick, debug, complete-milestone) now close beads after PR merge via AskUserQuestion merge gate
+- complete-milestone closes all slice beads (verifying PR merge status) before creating milestone PR
+- Removed impossible "all slices closed" prerequisite from complete-milestone (replaced by auto-closure step)
+
 ## [0.5.1] - 2026-03-22
 
 ### Fixed
