@@ -22419,7 +22419,7 @@ var MarkdownArtifactAdapter = class {
     try {
       return Ok(await (0, import_promises2.readFile)(this.resolve(path), "utf-8"));
     } catch {
-      return Err(createDomainError("PROJECT_EXISTS", `File not found: ${path}`, { path }));
+      return Err(createDomainError("NOT_FOUND", `File not found: ${path}`, { path }));
     }
   }
   async write(path, content) {
@@ -22429,7 +22429,7 @@ var MarkdownArtifactAdapter = class {
       await (0, import_promises2.writeFile)(fullPath, content, "utf-8");
       return Ok(void 0);
     } catch (err) {
-      return Err(createDomainError("SYNC_CONFLICT", `Failed to write: ${path}`, { path, error: String(err) }));
+      return Err(createDomainError("VALIDATION_ERROR", `Failed to write: ${path}`, { path, error: String(err) }));
     }
   }
   async exists(path) {
@@ -22453,7 +22453,7 @@ var MarkdownArtifactAdapter = class {
       await (0, import_promises2.mkdir)(this.resolve(path), { recursive: true });
       return Ok(void 0);
     } catch (err) {
-      return Err(createDomainError("SYNC_CONFLICT", `Failed to mkdir: ${path}`, { path, error: String(err) }));
+      return Err(createDomainError("VALIDATION_ERROR", `Failed to mkdir: ${path}`, { path, error: String(err) }));
     }
   }
 };
@@ -23373,9 +23373,9 @@ init_domain_error();
 var loadCheckpoint = async (sliceId, deps) => {
   const path = `.tff/slices/${sliceId}/CHECKPOINT.md`;
   const contentResult = await deps.artifactStore.read(path);
-  if (!isOk(contentResult)) return Err(createDomainError("PROJECT_EXISTS", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
+  if (!isOk(contentResult)) return Err(createDomainError("NOT_FOUND", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
   const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);
-  if (!match) return Err(createDomainError("SYNC_CONFLICT", `Checkpoint file for "${sliceId}" is corrupted`, { sliceId }));
+  if (!match) return Err(createDomainError("VALIDATION_ERROR", `Checkpoint file for "${sliceId}" is corrupted`, { sliceId }));
   const data = JSON.parse(match[1]);
   return Ok(data);
 };
@@ -23957,7 +23957,7 @@ var main = async () => {
   if (!command || command === "--help" || command === "-h") {
     console.log(JSON.stringify({
       ok: true,
-      data: { name: "tff-tools", version: "0.4.0", commands: Object.keys(commands) }
+      data: { name: "tff-tools", version: "0.5.0", commands: Object.keys(commands) }
     }));
     return;
   }
