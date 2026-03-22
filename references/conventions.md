@@ -98,11 +98,13 @@ Classification happens at end of discuss. User confirms the tier — no auto-rou
 
 **S-tier criteria (ALL must be true):** ≤1 file affected, 0 new files, no investigation needed, no architecture impact, 0 unknowns.
 
-| Tier | Brainstormer | Research | Plan Review | TDD | Fresh Reviewer |
+All tiers follow the same pipeline. Tiers control **depth**, not which steps run.
+
+| Tier | Discuss | Research | Plan Review | Execute | Code Review |
 |---|---|---|---|---|---|
-| S (single-file fix) | Skip | Skip | Plannotator (lightweight) | Skip | Always |
-| F-lite (default) | Yes | Optional | Plannotator | Yes | Always |
-| F-full (complex) | Yes | Required | Plannotator | Yes | Always, multi-agent |
+| S (single-file fix) | Lightweight | Skip | Plannotator | No TDD | Agent-only |
+| F-lite (default) | Full | Optional | Plannotator | TDD | Agent-only |
+| F-full (complex) | Full + brainstormer | Required | Plannotator | TDD | Agent-only, multi-reviewer |
 
 ## Beads Best Practices
 
