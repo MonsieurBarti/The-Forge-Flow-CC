@@ -57,6 +57,7 @@ export class MarkdownBeadAdapter implements BeadStore {
     label?: BeadLabel;
     parentId?: string;
     status?: string;
+    includeAll?: boolean;
   }): Promise<Result<BeadData[], DomainError>> {
     const allResult = await this.readAll();
     if (!isOk(allResult)) return allResult;

@@ -14506,6 +14506,7 @@ var init_bd_cli_adapter = __esm({
       }
       async list(filter) {
         const args = ["list", "--json"];
+        if (filter.includeAll) args.push("--all");
         if (filter.label) args.push("-l", filter.label);
         if (filter.parentId) args.push("--parent", filter.parentId);
         if (filter.status) args.push("-s", filter.status);
@@ -22867,7 +22868,7 @@ var milestoneCreateCmd = async (args) => {
     return JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: "No tff project found. Run /tff:new first." } });
   }
   const projectBeadId = projectResult.data[0].id;
-  const milestonesResult = await beadStore.list({ label: "tff:milestone" });
+  const milestonesResult = await beadStore.list({ label: "tff:milestone", includeAll: true });
   let maxMilestoneNumber = 0;
   if (isOk(milestonesResult)) {
     for (const m of milestonesResult.data) {
@@ -23065,8 +23066,9 @@ var sliceCreateCmd = async (args) => {
   const openMilestones = milestonesResult.data.filter((m) => m.status !== "closed");
   const milestone = openMilestones.length > 0 ? openMilestones[0] : milestonesResult.data[0];
   const milestoneBeadId = milestone.id;
-  const milestoneNumber = milestonesResult.data.indexOf(milestone) + 1;
-  const slicesResult = await beadStore.list({ label: "tff:slice", parentId: milestoneBeadId });
+  const milestoneMatch = milestone.design?.match(/M(\d+)/);
+  const milestoneNumber = milestoneMatch ? parseInt(milestoneMatch[1], 10) : 1;
+  const slicesResult = await beadStore.list({ label: "tff:slice", parentId: milestoneBeadId, includeAll: true });
   let maxSliceNumber = 0;
   if (isOk(slicesResult)) {
     for (const s of slicesResult.data) {

@@ -45,6 +45,7 @@ export class InMemoryBeadStore implements BeadStore {
     label?: BeadLabel;
     parentId?: string;
     status?: string;
+    includeAll?: boolean;
   }): Promise<Result<BeadData[], DomainError>> {
     let results = [...this.beads.values()];
     if (filter.label) results = results.filter((b) => b.label === filter.label);

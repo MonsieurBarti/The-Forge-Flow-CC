@@ -175,8 +175,10 @@ export class BdCliAdapter implements BeadStore {
     label?: BeadLabel;
     parentId?: string;
     status?: string;
+    includeAll?: boolean;
   }): Promise<Result<BeadData[], DomainError>> {
     const args = ['list', '--json'];
+    if (filter.includeAll) args.push('--all');
     if (filter.label) args.push('-l', filter.label);
     if (filter.parentId) args.push('--parent', filter.parentId);
     if (filter.status) args.push('-s', filter.status);
