@@ -19,22 +19,26 @@ status = reviewing
 5. USER REVIEW: invoke Skill `plannotator-review` for interactive code review of the diff
 6. PR: `gh pr create` — `slice/<slice-id>` → `milestone/<milestone>`
    **Show PR URL to user**
-7. POST-MERGE (user merges via GitHub):
-   delete worktree → close bead → completing → closed
 
 **tff NEVER merges — only creates PR.**
 
-8. NEXT: @references/next-steps.md
+7. MERGE GATE: AskUserQuestion with options:
+   - **"PR merged"** → continue to step 8
+   - **"PR needs changes"** → SPAWN tff-fixer with requested changes → push fixes → go back to step 7
+8. CLOSE:
+   - `tff-tools worktree:delete <slice-id>` (if worktree exists)
+   - `bd close <slice-bead-id> --reason "Slice PR merged"`
+   - Log: `[tff] <slice-id>: reviewing → closed`
+9. NEXT: @references/next-steps.md
 
 ## Auto-Transition
 After completing all steps above:
 1. READ `.tff/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
    - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
-   - Human gates (plan approval, spec approval, completion): pause and ask
+   - Human gates (plan approval, spec approval, merge gate): pause and ask
 3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
-4. Log: `[tff] <slice-id>: reviewing → completing`
 
 ## Auto-Fix (plan-to-pr)
-REQUEST_CHANGES ∧ cycles < 2 → SPAWN tff-fixer, re-review
+REQUEST_CHANGES ∧ cycles < 2 → SPAWN tff-fixer, re-review, go back to merge gate
 REQUEST_CHANGES ∧ cycles ≥ 2 → escalation task, pause chain
