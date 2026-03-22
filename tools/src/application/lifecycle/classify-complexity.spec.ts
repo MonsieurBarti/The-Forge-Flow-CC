@@ -10,10 +10,11 @@ const base = {
   requiresInvestigation: false,
   architectureImpact: false,
   unknownsSurfaced: 0,
+  riskLevel: 'low' as const,
 };
 
 describe('classifyComplexity', () => {
-  it('should classify as S only when single-file, no new files, no investigation, no unknowns', () => {
+  it('should classify as S only when single-file, no new files, no investigation, no unknowns, low risk', () => {
     expect(classifyComplexity(base)).toBe('S');
   });
 
@@ -35,6 +36,22 @@ describe('classifyComplexity', () => {
 
   it('should classify as F-lite when unknowns are surfaced', () => {
     expect(classifyComplexity({ ...base, unknownsSurfaced: 1 })).toBe('F-lite');
+  });
+
+  it('should classify as F-full for high risk regardless of file count', () => {
+    expect(classifyComplexity({ ...base, riskLevel: 'high' })).toBe('F-full');
+  });
+
+  it('should classify as F-full for high risk even with single file', () => {
+    expect(classifyComplexity({ ...base, estimatedFilesAffected: 1, riskLevel: 'high' })).toBe('F-full');
+  });
+
+  it('should classify as F-lite minimum for medium risk', () => {
+    expect(classifyComplexity({ ...base, riskLevel: 'medium' })).toBe('F-lite');
+  });
+
+  it('should classify as F-lite for medium risk even when S-tier criteria met', () => {
+    expect(classifyComplexity({ ...base, riskLevel: 'medium' })).toBe('F-lite');
   });
 
   it('should classify as F-full for external integrations regardless of size', () => {
@@ -60,6 +77,7 @@ describe('classifyComplexity', () => {
         requiresInvestigation: true,
         architectureImpact: false,
         unknownsSurfaced: 1,
+        riskLevel: 'low',
       }),
     ).toBe('F-lite');
   });

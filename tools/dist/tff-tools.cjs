@@ -23383,8 +23383,10 @@ var skillsValidateCmd = async (args) => {
 
 // tools/src/application/lifecycle/classify-complexity.ts
 var classifyComplexity = (signals) => {
+  if (signals.riskLevel === "high") return "F-full";
   if (signals.hasExternalIntegrations) return "F-full";
   if (signals.taskCount >= 8 || signals.modulesAffected >= 4) return "F-full";
+  if (signals.riskLevel === "medium") return "F-lite";
   const isS = signals.estimatedFilesAffected <= 1 && signals.newFilesCreated === 0 && !signals.requiresInvestigation && !signals.architectureImpact && signals.unknownsSurfaced === 0;
   if (isS) return "S";
   return "F-lite";
