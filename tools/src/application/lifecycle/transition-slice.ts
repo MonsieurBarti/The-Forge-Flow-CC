@@ -14,6 +14,7 @@ export const transitionSliceUseCase = async (
 ): Promise<Result<TransitionOutput, DomainError>> => {
   const result = transitionSlice(input.slice, input.targetStatus);
   if (!isOk(result)) return result;
-  await deps.beadStore.updateStatus(input.beadId, input.targetStatus);
+  const updateResult = await deps.beadStore.updateStatus(input.beadId, input.targetStatus);
+  if (!isOk(updateResult)) return updateResult;
   return result;
 };

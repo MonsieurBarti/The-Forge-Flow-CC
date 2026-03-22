@@ -11,6 +11,10 @@ export class InMemoryBeadStore implements BeadStore {
     return Ok(undefined);
   }
 
+  async registerStatuses(_statuses: string[]): Promise<Result<void, DomainError>> {
+    return Ok(undefined);
+  }
+
   async create(input: {
     label: BeadLabel;
     title: string;

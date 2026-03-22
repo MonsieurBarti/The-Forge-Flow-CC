@@ -19,6 +19,11 @@ export class MarkdownBeadAdapter implements BeadStore {
     return Ok(undefined);
   }
 
+  async registerStatuses(_statuses: string[]): Promise<Result<void, DomainError>> {
+    // Markdown adapter accepts any status string — no registration needed
+    return Ok(undefined);
+  }
+
   async create(input: {
     label: BeadLabel;
     title: string;

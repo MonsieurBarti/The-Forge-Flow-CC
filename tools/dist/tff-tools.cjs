@@ -14471,6 +14471,11 @@ var init_bd_cli_adapter = __esm({
         await runBd(["init", "--quiet"]);
         return Ok(void 0);
       }
+      async registerStatuses(statuses) {
+        const r = await runBd(["config", "set", "status.custom", statuses.join(",")]);
+        if (!r.ok) return r;
+        return Ok(void 0);
+      }
       async create(input) {
         const args = ["create", input.title, "-l", input.label, "--no-inherit-labels", "--json"];
         if (input.parentId) args.push("--parent", input.parentId);
@@ -14570,6 +14575,9 @@ var init_markdown_bead_adapter = __esm({
       beadsDir;
       async init() {
         await (0, import_promises.mkdir)(this.beadsDir, { recursive: true });
+        return Ok(void 0);
+      }
+      async registerStatuses(_statuses) {
         return Ok(void 0);
       }
       async create(input) {
@@ -22383,6 +22391,16 @@ var initProject = async (input, deps) => {
   if (await deps.artifactStore.exists(".tff/PROJECT.md")) return Err(projectExistsError(input.name));
   await deps.beadStore.init();
   await new Promise((resolve) => setTimeout(resolve, 2e3));
+  const regResult = await deps.beadStore.registerStatuses([
+    "discussing",
+    "researching",
+    "planning",
+    "executing",
+    "verifying",
+    "reviewing",
+    "completing"
+  ]);
+  if (!isOk(regResult)) return regResult;
   const existing = await deps.beadStore.list({ label: "tff:project" });
   if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
   const project = createProject(input);
@@ -22873,7 +22891,8 @@ init_result();
 var transitionSliceUseCase = async (input, deps) => {
   const result = transitionSlice(input.slice, input.targetStatus);
   if (!isOk(result)) return result;
-  await deps.beadStore.updateStatus(input.beadId, input.targetStatus);
+  const updateResult = await deps.beadStore.updateStatus(input.beadId, input.targetStatus);
+  if (!isOk(updateResult)) return updateResult;
   return result;
 };
 
