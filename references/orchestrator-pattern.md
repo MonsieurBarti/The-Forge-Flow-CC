@@ -23,6 +23,12 @@ tff workflows are orchestrators. They coordinate — they don't do heavy work.
 
 5. **State transitions go through tff-tools.** The orchestrator calls `tff-tools.cjs` for all state changes. Agents don't transition state directly.
 
+6. **Check tff-tools results for errors.** Every `tff-tools` call returns `{ "ok": true, ... }` or `{ "ok": false, "error": { "code": "...", "message": "..." } }`. The orchestrator MUST check `ok` — if `false`:
+   - Log the error: `⚠ tff-tools <command> failed: <message>`
+   - For state transitions: warn user and offer retry or abort
+   - For non-critical operations (snapshot, checkpoint): warn but continue
+   - NEVER silently continue after a failed state transition
+
 ## Anti-Patterns
 
 - Reading entire codebases in the workflow (spawn an agent instead)

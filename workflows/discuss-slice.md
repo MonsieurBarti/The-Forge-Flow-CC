@@ -55,6 +55,7 @@ AskUserQuestion: "Spec at `.tff/slices/<id>/SPEC.md`. Approve?"
 
 ### 8. Transition
 `tff-tools slice:transition <id> researching`
+CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
 
 ## Auto-Transition
 After completing all steps above:
