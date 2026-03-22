@@ -48,11 +48,8 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
    - Pre-filled from step 3 if onboarding occurred
 5. INIT: `tff-tools project:init "<name>" "<vision>"`
 6. SETTINGS: generate `.tff/settings.yaml` from @references/settings-template.md
-7. CREATE `.tff/REQUIREMENTS.md`: ask user for requirements → structured doc
-   - Pre-filled from step 3 if onboarding occurred
-8. FIRST MILESTONE: ask goal → execute new-milestone workflow
-9. SUMMARY: show created files (PROJECT.md, settings.yaml, REQUIREMENTS.md, milestone + branch)
-   - suggest `/tff:discuss`
+7. SUMMARY: show created files (PROJECT.md, settings.yaml)
+   - suggest `/tff:new-milestone` to create the first milestone
 
 ## Dolt Remote (optional)
 Prompt:
@@ -75,4 +72,4 @@ Configure snapshot merge driver:
 git config merge.tff-snapshot.driver "node ./tools/dist/tff-tools.cjs snapshot:merge %O %A %B"
 ```
 
-10. NEXT: @references/next-steps.md
+8. NEXT: @references/next-steps.md

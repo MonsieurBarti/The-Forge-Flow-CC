@@ -70,7 +70,7 @@ Special formats:
 ```
 .tff/
   PROJECT.md              ← project vision (markdown-authoritative)
-  REQUIREMENTS.md         ← requirements content
+  REQUIREMENTS.md         ← requirements for active milestone (written during /tff:new-milestone)
   STATE.md                ← DERIVED, never edit manually
   settings.yaml           ← model profiles, quality gates
   slices/
