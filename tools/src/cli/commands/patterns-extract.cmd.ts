@@ -1,6 +1,6 @@
 import { extractNgrams } from '../../application/patterns/extract-ngrams.js';
-import { JsonlStoreAdapter } from '../../infrastructure/adapters/jsonl/jsonl-store.adapter.js';
 import { isOk } from '../../domain/result.js';
+import { JsonlStoreAdapter } from '../../infrastructure/adapters/jsonl/jsonl-store.adapter.js';
 
 export const patternsExtractCmd = async (_args: string[]): Promise<string> => {
   const store = new JsonlStoreAdapter('.tff/observations');

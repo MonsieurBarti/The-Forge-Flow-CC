@@ -1,6 +1,6 @@
-import { type Result } from '../result.js';
-import { type CommitRef } from '../value-objects/commit-ref.js';
-import { type DomainError } from '../errors/domain-error.js';
+import type { DomainError } from '../errors/domain-error.js';
+import type { Result } from '../result.js';
+import type { CommitRef } from '../value-objects/commit-ref.js';
 
 export interface GitOps {
   createBranch(name: string, from: string): Promise<Result<void, DomainError>>;

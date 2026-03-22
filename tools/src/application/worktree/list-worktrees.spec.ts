@@ -1,11 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { listWorktreesUseCase } from './list-worktrees.js';
-import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
+import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
+import { listWorktreesUseCase } from './list-worktrees.js';
 
 describe('listWorktreesUseCase', () => {
   let gitOps: InMemoryGitOps;
-  beforeEach(() => { gitOps = new InMemoryGitOps(); });
+  beforeEach(() => {
+    gitOps = new InMemoryGitOps();
+  });
 
   it('should list all worktrees', async () => {
     await gitOps.createWorktree('.tff/worktrees/M01-S01', 'slice/M01-S01');

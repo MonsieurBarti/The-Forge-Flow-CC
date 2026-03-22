@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { hydrateSnapshot } from './hydrate-snapshot.js';
-import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
 import type { BeadSnapshot } from '../../domain/value-objects/bead-snapshot.js';
+import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { hydrateSnapshot } from './hydrate-snapshot.js';
 
 function jsonl(...entries: BeadSnapshot[]): string {
   return entries.map((e) => JSON.stringify(e)).join('\n');

@@ -1,31 +1,31 @@
-import { projectInitCmd } from './commands/project-init.cmd.js';
-import { projectGetCmd } from './commands/project-get.cmd.js';
+import { checkpointLoadCmd } from './commands/checkpoint-load.cmd.js';
+import { checkpointSaveCmd } from './commands/checkpoint-save.cmd.js';
+import { composeDetectCmd } from './commands/compose-detect.cmd.js';
 import { milestoneCreateCmd } from './commands/milestone-create.cmd.js';
 import { milestoneListCmd } from './commands/milestone-list.cmd.js';
+import { observeRecordCmd } from './commands/observe-record.cmd.js';
+import { patternsAggregateCmd } from './commands/patterns-aggregate.cmd.js';
+import { patternsExtractCmd } from './commands/patterns-extract.cmd.js';
+import { patternsRankCmd } from './commands/patterns-rank.cmd.js';
+import { projectGetCmd } from './commands/project-get.cmd.js';
+import { projectInitCmd } from './commands/project-init.cmd.js';
+import { reviewCheckFreshCmd } from './commands/review-check-fresh.cmd.js';
+import { skillsDriftCmd } from './commands/skills-drift.cmd.js';
+import { skillsValidateCmd } from './commands/skills-validate.cmd.js';
+import { sliceClassifyCmd } from './commands/slice-classify.cmd.js';
 import { sliceCreateCmd } from './commands/slice-create.cmd.js';
 import { sliceTransitionCmd } from './commands/slice-transition.cmd.js';
-import { sliceClassifyCmd } from './commands/slice-classify.cmd.js';
-import { wavesDetectCmd } from './commands/waves-detect.cmd.js';
-import { syncStateCmd } from './commands/sync-state.cmd.js';
+import { snapshotLoadCmd } from './commands/snapshot-load.cmd.js';
+import { snapshotMergeCmd } from './commands/snapshot-merge.cmd.js';
+import { snapshotSaveCmd } from './commands/snapshot-save.cmd.js';
 import { syncReconcileCmd } from './commands/sync-reconcile.cmd.js';
+import { syncStateCmd } from './commands/sync-state.cmd.js';
+import { wavesDetectCmd } from './commands/waves-detect.cmd.js';
+import { workflowNextCmd } from './commands/workflow-next.cmd.js';
+import { workflowShouldAutoCmd } from './commands/workflow-should-auto.cmd.js';
 import { worktreeCreateCmd } from './commands/worktree-create.cmd.js';
 import { worktreeDeleteCmd } from './commands/worktree-delete.cmd.js';
 import { worktreeListCmd } from './commands/worktree-list.cmd.js';
-import { reviewCheckFreshCmd } from './commands/review-check-fresh.cmd.js';
-import { checkpointSaveCmd } from './commands/checkpoint-save.cmd.js';
-import { checkpointLoadCmd } from './commands/checkpoint-load.cmd.js';
-import { observeRecordCmd } from './commands/observe-record.cmd.js';
-import { patternsExtractCmd } from './commands/patterns-extract.cmd.js';
-import { patternsAggregateCmd } from './commands/patterns-aggregate.cmd.js';
-import { patternsRankCmd } from './commands/patterns-rank.cmd.js';
-import { composeDetectCmd } from './commands/compose-detect.cmd.js';
-import { skillsDriftCmd } from './commands/skills-drift.cmd.js';
-import { skillsValidateCmd } from './commands/skills-validate.cmd.js';
-import { workflowNextCmd } from './commands/workflow-next.cmd.js';
-import { workflowShouldAutoCmd } from './commands/workflow-should-auto.cmd.js';
-import { snapshotSaveCmd } from './commands/snapshot-save.cmd.js';
-import { snapshotLoadCmd } from './commands/snapshot-load.cmd.js';
-import { snapshotMergeCmd } from './commands/snapshot-merge.cmd.js';
 
 type CommandFn = (args: string[]) => Promise<string>;
 
@@ -64,19 +64,23 @@ const main = async () => {
   const [command, ...args] = process.argv.slice(2);
 
   if (!command || command === '--help' || command === '-h') {
-    console.log(JSON.stringify({
-      ok: true,
-      data: { name: 'tff-tools', version: '0.5.3', commands: Object.keys(commands) },
-    }));
+    console.log(
+      JSON.stringify({
+        ok: true,
+        data: { name: 'tff-tools', version: '0.5.3', commands: Object.keys(commands) },
+      }),
+    );
     return;
   }
 
   const handler = commands[command];
   if (!handler) {
-    console.log(JSON.stringify({
-      ok: false,
-      error: { code: 'UNKNOWN_COMMAND', message: `Unknown command "${command}". Run --help for available commands.` },
-    }));
+    console.log(
+      JSON.stringify({
+        ok: false,
+        error: { code: 'UNKNOWN_COMMAND', message: `Unknown command "${command}". Run --help for available commands.` },
+      }),
+    );
     return;
   }
 
@@ -85,9 +89,11 @@ const main = async () => {
 };
 
 main().catch((err) => {
-  console.log(JSON.stringify({
-    ok: false,
-    error: { code: 'INTERNAL_ERROR', message: String(err) },
-  }));
+  console.log(
+    JSON.stringify({
+      ok: false,
+      error: { code: 'INTERNAL_ERROR', message: String(err) },
+    }),
+  );
   process.exit(1);
 });

@@ -10,6 +10,12 @@ export const EscalationSchema = z.object({
 });
 export type Escalation = z.infer<typeof EscalationSchema>;
 
-export function createEscalation(input: { sliceId: string; phase: string; reason: string; attempts: number; lastError?: string }): Escalation {
+export function createEscalation(input: {
+  sliceId: string;
+  phase: string;
+  reason: string;
+  attempts: number;
+  lastError?: string;
+}): Escalation {
   return { ...input, createdAt: new Date().toISOString() };
 }

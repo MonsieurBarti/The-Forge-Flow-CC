@@ -18,10 +18,7 @@ export const DomainEventSchema = z.object({
 
 export type DomainEvent = z.infer<typeof DomainEventSchema>;
 
-export const createDomainEvent = (
-  type: DomainEventType,
-  payload: Record<string, unknown>,
-): DomainEvent => ({
+export const createDomainEvent = (type: DomainEventType, payload: Record<string, unknown>): DomainEvent => ({
   id: crypto.randomUUID(),
   type,
   occurredAt: new Date(),

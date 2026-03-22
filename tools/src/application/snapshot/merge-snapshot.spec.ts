@@ -1,10 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { mergeSnapshots } from './merge-snapshot';
 
 const makeEntry = (id: string, status: string, design: string, ts: string) => ({
-  id, label: 'tff:slice' as const, title: id, status, design,
+  id,
+  label: 'tff:slice' as const,
+  title: id,
+  status,
+  design,
   deps: { blocks: [] as string[], validates: [] as string[] },
-  kvs: {} as Record<string, string>, snapshot_ts: ts,
+  kvs: {} as Record<string, string>,
+  snapshot_ts: ts,
 });
 
 describe('mergeSnapshots', () => {
@@ -46,9 +51,18 @@ describe('mergeSnapshots', () => {
   });
 
   it('should union dependencies', () => {
-    const base = JSON.stringify({ ...makeEntry('a', 'open', '', '2026-03-01T00:00:00Z'), deps: { blocks: ['x'], validates: [] } });
-    const ours = JSON.stringify({ ...makeEntry('a', 'open', '', '2026-03-02T00:00:00Z'), deps: { blocks: ['x', 'y'], validates: [] } });
-    const theirs = JSON.stringify({ ...makeEntry('a', 'open', '', '2026-03-02T00:00:00Z'), deps: { blocks: ['x', 'z'], validates: [] } });
+    const base = JSON.stringify({
+      ...makeEntry('a', 'open', '', '2026-03-01T00:00:00Z'),
+      deps: { blocks: ['x'], validates: [] },
+    });
+    const ours = JSON.stringify({
+      ...makeEntry('a', 'open', '', '2026-03-02T00:00:00Z'),
+      deps: { blocks: ['x', 'y'], validates: [] },
+    });
+    const theirs = JSON.stringify({
+      ...makeEntry('a', 'open', '', '2026-03-02T00:00:00Z'),
+      deps: { blocks: ['x', 'z'], validates: [] },
+    });
     const result = mergeSnapshots(base, ours, theirs);
     const merged = JSON.parse(result.merged.split('\n').filter(Boolean)[0]);
     expect(merged.deps.blocks.sort()).toEqual(['x', 'y', 'z']);

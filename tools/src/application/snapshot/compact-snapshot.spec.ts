@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { compactSnapshot } from './compact-snapshot';
 
 describe('compactSnapshot', () => {
@@ -11,7 +11,7 @@ describe('compactSnapshot', () => {
     const result = compactSnapshot(input);
     const lines = result.split('\n').filter(Boolean);
     expect(lines).toHaveLength(2);
-    const aEntry = JSON.parse(lines.find(l => l.includes('"a"'))!);
+    const aEntry = JSON.parse(lines.find((l) => l.includes('"a"'))!);
     expect(aEntry.status).toBe('executing');
   });
 

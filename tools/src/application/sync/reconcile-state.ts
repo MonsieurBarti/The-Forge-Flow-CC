@@ -1,29 +1,21 @@
-import { type Result, Ok, isOk } from '../../domain/result.js';
-import { type DomainError } from '../../domain/errors/domain-error.js';
-import { type BeadStore, type BeadData } from '../../domain/ports/bead-store.port.js';
-import { type ArtifactStore } from '../../domain/ports/artifact-store.port.js';
-import { type SyncReport, emptySyncReport } from '../../domain/value-objects/sync-report.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
+import type { BeadStore } from '../../domain/ports/bead-store.port.js';
+import { isOk, Ok, type Result } from '../../domain/result.js';
+import { emptySyncReport, type SyncReport } from '../../domain/value-objects/sync-report.js';
 import { generateState } from './generate-state.js';
 
 // ── Pure helpers ──────────────────────────────────────────────────────
 
 /** Markdown wins for content, unless markdown is empty. */
-export const resolveContentConflict = (
-  mdContent: string,
-  beadDesign: string,
-): string => (mdContent.length > 0 ? mdContent : beadDesign);
+export const resolveContentConflict = (mdContent: string, beadDesign: string): string =>
+  mdContent.length > 0 ? mdContent : beadDesign;
 
 /** Bead status is the source of truth (always wins). */
-export const resolveStatusConflict = (
-  _mdStatus: string,
-  beadStatus: string,
-): string => beadStatus;
+export const resolveStatusConflict = (_mdStatus: string, beadStatus: string): string => beadStatus;
 
 /** Compare two ID lists and return sets that exist in only one side. */
-export const detectOrphans = (
-  mdIds: string[],
-  beadIds: string[],
-): { markdownOnly: string[]; beadOnly: string[] } => {
+export const detectOrphans = (mdIds: string[], beadIds: string[]): { markdownOnly: string[]; beadOnly: string[] } => {
   const mdSet = new Set(mdIds);
   const beadSet = new Set(beadIds);
   return {

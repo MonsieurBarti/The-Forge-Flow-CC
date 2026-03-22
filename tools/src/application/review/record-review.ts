@@ -1,6 +1,6 @@
-import { type Result, Ok } from '../../domain/result.js';
-import { type DomainError } from '../../domain/errors/domain-error.js';
-import { type ReviewStore } from '../../domain/ports/review-store.port.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { ReviewStore } from '../../domain/ports/review-store.port.js';
+import type { Result } from '../../domain/result.js';
 
 interface RecordReviewInput {
   sliceId: string;
@@ -8,7 +8,9 @@ interface RecordReviewInput {
   status: 'approved' | 'changes_requested';
 }
 
-interface RecordReviewDeps { reviewStore: ReviewStore; }
+interface RecordReviewDeps {
+  reviewStore: ReviewStore;
+}
 
 export const recordReviewUseCase = async (
   input: RecordReviewInput,

@@ -1,6 +1,6 @@
 import { loadCheckpoint } from '../../application/checkpoint/load-checkpoint.js';
-import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { isOk } from '../../domain/result.js';
+import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 
 export const checkpointLoadCmd = async (args: string[]): Promise<string> => {
   const [sliceId] = args;

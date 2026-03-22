@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createSliceUseCase } from './create-slice.js';
-import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
-import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
+import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
+import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { createSliceUseCase } from './create-slice.js';
 
 describe('createSliceUseCase', () => {
   let beadStore: InMemoryBeadStore;

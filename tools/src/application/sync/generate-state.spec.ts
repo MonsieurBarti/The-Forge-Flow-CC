@@ -1,13 +1,16 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { generateState } from './generate-state.js';
-import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
-import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
+import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
+import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { generateState } from './generate-state.js';
 
 describe('generateState', () => {
   let beadStore: InMemoryBeadStore;
   let artifactStore: InMemoryArtifactStore;
-  beforeEach(() => { beadStore = new InMemoryBeadStore(); artifactStore = new InMemoryArtifactStore(); });
+  beforeEach(() => {
+    beadStore = new InMemoryBeadStore();
+    artifactStore = new InMemoryArtifactStore();
+  });
 
   it('should generate STATE.md with slice progress', async () => {
     beadStore.seed([

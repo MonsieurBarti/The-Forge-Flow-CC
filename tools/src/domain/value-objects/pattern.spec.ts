@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { PatternSchema } from './pattern.js';
 
 describe('Pattern', () => {
@@ -15,22 +15,26 @@ describe('Pattern', () => {
   });
 
   it('should reject empty sequence', () => {
-    expect(() => PatternSchema.parse({
-      sequence: [],
-      count: 1,
-      sessions: 1,
-      projects: 1,
-      lastSeen: '2026-03-21',
-    })).toThrow();
+    expect(() =>
+      PatternSchema.parse({
+        sequence: [],
+        count: 1,
+        sessions: 1,
+        projects: 1,
+        lastSeen: '2026-03-21',
+      }),
+    ).toThrow();
   });
 
   it('should reject zero count', () => {
-    expect(() => PatternSchema.parse({
-      sequence: ['Read'],
-      count: 0,
-      sessions: 1,
-      projects: 1,
-      lastSeen: '2026-03-21',
-    })).toThrow();
+    expect(() =>
+      PatternSchema.parse({
+        sequence: ['Read'],
+        count: 0,
+        sessions: 1,
+        projects: 1,
+        lastSeen: '2026-03-21',
+      }),
+    ).toThrow();
   });
 });

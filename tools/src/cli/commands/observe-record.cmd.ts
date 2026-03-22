@@ -1,10 +1,11 @@
+import { isOk } from '../../domain/result.js';
 import { ObservationSchema } from '../../domain/value-objects/observation.js';
 import { JsonlStoreAdapter } from '../../infrastructure/adapters/jsonl/jsonl-store.adapter.js';
-import { isOk } from '../../domain/result.js';
 
 export const observeRecordCmd = async (args: string[]): Promise<string> => {
   const input = args[0];
-  if (!input) return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: observe:record <json>' } });
+  if (!input)
+    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: observe:record <json>' } });
   try {
     const obs = ObservationSchema.parse(JSON.parse(input));
     const store = new JsonlStoreAdapter('.tff/observations');

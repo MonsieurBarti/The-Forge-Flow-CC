@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { GitCliAdapter } from './git-cli.adapter.js';
 
 describe('GitCliAdapter - caching', () => {

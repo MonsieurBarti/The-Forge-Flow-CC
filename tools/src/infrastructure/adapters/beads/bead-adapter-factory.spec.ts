@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createBeadAdapter } from './bead-adapter-factory';
 
 describe('bead-adapter-factory', () => {

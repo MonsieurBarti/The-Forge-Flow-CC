@@ -1,13 +1,13 @@
-import type { BeadStore } from '../../domain/ports/bead-store.port.js';
 import type { DomainError } from '../../domain/errors/domain-error.js';
-import type { Result } from '../../domain/result.js';
-import { Ok, Err, isOk } from '../../domain/result.js';
 import { createDomainError } from '../../domain/errors/domain-error.js';
+import type { BeadStore } from '../../domain/ports/bead-store.port.js';
+import type { Result } from '../../domain/result.js';
+import { Err, isOk, Ok } from '../../domain/result.js';
 import {
+  type BeadSnapshot,
+  BeadSnapshotSchema,
   createSnapshot,
   latestById,
-  BeadSnapshotSchema,
-  type BeadSnapshot,
 } from '../../domain/value-objects/bead-snapshot.js';
 
 export interface SerializeSnapshotInput {
@@ -33,9 +33,7 @@ function parseExistingSnapshot(raw: string): BeadSnapshot[] {
   return latestById(entries);
 }
 
-export async function serializeSnapshot(
-  input: SerializeSnapshotInput,
-): Promise<Result<string, DomainError>> {
+export async function serializeSnapshot(input: SerializeSnapshotInput): Promise<Result<string, DomainError>> {
   const listResult = await input.beadStore.list({});
   if (!isOk(listResult)) return listResult;
 

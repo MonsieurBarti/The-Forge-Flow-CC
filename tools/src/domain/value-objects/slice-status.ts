@@ -24,8 +24,6 @@ const transitions: Record<SliceStatus, readonly SliceStatus[]> = {
   closed: [],
 };
 
-export const canTransition = (from: SliceStatus, to: SliceStatus): boolean =>
-  transitions[from].includes(to);
+export const canTransition = (from: SliceStatus, to: SliceStatus): boolean => transitions[from].includes(to);
 
-export const validTransitionsFrom = (status: SliceStatus): readonly SliceStatus[] =>
-  transitions[status];
+export const validTransitionsFrom = (status: SliceStatus): readonly SliceStatus[] => transitions[status];

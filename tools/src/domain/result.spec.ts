@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { Ok, Err, isOk, isErr, match } from './result.js';
+import { describe, expect, it } from 'vitest';
+import { Err, isErr, isOk, match, Ok } from './result.js';
 
 describe('Result', () => {
   describe('Ok', () => {

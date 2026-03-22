@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
+import { describe, expect, it } from 'vitest';
 import { rankCandidates } from './rank-candidates.js';
 
 /** Arbitrary that produces 4 weights summing to exactly 1 */
@@ -23,29 +23,33 @@ const normalizedWeights = fc
 describe('rankCandidates - property-based', () => {
   it('scores should always be between 0 and 1', () => {
     fc.assert(
-      fc.property(
-        normalizedWeights,
-        (weights) => {
-          const patterns = [
-            { sequence: ['Read'], count: 5, sessions: 3, projects: 2, lastSeen: new Date().toISOString() },
-          ];
-          const result = rankCandidates(patterns, { totalProjects: 5, totalSessions: 10, now: new Date().toISOString(), weights });
-          expect(result[0].score).toBeGreaterThanOrEqual(0);
-          expect(result[0].score).toBeLessThanOrEqual(1);
-        },
-      ),
+      fc.property(normalizedWeights, (weights) => {
+        const patterns = [
+          { sequence: ['Read'], count: 5, sessions: 3, projects: 2, lastSeen: new Date().toISOString() },
+        ];
+        const result = rankCandidates(patterns, {
+          totalProjects: 5,
+          totalSessions: 10,
+          now: new Date().toISOString(),
+          weights,
+        });
+        expect(result[0].score).toBeGreaterThanOrEqual(0);
+        expect(result[0].score).toBeLessThanOrEqual(1);
+      }),
     );
   });
 
   it('empty patterns should return empty results', () => {
     fc.assert(
-      fc.property(
-        normalizedWeights,
-        (weights) => {
-          const result = rankCandidates([], { totalProjects: 5, totalSessions: 10, now: new Date().toISOString(), weights });
-          expect(result).toHaveLength(0);
-        },
-      ),
+      fc.property(normalizedWeights, (weights) => {
+        const result = rankCandidates([], {
+          totalProjects: 5,
+          totalSessions: 10,
+          now: new Date().toISOString(),
+          weights,
+        });
+        expect(result).toHaveLength(0);
+      }),
     );
   });
 
