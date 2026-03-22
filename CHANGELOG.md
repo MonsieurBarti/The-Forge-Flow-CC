@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-03-22
+
+### Added
+
+- Bead-vs-PR reconciliation in `/tff:health` — detects stale beads whose PRs are already merged
+- Error handling convention (rule 6) in orchestrator pattern — all tff-tools calls must check `ok` field
+- Explicit error checks after state transitions in discuss, research, plan, execute, verify workflows
+- Plan Review column in complexity tiers — plannotator review mandatory for ALL tiers including S-tier
+
+### Changed
+
+- **Directory restructure**: `.tff/slices/<id>/` → `.tff/milestones/<M0X>/slices/<id>/`
+- **Requirements scoped per milestone**: `.tff/REQUIREMENTS.md` → `.tff/milestones/<M0X>/REQUIREMENTS.md`
+- `quick.md` and `debug.md` now include plannotator-annotate plan review step (was skipped)
+- `discuss-slice.md` S-tier shortcut skips discuss+research but still requires plan approval
+- `milestone:create` derives number from highest existing `M(\d+)` instead of count (same as S12 slice fix)
+
+### Fixed
+
+- Milestone numbering: `milestone:create` produced duplicate M01 because `bd list` excludes closed beads
+- Path traversal guard in `MarkdownArtifactAdapter.resolve()` — rejects `../` escape attempts
+- Dolt remote validation — `doltPush`/`doltPull` reject non-alphanumeric remote names (prevents flag injection)
+
+### Security
+
+- Path traversal: resolved path must start with basePath (defense-in-depth)
+- Dolt remote: validates against `^[a-zA-Z0-9_-]+$` before `execFile`
+
 ## [0.5.2] - 2026-03-22
 
 ### Changed

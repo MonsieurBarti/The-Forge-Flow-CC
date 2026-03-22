@@ -1,6 +1,6 @@
 {
   "name": "the-forge-flow",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Autonomous coding agent orchestrator for Claude Code",
   "type": "module",
   "engines": {
