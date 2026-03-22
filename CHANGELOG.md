@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-03-22
+
+### Added
+
+- **R02 — riskLevel signal:** Complexity classification now detects risk signals (concurrency, security, data migration) that force automatic tier upgrades (S09)
+- **S06 — Git hooks:** lefthook pre-commit with biome lint/format checks
+- **S08 — CI expansion:** CI pipeline runs on all PRs with lint step
+- **S10/S11 — Cleanup automation:** Auto-rebase milestone branch on slice close
+
+### Changed
+
+- **R01 — Classification timing:** Classification moved to end of discuss phase; orchestrator proposes tier, user confirms via AskUserQuestion (S02)
+- **R02 — S-tier criteria:** S-tier restricted to single-file changes, no new files, no architecture impact, root cause known (S01)
+- **R03 — User-confirmed classification:** `slice:classify` output is a suggestion, not auto-routing; no workflow step auto-skipped (S02, S03)
+- **R04 — Unified pipeline:** All tiers follow same pipeline (discuss → research → plan → execute → verify → ship); tiers control depth, not skipping (S03)
+- **R05 — Quick/debug alignment:** Quick and debug become entry-point shortcuts that converge on standard plan → execute → ship (S04)
+- **Removed `.tff/` from git tracking** — internal project state is no longer version-controlled
+
+### Fixed
+
+- **R06 — Milestone numbering:** Fixed to use `--all` flag for closed beads in numbering scans (S05)
+
 ## [0.5.3] - 2026-03-22
 
 ### Added
