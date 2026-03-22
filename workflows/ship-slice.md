@@ -16,20 +16,19 @@ status = reviewing
    REQUEST_CHANGES → SPAWN tff-fixer → loop until APPROVE
 4. Stage 3 (security) — SPAWN tff-security-auditor: {diff, @references/security-baseline.md}
    critical ∨ high → blocks PR → SPAWN tff-fixer → re-audit
-5. USER REVIEW: invoke Skill `plannotator-review` for interactive code review of the diff
-6. PR: `gh pr create` — `slice/<slice-id>` → `milestone/<milestone>`
+5. PR: `gh pr create` — `slice/<slice-id>` → `milestone/<milestone>`
    **Show PR URL to user**
 
 **tff NEVER merges — only creates PR.**
 
-7. MERGE GATE: AskUserQuestion with options:
-   - **"PR merged"** → continue to step 8
-   - **"PR needs changes"** → SPAWN tff-fixer with requested changes → push fixes → go back to step 7
-8. CLOSE:
+6. MERGE GATE: AskUserQuestion with options:
+   - **"PR merged"** → continue to step 7
+   - **"PR needs changes"** → SPAWN tff-fixer with requested changes → push fixes → go back to step 6
+7. CLOSE:
    - `tff-tools worktree:delete <slice-id>` (if worktree exists)
    - `bd close <slice-bead-id> --reason "Slice PR merged"`
    - Log: `[tff] <slice-id>: reviewing → closed`
-9. NEXT: @references/next-steps.md
+8. NEXT: @references/next-steps.md
 
 ## Auto-Transition
 After completing all steps above:
