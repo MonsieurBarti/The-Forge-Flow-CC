@@ -59,12 +59,15 @@ export const reconcileState = async (
   const sliceBeads = slicesResult.data;
 
   // 2. Load all slice markdown files and extract unique slice directory names
-  const sliceFilesResult = await deps.artifactStore.list('.tff/slices');
+  // Derive milestone number from name (e.g. "Milestone M02: ..." → "M02") or default
+  const milestoneNum = input.milestoneName.match(/(M\d+)/)?.[1] ?? 'M01';
+  const slicesDir = `.tff/milestones/${milestoneNum}/slices`;
+  const sliceFilesResult = await deps.artifactStore.list(slicesDir);
   const sliceFiles = isOk(sliceFilesResult) ? sliceFilesResult.data : [];
 
   // Extract slice IDs from file paths
-  // e.g., ".tff/slices/M01-S01/PLAN.md" → "M01-S01"
-  const prefix = '.tff/slices/';
+  // e.g., ".tff/milestones/M01/slices/M01-S01/PLAN.md" → "M01-S01"
+  const prefix = `${slicesDir}/`;
   const mdSliceIds = new Set(
     sliceFiles
       .filter((f) => f.startsWith(prefix))
@@ -78,7 +81,7 @@ export const reconcileState = async (
 
   // 3. For each bead slice: check if markdown exists
   for (const bead of sliceBeads) {
-    const sliceDir = `.tff/slices/${bead.title}`;
+    const sliceDir = `${slicesDir}/${bead.title}`;
     const planPath = `${sliceDir}/PLAN.md`;
 
     if (!(await deps.artifactStore.exists(planPath))) {
@@ -125,7 +128,7 @@ export const reconcileState = async (
 
   // 4. Remaining mdSliceIds are markdown-only (no bead) → create beads
   for (const sliceId of mdSliceIds) {
-    const planPath = `.tff/slices/${sliceId}/PLAN.md`;
+    const planPath = `${slicesDir}/${sliceId}/PLAN.md`;
     if (await deps.artifactStore.exists(planPath)) {
       const mdResult = await deps.artifactStore.read(planPath);
       const design = isOk(mdResult) ? mdResult.data : '';

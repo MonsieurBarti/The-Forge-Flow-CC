@@ -34,7 +34,7 @@ LOAD @skills/interactive-design.md
 - Revise until approved, then next section
 
 ### 3. Write Spec
-WRITE `.tff/slices/<id>/SPEC.md` w/ validated design
+WRITE `.tff/milestones/<milestone>/slices/<id>/SPEC.md` w/ validated design
 UPDATE bead design field: `beadStore.updateDesign(id, spec_content)`
 
 ### 4. Challenge Spec (F-full only)
@@ -51,7 +51,7 @@ DISPATCH anonymous reviewer via Agent tool (prompt: @skills/interactive-design.m
 Issues → fix, re-dispatch (max 3)
 
 ### 7. User Gate
-AskUserQuestion: "Spec at `.tff/slices/<id>/SPEC.md`. Approve?"
+AskUserQuestion: "Spec at `.tff/milestones/<milestone>/slices/<id>/SPEC.md`. Approve?"
 
 ### 8. Transition
 `tff-tools slice:transition <id> researching`

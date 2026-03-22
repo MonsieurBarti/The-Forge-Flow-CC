@@ -12,7 +12,7 @@ status = researching
 2. RESEARCH (if needed):
    - Read relevant codebase areas
    - Check dependencies + integration points
-   - Output → `.tff/slices/<slice-id>/RESEARCH.md`
+   - Output → `.tff/milestones/<milestone>/slices/<slice-id>/RESEARCH.md`
 3. TRANSITION: `tff-tools slice:transition <id> planning`
 4. NEXT: @references/next-steps.md
 

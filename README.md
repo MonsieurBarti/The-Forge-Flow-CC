@@ -185,7 +185,7 @@ Complexity is auto-classified as **F-lite** (5 tasks, 2 modules, no external int
 /tff:research M01-S01
 ```
 
-The agent investigates the technical approach: reads the existing codebase, checks what auth libraries are available, documents findings in `.tff/slices/M01-S01/RESEARCH.md`.
+The agent investigates the technical approach: reads the existing codebase, checks what auth libraries are available, documents findings in `.tff/milestones/M01/slices/M01-S01/RESEARCH.md`.
 
 **Next step suggested:** `/tff:plan M01-S01`
 

@@ -37,6 +37,6 @@ describe('createMilestoneUseCase', () => {
       { beadStore, artifactStore, gitOps },
     );
 
-    expect(await artifactStore.exists('.tff/REQUIREMENTS.md')).toBe(true);
+    expect(await artifactStore.exists('.tff/milestones/M01/REQUIREMENTS.md')).toBe(true);
   });
 });
