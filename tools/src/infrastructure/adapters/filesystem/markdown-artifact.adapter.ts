@@ -10,12 +10,12 @@ export class MarkdownArtifactAdapter implements ArtifactStore {
 
   async read(path: string): Promise<Result<string, DomainError>> {
     try { return Ok(await readFile(this.resolve(path), 'utf-8')); }
-    catch { return Err(createDomainError('PROJECT_EXISTS', `File not found: ${path}`, { path })); }
+    catch { return Err(createDomainError('NOT_FOUND', `File not found: ${path}`, { path })); }
   }
 
   async write(path: string, content: string): Promise<Result<void, DomainError>> {
     try { const fullPath = this.resolve(path); await mkdir(dirname(fullPath), { recursive: true }); await writeFile(fullPath, content, 'utf-8'); return Ok(undefined); }
-    catch (err) { return Err(createDomainError('SYNC_CONFLICT', `Failed to write: ${path}`, { path, error: String(err) })); }
+    catch (err) { return Err(createDomainError('VALIDATION_ERROR', `Failed to write: ${path}`, { path, error: String(err) })); }
   }
 
   async exists(path: string): Promise<boolean> {
@@ -29,6 +29,6 @@ export class MarkdownArtifactAdapter implements ArtifactStore {
 
   async mkdir(path: string): Promise<Result<void, DomainError>> {
     try { await mkdir(this.resolve(path), { recursive: true }); return Ok(undefined); }
-    catch (err) { return Err(createDomainError('SYNC_CONFLICT', `Failed to mkdir: ${path}`, { path, error: String(err) })); }
+    catch (err) { return Err(createDomainError('VALIDATION_ERROR', `Failed to mkdir: ${path}`, { path, error: String(err) })); }
   }
 }

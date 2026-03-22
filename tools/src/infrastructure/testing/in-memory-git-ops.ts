@@ -17,7 +17,7 @@ export class InMemoryGitOps implements GitOps {
   }
 
   async deleteWorktree(path: string): Promise<Result<void, DomainError>> {
-    if (!this.worktrees.has(path)) return Err(createDomainError('PROJECT_EXISTS', `Worktree not found: ${path}`, { path }));
+    if (!this.worktrees.has(path)) return Err(createDomainError('NOT_FOUND', `Worktree not found: ${path}`, { path }));
     this.worktrees.delete(path); return Ok(undefined);
   }
 

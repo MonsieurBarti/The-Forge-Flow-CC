@@ -7,7 +7,7 @@ export class InMemoryArtifactStore implements ArtifactStore {
 
   async read(path: string): Promise<Result<string, DomainError>> {
     const content = this.files.get(path);
-    if (content === undefined) return Err(createDomainError('PROJECT_EXISTS', `File not found: ${path}`, { path }));
+    if (content === undefined) return Err(createDomainError('NOT_FOUND', `File not found: ${path}`, { path }));
     return Ok(content);
   }
 
