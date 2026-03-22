@@ -20,9 +20,6 @@ export const initProject = async (
   // which we silently ignore (the list() call below will verify connectivity)
   await deps.beadStore.init();
 
-  // Small delay to let Dolt server stabilize after init
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
   // Register tff slice lifecycle statuses as custom bd statuses
   const regResult = await deps.beadStore.registerStatuses([
     'discussing', 'researching', 'planning', 'executing',
@@ -30,7 +27,12 @@ export const initProject = async (
   ]);
   if (!isOk(regResult)) return regResult;
 
-  const existing = await deps.beadStore.list({ label: 'tff:project' });
+  // Verify store is ready and check for existing projects with retry backoff
+  let existing = await deps.beadStore.list({ label: 'tff:project' });
+  for (let attempt = 1; attempt < 5 && !isOk(existing); attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    existing = await deps.beadStore.list({ label: 'tff:project' });
+  }
   if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
 
   const project = createProject(input);
