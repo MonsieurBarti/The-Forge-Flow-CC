@@ -3,18 +3,27 @@ import { promisify } from 'node:util';
 
 const exec = promisify(execFile);
 
+interface DoltConfig {
+  remote: string;
+  'auto-sync'?: boolean;
+}
+
+interface DoltAwareSettings {
+  dolt?: DoltConfig;
+}
+
 interface DoltSettings {
   remote: string;
   autoSync: boolean;
 }
 
-export function parseDoltSettings(settings: Record<string, any> | undefined): DoltSettings | null {
+export function parseDoltSettings(settings: DoltAwareSettings | undefined): DoltSettings | null {
   const dolt = settings?.dolt;
   if (!dolt?.remote) return null;
   return { remote: dolt.remote, autoSync: dolt['auto-sync'] === true };
 }
 
-export function shouldAutoSync(settings: Record<string, any> | undefined): boolean {
+export function shouldAutoSync(settings: DoltAwareSettings | undefined): boolean {
   return parseDoltSettings(settings)?.autoSync === true;
 }
 
