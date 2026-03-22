@@ -1,12 +1,19 @@
 import { readFile, writeFile, mkdir, readdir, access } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
 import { type ArtifactStore } from '../../../domain/ports/artifact-store.port.js';
 import { type Result, Ok, Err } from '../../../domain/result.js';
 import { type DomainError, createDomainError } from '../../../domain/errors/domain-error.js';
 
 export class MarkdownArtifactAdapter implements ArtifactStore {
   constructor(private readonly basePath: string) {}
-  private resolve(path: string): string { return join(this.basePath, path); }
+  private resolve(path: string): string {
+    const resolved = resolve(join(this.basePath, path));
+    const base = resolve(this.basePath);
+    if (!resolved.startsWith(base + '/') && resolved !== base) {
+      throw new Error(`Path traversal rejected: ${path}`);
+    }
+    return resolved;
+  }
 
   async read(path: string): Promise<Result<string, DomainError>> {
     try { return Ok(await readFile(this.resolve(path), 'utf-8')); }
