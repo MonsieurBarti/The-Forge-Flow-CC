@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-03-22
+
+### Fixed
+
+**CLI Tooling (R01)**
+- S01: Corrected misused error codes and version drift across CLI commands
+- S04: Replaced hardcoded 2s init delay with readiness retry loop (up to 5 attempts)
+- S12: Derive slice number from highest existing ID instead of bead count
+- S14: Parse `--title` flag and skip unknown flags in `slice:create` (was treating `--milestone` as slice name)
+
+**Dual-State Coordination (R03)**
+- S03: Fixed `InMemoryBeadStore.ready()` dependency resolution and typed dolt-sync
+- S06: Read actual bead status in `slice:transition` instead of stale cached value
+- S07 (beads): Register tff custom statuses with beads on project init
+
+**Workflow Orchestration (R02)**
+- S07 (plannotator): Standardized all plannotator invocations to use Skill tool instead of raw bash commands (5 workflows + skill reference)
+- S09: Enforce `.tff/worktrees/` path in quick and debug workflows with explicit `tff-tools worktree:create` calls
+- S11: Make auto-transition instructions explicit in all workflows (read settings, check autonomy mode)
+
+**Observability (R06)**
+- S02: Added `tffWarn` helper and surfaced swallowed errors in beads adapter
+- S13: Fixed PostToolUse hook path resolution — use `${CLAUDE_PLUGIN_ROOT}` instead of relative path
+
+**Dual-State Persistence (R03)**
+- S10: Auto-generate STATE.md and save checkpoints after slice transitions
+
+**Documentation**
+- S05: Fixed Dolt remote setup instructions in new-project workflow
+
+**Security**
+- Removed `.beads/.beads-credential-key` from git tracking and added to `.gitignore`
+
 ## [0.5.0] - 2026-03-22
 
 ### Added
