@@ -10,10 +10,10 @@ export const loadCheckpoint = async (
 ): Promise<Result<CheckpointData, DomainError>> => {
   const path = `.tff/slices/${sliceId}/CHECKPOINT.md`;
   const contentResult = await deps.artifactStore.read(path);
-  if (!isOk(contentResult)) return Err(createDomainError('PROJECT_EXISTS', `No checkpoint found for slice "${sliceId}"`, { sliceId }));
+  if (!isOk(contentResult)) return Err(createDomainError('NOT_FOUND', `No checkpoint found for slice "${sliceId}"`, { sliceId }));
 
   const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);
-  if (!match) return Err(createDomainError('SYNC_CONFLICT', `Checkpoint file for "${sliceId}" is corrupted`, { sliceId }));
+  if (!match) return Err(createDomainError('VALIDATION_ERROR', `Checkpoint file for "${sliceId}" is corrupted`, { sliceId }));
 
   const data = JSON.parse(match[1]) as CheckpointData;
   return Ok(data);

@@ -17,6 +17,9 @@ export interface BeadData {
 export interface BeadStore {
   init(): Promise<Result<void, DomainError>>;
 
+  /** Register custom statuses with the backing store */
+  registerStatuses(statuses: string[]): Promise<Result<void, DomainError>>;
+
   create(input: {
     label: BeadLabel;
     title: string;

@@ -14,16 +14,16 @@ token-budget: background
 
 | Point | Workflow | Command | Input |
 |---|---|---|---|
-| Plan review | /tff:plan | `plannotator annotate .tff/slices/M01-S01/PLAN.md` | PLAN.md |
-| Verification | /tff:verify | `plannotator annotate .tff/slices/M01-S01/VERIFICATION.md` | VERIFICATION.md |
-| Code review | /tff:ship | `plannotator review` | git diff |
+| Plan review | /tff:plan | invoke Skill `plannotator-annotate` with arg `.tff/slices/<id>/PLAN.md` | PLAN.md |
+| Verification | /tff:verify | invoke Skill `plannotator-annotate` with arg `.tff/slices/<id>/VERIFICATION.md` | VERIFICATION.md |
+| Code review | /tff:ship | invoke Skill `plannotator-review` | git diff |
 
 ∀ points: opens interactive UI → user annotates → feedback returns to stdout → agent processes
 
 ## Command Frontmatter
 
 ```yaml
-allowed-tools: Bash(plannotator:*)
+allowed-tools: Skill(plannotator-annotate, plannotator-review)
 ```
 
 ## Loop

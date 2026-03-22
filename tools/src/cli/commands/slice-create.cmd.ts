@@ -4,10 +4,25 @@ import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesyste
 import { isOk } from '../../domain/result.js';
 
 export const sliceCreateCmd = async (args: string[]): Promise<string> => {
-  const name = args[0];
+  // Parse --title flag or fall back to positional arg
+  let name: string | undefined;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--title' && i + 1 < args.length) {
+      name = args[i + 1];
+      break;
+    }
+    if (!args[i].startsWith('--')) {
+      name = args[i];
+      break;
+    }
+    // Skip unknown flags with values (e.g. --milestone M01)
+    if (args[i].startsWith('--') && i + 1 < args.length && !args[i + 1].startsWith('--')) {
+      i++;
+    }
+  }
 
   if (!name) {
-    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: slice:create <name>' } });
+    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: slice:create <name> or slice:create --title <name>' } });
   }
 
   const { store: beadStore } = await createBeadAdapter();
@@ -26,9 +41,19 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
   // Detect milestone number from title (e.g., "Milestone M02: ..." → 2) or count
   const milestoneNumber = milestonesResult.data.indexOf(milestone) + 1;
 
-  // Auto-number slice: count existing slices under this milestone + 1
+  // Auto-number slice: find highest existing slice number and increment from there
   const slicesResult = await beadStore.list({ label: 'tff:slice', parentId: milestoneBeadId });
-  const sliceNumber = isOk(slicesResult) ? slicesResult.data.length + 1 : 1;
+  let maxSliceNumber = 0;
+  if (isOk(slicesResult)) {
+    for (const s of slicesResult.data) {
+      const match = s.design?.match(/Slice M\d+-S(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxSliceNumber) maxSliceNumber = num;
+      }
+    }
+  }
+  const sliceNumber = maxSliceNumber + 1;
 
   const result = await createSliceUseCase(
     { milestoneBeadId, name, milestoneNumber, sliceNumber },

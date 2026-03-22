@@ -63,9 +63,11 @@ b) Self-hosted Dolt remote
 c) Skip (git snapshots only, configure later via /tff:settings)
 ```
 If a) or b):
-1. Guide: `dolt remote add origin <url>`
-2. Guide: `dolt push --set-upstream origin main`
-3. Update `.tff/settings.yaml`: uncomment dolt section, set remote + auto-sync
+1. Guide: run `dolt login` (interactive — user must complete in their terminal)
+2. Guide: `cd .beads/dolt && dolt remote add origin <url>`
+3. Guide: `dolt push --set-upstream origin main`
+4. Guide: `cd ../..` (return to project root)
+5. Update `.tff/settings.yaml`: uncomment dolt section, set remote + auto-sync
 
 ## Git Merge Driver
 Configure snapshot merge driver:

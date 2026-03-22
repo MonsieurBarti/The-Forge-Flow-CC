@@ -23,7 +23,7 @@ Pass: `tff-tools compose:detect --min-sessions 3 --min-patterns 2 --max-distance
 3. SPAWN tff-skill-drafter ("Compose Bundle" mode) for selected cluster:
    - provide cluster skills + co-activation rate → decides bundle vs agent
    - draft → `.tff/drafts/<name>.md`
-4. REVIEW: `plannotator annotate .tff/drafts/<name>.md`
+4. REVIEW: invoke Skill `plannotator-annotate` with arg `.tff/drafts/<name>.md`
 5. HANDLE:
    - approved bundle → `skills/<name>.md`
    - approved agent → `agents/<name>.md`

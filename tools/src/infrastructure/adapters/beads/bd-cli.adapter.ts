@@ -38,6 +38,9 @@ const execBd = async (
 ): Promise<string> => {
   const options: { timeout: number; input?: string } = { timeout: 30_000 };
   if (stdin) options.input = stdin;
+  // TODO(S09): When running inside a worktree (process.cwd() contains '.tff/worktrees/'),
+  // bd commands should use '--sandbox' flag to prevent auto-sync and Dolt server conflicts
+  // with the main repo's Dolt server. Requires verifying that bd supports a '--sandbox' flag.
   const { stdout } = await exec('bd', args, options);
   return stdout.trim();
 };
@@ -68,8 +71,8 @@ const runBdRetry = async (
 };
 
 /**
- * Normalize beads JSON output (snake_case) to our BeadData interface.
- * bd returns snake_case fields: issue_type, created_at, parent_id, etc.
+ * Normalize beads JSON output to our BeadData interface.
+ * bd returns: id, title, design, status, parent, labels, etc.
  */
 const normalizeBeadData = (raw: Record<string, unknown>): Result<BeadData, DomainError> => {
   if (!raw.id || typeof raw.id !== 'string') {
@@ -87,7 +90,7 @@ const normalizeBeadData = (raw: Record<string, unknown>): Result<BeadData, Domai
     title: raw.title as string,
     status: raw.status,
     design: raw.design as string | undefined,
-    parentId: (raw.parent_id ?? raw.parentId) as string | undefined,
+    parentId: raw.parent as string | undefined,
     blocks: raw.blocks as string[] | undefined,
     validates: raw.validates as string[] | undefined,
     metadata: raw.metadata as Record<string, string> | undefined,
@@ -117,6 +120,12 @@ export class BdCliAdapter implements BeadStore {
   async init(): Promise<Result<void, DomainError>> {
     // init is idempotent — ignore errors if already initialized
     await runBd(['init', '--quiet']);
+    return Ok(undefined);
+  }
+
+  async registerStatuses(statuses: string[]): Promise<Result<void, DomainError>> {
+    const r = await runBd(['config', 'set', 'status.custom', statuses.join(',')]);
+    if (!r.ok) return r;
     return Ok(undefined);
   }
 

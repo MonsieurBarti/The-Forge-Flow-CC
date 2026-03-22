@@ -11,6 +11,10 @@ export class InMemoryBeadStore implements BeadStore {
     return Ok(undefined);
   }
 
+  async registerStatuses(_statuses: string[]): Promise<Result<void, DomainError>> {
+    return Ok(undefined);
+  }
+
   async create(input: {
     label: BeadLabel;
     title: string;
@@ -51,7 +55,11 @@ export class InMemoryBeadStore implements BeadStore {
 
   async ready(): Promise<Result<BeadData[], DomainError>> {
     // Return open beads with no unresolved blockers
-    const results = [...this.beads.values()].filter((b) => b.status === 'open');
+    const results = [...this.beads.values()].filter((b) => {
+      if (b.status !== 'open') return false;
+      if (!b.blocks || b.blocks.length === 0) return true;
+      return b.blocks.every((blockerId) => this.beads.get(blockerId)?.status === 'closed');
+    });
     return Ok(results);
   }
 

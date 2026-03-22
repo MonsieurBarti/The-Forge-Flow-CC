@@ -2,6 +2,8 @@
 
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
+**Autonomy**: check `.tff/settings.yaml` → `autonomy.mode` before pausing.
+
 ## Prerequisites
 status = reviewing
 
@@ -14,7 +16,7 @@ status = reviewing
    REQUEST_CHANGES → SPAWN tff-fixer → loop until APPROVE
 4. Stage 3 (security) — SPAWN tff-security-auditor: {diff, @references/security-baseline.md}
    critical ∨ high → blocks PR → SPAWN tff-fixer → re-audit
-5. USER REVIEW: `plannotator review`
+5. USER REVIEW: invoke Skill `plannotator-review` for interactive code review of the diff
 6. PR: `gh pr create` — `slice/<slice-id>` → `milestone/<milestone>`
    **Show PR URL to user**
 7. POST-MERGE (user merges via GitHub):
@@ -25,10 +27,13 @@ status = reviewing
 8. NEXT: @references/next-steps.md
 
 ## Auto-Transition
-Read `.tff/settings.yaml` → `autonomy.mode`.
-`plan-to-pr` ∧ ¬HUMAN_GATE → auto-invoke next workflow via `tff-tools workflow:next <status>`.
-`guided` → suggest next step, wait for user.
-Progress: `[tff] <slice-id>: reviewing → completing`
+After completing all steps above:
+1. READ `.tff/settings.yaml` → check `autonomy.mode`
+2. IF `plan-to-pr`:
+   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
+   - Human gates (plan approval, spec approval, completion): pause and ask
+3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
+4. Log: `[tff] <slice-id>: reviewing → completing`
 
 ## Auto-Fix (plan-to-pr)
 REQUEST_CHANGES ∧ cycles < 2 → SPAWN tff-fixer, re-review
