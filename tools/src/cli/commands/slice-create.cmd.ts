@@ -26,9 +26,19 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
   // Detect milestone number from title (e.g., "Milestone M02: ..." → 2) or count
   const milestoneNumber = milestonesResult.data.indexOf(milestone) + 1;
 
-  // Auto-number slice: count existing slices under this milestone + 1
+  // Auto-number slice: find highest existing slice number and increment from there
   const slicesResult = await beadStore.list({ label: 'tff:slice', parentId: milestoneBeadId });
-  const sliceNumber = isOk(slicesResult) ? slicesResult.data.length + 1 : 1;
+  let maxSliceNumber = 0;
+  if (isOk(slicesResult)) {
+    for (const s of slicesResult.data) {
+      const match = s.design?.match(/Slice M\d+-S(\d+)/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxSliceNumber) maxSliceNumber = num;
+      }
+    }
+  }
+  const sliceNumber = maxSliceNumber + 1;
 
   const result = await createSliceUseCase(
     { milestoneBeadId, name, milestoneNumber, sliceNumber },
