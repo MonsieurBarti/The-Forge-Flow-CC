@@ -23185,8 +23185,9 @@ var sliceTransitionCmd = async (args) => {
 var classifyComplexity = (signals) => {
   if (signals.hasExternalIntegrations) return "F-full";
   if (signals.taskCount >= 8 || signals.modulesAffected >= 4) return "F-full";
-  if (signals.taskCount >= 4 || signals.modulesAffected >= 2 || signals.estimatedFilesAffected >= 6 || signals.unknownsSurfaced >= 2) return "F-lite";
-  return "S";
+  const isS = signals.estimatedFilesAffected <= 1 && signals.newFilesCreated === 0 && !signals.requiresInvestigation && !signals.architectureImpact && signals.unknownsSurfaced === 0;
+  if (isS) return "S";
+  return "F-lite";
 };
 
 // tools/src/cli/commands/slice-classify.cmd.ts
