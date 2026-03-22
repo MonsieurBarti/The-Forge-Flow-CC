@@ -14392,7 +14392,7 @@ async function withRetry(fn, opts = {}) {
       lastError = err;
       if (attempt < maxAttempts) {
         const delay = Math.min(baseMs * Math.pow(2, attempt - 1), maxMs);
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await new Promise((resolve2) => setTimeout(resolve2, delay));
       }
     }
   }
@@ -14735,7 +14735,12 @@ var init_markdown_artifact_adapter = __esm({
         this.basePath = basePath;
       }
       resolve(path) {
-        return (0, import_node_path2.join)(this.basePath, path);
+        const resolved = (0, import_node_path2.resolve)((0, import_node_path2.join)(this.basePath, path));
+        const base = (0, import_node_path2.resolve)(this.basePath);
+        if (!resolved.startsWith(base + "/") && resolved !== base) {
+          throw new Error(`Path traversal rejected: ${path}`);
+        }
+        return resolved;
       }
       async read(path) {
         try {
@@ -22394,24 +22399,32 @@ function parseDoltSettings(settings) {
 function shouldAutoSync(settings) {
   return parseDoltSettings(settings)?.autoSync === true;
 }
+function validateRemote(remote) {
+  if (!VALID_REMOTE.test(remote)) {
+    throw new Error(`Invalid Dolt remote name: "${remote}". Must be alphanumeric, hyphens, or underscores only.`);
+  }
+}
 async function doltPush(remote) {
   try {
+    validateRemote(remote);
     await exec4("dolt", ["push", remote], { timeout: 3e4, cwd: process.cwd() });
   } catch {
   }
 }
 async function doltPull(remote) {
   try {
+    validateRemote(remote);
     await exec4("dolt", ["pull", remote], { timeout: 3e4, cwd: process.cwd() });
   } catch {
   }
 }
-var import_node_child_process4, import_node_util4, exec4;
+var import_node_child_process4, import_node_util4, exec4, VALID_REMOTE;
 var init_dolt_sync = __esm({
   "tools/src/infrastructure/adapters/dolt/dolt-sync.ts"() {
     import_node_child_process4 = require("child_process");
     import_node_util4 = require("util");
     exec4 = (0, import_node_util4.promisify)(import_node_child_process4.execFile);
+    VALID_REMOTE = /^[a-zA-Z0-9_-]+$/;
   }
 });
 
@@ -22604,7 +22617,7 @@ var initProject = async (input, deps) => {
   if (!isOk(regResult)) return regResult;
   let existing = await deps.beadStore.list({ label: "tff:project" });
   for (let attempt = 1; attempt < 5 && !isOk(existing); attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve2) => setTimeout(resolve2, 500));
     existing = await deps.beadStore.list({ label: "tff:project" });
   }
   if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
