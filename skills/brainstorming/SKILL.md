@@ -1,14 +1,13 @@
 ---
 name: brainstorming
-description: "Use when running discuss/frame workflow. MUST use before any creative work."
-token-budget: critical
+description: "Use when starting design or discovery work. MUST use before any creative work."
 ---
 
 # Brainstorming
 
 ## When to Use
 
-∀ discuss/frame workflow. Explores intent -> design -> approval.
+∀ design and discovery phases. Explores intent -> design -> approval.
 
 ## HARD-GATE
 
@@ -27,10 +26,10 @@ Do NOT invoke any implementation skill, write any code, or take any implementati
 1. FRAME: Define problem, constraints, scope (2-4 questions via AskUserQuestion)
 2. APPROACH: Propose 2-3, recommend one, user picks
 3. DESIGN: Section-by-section, user approves each via AskUserQuestion
-   - F-lite: problem, approach, acceptance criteria, non-goals (~1 page)
-   - F-full: + constraints, architecture, error handling, testing strategy (~3 pages)
-4. WRITE: `.tff/milestones/<milestone>/slices/<id>/SPEC.md`
-5. REVIEW: Dispatch anonymous spec-document-reviewer (max 3 iterations)
+   - standard: problem, approach, acceptance criteria, non-goals (~1 page)
+   - complex: + constraints, architecture, error handling, testing strategy (~3 pages)
+4. WRITE: `project spec document (e.g., docs/specs/SPEC.md)`
+5. REVIEW: Dispatch anonymous spec reviewer subagent (max 3 iterations)
 6. USER GATE: Show spec, ask approval via AskUserQuestion
 
 ## Spec Document Reviewer
