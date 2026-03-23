@@ -1,14 +1,13 @@
 ---
 name: receiving-code-review
 description: "Use when processing review feedback. Technical rigor, not performative agreement."
-token-budget: workflow
 ---
 
 # Receiving Code Review
 
 ## When to Use
 
-∀ review feedback (code-reviewer, spec-reviewer, security-auditor findings).
+∀ review feedback from any reviewer.
 
 ## HARD-GATE
 
