@@ -1,7 +1,6 @@
 ---
 name: writing-plans
 description: "Use when creating implementation plans. Break specs into bite-sized tasks (2-5 min each)."
-token-budget: critical
 ---
 
 # Writing Plans
@@ -42,7 +41,7 @@ Each task = 1 action (2-5 minutes):
 - **Code**: [exact implementation]
 - **Run**: `npx vitest run src/domain/feature.spec.ts`
 - **Expect**: PASS — 1/1 tests passing
-- **Commit**: `feat(S01/T02): add feature`
+- **Commit**: `feat(auth/T02): add feature`
 
 ## Wave 1 (depends on Wave 0)
 ...
@@ -53,7 +52,7 @@ Each task = 1 action (2-5 minutes):
 - Tasks with no dependencies -> Wave 0
 - Tasks depending on Wave N -> Wave N+1
 - Tasks within same wave -> parallelizable
-- Detect via topological sort: `tff-tools waves:detect`
+- Detect via topological sort
 
 ## Review Loop
 
@@ -67,12 +66,12 @@ Each task = 1 action (2-5 minutes):
 - Tasks without exact file paths ("update the relevant files")
 - Tasks without expected output ("tests should pass")
 - Combining test-writing and implementation in same task
-- Plans that skip TDD steps (F-lite/F-full require them)
+- Plans that skip TDD steps (standard/complex tasks require them)
 - Wave assignments that don't match dependency graph
 
 ## Rules
 
 - ∀ task: 1 file, 1 action, 1 commit
-- ∀ F-lite/F-full task: TDD steps (write test -> fail -> implement -> pass -> commit)
-- S-tier: simpler (may combine steps, skip TDD)
+- ∀ standard/complex task: TDD steps (write test -> fail -> implement -> pass -> commit)
+- Simple tasks: simpler (may combine steps, skip TDD)
 - ¬proceed to execute until plan approved
