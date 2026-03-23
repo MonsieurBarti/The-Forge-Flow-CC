@@ -6,6 +6,11 @@ import type { BeadLabel } from '../../domain/value-objects/bead-label.js';
 export class InMemoryBeadStore implements BeadStore {
   private beads = new Map<string, BeadData>();
   private nextId = 1;
+  private failOnUpdateIds = new Set<string>();
+
+  simulateUpdateFailure(id: string): void {
+    this.failOnUpdateIds.add(id);
+  }
 
   async init(): Promise<Result<void, DomainError>> {
     return Ok(undefined);
@@ -88,6 +93,9 @@ export class InMemoryBeadStore implements BeadStore {
   }
 
   async updateDesign(id: string, design: string): Promise<Result<void, DomainError>> {
+    if (this.failOnUpdateIds.has(id)) {
+      return Err(createDomainError('WRITE_FAILURE', `Simulated update failure for bead: ${id}`, { id }));
+    }
     const bead = this.beads.get(id);
     if (!bead) return Err(createDomainError('NOT_FOUND', `Bead "${id}" not found`, { id }));
     bead.design = design;
