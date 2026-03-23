@@ -35,7 +35,7 @@ Do NOT invoke any implementation skill, write any code, or take any implementati
 
 ## Spec Document Reviewer
 
-Dispatch via Agent tool (subagent_type: general-purpose) with prompt from interactive-design review template. Max 3 iterations. Calibration: only flag issues that cause real problems during planning.
+Dispatch via Agent tool (subagent_type: general-purpose) with prompt from brainstorming review template. Max 3 iterations. Calibration: only flag issues that cause real problems during planning.
 
 ## Plan Document Reviewer
 

@@ -12,13 +12,13 @@ description: Canonical commented YAML template for .tff/settings.yaml — single
 # Assign AI models to agent roles by computational budget.
 # Options: opus (most capable), sonnet (balanced), haiku (fastest)
 model-profiles:
-  # Used by: brainstormer, architect, code-reviewer, security-auditor
+  # Used by: code-reviewer, spec-reviewer, security-auditor
   quality:
     model: opus
-  # Used by: product-lead, tester
+  # Used by: subagents with critical skills
   balanced:
     model: sonnet
-  # Used by: frontend-dev, backend-dev, devops, fixer, doc-writer
+  # Used by: fixer, subagents with workflow/background skills
   budget:
     model: sonnet
 

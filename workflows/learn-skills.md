@@ -15,7 +15,7 @@ Pass maxDrift: `tff-tools skills:drift --max-drift 0.2`
 ## Steps
 1. DRIFT CHECK: for each skill, `tff-tools skills:drift "<original>" "<current>"`
 2. COMPARE actual sequences (sessions.jsonl) vs skill's documented steps → flag consistent deviations (≥3 occurrences)
-3. divergences found → SPAWN tff-skill-drafter ("Refine Existing Skill" mode):
+3. divergences found → LOAD @skills/skill-authoring.md → SPAWN subagent ("Refine Existing Skill" mode):
    - provide original + divergence evidence → bounded diff (max 20% change)
    - draft → `.tff/drafts/<skill-name>.md`
 4. CONSTRAINTS: max 20% per refinement, max 60% cumulative drift, 7-day cooldown

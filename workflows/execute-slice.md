@@ -1,4 +1,6 @@
 # Execute Slice
+LOAD @skills/executing-plans.md
+LOAD @skills/verification-before-completion.md
 
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
@@ -28,18 +30,25 @@ status = executing ∧ worktree exists at `.tff/worktrees/<slice-id>/`
 ∀ wave ∈ waves (sequential):
   STALE-CHECK: `tff-tools claim:check-stale` → if count > 0: warn user, list stale tasks, offer to continue or abort
   checkpoint:save <slice-id> '<data-json>'
-  tier ∈ {F-lite, F-full} → ∀ task: SPAWN tff-tester: {task.criteria, task.files}
+  tier ∈ {F-lite, F-full} → LOAD @skills/test-driven-development.md → SPAWN subagent: {task.criteria, task.files}
     tester writes failing .spec.ts + commits in worktree
   ∀ task ∈ wave (parallel):
     IF task.ref ∈ checkpoint.completedTasks → SKIP
     bd update <id> --claim
-    SPAWN executor_agent: {task.description, task.criteria, task.files, @references/conventions.md}
+    LOAD @skills/executing-plans.md + domain skills (see routing below) → SPAWN subagent: {task.description, task.criteria, task.files, @references/conventions.md}
     agent works in worktree → implement → tests pass → commit
     record executor → bead metadata
     bd close <id> --reason "Completed"
     checkpoint:save <slice-id> '<updated-data-json>'   ← per-task checkpoint
   sync:state
 ```
+## Domain Routing
+Read task file paths from PLAN.md to decide which domain skills to load:
+- File paths in `src/domain/`, `src/application/`, `src/infrastructure/` → LOAD @skills/hexagonal-architecture.md
+- File paths in `src/cli/`, `src/presentation/` → no extra domain skill
+- CI/CD files (`.github/`, `Dockerfile`, etc.) → LOAD @skills/commit-conventions.md only
+- All tasks: LOAD @skills/executing-plans.md + @skills/commit-conventions.md as baseline
+
 4. TRANSITION: `tff-tools slice:transition <id> verifying`
    CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
   IF `ok` = true ∧ `warnings.length > 0`:

@@ -6,6 +6,7 @@ Run pattern detection pipeline: extract → aggregate → rank.
 
 ## Prerequisites
 observation enabled in `.tff/settings.yaml` ∧ `.tff/observations/sessions.jsonl` exists
+LOAD @skills/skill-authoring.md
 
 ## Settings
 Read `.tff/settings.yaml` → `auto-learn.weights`.
