@@ -44,4 +44,10 @@ describe('checkpoint', () => {
     const result = await loadCheckpoint('M01-S99', { artifactStore });
     expect(isErr(result)).toBe(true);
   });
+
+  it('should return Err when artifact write fails', async () => {
+    artifactStore.simulateWriteFailure('.tff/milestones/M01/slices/M01-S01/CHECKPOINT.md');
+    const result = await saveCheckpoint(checkpointData, { artifactStore });
+    expect(isOk(result)).toBe(false);
+  });
 });
