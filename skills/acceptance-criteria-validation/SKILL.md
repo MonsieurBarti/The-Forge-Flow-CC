@@ -1,14 +1,13 @@
 ---
 name: acceptance-criteria-validation
 description: "Use when verifying acceptance criteria. Binary verdict per criterion. Evidence-based."
-token-budget: critical
 ---
 
 # Acceptance Criteria Validation
 
 ## When to Use
 
-∀ verify workflow. ∀ spec validation (end of discuss phase).
+∀ verification and acceptance testing. ∀ spec validation.
 
 ## HARD-GATE
 
@@ -34,8 +33,8 @@ token-budget: critical
 ∀ criterion must be:
 - Testable: Can write a test for it
 - Binary: Unambiguous pass/fail
-- Scoped: Belongs to this slice (¬future work)
-- Independent: ¬depends on unimplemented criteria from other slices
+- Scoped: Belongs to this scope (¬future work)
+- Independent: ¬depends on unimplemented criteria from other scopes
 
 ## Anti-Patterns
 
