@@ -1,7 +1,6 @@
 ---
 name: code-review-protocol
 description: "Use when reviewing or requesting code review. Two-stage protocol with fresh-reviewer enforcement."
-token-budget: critical
 ---
 
 # Code Review Protocol
@@ -16,8 +15,8 @@ Stage 1 (spec compliance) MUST pass before Stage 2 (code quality) runs.
 
 | Stage | Role | Checks | Verdict |
 |---|---|---|---|
-| 1: Spec | spec-reviewer | ∀ criteria implemented? Extra work? Correct interpretation? | PASS ∨ FAIL |
-| 2: Quality | code-reviewer | Correctness, tests (edge cases), patterns, YAGNI, readability | APPROVE ∨ REQUEST_CHANGES |
+| 1: Spec | spec reviewer | ∀ criteria implemented? Extra work? Correct interpretation? | PASS ∨ FAIL |
+| 2: Quality | code quality reviewer | Correctness, tests (edge cases), patterns, YAGNI, readability | APPROVE ∨ REQUEST_CHANGES |
 
 ## Pre-Review Checklist (Before Requesting Review)
 
@@ -41,7 +40,7 @@ Bug in prod? -> Critical | Confuses next dev? -> Important | ¬noticed in 1000-l
 
 ## Fresh-Reviewer Enforcement
 
-¬agent reviews code it wrote. Identity tracked via `tff-tools review:check-fresh`.
+¬agent reviews code it wrote. Verify reviewer hasn't authored the code under review.
 
 ## Anti-Patterns
 
