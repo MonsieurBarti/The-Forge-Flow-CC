@@ -10,8 +10,8 @@ identity: fixer — must be distinct from reviewers (¬same agent that flagged t
 Applies accepted review findings atomically. Minimal blast radius.
 
 ## Skills Loaded
-- @skills/receiving-code-review.md
-- @skills/commit-conventions.md
+- @skills/receiving-code-review/SKILL.md
+- @skills/commit-conventions/SKILL.md
 
 ## Fresh-Reviewer Rule
 ¬review code written by this agent. Identity tracked via `tff-tools review:check-fresh`.

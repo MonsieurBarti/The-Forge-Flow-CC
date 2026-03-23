@@ -10,8 +10,8 @@ identity: code-reviewer — tracked for fresh-reviewer enforcement
 Reviews code quality after spec compliance is confirmed.
 
 ## Skills Loaded
-- @skills/code-review-protocol.md
-- @skills/hexagonal-architecture.md
+- @skills/code-review-protocol/SKILL.md
+- @skills/hexagonal-architecture/SKILL.md
 
 ## Fresh-Reviewer Rule
 ¬review code written by this agent. Identity tracked via `tff-tools review:check-fresh`.
