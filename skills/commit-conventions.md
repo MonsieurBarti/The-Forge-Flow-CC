@@ -39,3 +39,7 @@ chore: update dependencies
 3. ¬commit generated files (except tff-tools.cjs)
 4. ¬commit secrets (.env, credentials, API keys)
 5. Imperative summary ("add" ¬"added"), <72 chars
+
+## Enforcement
+
+Enforced by lefthook `commit-msg` hook. ¬bypass with --no-verify.
