@@ -1,7 +1,6 @@
 ---
 name: finishing-work
 description: "Use when shipping work. Pre-PR checklist, structured merge/PR decision, branch cleanup."
-token-budget: workflow
 ---
 
 # Finishing Work
@@ -18,14 +17,14 @@ Before creating PR, verify:
 3. No debug code (console.log, debugger, TODO)
 4. Commits follow conventions
 5. Changes match plan (no scope creep)
-6. No generated files committed (except tff-tools.cjs)
+6. No generated files committed
 7. No secrets (.env, credentials, API keys)
 
 ## PR Creation
 
 ```bash
-gh pr create --base milestone/<milestone> --head slice/<slice-id> \
-  --title "<type>(M0X-S0Y): <summary>" \
+gh pr create --base <target-branch> --head <feature-branch> \
+  --title "<type>(<scope>): <summary>" \
   --body "$(cat <<'EOF'
 ## Summary
 <what and why>
@@ -42,7 +41,7 @@ EOF
 
 ## Merge Gate
 
-- tff NEVER merges — only creates PR
+- NEVER merge directly — only create PR
 - User approves and merges via GitHub
 - After merge: cleanup worktree, close bead, delete branches
 
