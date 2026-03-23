@@ -75,7 +75,16 @@ export class InMemoryBeadStore implements BeadStore {
     const bead = this.beads.get(id);
     if (!bead) return Err(createDomainError('NOT_FOUND', `Bead "${id}" not found`, { id }));
     bead.status = 'in_progress';
+    bead.claimedAt = new Date().toISOString();
     return Ok(undefined);
+  }
+
+  async listStaleClaims(ttlMinutes: number): Promise<Result<BeadData[], DomainError>> {
+    const cutoff = new Date(Date.now() - ttlMinutes * 60 * 1000).toISOString();
+    const stale = [...this.beads.values()].filter(
+      (b) => b.status === 'in_progress' && b.claimedAt != null && b.claimedAt < cutoff,
+    );
+    return Ok(stale);
   }
 
   async updateDesign(id: string, design: string): Promise<Result<void, DomainError>> {
