@@ -1,14 +1,13 @@
 ---
 name: architecture-review
 description: "Use when reviewing architecture decisions. C4 model, dependency inversion, hexagonal boundaries."
-token-budget: critical
 ---
 
 # Architecture Review
 
 ## When to Use
 
-∀ plan reviews (F-lite, F-full). ∀ PRs that touch module boundaries.
+∀ plan reviews (standard, complex). ∀ PRs that touch module boundaries.
 
 ## Checklist
 
