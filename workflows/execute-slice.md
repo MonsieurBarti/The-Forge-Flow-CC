@@ -19,7 +19,9 @@ status = executing ∧ worktree exists at `.tff/worktrees/<slice-id>/`
    - Worktree not required. Proceed in main repo.
 
 ## Steps
-1. RESUME: `tff-tools checkpoint:load <slice-id>` → skip completed waves
+1. RESUME: `tff-tools checkpoint:load <slice-id>` →
+   - Skip fully completed waves (wave ∈ completedWaves)
+   - For current wave: skip tasks already in completedTasks, retry remaining
 2. DETECT: `tff-tools waves:detect '<tasks-json>'`
 3. EXECUTE:
 ```
@@ -29,11 +31,13 @@ status = executing ∧ worktree exists at `.tff/worktrees/<slice-id>/`
   tier ∈ {F-lite, F-full} → ∀ task: SPAWN tff-tester: {task.criteria, task.files}
     tester writes failing .spec.ts + commits in worktree
   ∀ task ∈ wave (parallel):
+    IF task.ref ∈ checkpoint.completedTasks → SKIP
     bd update <id> --claim
     SPAWN executor_agent: {task.description, task.criteria, task.files, @references/conventions.md}
     agent works in worktree → implement → tests pass → commit
     record executor → bead metadata
     bd close <id> --reason "Completed"
+    checkpoint:save <slice-id> '<updated-data-json>'   ← per-task checkpoint
   sync:state
 ```
 4. TRANSITION: `tff-tools slice:transition <id> verifying`
