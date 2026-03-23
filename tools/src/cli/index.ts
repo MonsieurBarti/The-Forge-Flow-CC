@@ -1,5 +1,6 @@
 import { checkpointLoadCmd } from './commands/checkpoint-load.cmd.js';
 import { checkpointSaveCmd } from './commands/checkpoint-save.cmd.js';
+import { claimCheckStaleCmd } from './commands/claim-check-stale.cmd.js';
 import { composeDetectCmd } from './commands/compose-detect.cmd.js';
 import { milestoneCreateCmd } from './commands/milestone-create.cmd.js';
 import { milestoneListCmd } from './commands/milestone-list.cmd.js';
@@ -58,6 +59,7 @@ const commands: Record<string, CommandFn> = {
   'snapshot:save': snapshotSaveCmd,
   'snapshot:load': snapshotLoadCmd,
   'snapshot:merge': snapshotMergeCmd,
+  'claim:check-stale': claimCheckStaleCmd,
 };
 
 const main = async () => {
