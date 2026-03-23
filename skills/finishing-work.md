@@ -1,0 +1,60 @@
+---
+name: finishing-work
+description: "Use when shipping work. Pre-PR checklist, structured merge/PR decision, branch cleanup."
+token-budget: workflow
+---
+
+# Finishing Work
+
+## When to Use
+
+∀ ship workflow, after reviews pass.
+
+## Pre-PR Checklist
+
+Before creating PR, verify:
+1. ∀ tests pass (fresh run, ¬cached)
+2. ∀ lint/typecheck pass
+3. No debug code (console.log, debugger, TODO)
+4. Commits follow conventions
+5. Changes match plan (no scope creep)
+6. No generated files committed (except tff-tools.cjs)
+7. No secrets (.env, credentials, API keys)
+
+## PR Creation
+
+```bash
+gh pr create --base milestone/<milestone> --head slice/<slice-id> \
+  --title "<type>(M0X-S0Y): <summary>" \
+  --body "$(cat <<'EOF'
+## Summary
+<what and why>
+
+## Acceptance Criteria
+- [x] AC1: ...
+- [x] AC2: ...
+
+## Test Plan
+- [ ] Manual verification of ...
+EOF
+)"
+```
+
+## Merge Gate
+
+- tff NEVER merges — only creates PR
+- User approves and merges via GitHub
+- After merge: cleanup worktree, close bead, delete branches
+
+## Anti-Patterns
+
+- Merging without user approval
+- Creating PR before all reviews pass
+- Leaving stale worktrees after merge
+- Force-pushing to shared branches
+
+## Rules
+
+- ∀ PR: show URL to user
+- ∀ cleanup: worktree delete, branch delete (local + remote)
+- ∀ merge: rebase milestone branch on origin
