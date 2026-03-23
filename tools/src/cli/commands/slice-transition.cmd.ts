@@ -64,15 +64,19 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
   );
 
   if (isOk(result)) {
-    // Auto-snapshot after successful transition
+    const warnings: string[] = [];
+
+    // Auto-snapshot (non-critical)
     try {
       const { snapshotSaveCmd } = await import('./snapshot-save.cmd.js');
       await snapshotSaveCmd([]);
     } catch (e) {
-      tffWarn('snapshot failed', { error: String(e) });
+      const msg = `snapshot failed: ${String(e)}`;
+      tffWarn(msg);
+      warnings.push(msg);
     }
 
-    // Auto-sync to Dolt remote if configured
+    // Auto-sync to Dolt (non-critical)
     try {
       const { readFile } = await import('node:fs/promises');
       const { loadProjectSettings } = await import('../../domain/value-objects/project-settings.js');
@@ -83,18 +87,22 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
         await doltPush(settings.dolt.remote);
       }
     } catch (e) {
-      tffWarn('dolt sync failed', { error: String(e) });
+      const msg = `dolt sync failed: ${String(e)}`;
+      tffWarn(msg);
+      warnings.push(msg);
     }
 
-    // Auto-regenerate STATE.md
+    // Auto-regenerate STATE.md (non-critical)
     try {
       const { syncStateCmd } = await import('./sync-state.cmd.js');
       await syncStateCmd([bead.parentId ?? '']);
     } catch (e) {
-      tffWarn('state sync failed', { error: String(e) });
+      const msg = `state sync failed: ${String(e)}`;
+      tffWarn(msg);
+      warnings.push(msg);
     }
 
-    // Auto-save CHECKPOINT.md
+    // Auto-save CHECKPOINT.md (CRITICAL — blocks transition)
     try {
       const { checkpointSaveCmd } = await import('./checkpoint-save.cmd.js');
       const checkpointData = JSON.stringify({
@@ -107,10 +115,14 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
       });
       await checkpointSaveCmd([checkpointData]);
     } catch (e) {
-      tffWarn('checkpoint save failed', { error: String(e) });
+      return JSON.stringify({
+        ok: false,
+        error: { code: 'CHECKPOINT_FAILED', message: `Checkpoint save failed: ${String(e)}` },
+        warnings,
+      });
     }
 
-    return JSON.stringify({ ok: true, data: { status: result.data.slice.status } });
+    return JSON.stringify({ ok: true, data: { status: result.data.slice.status }, warnings });
   }
   return JSON.stringify({ ok: false, error: result.error });
 };
