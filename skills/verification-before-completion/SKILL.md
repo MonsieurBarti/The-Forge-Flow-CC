@@ -1,7 +1,6 @@
 ---
 name: verification-before-completion
 description: "Use when completing any task. Evidence before claims, always."
-token-budget: critical
 ---
 
 # Verification Before Completion
