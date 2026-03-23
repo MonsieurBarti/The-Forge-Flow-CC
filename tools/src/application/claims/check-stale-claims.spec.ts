@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
 import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { checkStaleClaims } from './check-stale-claims.js';
 
 describe('InMemoryBeadStore — claim + stale detection', () => {
   let store: InMemoryBeadStore;
@@ -43,6 +44,26 @@ describe('InMemoryBeadStore — claim + stale detection', () => {
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
       expect(result.data).toHaveLength(0);
+    }
+  });
+});
+
+describe('checkStaleClaims use case', () => {
+  let store: InMemoryBeadStore;
+  beforeEach(() => {
+    store = new InMemoryBeadStore();
+  });
+
+  it('should return stale claims with given TTL', async () => {
+    const thirtyOneMinutesAgo = new Date(Date.now() - 31 * 60 * 1000).toISOString();
+    store.seed([
+      { id: 't1', label: 'tff:task', title: 'Task 1', status: 'in_progress', claimedAt: thirtyOneMinutesAgo },
+    ]);
+    const result = await checkStaleClaims({ ttlMinutes: 30 }, { beadStore: store });
+    expect(isOk(result)).toBe(true);
+    if (isOk(result)) {
+      expect(result.data.staleClaims).toHaveLength(1);
+      expect(result.data.staleClaims[0].id).toBe('t1');
     }
   });
 });
