@@ -7,6 +7,17 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 ## Prerequisites
 status = executing ∧ worktree exists at `.tff/worktrees/<slice-id>/`
 
+## Pre-Execute Validation
+1. READ slice classification from SPEC.md → tier ∈ {S-tier, F-lite, F-full}
+2. IF tier ∈ {F-lite, F-full}:
+   - CHECK: `tff-tools worktree:list` → verify worktree exists for `<slice-id>`
+   - IF worktree MISSING:
+     ❌ BLOCKED: Worktree required for F-lite/F-full execution but not found.
+     Recovery: `tff-tools worktree:create <slice-id>`
+     → STOP execution. Do NOT proceed.
+3. IF tier = S-tier:
+   - Worktree not required. Proceed in main repo.
+
 ## Steps
 1. RESUME: `tff-tools checkpoint:load <slice-id>` → skip completed waves
 2. DETECT: `tff-tools waves:detect '<tasks-json>'`
