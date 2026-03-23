@@ -1,7 +1,6 @@
 ---
 name: systematic-debugging
-description: "Use when debugging. 4-phase investigation -> root cause -> minimal fix."
-token-budget: critical
+description: "Use when debugging. 4-phase investigation, root cause, minimal fix."
 ---
 
 # Systematic Debugging
