@@ -1,14 +1,13 @@
 ---
 name: skill-authoring
 description: "Use when creating, refining, or composing skills. Evidence-driven pattern analysis."
-token-budget: workflow
 ---
 
 # Skill Authoring
 
 ## When to Use
 
-∀ create-skill, learn-skills, compose-skills, suggest-skills, detect-patterns workflows.
+∀ skill creation and refinement tasks.
 
 ## HARD-GATE
 
@@ -20,7 +19,6 @@ token-budget: workflow
 ---
 name: <kebab-case>
 description: "Use when <trigger>"
-token-budget: critical | workflow | background
 ---
 ```
 
@@ -50,31 +48,23 @@ Target: ~62% token reduction vs prose
 - **Rigid** (follow exactly): TDD, commit conventions, verification gates
 - **Flexible** (adapt to context): brainstorming, documentation, debugging
 
-## Token Budget Tiers
-
-| Tier | When | Examples |
-|---|---|---|
-| critical | ∀ invocation, always loaded | TDD, debugging, code-review |
-| workflow | Loaded when workflow triggers | skill-authoring, documentation |
-| background | Loaded on demand | plannotator-usage |
-
 ## Modes
 
 ### Draft New Skill
 1. Read `skills/` for format reference
 2. Analyze pattern -> identify workflow
 3. Write skill file: frontmatter + all required sections
-4. Save -> `.tff/drafts/<name>.md`
+4. Save -> `drafts directory (e.g., drafts/<name>.md)`
 
 ### Refine Existing
 1. Read original skill + divergence evidence
 2. Propose bounded diff — max_drift <= 20% of original content
-3. Save -> `.tff/drafts/<name>.md`
+3. Save -> `drafts directory`
 
 ### Compose Bundle
 1. Read each skill in cluster
 2. co_activation >= 70% -> bundle (meta-skill with @skills/ refs)
-3. Save -> `.tff/drafts/<name>.md`
+3. Save -> `drafts directory`
 
 ## Anti-Patterns
 
@@ -85,7 +75,7 @@ Target: ~62% token reduction vs prose
 
 ## Validation
 
-`tff-tools skills:validate '<json>'` must pass before deployment.
+Run skill validation before deployment.
 
 ## Rules
 
@@ -94,4 +84,4 @@ Target: ~62% token reduction vs prose
 - Name: 1-64 chars, `[a-z0-9-]`, no leading/trailing/consecutive hyphens
 - Description: starts with "Use when"
 - ¬dangerous_cmds (rm -rf, sudo, curl|bash)
-- Drafts -> `.tff/drafts/` only — user reviews via plannotator before promotion
+- Drafts saved to drafts directory — user reviews before promotion
