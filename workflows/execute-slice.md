@@ -24,6 +24,7 @@ status = executing ∧ worktree exists at `.tff/worktrees/<slice-id>/`
 3. EXECUTE:
 ```
 ∀ wave ∈ waves (sequential):
+  STALE-CHECK: `tff-tools claim:check-stale` → if count > 0: warn user, list stale tasks, offer to continue or abort
   checkpoint:save <slice-id> '<data-json>'
   tier ∈ {F-lite, F-full} → ∀ task: SPAWN tff-tester: {task.criteria, task.files}
     tester writes failing .spec.ts + commits in worktree
