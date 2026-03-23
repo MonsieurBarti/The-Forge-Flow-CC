@@ -1,7 +1,6 @@
 ---
 name: agent-authoring
 description: "Use when creating or modifying agents. Standardized template, identity-only, skills-loaded."
-token-budget: workflow
 ---
 
 # Agent Authoring
@@ -26,22 +25,22 @@ Identity tracking is needed when:
 
 ```markdown
 ---
-name: tff-<role>
+name: <project>-<role>
 model: <opus|sonnet>
 identity: <role> — tracked for fresh-reviewer enforcement
 ---
 
-# tff-<role>
+# <project>-<role>
 
 ## Purpose
 <one-line purpose>
 
 ## Skills Loaded
-- @skills/<skill-1>.md
-- @skills/<skill-2>.md
+- @skills/<skill-1>/SKILL.md
+- @skills/<skill-2>/SKILL.md
 
 ## Fresh-Reviewer Rule
-¬review code written by this agent. Identity tracked via `tff-tools review:check-fresh`.
+¬review code written by this agent. Identity tracked via `verify reviewer identity`.
 
 ## Scope
 <what this agent does and does NOT do>
