@@ -78,7 +78,7 @@ feedback → revise ∨ approved → continue
 
 ### 9. Worktree + Transition
 `tff-tools worktree:create <id>`
-CHECK: `ok` = true → continue | `ok` = false → warn (worktree failure is non-blocking)
+CHECK: `ok` = true → continue | `ok` = false → warn (worktree failure is non-blocking at plan time; execute-slice will block F-lite/F-full if worktree is still missing)
 `tff-tools slice:transition <id> executing`
 CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
 
