@@ -7,25 +7,43 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 ## Prerequisites
 status = executing ∧ worktree exists at `.tff/worktrees/<slice-id>/`
 
+## Pre-Execute Validation
+1. READ slice classification from SPEC.md → tier ∈ {S-tier, F-lite, F-full}
+2. IF tier ∈ {F-lite, F-full}:
+   - CHECK: `tff-tools worktree:list` → verify worktree exists for `<slice-id>`
+   - IF worktree MISSING:
+     ❌ BLOCKED: Worktree required for F-lite/F-full execution but not found.
+     Recovery: `tff-tools worktree:create <slice-id>`
+     → STOP execution. Do NOT proceed.
+3. IF tier = S-tier:
+   - Worktree not required. Proceed in main repo.
+
 ## Steps
-1. RESUME: `tff-tools checkpoint:load <slice-id>` → skip completed waves
+1. RESUME: `tff-tools checkpoint:load <slice-id>` →
+   - Skip fully completed waves (wave ∈ completedWaves)
+   - For current wave: skip tasks already in completedTasks, retry remaining
 2. DETECT: `tff-tools waves:detect '<tasks-json>'`
 3. EXECUTE:
 ```
 ∀ wave ∈ waves (sequential):
+  STALE-CHECK: `tff-tools claim:check-stale` → if count > 0: warn user, list stale tasks, offer to continue or abort
   checkpoint:save <slice-id> '<data-json>'
   tier ∈ {F-lite, F-full} → ∀ task: SPAWN tff-tester: {task.criteria, task.files}
     tester writes failing .spec.ts + commits in worktree
   ∀ task ∈ wave (parallel):
+    IF task.ref ∈ checkpoint.completedTasks → SKIP
     bd update <id> --claim
     SPAWN executor_agent: {task.description, task.criteria, task.files, @references/conventions.md}
     agent works in worktree → implement → tests pass → commit
     record executor → bead metadata
     bd close <id> --reason "Completed"
+    checkpoint:save <slice-id> '<updated-data-json>'   ← per-task checkpoint
   sync:state
 ```
 4. TRANSITION: `tff-tools slice:transition <id> verifying`
    CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
+  IF `ok` = true ∧ `warnings.length > 0`:
+    ∀ warning ∈ warnings: display `⚠ <warning>` to user
 5. NEXT: @references/next-steps.md
 
 ## Auto-Transition

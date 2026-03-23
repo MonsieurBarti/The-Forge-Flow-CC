@@ -78,9 +78,11 @@ export const reconcileState = async (
 
     if (!(await deps.artifactStore.exists(planPath))) {
       // Bead exists but no markdown → generate markdown from bead
-      await deps.artifactStore.mkdir(sliceDir);
+      const mkdirResult = await deps.artifactStore.mkdir(sliceDir);
+      if (!isOk(mkdirResult)) return mkdirResult;
       const content = `# Plan — ${bead.title}\n\n${bead.design ?? '_No plan yet._'}\n`;
-      await deps.artifactStore.write(planPath, content);
+      const writeResult = await deps.artifactStore.write(planPath, content);
+      if (!isOk(writeResult)) return writeResult;
       report.created.push({ entityId: bead.id, source: 'beads' });
     } else {
       // Both exist → sync content and status
@@ -92,7 +94,8 @@ export const reconcileState = async (
         // Content: markdown wins (unless empty)
         const winner = resolveContentConflict(mdContent, beadDesign);
         if (winner !== beadDesign && mdContent.length > 0) {
-          await deps.beadStore.updateDesign(bead.id, winner);
+          const updateResult = await deps.beadStore.updateDesign(bead.id, winner);
+          if (!isOk(updateResult)) return updateResult;
           report.updated.push({
             entityId: bead.id,
             field: 'design',
@@ -132,14 +135,14 @@ export const reconcileState = async (
         parentId: input.milestoneId,
       });
 
-      if (isOk(beadResult)) {
-        report.created.push({ entityId: beadResult.data.id, source: 'markdown' });
-      }
+      if (!isOk(beadResult)) return beadResult;
+      report.created.push({ entityId: beadResult.data.id, source: 'markdown' });
     }
   }
 
   // 5. Regenerate STATE.md (always derived from beads)
-  await generateState(input, deps);
+  const stateResult = await generateState(input, deps);
+  if (!isOk(stateResult)) return stateResult;
 
   return Ok(report);
 };

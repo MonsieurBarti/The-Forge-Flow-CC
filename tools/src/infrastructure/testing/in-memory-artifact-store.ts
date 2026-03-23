@@ -4,6 +4,11 @@ import { Err, Ok, type Result } from '../../domain/result.js';
 
 export class InMemoryArtifactStore implements ArtifactStore {
   private files = new Map<string, string>();
+  private failOnWritePaths = new Set<string>();
+
+  simulateWriteFailure(path: string): void {
+    this.failOnWritePaths.add(path);
+  }
 
   async read(path: string): Promise<Result<string, DomainError>> {
     const content = this.files.get(path);
@@ -12,6 +17,9 @@ export class InMemoryArtifactStore implements ArtifactStore {
   }
 
   async write(path: string, content: string): Promise<Result<void, DomainError>> {
+    if (this.failOnWritePaths.has(path)) {
+      return Err(createDomainError('WRITE_FAILURE', `Simulated write failure for: ${path}`, { path }));
+    }
     this.files.set(path, content);
     return Ok(undefined);
   }

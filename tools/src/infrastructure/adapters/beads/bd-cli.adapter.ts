@@ -85,6 +85,7 @@ const normalizeBeadData = (raw: Record<string, unknown>): Result<BeadData, Domai
     blocks: raw.blocks as string[] | undefined,
     validates: raw.validates as string[] | undefined,
     metadata: raw.metadata as Record<string, string> | undefined,
+    claimedAt: (raw.metadata as Record<string, string> | undefined)?.claimedAt,
   });
 };
 
@@ -198,7 +199,20 @@ export class BdCliAdapter implements BeadStore {
     // Atomically sets assignee + status to in_progress
     const r = await runBdRetry(['update', id, '--claim']);
     if (!r.ok) return r;
+    const metaR = await runBd(['kv', 'set', `${id}.claimedAt`, new Date().toISOString()]);
+    if (!metaR.ok) return metaR;
     return Ok(undefined);
+  }
+
+  async listStaleClaims(ttlMinutes: number): Promise<Result<BeadData[], DomainError>> {
+    const allResult = await this.list({ status: 'in_progress', includeAll: true });
+    if (!allResult.ok) return allResult;
+    const cutoff = new Date(Date.now() - ttlMinutes * 60 * 1000).toISOString();
+    const stale = allResult.data.filter((b) => {
+      const claimedAt = b.metadata?.claimedAt ?? b.claimedAt;
+      return claimedAt != null && claimedAt < cutoff;
+    });
+    return Ok(stale);
   }
 
   async updateDesign(id: string, design: string): Promise<Result<void, DomainError>> {

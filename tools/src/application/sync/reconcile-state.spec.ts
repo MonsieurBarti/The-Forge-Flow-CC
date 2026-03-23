@@ -102,6 +102,39 @@ describe('reconcileState', () => {
     }
   });
 
+  it('should return Err on artifact write failure', async () => {
+    beadStore.seed([
+      { id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' },
+      { id: 's1', label: 'tff:slice', title: 'FailSlice', status: 'open', design: 'design', parentId: 'ms1' },
+    ]);
+    artifactStore.simulateWriteFailure('.tff/milestones/M01/slices/FailSlice/PLAN.md');
+    const result = await reconcileState(
+      { milestoneId: 'ms1', milestoneName: 'M01: MVP' },
+      { beadStore, artifactStore },
+    );
+    expect(isOk(result)).toBe(false);
+    if (!isOk(result)) {
+      expect(result.error.code).toBe('WRITE_FAILURE');
+    }
+  });
+
+  it('should return Err on bead updateDesign failure', async () => {
+    beadStore.seed([
+      { id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' },
+      { id: 's1', label: 'tff:slice', title: 'Auth', status: 'open', design: 'Old design', parentId: 'ms1' },
+    ]);
+    artifactStore.seed({ '.tff/milestones/M01/slices/Auth/PLAN.md': '# Updated plan content' });
+    beadStore.simulateUpdateFailure('s1');
+    const result = await reconcileState(
+      { milestoneId: 'ms1', milestoneName: 'M01: MVP' },
+      { beadStore, artifactStore },
+    );
+    expect(isOk(result)).toBe(false);
+    if (!isOk(result)) {
+      expect(result.error.code).toBe('WRITE_FAILURE');
+    }
+  });
+
   it('should return empty report when everything is in sync', async () => {
     beadStore.seed([{ id: 'ms1', label: 'tff:milestone', title: 'MVP', status: 'open' }]);
 

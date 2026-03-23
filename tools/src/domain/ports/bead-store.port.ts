@@ -12,6 +12,7 @@ export interface BeadData {
   blocks?: string[];
   validates?: string[];
   metadata?: Record<string, string>;
+  claimedAt?: string;
 }
 
 export interface BeadStore {
@@ -52,4 +53,7 @@ export interface BeadStore {
   addDependency(fromId: string, toId: string, type: 'blocks' | 'validates'): Promise<Result<void, DomainError>>;
 
   close(id: string, reason?: string): Promise<Result<void, DomainError>>;
+
+  /** List tasks with stale claims (claimed but not completed within ttlMinutes) */
+  listStaleClaims(ttlMinutes: number): Promise<Result<BeadData[], DomainError>>;
 }

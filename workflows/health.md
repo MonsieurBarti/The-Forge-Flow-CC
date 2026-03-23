@@ -13,7 +13,11 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
        - report as stale: `⚠ <slice-id>: bead is <status> but PR #<N> is merged`
    - `bd list --label tff:milestone --json` → for each non-closed milestone:
      - if all child slices are closed → report: `⚠ <milestone>: all slices closed but milestone bead is still open`
-5. REPORT:
+5. CHECK stale claims: `tff-tools claim:check-stale`
+   - Parse result → if `count > 0`:
+     - ∀ stale claim: report `⚠ Task <id> (<title>) claimed at <claimedAt> — exceeds 30min TTL`
+   - Add row to health report table: `| Stale claims | OK/X stale |`
+6. REPORT:
    ```
    | Check | Status |
    |---|---|
@@ -21,10 +25,11 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
    | plannotator | OK/MISSING |
    | State consistency | OK/X mismatches |
    | Bead-PR sync | OK/X stale beads |
+   | Stale claims | OK/X stale |
    | Worktrees | OK/X orphans |
    ```
-6. stale beads found → AskUserQuestion: "Close stale beads?" → yes → `bd close <id> --reason "PR already merged"`
-7. other issues found → offer `/tff:sync` to reconcile
+7. stale beads found → AskUserQuestion: "Close stale beads?" → yes → `bd close <id> --reason "PR already merged"`
+8. other issues found → offer `/tff:sync` to reconcile
 
 ## Adapter Mode
 Check `bd --version`:
@@ -40,4 +45,4 @@ Check `bd --version`:
   Then:    /tff:sync to hydrate from existing state
   ```
 
-6. NEXT: @references/next-steps.md
+9. NEXT: @references/next-steps.md
