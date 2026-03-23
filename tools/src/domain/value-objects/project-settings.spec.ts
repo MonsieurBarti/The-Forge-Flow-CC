@@ -100,6 +100,28 @@ describe('parseProjectSettings', () => {
   });
 });
 
+describe('ProjectSettings - new keys', () => {
+  it('should parse beads.timeout with default 30000', () => {
+    const settings = parseProjectSettings({});
+    expect(settings.beads?.timeout).toBe(30000);
+  });
+
+  it('should parse beads.timeout from yaml', () => {
+    const settings = loadProjectSettings('beads:\n  timeout: 60000');
+    expect(settings.beads?.timeout).toBe(60000);
+  });
+
+  it('should parse autonomy.max-retries with default 2', () => {
+    const settings = parseProjectSettings({});
+    expect(settings.autonomy['max-retries']).toBe(2);
+  });
+
+  it('should parse auto-learn.clustering.jaccard-threshold with default 0.3', () => {
+    const settings = parseProjectSettings({});
+    expect(settings['auto-learn'].clustering['jaccard-threshold']).toBe(0.3);
+  });
+});
+
 describe('loadProjectSettings', () => {
   it('should return defaults for corrupted YAML', () => {
     const settings = loadProjectSettings('{ broken: yaml: [["');

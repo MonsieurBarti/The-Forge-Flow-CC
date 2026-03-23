@@ -32,6 +32,7 @@ model-profiles:
 #                recommended once comfortable with the workflow
 autonomy:
   mode: guided
+  max-retries: 2   # max review/verify retry cycles before escalation
 
 # ── Auto-Learn ────────────────────────────────────────────────
 # Skill detection and refinement from observed execution patterns.
@@ -54,6 +55,12 @@ auto-learn:
   clustering:
     min-sessions: 3     # min sessions to establish a pattern
     min-patterns: 2     # min similar patterns to form a cluster
+    jaccard-threshold: 0.3  # max Jaccard distance for cluster membership
+
+# ── Beads ────────────────────────────────────────────────────
+# Configuration for bead store operations.
+beads:
+  timeout: 30000     # bd CLI command timeout in milliseconds
 
 # ── Dolt Remote (optional) ────────────────────────────────────
 # Sync beads state to a remote Dolt database for team collaboration.

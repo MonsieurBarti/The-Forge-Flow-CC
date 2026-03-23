@@ -55,9 +55,35 @@ export const validateSkill = (input: SkillInput): Result<ValidationResult, Domai
     warnings.push(`Content size ${input.content.length} exceeds max size ${maxSize}`);
   }
 
-  // Shell injection pattern check
-  if (input.content?.match(/\$\(|;\s*(rm|curl|wget|eval)/)) {
-    warnings.push('Content contains potential shell injection patterns');
+  // Shell injection pattern check (allowlist approach)
+  if (input.content) {
+    const SAFE_COMMAND_PATTERNS = [
+      /^`npm\s+(test|run|install)\b[^`]*`$/,
+      /^`npx\s+(vitest|tsc|biome)\b[^`]*`$/,
+      /^`git\s+(add|commit|status|log|diff|branch|checkout|push|pull|fetch|rebase|merge|rm)\b[^`]*`$/,
+      /^`tff-tools\b[^`]*`$/,
+      /^`bd\s+(create|update|close|list)\b[^`]*`$/,
+      /^`gh\s+(pr|issue)\b[^`]*`$/,
+      /^`ls\b[^`]*`$/,
+      /^`mkdir\b[^`]*`$/,
+    ];
+
+    const DANGEROUS_PATTERNS = [
+      /\$\(/, // command substitution $(...)
+      /\$\{[^}]*\}/, // variable substitution ${...}
+      /;\s*(rm|curl|wget|eval|sudo)\b/, // semicolon-chained dangerous commands
+      /\|\s*\b(nc|ncat|bash|sh|zsh)\b/, // pipe to shell/netcat
+    ];
+
+    const hasDangerousPattern = DANGEROUS_PATTERNS.some((p) => p.test(input.content!));
+
+    // Check backtick-enclosed commands against safe list
+    const backtickCommands = input.content.match(/`[^`]+`/g) || [];
+    const hasUnsafeBacktickCmd = backtickCommands.some((cmd) => !SAFE_COMMAND_PATTERNS.some((safe) => safe.test(cmd)));
+
+    if (hasDangerousPattern || hasUnsafeBacktickCmd) {
+      warnings.push('Content contains potential shell injection patterns');
+    }
   }
 
   return Ok({ valid, warnings });
