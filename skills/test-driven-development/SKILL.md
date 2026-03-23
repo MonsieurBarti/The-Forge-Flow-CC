@@ -1,14 +1,13 @@
 ---
 name: test-driven-development
-description: "Use when implementing features/fixes where TDD required (F-lite, F-full). Iron law: ¬∃ production code without failing test."
-token-budget: critical
+description: "Use when implementing features/fixes. Iron law: ¬∃ production code without failing test."
 ---
 
 # Test-Driven Development
 
 ## When to Use
 
-∀ features/fixes where TDD required (F-lite, F-full tiers). S-tier skips TDD.
+∀ features/fixes where TDD applies. Simple tasks may skip TDD.
 
 ## HARD-GATE
 
@@ -46,7 +45,7 @@ Only enough code to pass. No more.
 
 Improve structure, ¬change behavior, tests stay green.
 
-## Agent Routing (F-lite/F-full)
+## Agent Routing (standard/complex)
 
 1. Tester subagent writes failing .spec.ts -> commits
 2. Domain subagent implements -> tests pass -> commits
