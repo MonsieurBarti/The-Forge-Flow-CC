@@ -1,14 +1,13 @@
 ---
 name: stress-testing-specs
 description: "Use when stress-testing design specs. Devil's advocate for assumptions, unknowns, scope."
-token-budget: critical
 ---
 
 # Stress-Testing Specs
 
 ## When to Use
 
-∀ F-full specs after initial draft. Optional for F-lite.
+∀ complex specs after initial draft. Optional for standard.
 
 ## HARD-GATE
 
