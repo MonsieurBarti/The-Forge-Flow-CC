@@ -39,10 +39,10 @@ describe('S-tier integration: skill/agent/workflow consistency', () => {
     const agents = readdirSync(AGENTS_DIR).filter((f) => f.endsWith('.md'));
     for (const agent of agents) {
       const content = readFileSync(join(AGENTS_DIR, agent), 'utf-8');
-      const refs = content.match(/@skills\/([a-z0-9-]+\.md)/g) || [];
+      const refs = content.match(/@skills\/([a-z0-9-]+)\/SKILL\.md/g) || [];
       for (const ref of refs) {
-        const skillName = ref.replace('@skills/', '');
-        expect(existsSync(join(SKILLS_DIR, skillName))).toBe(true);
+        const skillFolder = ref.replace('@skills/', '').replace('/SKILL.md', '');
+        expect(existsSync(join(SKILLS_DIR, skillFolder, 'SKILL.md'))).toBe(true);
       }
     }
   });
