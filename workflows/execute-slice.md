@@ -37,6 +37,8 @@ status = executing ∧ worktree exists at `.tff/worktrees/<slice-id>/`
 ```
 4. TRANSITION: `tff-tools slice:transition <id> verifying`
    CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
+  IF `ok` = true ∧ `warnings.length > 0`:
+    ∀ warning ∈ warnings: display `⚠ <warning>` to user
 5. NEXT: @references/next-steps.md
 
 ## Auto-Transition

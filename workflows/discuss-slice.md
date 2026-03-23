@@ -70,6 +70,8 @@ If F-full confirmed → run step 4 (Challenge Spec) now if not already done.
 tier = S → `tff-tools slice:transition <id> planning` (skip research)
 tier = F-lite ∨ F-full → `tff-tools slice:transition <id> researching`
 CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
+  IF `ok` = true ∧ `warnings.length > 0`:
+    ∀ warning ∈ warnings: display `⚠ <warning>` to user
 
 ## Auto-Transition
 After completing all steps above:

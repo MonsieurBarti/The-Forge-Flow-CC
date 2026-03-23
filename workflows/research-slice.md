@@ -15,6 +15,8 @@ status = researching
    - Output → `.tff/milestones/<milestone>/slices/<slice-id>/RESEARCH.md`
 3. TRANSITION: `tff-tools slice:transition <id> planning`
    CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
+  IF `ok` = true ∧ `warnings.length > 0`:
+    ∀ warning ∈ warnings: display `⚠ <warning>` to user
 4. NEXT: @references/next-steps.md
 
 ## Auto-Transition
