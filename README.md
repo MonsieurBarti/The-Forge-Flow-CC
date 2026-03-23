@@ -363,10 +363,10 @@ Systematically diagnoses the issue first (no slice created), then fixes via S-ti
 the-forge-flow/
   .claude-plugin/         # CC marketplace manifest
   commands/tff/           # 30 slash commands (.md)
-  agents/                 # 13 agent definitions (.md)
-  skills/                 # 7 reusable knowledge skills (.md)
+  agents/                 # 4 lean identity-only agents (.md)
+  skills/                 # 18 reusable methodology skills (folder convention)
   workflows/              # 23 orchestration workflows (.md)
-  references/             # 7 reference documents (.md)
+  references/             # 8 reference documents (.md)
   hooks/                  # PostToolUse observation hook (.sh)
   tools/
     src/
@@ -387,35 +387,39 @@ the-forge-flow/
 
 ## Agents
 
+After v0.7.0's skills architecture reform, methodology moved from agents to skills. Only 4 identity-only agents remain -- they exist for fresh-reviewer enforcement (ensuring the reviewer is never the same agent that wrote the code).
+
 | Agent | Role | Profile |
 |---|---|---|
-| brainstormer | Challenge assumptions, surface unknowns | quality (opus) |
-| architect | Architecture decisions, module boundaries | quality (opus) |
-| product-lead | Requirements validation, acceptance criteria | balanced (sonnet) |
-| backend-dev | API, services, domain logic | budget (sonnet) |
-| frontend-dev | UI code, components | budget (sonnet) |
-| devops | CI/CD, infrastructure | budget (sonnet) |
-| tester | Write failing tests before implementation | balanced (sonnet) |
 | code-reviewer | Code quality review (fresh reviewer) | quality (opus) |
 | spec-reviewer | Spec compliance verification | quality (opus) |
 | security-auditor | Security review on every PR | quality (opus) |
 | fixer | Apply accepted review findings | budget (sonnet) |
-| doc-writer | Codebase documentation and analysis | budget (sonnet) |
-| skill-drafter | Draft skills from observed patterns | quality (opus) |
 
 ## Skills
 
-Skills are reusable knowledge fragments that agents load via `@skills/<name>/SKILL.md`. They teach HOW to do something -- agents define WHO does it.
+Skills are reusable knowledge fragments loaded via `@skills/<name>/SKILL.md`. They teach HOW to do something -- agents define WHO does it. After v0.7.0, all methodology lives in skills (decoupled from TFF-specific terminology).
 
-| Skill | Used By |
+| Skill | Purpose |
 |---|---|
-| hexagonal-architecture | backend-dev, frontend-dev, devops, architect, doc-writer |
-| test-driven-development | tester, backend-dev, frontend-dev |
-| code-review-checklist | code-reviewer, spec-reviewer, architect |
-| commit-conventions | all executor agents, fixer |
-| plannotator-usage | plan, verify, ship workflows |
-| interactive-design | discuss workflow (conversation methodology, spec templates, reviewer prompts) |
-| debugging-methodology | debug workflow (Track A: reproducible errors, Track B: symptom-based diagnosis) |
+| hexagonal-architecture | DDD + CQRS + hexagonal boundary patterns |
+| test-driven-development | TDD methodology with HARD-GATE enforcement |
+| code-review-protocol | Two-stage review (spec compliance + code quality) |
+| commit-conventions | Conventional commit format and rules |
+| plannotator-usage | Interactive plan/review UI integration |
+| brainstorming | Structured discovery and design exploration |
+| systematic-debugging | 4-phase investigation (Track A/B diagnosis) |
+| writing-plans | Break specs into bite-sized tasks (2-5 min each) |
+| executing-plans | Wave-based execution with fresh subagent per task |
+| finishing-work | Pre-PR checklist, structured merge/PR decision |
+| stress-testing-specs | Devil's advocate for assumptions and scope |
+| architecture-review | C4 model, dependency inversion review |
+| acceptance-criteria-validation | Binary verdict per criterion, evidence-based |
+| codebase-documentation | Divio framework documentation generation |
+| skill-authoring | Evidence-driven pattern analysis for new skills |
+| agent-authoring | Standardized agent template (identity-only) |
+| receiving-code-review | Technical rigor when processing review feedback |
+| verification-before-completion | Evidence before claims, always |
 
 ## Work Hierarchy
 
