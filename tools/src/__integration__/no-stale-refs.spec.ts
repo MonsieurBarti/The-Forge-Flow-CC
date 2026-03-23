@@ -24,9 +24,19 @@ function scanDir(dir: string): string[] {
     .map((f) => join(dir, f));
 }
 
+function scanSkillsDir(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((entry) => {
+      const skillPath = join(dir, entry, 'SKILL.md');
+      return existsSync(skillPath);
+    })
+    .map((entry) => join(dir, entry, 'SKILL.md'));
+}
+
 describe('No stale references integration test', () => {
   const allFiles = [
-    ...scanDir(join(ROOT, 'skills')),
+    ...scanSkillsDir(join(ROOT, 'skills')),
     ...scanDir(join(ROOT, 'agents')),
     ...scanDir(join(ROOT, 'workflows')),
   ];
@@ -53,7 +63,7 @@ describe('No stale references integration test', () => {
   });
 
   it('should have 18 skill files', () => {
-    const skills = readdirSync(join(ROOT, 'skills')).filter((f) => f.endsWith('.md'));
+    const skills = scanSkillsDir(join(ROOT, 'skills'));
     expect(skills).toHaveLength(18);
   });
 });
