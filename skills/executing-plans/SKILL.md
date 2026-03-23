@@ -1,7 +1,6 @@
 ---
 name: executing-plans
 description: "Use when executing approved plans. Wave-based execution with fresh subagent per task."
-token-budget: critical
 ---
 
 # Executing Plans
@@ -18,11 +17,11 @@ Fresh subagent per task. Controller curates exactly what context is needed.
 ## Process
 
 ∀ wave ∈ waves (sequential):
-  1. Save checkpoint: `tff-tools checkpoint:save <slice-id>`
-  2. IF tier ∈ {F-lite, F-full}: load @skills/test-driven-development.md
+  1. Save checkpoint
+  2. IF task requires TDD: load @skills/test-driven-development/SKILL.md
      Spawn subagent -> write failing .spec.ts for wave tasks
   3. ∀ task ∈ wave (parallel):
-     a. Claim: `bd update <task-id> --claim`
+     a. Claim: `claim task in tracker`
      b. Spawn fresh subagent with:
         - Task description from PLAN.md
         - Relevant skill(s) loaded
@@ -30,22 +29,22 @@ Fresh subagent per task. Controller curates exactly what context is needed.
         - ¬full session history (context isolation)
      c. Agent implements -> runs tests -> commits
      d. Save per-task checkpoint update
-     e. Close: `bd close <task-id>`
-  4. Sync: `tff-tools sync:state`
+     e. Close: `close task in tracker`
+  4. Sync: `sync state`
 
 ## Context Curation
 
 ∀ subagent spawn, provide ONLY:
 - Task description + acceptance criteria
 - Exact file paths from plan
-- Relevant skills (TDD, hexagonal-arch, commit-conventions)
+- Relevant skills (TDD, architecture skills, commit-conventions)
 - ¬prior task context, ¬full SPEC.md (unless needed)
 
 ## Domain Routing
 
 Read task file paths from PLAN.md to decide which domain skills to load:
-- File paths in `src/domain/`, `src/application/`, `src/infrastructure/` -> LOAD hexagonal-architecture
-- File paths in `src/cli/`, `src/presentation/` -> no extra domain skill
+- File paths in domain/application/infrastructure layers (e.g., `src/domain/`, `src/application/`, `src/infrastructure/`) -> LOAD architecture skills
+- File paths in presentation/CLI layers (e.g., `src/cli/`, `src/presentation/`) -> no extra domain skill
 - CI/CD files (`.github/`, `Dockerfile`, etc.) -> LOAD commit-conventions only
 - All tasks: LOAD executing-plans + commit-conventions as baseline
 
@@ -53,7 +52,7 @@ Read task file paths from PLAN.md to decide which domain skills to load:
 
 - Save after EACH task (¬just per-wave)
 - On failure: resume retries only incomplete tasks in current wave
-- On crash: `/tff:resume` loads checkpoint, skips completed tasks
+- On crash: resume from checkpoint, skips completed tasks
 
 ## Escalation
 
