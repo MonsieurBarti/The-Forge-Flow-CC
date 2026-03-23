@@ -83,7 +83,22 @@ export class MarkdownBeadAdapter implements BeadStore {
   }
 
   async claim(id: string): Promise<Result<void, DomainError>> {
-    return this.updateStatus(id, 'in_progress');
+    const result = await this.get(id);
+    if (!isOk(result)) return result;
+    result.data.status = 'in_progress';
+    result.data.claimedAt = new Date().toISOString();
+    await this.writeBead(result.data);
+    return Ok(undefined);
+  }
+
+  async listStaleClaims(ttlMinutes: number): Promise<Result<BeadData[], DomainError>> {
+    const allResult = await this.readAll();
+    if (!isOk(allResult)) return allResult;
+    const cutoff = new Date(Date.now() - ttlMinutes * 60 * 1000).toISOString();
+    const stale = allResult.data.filter(
+      (b) => b.status === 'in_progress' && b.claimedAt != null && b.claimedAt < cutoff,
+    );
+    return Ok(stale);
   }
 
   async updateDesign(id: string, design: string): Promise<Result<void, DomainError>> {
