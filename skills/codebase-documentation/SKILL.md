@@ -1,14 +1,13 @@
 ---
 name: codebase-documentation
 description: "Use when generating or maintaining codebase documentation. Divio framework."
-token-budget: workflow
 ---
 
 # Codebase Documentation
 
 ## When to Use
 
-∀ map-codebase workflow. ∀ documentation tasks.
+∀ codebase analysis tasks. ∀ documentation tasks.
 
 ## Divio Framework
 
@@ -33,7 +32,7 @@ token-budget: workflow
 1. Read focus from prompt (tech/arch/concerns/conventions)
 2. Glob -> relevant files (targeted)
 3. Grep -> patterns (imports, TODOs, configs)
-4. Read key files -> write to `.tff/docs/`
+4. Read key files -> write to `project docs directory (e.g., docs/)`
 5. Report brief confirmation
 
 ## Anti-Patterns
