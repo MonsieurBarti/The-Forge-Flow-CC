@@ -1,14 +1,13 @@
 ---
-name: Commit Conventions
-description: Git commit format and rules for tff projects
-token-budget: workflow
+name: commit-conventions
+description: "Use when making git commits. Conventional commit format and rules."
 ---
 
 # Commit Conventions
 
 ## When to Use
 
-∀ git commits in tff projects.
+∀ git commits.
 
 ## Format: `<type>(<scope>): <summary>`
 
@@ -21,14 +20,14 @@ token-budget: workflow
 | `docs` | Documentation changes |
 | `chore` | Tooling, config, dependencies |
 
-Scope: slice work → `S01/T03` | artifacts → `S01` | rollbacks → `S01/T03`
+Scope: feature work → `auth/login` | module → `api/users` | general → omit scope
 
 ```
-feat(S01/T03): add user validation
-fix(S01/T03): handle null email in signup
-test(S01/T03): add failing spec for email validation
-docs(S01): update PLAN.md with research
-revert(S01/T03): undo broken migration
+feat(auth/login): add user validation
+fix(auth/login): handle null email in signup
+test(auth/login): add failing spec for email validation
+docs(api): update API documentation
+revert(auth/login): undo broken migration
 chore: update dependencies
 ```
 
@@ -36,6 +35,10 @@ chore: update dependencies
 
 1. Atomic: 1 logical change/commit
 2. Stage specific files (¬`git add .` ¬`git add -A`)
-3. ¬commit generated files (except tff-tools.cjs)
+3. ¬commit generated files
 4. ¬commit secrets (.env, credentials, API keys)
 5. Imperative summary ("add" ¬"added"), <72 chars
+
+## Enforcement
+
+Enforced by lefthook `commit-msg` hook. ¬bypass with --no-verify.

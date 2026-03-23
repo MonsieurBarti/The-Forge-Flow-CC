@@ -4,9 +4,10 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
 status = verifying
+LOAD @skills/verification-before-completion/SKILL.md
 
 ## Steps
-1. SPAWN tff-product-lead: {acceptance_criteria from PLAN.md}
+1. LOAD @skills/acceptance-criteria-validation/SKILL.md → SPAWN subagent: {acceptance_criteria from PLAN.md}
    - Verify each criterion against implementation
 2. FINDINGS → invoke Skill `plannotator-annotate` with arg `.tff/milestones/<milestone>/slices/<slice-id>/VERIFICATION.md`
 3. VERDICT:

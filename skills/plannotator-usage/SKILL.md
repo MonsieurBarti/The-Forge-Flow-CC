@@ -1,7 +1,6 @@
 ---
-name: Plannotator Usage
-description: How to invoke plannotator for plan approval and verification review
-token-budget: background
+name: plannotator-usage
+description: "Use when invoking plannotator for plan approval and verification review."
 ---
 
 # Plannotator Usage

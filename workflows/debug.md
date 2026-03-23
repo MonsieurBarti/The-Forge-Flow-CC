@@ -16,7 +16,7 @@ like `discuss`, debug drives multi-turn investigation directly. For broad code
 exploration, spawn Explore subagents and reason about their findings.
 
 1. GATHER: ask user for error/symptom + reproduction steps via AskUserQuestion
-2. LOAD: @skills/debugging-methodology.md
+2. LOAD: @skills/systematic-debugging/SKILL.md
 3. CLASSIFY: reproducible error (Track A) or symptom-based (Track B)
 4. INVESTIGATE: orchestrator drives systematic diagnosis per skill methodology
    - Track A: parse error → read implicated code → trace call chain → form hypothesis → verify

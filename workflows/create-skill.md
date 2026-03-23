@@ -6,7 +6,7 @@ Draft new skill from pattern candidate or user description.
 
 ## Steps
 1. INPUT: candidate number (load from candidates.jsonl) ∨ free-text description
-2. SPAWN tff-skill-drafter ("Draft New Skill" mode):
+2. LOAD @skills/skill-authoring/SKILL.md → SPAWN subagent ("Draft New Skill" mode):
    - provide pattern evidence (or description) + existing skills as format examples
    - draft → `.tff/drafts/<skill-name>.md`
 3. VALIDATE: `tff-tools skills:validate '<json>'`

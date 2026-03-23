@@ -26,6 +26,7 @@ const ModelProfilesSchema = withDefault(
 const AutonomySchema = withDefault(
   z.object({
     mode: z.enum(['guided', 'plan-to-pr']).catch('guided'),
+    'max-retries': z.number().catch(2),
   }),
 );
 
@@ -50,6 +51,7 @@ const AutoLearnClusteringSchema = withDefault(
   z.object({
     'min-sessions': z.number().catch(3),
     'min-patterns': z.number().catch(2),
+    'jaccard-threshold': z.number().catch(0.3),
   }),
 );
 
@@ -58,6 +60,12 @@ const AutoLearnSchema = withDefault(
     weights: AutoLearnWeightsSchema,
     guardrails: AutoLearnGuardrailsSchema,
     clustering: AutoLearnClusteringSchema,
+  }),
+);
+
+const BeadsSchema = withDefault(
+  z.object({
+    timeout: z.number().catch(30000),
   }),
 );
 
@@ -71,6 +79,7 @@ export const ProjectSettingsSchema = withDefault(
     'model-profiles': ModelProfilesSchema,
     autonomy: AutonomySchema,
     'auto-learn': AutoLearnSchema,
+    beads: BeadsSchema,
     dolt: DoltSchema.optional(),
   }),
 );

@@ -12,13 +12,13 @@ description: Canonical commented YAML template for .tff/settings.yaml — single
 # Assign AI models to agent roles by computational budget.
 # Options: opus (most capable), sonnet (balanced), haiku (fastest)
 model-profiles:
-  # Used by: brainstormer, architect, code-reviewer, security-auditor
+  # Used by: code-reviewer, spec-reviewer, security-auditor
   quality:
     model: opus
-  # Used by: product-lead, tester
+  # Used by: subagents with critical skills
   balanced:
     model: sonnet
-  # Used by: frontend-dev, backend-dev, devops, fixer, doc-writer
+  # Used by: fixer, subagents with workflow/background skills
   budget:
     model: sonnet
 
@@ -32,6 +32,7 @@ model-profiles:
 #                recommended once comfortable with the workflow
 autonomy:
   mode: guided
+  max-retries: 2   # max review/verify retry cycles before escalation
 
 # ── Auto-Learn ────────────────────────────────────────────────
 # Skill detection and refinement from observed execution patterns.
@@ -54,6 +55,12 @@ auto-learn:
   clustering:
     min-sessions: 3     # min sessions to establish a pattern
     min-patterns: 2     # min similar patterns to form a cluster
+    jaccard-threshold: 0.3  # max Jaccard distance for cluster membership
+
+# ── Beads ────────────────────────────────────────────────────
+# Configuration for bead store operations.
+beads:
+  timeout: 30000     # bd CLI command timeout in milliseconds
 
 # ── Dolt Remote (optional) ────────────────────────────────────
 # Sync beads state to a remote Dolt database for team collaboration.

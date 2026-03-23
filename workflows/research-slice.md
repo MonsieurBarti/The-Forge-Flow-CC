@@ -6,6 +6,7 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
 status = researching
+LOAD @skills/architecture-review/SKILL.md
 
 ## Steps
 1. ROUTE: F-full → spawn researcher | F-lite → ask user | S → skip

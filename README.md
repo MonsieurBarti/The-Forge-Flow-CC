@@ -405,7 +405,7 @@ the-forge-flow/
 
 ## Skills
 
-Skills are reusable knowledge fragments that agents load via `@skills/<name>.md`. They teach HOW to do something -- agents define WHO does it.
+Skills are reusable knowledge fragments that agents load via `@skills/<name>/SKILL.md`. They teach HOW to do something -- agents define WHO does it.
 
 | Skill | Used By |
 |---|---|

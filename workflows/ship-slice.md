@@ -6,6 +6,8 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
 status = reviewing
+LOAD @skills/verification-before-completion/SKILL.md
+LOAD @skills/finishing-work/SKILL.md
 
 ## Steps
 1. `∀ reviewer: tff-tools review:check-fresh <slice-id> <role>`
