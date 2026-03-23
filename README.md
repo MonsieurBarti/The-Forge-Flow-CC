@@ -21,7 +21,7 @@
 
 ## What is The Forge Flow?
 
-The Forge Flow (`tff`) is a Claude Code plugin that orchestrates AI agents through a structured software development lifecycle. It coordinates 13 specialized agents from project initialization to shipped code.
+The Forge Flow (`tff`) is a Claude Code plugin that orchestrates AI agents through a structured software development lifecycle. It coordinates 4 lean agents and 18 skills from project initialization to shipped code.
 
 **Key features:**
 - **Dual state** -- markdown files for human-readable content, beads for status/dependencies
@@ -30,10 +30,10 @@ The Forge Flow (`tff`) is a Claude Code plugin that orchestrates AI agents throu
 - **Plannotator integration** -- all plan reviews, verification, and code reviews go through plannotator's interactive UI
 - **Complexity tiers** -- S (quick fix), F-lite (feature), F-full (complex) determine which phases are required
 - **Checkpoint/resumability** -- pause and resume execution across sessions
-- **Skill library** -- reusable knowledge fragments with token-budget tiers that agents load for consistent practices
+- **Skill library** -- 18 reusable methodology skills that agents load for consistent practices
 - **Autonomous flow** -- `plan-to-pr` mode auto-runs from plan approval through PR creation, with escalation on failure
 - **Auto-learn pipeline** -- observes tool-use patterns, ranks candidates, drafts skills with bounded guardrails
-- **Agent personality** -- each agent has distinct methodology, communication style, and domain expertise
+- **Lean agents** -- 4 identity-only agents for fresh-reviewer enforcement; all methodology lives in skills
 
 ---
 

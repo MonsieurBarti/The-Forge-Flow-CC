@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-03-23
+
+### Added
+
+- **S01**: 5 new skills from agent conversions (stress-testing-specs, architecture-review, acceptance-criteria-validation, codebase-documentation, skill-authoring)
+- **S02**: 2 new skills from superpowers (verification-before-completion, receiving-code-review)
+- **S03**: 3 new skills for plan/execute/ship (writing-plans, executing-plans, finishing-work)
+- **S05**: Agent-authoring skill with standardized template
+- **S09**: `layer-rules.md` supporting file for hexagonal-architecture
+
+### Changed
+
+- **S04**: 4 skill rewrites with HARD-GATE + enhanced commit-conventions (TDD, systematic-debugging, brainstorming, code-review-protocol)
+- **S06**: 4 agents rewritten as lean identity-only; 9 agents deleted (methodology moved to skills)
+- **S07**: All 13+ workflows updated to use skill-loading instead of agent-spawning
+- **S08**: Config extraction (beads.timeout, autonomy.max-retries, jaccard-threshold), validate-skill allowlist security fix
+- **S09 — Skills Architecture Reform**: All 18 skills restructured from `skills/<name>.md` to `skills/<name>/SKILL.md` folder convention; all skills decoupled from TFF-specific commands, paths, agent names, and tier terminology (S-tier/F-lite/F-full → simple/standard/complex); `token-budget` frontmatter removed; hexagonal-architecture fully rewritten with DDD + CQRS patterns; all references updated across workflows, agents, README, and integration tests
+- **Agent count**: 13 → 4 (lean identity-only agents; methodology now in skills)
+
+### Security
+
+- **S08**: validate-skill allowlist restricts command patterns
+
 ## [0.6.0] - 2026-03-22
 
 ### Added
