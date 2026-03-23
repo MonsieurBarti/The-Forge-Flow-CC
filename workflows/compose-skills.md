@@ -20,7 +20,7 @@ Pass: `tff-tools compose:detect --min-sessions 3 --min-patterns 2 --max-distance
    2. [90%] code-review-protocol + hexagonal-architecture
       18/20 sessions — suggestion: review-workflow bundle
    ```
-3. LOAD @skills/skill-authoring.md → SPAWN subagent ("Compose Bundle" mode) for selected cluster:
+3. LOAD @skills/skill-authoring/SKILL.md → SPAWN subagent ("Compose Bundle" mode) for selected cluster:
    - provide cluster skills + co-activation rate → decides bundle vs agent
    - draft → `.tff/drafts/<name>.md`
 4. REVIEW: invoke Skill `plannotator-annotate` with arg `.tff/drafts/<name>.md`

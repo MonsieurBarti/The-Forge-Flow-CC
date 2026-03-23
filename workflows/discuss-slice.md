@@ -13,7 +13,7 @@ status = discussing
 CHECK: read slice bead + notes
 
 ### 2. Interactive Design
-LOAD @skills/brainstorming.md
+LOAD @skills/brainstorming/SKILL.md
 
 **Phase 1 — Scope** (2-4 questions via AskUserQuestion)
 - What problem does this solve? Who benefits?
@@ -27,7 +27,7 @@ LOAD @skills/brainstorming.md
 - User picks via AskUserQuestion
 
 **Phase 3 — Design** (section by section)
-- Present each section per tier template from @skills/brainstorming.md
+- Present each section per tier template from @skills/brainstorming/SKILL.md
 - ∀ section: ask "does this look right?" via AskUserQuestion
 - Revise until approved, then next section
 
@@ -36,16 +36,16 @@ WRITE `.tff/milestones/<milestone>/slices/<id>/SPEC.md` w/ validated design
 UPDATE bead design field: `beadStore.updateDesign(id, spec_content)`
 
 ### 4. Challenge Spec (F-full only — determined in step 8)
-LOAD @skills/stress-testing-specs.md → SPAWN subagent: {spec_content}
+LOAD @skills/stress-testing-specs/SKILL.md → SPAWN subagent: {spec_content}
 REVISE → critical issues → loop Phase 3 (max 2) ∨ escalate
 APPROVE → note concerns in spec, proceed
 
 ### 5. Validate AC
-LOAD @skills/acceptance-criteria-validation.md → SPAWN subagent: {spec_content, acceptance_criteria}
+LOAD @skills/acceptance-criteria-validation/SKILL.md → SPAWN subagent: {spec_content, acceptance_criteria}
 ∀ criterion: testable ∧ binary — gaps → revise via AskUserQuestion
 
 ### 6. Spec Review
-DISPATCH anonymous reviewer via Agent tool (prompt: @skills/brainstorming.md)
+DISPATCH anonymous reviewer via Agent tool (prompt: @skills/brainstorming/SKILL.md)
 Issues → fix, re-dispatch (max 3)
 
 ### 7. User Gate

@@ -9,7 +9,7 @@ Show ranked pattern candidates with human-readable summaries.
 
 ## Steps
 1. LOAD `.tff/observations/candidates.jsonl`
-2. SUMMARIZE: for each candidate, LOAD @skills/skill-authoring.md → SPAWN subagent (summarize mode) → one-line summary
+2. SUMMARIZE: for each candidate, LOAD @skills/skill-authoring/SKILL.md → SPAWN subagent (summarize mode) → one-line summary
 3. DISPLAY numbered list:
    ```
    1. [0.78] Read -> Grep -> Edit -> Bash(npm test)

@@ -13,7 +13,7 @@ SPEC.md exists at `.tff/milestones/<milestone>/slices/<id>/SPEC.md`
 ### 1. Load Spec
 READ `.tff/milestones/<milestone>/slices/<id>/SPEC.md`
 READ `.tff/milestones/<milestone>/slices/<id>/RESEARCH.md` (if exists)
-LOAD @skills/writing-plans.md
+LOAD @skills/writing-plans/SKILL.md
 
 ### 2. File Structure
 Map files to create/modify BEFORE tasks.
@@ -66,11 +66,11 @@ CREATE beads: `tff-tools` ∀ task w/ deps
 DETECT: `tff-tools waves:detect '<tasks-json>'` → show user
 
 ### 6. Architecture Review (F-lite ∧ F-full)
-LOAD @skills/architecture-review.md + @skills/writing-plans.md → SPAWN subagent: {plan_content, spec_content}
+LOAD @skills/architecture-review/SKILL.md + @skills/writing-plans/SKILL.md → SPAWN subagent: {plan_content, spec_content}
 Issues → revise plan
 
 ### 7. Plan Review
-DISPATCH anonymous reviewer via Agent tool (prompt: @skills/brainstorming.md § Plan Document Reviewer)
+DISPATCH anonymous reviewer via Agent tool (prompt: @skills/brainstorming/SKILL.md § Plan Document Reviewer)
 Issues → fix, re-dispatch (max 3)
 
 ### 8. Plannotator Review
