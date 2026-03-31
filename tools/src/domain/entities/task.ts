@@ -16,6 +16,7 @@ export const TaskSchema = z.object({
   status: TaskStatusSchema,
   wave: z.number().int().nonnegative().optional(),
   claimedAt: z.date().optional(),
+  claimedBy: z.string().optional(),
   closedReason: z.string().optional(),
   createdAt: z.date(),
 });

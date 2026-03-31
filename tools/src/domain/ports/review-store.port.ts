@@ -1,15 +1,11 @@
 import type { DomainError } from '../errors/domain-error.js';
 import type { Result } from '../result.js';
+import type { ReviewRecord, ReviewType } from '../value-objects/review-record.js';
 
-export interface ReviewRecord {
-  sliceId: string;
-  reviewerAgent: string;
-  status: 'approved' | 'changes_requested';
-  reviewedAt: Date;
-}
+export type { ReviewRecord, ReviewType };
 
 export interface ReviewStore {
-  record(review: ReviewRecord): Promise<Result<void, DomainError>>;
-  getExecutorsForSlice(sliceId: string): Promise<Result<string[], DomainError>>;
-  getReviewsForSlice(sliceId: string): Promise<Result<ReviewRecord[], DomainError>>;
+  recordReview(review: ReviewRecord): Result<void, DomainError>;
+  getLatestReview(sliceId: string, type: ReviewType): Result<ReviewRecord | null, DomainError>;
+  listReviews(sliceId: string): Result<ReviewRecord[], DomainError>;
 }

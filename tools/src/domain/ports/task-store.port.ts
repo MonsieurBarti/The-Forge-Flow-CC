@@ -9,8 +9,9 @@ export interface TaskStore {
   getTask(id: string): Result<Task | null, DomainError>;
   listTasks(sliceId: string): Result<Task[], DomainError>;
   updateTask(id: string, updates: TaskUpdateProps): Result<void, DomainError>;
-  claimTask(id: string): Result<void, DomainError>;
+  claimTask(id: string, claimedBy?: string): Result<void, DomainError>;
   closeTask(id: string, reason?: string): Result<void, DomainError>;
   listReadyTasks(sliceId: string): Result<Task[], DomainError>;
   listStaleClaims(ttlMinutes: number): Result<Task[], DomainError>;
+  getExecutorsForSlice(sliceId: string): Result<string[], DomainError>;
 }
