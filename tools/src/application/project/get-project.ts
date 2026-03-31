@@ -1,20 +1,12 @@
-import { createDomainError, type DomainError } from '../../domain/errors/domain-error.js';
-import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
-import type { BeadData, BeadStore } from '../../domain/ports/bead-store.port.js';
-import { Err, isOk, type Result } from '../../domain/result.js';
+import type { Project } from '../../domain/entities/project.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { ProjectStore } from '../../domain/ports/project-store.port.js';
+import { type Result } from '../../domain/result.js';
 
 interface GetProjectDeps {
-  beadStore: BeadStore;
-  artifactStore: ArtifactStore;
+  projectStore: ProjectStore;
 }
 
-export const getProject = async (deps: GetProjectDeps): Promise<Result<BeadData, DomainError>> => {
-  const result = await deps.beadStore.list({ label: 'tff:project' });
-  if (!isOk(result)) return result;
-
-  if (result.data.length === 0) {
-    return Err(createDomainError('NOT_FOUND', 'No tff project found in this repository. Run /tff:new to create one.'));
-  }
-
-  return { ok: true, data: result.data[0] };
+export const getProject = async (deps: GetProjectDeps): Promise<Result<Project | null, DomainError>> => {
+  return deps.projectStore.getProject();
 };

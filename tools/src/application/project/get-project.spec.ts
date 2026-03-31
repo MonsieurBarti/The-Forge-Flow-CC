@@ -1,40 +1,30 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isErr, isOk } from '../../domain/result.js';
-import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
-import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { InMemoryStateAdapter } from '../../infrastructure/testing/in-memory-state-adapter.js';
 import { getProject } from './get-project.js';
 
 describe('getProject', () => {
-  let beadStore: InMemoryBeadStore;
-  let artifactStore: InMemoryArtifactStore;
+  let adapter: InMemoryStateAdapter;
 
   beforeEach(() => {
-    beadStore = new InMemoryBeadStore();
-    artifactStore = new InMemoryArtifactStore();
+    adapter = new InMemoryStateAdapter();
   });
 
   it('should return project data when project exists', async () => {
-    beadStore.seed([
-      {
-        id: 'proj-1',
-        label: 'tff:project',
-        title: 'my-app',
-        status: 'open',
-        design: 'A great app',
-      },
-    ]);
-    artifactStore.seed({ '.tff/PROJECT.md': '# my-app\n\n## Vision\n\nA great app\n' });
+    adapter.saveProject({ name: 'my-app' });
 
-    const result = await getProject({ beadStore, artifactStore });
+    const result = await getProject({ projectStore: adapter });
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
-      expect(result.data.title).toBe('my-app');
-      expect(result.data.design).toBe('A great app');
+      expect(result.data?.name).toBe('my-app');
     }
   });
 
-  it('should return error when no project exists', async () => {
-    const result = await getProject({ beadStore, artifactStore });
-    expect(isErr(result)).toBe(true);
+  it('should return null when no project exists', async () => {
+    const result = await getProject({ projectStore: adapter });
+    expect(isOk(result)).toBe(true);
+    if (isOk(result)) {
+      expect(result.data).toBeNull();
+    }
   });
 });
