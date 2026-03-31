@@ -1,28 +1,27 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
 import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
-import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
 import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
+import { InMemoryStateAdapter } from '../../infrastructure/testing/in-memory-state-adapter.js';
 import { createMilestoneUseCase } from './create-milestone.js';
 
 describe('createMilestoneUseCase', () => {
-  let beadStore: InMemoryBeadStore;
+  let adapter: InMemoryStateAdapter;
   let artifactStore: InMemoryArtifactStore;
   let gitOps: InMemoryGitOps;
 
   beforeEach(() => {
-    beadStore = new InMemoryBeadStore();
+    adapter = new InMemoryStateAdapter();
+    adapter.init();
     artifactStore = new InMemoryArtifactStore();
     gitOps = new InMemoryGitOps();
-    beadStore.seed([
-      { id: '00000000-0000-4000-8000-000000000001', label: 'tff:project', title: 'app', status: 'open' },
-    ]);
+    adapter.saveProject({ name: 'app', vision: 'A great app' });
   });
 
-  it('should create a milestone with bead and branch', async () => {
+  it('should create a milestone with branch', async () => {
     const result = await createMilestoneUseCase(
-      { projectBeadId: '00000000-0000-4000-8000-000000000001', name: 'MVP', number: 1 },
-      { beadStore, artifactStore, gitOps },
+      { name: 'MVP', number: 1 },
+      { milestoneStore: adapter, artifactStore, gitOps },
     );
 
     expect(isOk(result)).toBe(true);
@@ -35,8 +34,8 @@ describe('createMilestoneUseCase', () => {
 
   it('should create REQUIREMENTS.md stub', async () => {
     await createMilestoneUseCase(
-      { projectBeadId: '00000000-0000-4000-8000-000000000001', name: 'MVP', number: 1 },
-      { beadStore, artifactStore, gitOps },
+      { name: 'MVP', number: 1 },
+      { milestoneStore: adapter, artifactStore, gitOps },
     );
 
     expect(await artifactStore.exists('.tff/milestones/M01/REQUIREMENTS.md')).toBe(true);
