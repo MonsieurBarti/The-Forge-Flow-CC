@@ -5,19 +5,37 @@ import { completeTask, createTask, startTask, TaskSchema } from './task.js';
 describe('Task', () => {
   const makeTask = () =>
     createTask({
-      sliceId: crypto.randomUUID(),
-      sliceRef: 'M01-S01',
-      name: 'Implement login',
-      taskNumber: 3,
-      description: 'Build the login form',
-      acceptanceCriteria: ['Form renders', 'Validates email'],
+      sliceId: 'M01-S01',
+      number: 3,
+      title: 'Implement login',
     });
 
-  it('should create a task with open status', () => {
+  it('should create a task with human-readable id', () => {
     const task = makeTask();
+    expect(task.id).toBe('M01-S01-T03');
     expect(task.status).toBe('open');
-    expect(task.name).toBe('Implement login');
-    expect(task.taskRef).toBe('T03');
+    expect(task.title).toBe('Implement login');
+    expect(task.number).toBe(3);
+  });
+
+  it('should not have removed fields', () => {
+    const task = makeTask();
+    expect(task).not.toHaveProperty('name');
+    expect(task).not.toHaveProperty('taskRef');
+    expect(task).not.toHaveProperty('sliceRef');
+    expect(task).not.toHaveProperty('acceptanceCriteria');
+    expect(task).not.toHaveProperty('executor');
+    expect(task).not.toHaveProperty('dependsOn');
+  });
+
+  it('should allow optional description', () => {
+    const task = createTask({
+      sliceId: 'M01-S01',
+      number: 1,
+      title: 'Task',
+      description: 'Some desc',
+    });
+    expect(task.description).toBe('Some desc');
   });
 
   it('should validate against schema', () => {
@@ -54,7 +72,6 @@ describe('Task', () => {
       expect(isOk(result)).toBe(true);
       if (isOk(result)) {
         expect(result.data.task.status).toBe('closed');
-        expect(result.data.task.executor).toBe('backend-dev');
         expect(result.data.events[0].type).toBe('TASK_COMPLETED');
       }
     });

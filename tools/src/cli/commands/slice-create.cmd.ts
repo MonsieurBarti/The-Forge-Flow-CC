@@ -63,7 +63,7 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
   const sliceNumber = maxSliceNumber + 1;
 
   const result = await createSliceUseCase(
-    { milestoneBeadId, name, milestoneNumber, sliceNumber },
+    { milestoneBeadId, title: name, milestoneNumber, sliceNumber },
     { beadStore, artifactStore },
   );
 

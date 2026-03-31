@@ -12,7 +12,7 @@ describe('transitionSliceUseCase', () => {
   });
 
   it('should transition slice and update bead status', async () => {
-    const slice = createSlice({ milestoneId: crypto.randomUUID(), name: 'Auth', milestoneNumber: 1, sliceNumber: 1 });
+    const slice = createSlice({ milestoneId: crypto.randomUUID(), title: 'Auth', milestoneNumber: 1, sliceNumber: 1 });
     beadStore.seed([{ id: 'bead-1', label: 'tff:slice', title: 'Auth', status: 'discussing' }]);
     const result = await transitionSliceUseCase(
       { slice, beadId: 'bead-1', targetStatus: 'researching' },
@@ -26,7 +26,7 @@ describe('transitionSliceUseCase', () => {
   });
 
   it('should reject invalid transition', async () => {
-    const slice = createSlice({ milestoneId: crypto.randomUUID(), name: 'Auth', milestoneNumber: 1, sliceNumber: 1 });
+    const slice = createSlice({ milestoneId: crypto.randomUUID(), title: 'Auth', milestoneNumber: 1, sliceNumber: 1 });
     const result = await transitionSliceUseCase({ slice, beadId: 'bead-1', targetStatus: 'executing' }, { beadStore });
     expect(isErr(result)).toBe(true);
     if (isErr(result)) expect(result.error.code).toBe('INVALID_TRANSITION');
