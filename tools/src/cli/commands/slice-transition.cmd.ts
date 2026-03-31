@@ -49,11 +49,15 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
   const sliceIdMatch = bead.design?.match(/Slice (M\d+-S\d+)/);
   const sliceId = sliceIdMatch?.[1] ?? 'unknown';
 
+  // Extract number from sliceId (e.g., "M01-S03" → 3)
+  const sliceNumberMatch = sliceId.match(/S(\d+)/);
+  const sliceNumber = sliceNumberMatch ? parseInt(sliceNumberMatch[1], 10) : 1;
+
   const slice = {
-    id: bead.id,
+    id: sliceId,
     milestoneId: bead.parentId,
-    name: bead.title,
-    sliceId,
+    number: sliceNumber,
+    title: bead.title,
     status: parsedStatus.data,
     createdAt: new Date(),
   };
