@@ -1,21 +1,21 @@
 import { generateState } from '../../application/sync/generate-state.js';
 import { isOk } from '../../domain/result.js';
-import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
+import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 
 export const syncStateCmd = async (args: string[]): Promise<string> => {
-  const [milestoneId, milestoneName] = args;
+  const [milestoneId] = args;
   if (!milestoneId) {
     return JSON.stringify({
       ok: false,
-      error: { code: 'INVALID_ARGS', message: 'Usage: sync:state <milestone-bead-id> [milestone-name]' },
+      error: { code: 'INVALID_ARGS', message: 'Usage: sync:state <milestone-id>' },
     });
   }
-  const { store: beadStore } = await createBeadAdapter();
+  const { milestoneStore, sliceStore, taskStore } = createStateStores();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
   const result = await generateState(
-    { milestoneId, milestoneName: milestoneName ?? 'Milestone' },
-    { beadStore, artifactStore },
+    { milestoneId },
+    { milestoneStore, sliceStore, taskStore, artifactStore },
   );
   if (isOk(result)) return JSON.stringify({ ok: true, data: null });
   return JSON.stringify({ ok: false, error: result.error });
