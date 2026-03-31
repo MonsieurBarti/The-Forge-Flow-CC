@@ -16600,7 +16600,12 @@ init_result();
 var projectGetCmd = async (_args) => {
   const { projectStore } = createStateStores();
   const result = await getProject({ projectStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  if (isOk(result)) {
+    if (result.data === null) {
+      return JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: "No tff project found. Run /tff:new first." } });
+    }
+    return JSON.stringify({ ok: true, data: result.data });
+  }
   return JSON.stringify({ ok: false, error: result.error });
 };
 
@@ -16714,6 +16719,21 @@ var recordReviewUseCase = async (input, deps) => {
 
 // tools/src/cli/commands/review-record.cmd.ts
 init_result();
+
+// tools/src/domain/value-objects/review-record.ts
+init_zod();
+var ReviewTypeSchema = external_exports.enum(["code", "security", "spec"]);
+var ReviewRecordSchema = external_exports.object({
+  sliceId: external_exports.string().min(1),
+  type: ReviewTypeSchema,
+  reviewer: external_exports.string().min(1),
+  verdict: external_exports.enum(["approved", "changes_requested"]),
+  commitSha: external_exports.string().min(1),
+  notes: external_exports.string().optional(),
+  createdAt: external_exports.string().min(1)
+});
+
+// tools/src/cli/commands/review-record.cmd.ts
 var reviewRecordCmd = async (args) => {
   const [sliceId, agent, verdict, type, commitSha] = args;
   if (!sliceId || !agent || !verdict || !type || !commitSha) {
@@ -16725,13 +16745,21 @@ var reviewRecordCmd = async (args) => {
       }
     });
   }
+  const parsedType2 = ReviewTypeSchema.safeParse(type);
+  if (!parsedType2.success) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: `Invalid type "${type}". Must be: code, security, spec` } });
+  }
+  const validVerdicts = ["approved", "changes_requested"];
+  if (!validVerdicts.includes(verdict)) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: `Invalid verdict "${verdict}". Must be: approved, changes_requested` } });
+  }
   const { reviewStore } = createStateStores();
   const result = await recordReviewUseCase(
     {
       sliceId,
       reviewer: agent,
       verdict,
-      type,
+      type: parsedType2.data,
       commitSha
     },
     { reviewStore }
@@ -16874,13 +16902,14 @@ var sliceClassifyCmd = async (args) => {
 };
 
 // tools/src/application/slice/create-slice.ts
+init_domain_error();
 init_result();
 var createSliceUseCase = async (input, deps) => {
   const milestoneResult = deps.milestoneStore.getMilestone(input.milestoneId);
   if (!isOk(milestoneResult)) return milestoneResult;
   const milestone = milestoneResult.data;
   if (!milestone) {
-    return { ok: false, error: { code: "NOT_FOUND", message: `Milestone "${input.milestoneId}" not found` } };
+    return Err(createDomainError("NOT_FOUND", `Milestone "${input.milestoneId}" not found`));
   }
   const existingSlicesResult = deps.sliceStore.listSlices(input.milestoneId);
   if (!isOk(existingSlicesResult)) return existingSlicesResult;
