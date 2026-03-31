@@ -5,16 +5,23 @@ import { createSlice, formatSliceId, SliceSchema, transitionSlice } from './slic
 describe('Slice', () => {
   const makeSlice = () =>
     createSlice({
-      milestoneId: crypto.randomUUID(),
-      name: 'Auth flow',
+      milestoneId: 'M01',
+      title: 'Auth flow',
       milestoneNumber: 1,
       sliceNumber: 1,
     });
 
-  it('should create a slice in discussing status', () => {
+  it('should create a slice with human-readable id', () => {
     const slice = makeSlice();
+    expect(slice.id).toBe('M01-S01');
     expect(slice.status).toBe('discussing');
-    expect(slice.name).toBe('Auth flow');
+    expect(slice.title).toBe('Auth flow');
+    expect(slice.number).toBe(1);
+  });
+
+  it('should not have a sliceId field', () => {
+    const slice = makeSlice();
+    expect(slice).not.toHaveProperty('sliceId');
   });
 
   it('should format slice ID as M01-S01', () => {
@@ -38,12 +45,13 @@ describe('Slice', () => {
       }
     });
 
-    it('should reject invalid transition discussing → executing', () => {
+    it('should use slice.id in transition errors', () => {
       const slice = makeSlice();
       const result = transitionSlice(slice, 'executing');
       expect(isErr(result)).toBe(true);
       if (isErr(result)) {
         expect(result.error.code).toBe('INVALID_TRANSITION');
+        expect(result.error.context?.sliceId).toBe('M01-S01');
       }
     });
 

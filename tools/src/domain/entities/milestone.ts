@@ -9,6 +9,7 @@ export const MilestoneSchema = z.object({
   name: z.string().min(1),
   number: z.number().int().min(1),
   status: MilestoneStatusSchema,
+  closeReason: z.string().optional(),
   createdAt: z.date(),
 });
 
@@ -16,7 +17,7 @@ export type Milestone = z.infer<typeof MilestoneSchema>;
 
 export const createMilestone = (input: { projectId: string; name: string; number: number }): Milestone => {
   const milestone = {
-    id: crypto.randomUUID(),
+    id: formatMilestoneNumber(input.number),
     projectId: input.projectId,
     name: input.name,
     number: input.number,
