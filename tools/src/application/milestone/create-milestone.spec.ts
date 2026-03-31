@@ -33,10 +33,7 @@ describe('createMilestoneUseCase', () => {
   });
 
   it('should create REQUIREMENTS.md stub', async () => {
-    await createMilestoneUseCase(
-      { name: 'MVP', number: 1 },
-      { milestoneStore: adapter, artifactStore, gitOps },
-    );
+    await createMilestoneUseCase({ name: 'MVP', number: 1 }, { milestoneStore: adapter, artifactStore, gitOps });
 
     expect(await artifactStore.exists('.tff/milestones/M01/REQUIREMENTS.md')).toBe(true);
   });

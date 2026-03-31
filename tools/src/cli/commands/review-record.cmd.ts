@@ -16,11 +16,17 @@ export const reviewRecordCmd = async (args: string[]): Promise<string> => {
   }
   const parsedType = ReviewTypeSchema.safeParse(type);
   if (!parsedType.success) {
-    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: `Invalid type "${type}". Must be: code, security, spec` } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: 'INVALID_ARGS', message: `Invalid type "${type}". Must be: code, security, spec` },
+    });
   }
   const validVerdicts = ['approved', 'changes_requested'];
   if (!validVerdicts.includes(verdict)) {
-    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: `Invalid verdict "${verdict}". Must be: approved, changes_requested` } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: 'INVALID_ARGS', message: `Invalid verdict "${verdict}". Must be: approved, changes_requested` },
+    });
   }
   const { reviewStore } = createStateStores();
   const result = await recordReviewUseCase(

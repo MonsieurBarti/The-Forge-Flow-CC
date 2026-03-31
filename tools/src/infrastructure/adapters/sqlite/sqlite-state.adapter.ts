@@ -24,17 +24,25 @@ import type { Dependency } from '../../../domain/value-objects/dependency.js';
 import type { MilestoneProps } from '../../../domain/value-objects/milestone-props.js';
 import type { MilestoneUpdateProps } from '../../../domain/value-objects/milestone-update-props.js';
 import type { ProjectProps } from '../../../domain/value-objects/project-props.js';
+import type { ReviewRecord, ReviewType } from '../../../domain/value-objects/review-record.js';
 import type { SliceProps } from '../../../domain/value-objects/slice-props.js';
 import type { SliceStatus } from '../../../domain/value-objects/slice-status.js';
 import type { SliceUpdateProps } from '../../../domain/value-objects/slice-update-props.js';
 import type { TaskProps } from '../../../domain/value-objects/task-props.js';
 import type { TaskUpdateProps } from '../../../domain/value-objects/task-update-props.js';
 import type { WorkflowSession } from '../../../domain/value-objects/workflow-session.js';
-import type { ReviewRecord, ReviewType } from '../../../domain/value-objects/review-record.js';
 import { runMigrations } from './schema.js';
 
 export class SQLiteStateAdapter
-  implements DatabaseInit, ProjectStore, MilestoneStore, SliceStore, TaskStore, DependencyStore, SessionStore, ReviewStore
+  implements
+    DatabaseInit,
+    ProjectStore,
+    MilestoneStore,
+    SliceStore,
+    TaskStore,
+    DependencyStore,
+    SessionStore,
+    ReviewStore
 {
   constructor(private db: Database.Database) {}
 
@@ -419,17 +427,18 @@ export class SQLiteStateAdapter
 
   claimTask(id: string, claimedBy?: string): Result<void, DomainError> {
     try {
-      const info = claimedBy !== undefined
-        ? this.db
-            .prepare(
-              "UPDATE task SET status = 'in_progress', claimed_at = datetime('now'), claimed_by = ?, updated_at = datetime('now') WHERE id = ? AND status = 'open'",
-            )
-            .run(claimedBy, id)
-        : this.db
-            .prepare(
-              "UPDATE task SET status = 'in_progress', claimed_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND status = 'open'",
-            )
-            .run(id);
+      const info =
+        claimedBy !== undefined
+          ? this.db
+              .prepare(
+                "UPDATE task SET status = 'in_progress', claimed_at = datetime('now'), claimed_by = ?, updated_at = datetime('now') WHERE id = ? AND status = 'open'",
+              )
+              .run(claimedBy, id)
+          : this.db
+              .prepare(
+                "UPDATE task SET status = 'in_progress', claimed_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND status = 'open'",
+              )
+              .run(id);
       if (info.changes === 0) {
         return Err(alreadyClaimedError(id));
       }
@@ -634,9 +643,7 @@ export class SQLiteStateAdapter
   getLatestReview(sliceId: string, type: ReviewType): Result<ReviewRecord | null, DomainError> {
     try {
       const row = this.db
-        .prepare(
-          'SELECT * FROM review WHERE slice_id = ? AND type = ? ORDER BY created_at DESC LIMIT 1',
-        )
+        .prepare('SELECT * FROM review WHERE slice_id = ? AND type = ? ORDER BY created_at DESC LIMIT 1')
         .get(sliceId, type) as
         | {
             slice_id: string;

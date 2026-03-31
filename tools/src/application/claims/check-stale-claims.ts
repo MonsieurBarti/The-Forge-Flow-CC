@@ -1,7 +1,7 @@
 import type { Task } from '../../domain/entities/task.js';
 import type { DomainError } from '../../domain/errors/domain-error.js';
-import { Ok, type Result } from '../../domain/result.js';
 import type { TaskStore } from '../../domain/ports/task-store.port.js';
+import { Ok, type Result } from '../../domain/result.js';
 
 interface CheckStaleClaimsInput {
   ttlMinutes?: number;

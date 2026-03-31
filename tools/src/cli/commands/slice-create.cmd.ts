@@ -1,7 +1,7 @@
 import { createSliceUseCase } from '../../application/slice/create-slice.js';
 import { isOk } from '../../domain/result.js';
-import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
+import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 
 export const sliceCreateCmd = async (args: string[]): Promise<string> => {
   // Parse --title flag or fall back to positional arg
@@ -41,13 +41,13 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
   }
   // Use the last open milestone, or the last one if none are open
   const openMilestones = milestonesResult.data.filter((m) => m.status !== 'closed');
-  const milestone = openMilestones.length > 0 ? openMilestones[openMilestones.length - 1] : milestonesResult.data[milestonesResult.data.length - 1];
+  const milestone =
+    openMilestones.length > 0
+      ? openMilestones[openMilestones.length - 1]
+      : milestonesResult.data[milestonesResult.data.length - 1];
   const milestoneId = milestone.id;
 
-  const result = await createSliceUseCase(
-    { milestoneId, title: name },
-    { milestoneStore, sliceStore, artifactStore },
-  );
+  const result = await createSliceUseCase({ milestoneId, title: name }, { milestoneStore, sliceStore, artifactStore });
 
   if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
   return JSON.stringify({ ok: false, error: result.error });

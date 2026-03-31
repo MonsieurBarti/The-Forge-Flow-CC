@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { isErr, isOk } from '../../domain/result.js';
+import { isOk } from '../../domain/result.js';
 import { InMemoryStateAdapter } from '../../infrastructure/testing/in-memory-state-adapter.js';
 import { getProject } from './get-project.js';
 

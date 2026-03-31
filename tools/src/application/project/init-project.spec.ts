@@ -14,7 +14,10 @@ describe('initProject', () => {
   });
 
   it('should create a project when none exists', async () => {
-    const result = await initProject({ name: 'my-app', vision: 'A great app' }, { projectStore: adapter, artifactStore });
+    const result = await initProject(
+      { name: 'my-app', vision: 'A great app' },
+      { projectStore: adapter, artifactStore },
+    );
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
       expect(result.data.project.name).toBe('my-app');

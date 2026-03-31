@@ -4,7 +4,7 @@ import { createStateStores } from '../../infrastructure/adapters/sqlite/create-s
 
 export const claimCheckStaleCmd = async (args: string[]): Promise<string> => {
   const ttlMinutes = args[0] ? parseInt(args[0], 10) : 30;
-  if (isNaN(ttlMinutes) || ttlMinutes <= 0) {
+  if (Number.isNaN(ttlMinutes) || ttlMinutes <= 0) {
     return JSON.stringify({
       ok: false,
       error: { code: 'INVALID_ARGS', message: 'Usage: claim:check-stale [ttl-minutes]' },

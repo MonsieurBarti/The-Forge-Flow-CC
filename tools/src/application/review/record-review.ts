@@ -1,7 +1,7 @@
 import type { DomainError } from '../../domain/errors/domain-error.js';
 import type { ReviewStore } from '../../domain/ports/review-store.port.js';
-import type { ReviewType } from '../../domain/value-objects/review-record.js';
 import type { Result } from '../../domain/result.js';
+import type { ReviewType } from '../../domain/value-objects/review-record.js';
 
 interface RecordReviewInput {
   sliceId: string;

@@ -2,9 +2,9 @@ import { transitionSliceUseCase } from '../../application/lifecycle/transition-s
 import { generateState } from '../../application/sync/generate-state.js';
 import { isOk } from '../../domain/result.js';
 import { type SliceStatus, SliceStatusSchema } from '../../domain/value-objects/slice-status.js';
-import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { tffWarn } from '../../infrastructure/adapters/logging/warn.js';
+import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 
 export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
   const [sliceId, targetStatus] = args;
@@ -24,10 +24,7 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
   const { sliceStore, milestoneStore, taskStore } = createStateStores();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
 
-  const result = await transitionSliceUseCase(
-    { sliceId, targetStatus: targetStatus as SliceStatus },
-    { sliceStore },
-  );
+  const result = await transitionSliceUseCase({ sliceId, targetStatus: targetStatus as SliceStatus }, { sliceStore });
 
   if (isOk(result)) {
     const warnings: string[] = [];
@@ -35,10 +32,7 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 
     // Auto-regenerate STATE.md (non-critical)
     try {
-      await generateState(
-        { milestoneId: slice.milestoneId },
-        { milestoneStore, sliceStore, taskStore, artifactStore },
-      );
+      await generateState({ milestoneId: slice.milestoneId }, { milestoneStore, sliceStore, taskStore, artifactStore });
     } catch (e) {
       const msg = `state sync failed: ${String(e)}`;
       tffWarn(msg);

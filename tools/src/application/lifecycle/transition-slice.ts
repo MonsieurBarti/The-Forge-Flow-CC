@@ -1,9 +1,9 @@
 import type { Slice } from '../../domain/entities/slice.js';
 import type { DomainError } from '../../domain/errors/domain-error.js';
+import { createDomainError } from '../../domain/errors/domain-error.js';
 import type { DomainEvent } from '../../domain/events/domain-event.js';
 import type { SliceStore } from '../../domain/ports/slice-store.port.js';
 import { Err, isOk, type Result } from '../../domain/result.js';
-import { createDomainError } from '../../domain/errors/domain-error.js';
 import type { SliceStatus } from '../../domain/value-objects/slice-status.js';
 
 interface TransitionInput {

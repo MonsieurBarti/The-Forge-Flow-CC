@@ -16024,9 +16024,7 @@ var SQLiteStateAdapter = class _SQLiteStateAdapter {
   }
   getLatestReview(sliceId, type) {
     try {
-      const row = this.db.prepare(
-        "SELECT * FROM review WHERE slice_id = ? AND type = ? ORDER BY created_at DESC LIMIT 1"
-      ).get(sliceId, type);
+      const row = this.db.prepare("SELECT * FROM review WHERE slice_id = ? AND type = ? ORDER BY created_at DESC LIMIT 1").get(sliceId, type);
       if (!row) return Ok(null);
       return Ok(this.rowToReview(row));
     } catch (e) {
@@ -16113,7 +16111,7 @@ function createStateStores(dbPath) {
 // tools/src/cli/commands/claim-check-stale.cmd.ts
 var claimCheckStaleCmd = async (args) => {
   const ttlMinutes = args[0] ? parseInt(args[0], 10) : 30;
-  if (isNaN(ttlMinutes) || ttlMinutes <= 0) {
+  if (Number.isNaN(ttlMinutes) || ttlMinutes <= 0) {
     return JSON.stringify({
       ok: false,
       error: { code: "INVALID_ARGS", message: "Usage: claim:check-stale [ttl-minutes]" }
@@ -16602,7 +16600,10 @@ var projectGetCmd = async (_args) => {
   const result = await getProject({ projectStore });
   if (isOk(result)) {
     if (result.data === null) {
-      return JSON.stringify({ ok: false, error: { code: "NOT_FOUND", message: "No tff project found. Run /tff:new first." } });
+      return JSON.stringify({
+        ok: false,
+        error: { code: "NOT_FOUND", message: "No tff project found. Run /tff:new first." }
+      });
     }
     return JSON.stringify({ ok: true, data: result.data });
   }
@@ -16747,11 +16748,17 @@ var reviewRecordCmd = async (args) => {
   }
   const parsedType2 = ReviewTypeSchema.safeParse(type);
   if (!parsedType2.success) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: `Invalid type "${type}". Must be: code, security, spec` } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: `Invalid type "${type}". Must be: code, security, spec` }
+    });
   }
   const validVerdicts = ["approved", "changes_requested"];
   if (!validVerdicts.includes(verdict)) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: `Invalid verdict "${verdict}". Must be: approved, changes_requested` } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: `Invalid verdict "${verdict}". Must be: approved, changes_requested` }
+    });
   }
   const { reviewStore } = createStateStores();
   const result = await recordReviewUseCase(
@@ -16970,17 +16977,14 @@ var sliceCreateCmd = async (args) => {
   const openMilestones = milestonesResult.data.filter((m) => m.status !== "closed");
   const milestone = openMilestones.length > 0 ? openMilestones[openMilestones.length - 1] : milestonesResult.data[milestonesResult.data.length - 1];
   const milestoneId = milestone.id;
-  const result = await createSliceUseCase(
-    { milestoneId, title: name },
-    { milestoneStore, sliceStore, artifactStore }
-  );
+  const result = await createSliceUseCase({ milestoneId, title: name }, { milestoneStore, sliceStore, artifactStore });
   if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
   return JSON.stringify({ ok: false, error: result.error });
 };
 
 // tools/src/application/lifecycle/transition-slice.ts
-init_result();
 init_domain_error();
+init_result();
 var transitionSliceUseCase = async (input, deps) => {
   const transitionResult = deps.sliceStore.transitionSlice(input.sliceId, input.targetStatus);
   if (!isOk(transitionResult)) return transitionResult;
@@ -17066,18 +17070,12 @@ var sliceTransitionCmd = async (args) => {
   }
   const { sliceStore, milestoneStore, taskStore } = createStateStores();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  const result = await transitionSliceUseCase(
-    { sliceId, targetStatus },
-    { sliceStore }
-  );
+  const result = await transitionSliceUseCase({ sliceId, targetStatus }, { sliceStore });
   if (isOk(result)) {
     const warnings = [];
     const { slice } = result.data;
     try {
-      await generateState(
-        { milestoneId: slice.milestoneId },
-        { milestoneStore, sliceStore, taskStore, artifactStore }
-      );
+      await generateState({ milestoneId: slice.milestoneId }, { milestoneStore, sliceStore, taskStore, artifactStore });
     } catch (e) {
       const msg = `state sync failed: ${String(e)}`;
       tffWarn(msg);
@@ -17289,10 +17287,7 @@ var syncStateCmd = async (args) => {
   }
   const { milestoneStore, sliceStore, taskStore } = createStateStores();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  const result = await generateState(
-    { milestoneId },
-    { milestoneStore, sliceStore, taskStore, artifactStore }
-  );
+  const result = await generateState({ milestoneId }, { milestoneStore, sliceStore, taskStore, artifactStore });
   if (isOk(result)) return JSON.stringify({ ok: true, data: null });
   return JSON.stringify({ ok: false, error: result.error });
 };

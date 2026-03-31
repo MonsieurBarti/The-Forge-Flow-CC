@@ -1,5 +1,5 @@
-import { createDomainError } from '../../domain/errors/domain-error.js';
 import type { DomainError } from '../../domain/errors/domain-error.js';
+import { createDomainError } from '../../domain/errors/domain-error.js';
 import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
 import type { MilestoneStore } from '../../domain/ports/milestone-store.port.js';
 import type { SliceStore } from '../../domain/ports/slice-store.port.js';

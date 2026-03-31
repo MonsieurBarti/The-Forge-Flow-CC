@@ -1,7 +1,7 @@
 import { initProject } from '../../application/project/init-project.js';
 import { isOk } from '../../domain/result.js';
-import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
+import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 
 export const projectInitCmd = async (args: string[]): Promise<string> => {
   const name = args[0];

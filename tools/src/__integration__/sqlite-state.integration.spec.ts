@@ -4,7 +4,6 @@ import { isErr, isOk } from '../domain/result.js';
 import { SQLiteStateAdapter } from '../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
 
 // Integration tests access the private `db` field for direct SQL operations.
-// biome-ignore lint/suspicious/noExplicitAny: accessing private db for integration tests
 type AdapterWithDb = { db: Database.Database };
 const getDb = (adapter: SQLiteStateAdapter): Database.Database => (adapter as unknown as AdapterWithDb).db;
 
@@ -74,7 +73,6 @@ describe('SQLite integration', () => {
     const db = getDb(adapter);
     db.prepare('DELETE FROM schema_version').run();
     db.prepare('INSERT INTO schema_version (version) VALUES (999)').run();
-    // biome-ignore lint/suspicious/noExplicitAny: constructing adapter with existing db for test
     const adapterWithFutureSchema = new (
       SQLiteStateAdapter as unknown as new (
         db: Database.Database,
