@@ -1,15 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { MilestoneStore } from './milestone-store.port.js';
 import type { ProjectStore } from './project-store.port.js';
+import type { SliceStore } from './slice-store.port.js';
 import type { DatabaseInit } from './database-init.port.js';
 import { isOk, isErr } from '../result.js';
 
 export const runMilestoneStoreContractTests = (
   name: string,
-  createAdapter: () => MilestoneStore & ProjectStore & DatabaseInit,
+  createAdapter: () => MilestoneStore & ProjectStore & SliceStore & DatabaseInit,
 ) => {
   describe(`MilestoneStore contract [${name}]`, () => {
-    let store: MilestoneStore & ProjectStore & DatabaseInit;
+    let store: MilestoneStore & ProjectStore & SliceStore & DatabaseInit;
     beforeEach(() => {
       store = createAdapter();
       store.init();
@@ -70,12 +71,20 @@ export const runMilestoneStoreContractTests = (
       }
     });
 
-    it('closeMilestone with open slices returns HAS_OPEN_CHILDREN', () => {
-      // This test requires SliceStore — will be verified in T08
-      // For now, test the base case without slices
+    it('closeMilestone with no open slices succeeds', () => {
       store.createMilestone({ number: 1, name: 'Test' });
       const result = store.closeMilestone('M01');
       expect(isOk(result)).toBe(true);
+    });
+
+    it('closeMilestone with open slices returns HAS_OPEN_CHILDREN', () => {
+      store.createMilestone({ number: 1, name: 'Test' });
+      store.createSlice({ milestoneId: 'M01', number: 1, title: 'Open Slice' });
+      const result = store.closeMilestone('M01');
+      expect(isErr(result)).toBe(true);
+      if (isErr(result)) {
+        expect(result.error.code).toBe('HAS_OPEN_CHILDREN');
+      }
     });
   });
 };
