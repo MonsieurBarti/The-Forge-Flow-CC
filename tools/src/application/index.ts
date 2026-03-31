@@ -15,5 +15,4 @@ export { checkDrift } from './skills/check-drift.js';
 export { validateSkill } from './skills/validate-skill.js';
 export { createSliceUseCase } from './slice/create-slice.js';
 export { generateState } from './sync/generate-state.js';
-export { reconcileState } from './sync/reconcile-state.js';
 export { detectWaves } from './waves/detect-waves.js';

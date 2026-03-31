@@ -70,16 +70,6 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
   if (isOk(result)) {
     const warnings: string[] = [];
 
-    // Auto-snapshot (non-critical)
-    try {
-      const { snapshotSaveCmd } = await import('./snapshot-save.cmd.js');
-      await snapshotSaveCmd([]);
-    } catch (e) {
-      const msg = `snapshot failed: ${String(e)}`;
-      tffWarn(msg);
-      warnings.push(msg);
-    }
-
     // Auto-sync to Dolt (non-critical)
     try {
       const { readFile } = await import('node:fs/promises');
