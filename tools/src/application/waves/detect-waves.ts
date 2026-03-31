@@ -78,9 +78,7 @@ export const detectWavesFromStores = (
 
   const taskDeps: TaskDep[] = tasksResult.data.map((task) => {
     const depsResult = deps.dependencyStore.getDependencies(task.id);
-    const outbound = depsResult.ok
-      ? depsResult.data.filter((d) => d.fromId === task.id).map((d) => d.toId)
-      : [];
+    const outbound = depsResult.ok ? depsResult.data.filter((d) => d.fromId === task.id).map((d) => d.toId) : [];
     return { id: task.id, dependsOn: outbound };
   });
 

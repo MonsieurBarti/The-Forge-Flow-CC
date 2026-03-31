@@ -1,14 +1,18 @@
-import Database from 'better-sqlite3';
-import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { runMigrations, getCurrentVersion } from './schema.js';
+import { join } from 'node:path';
+import Database from 'better-sqlite3';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { getCurrentVersion, runMigrations } from './schema.js';
 
 describe('schema', () => {
   let db: Database.Database;
-  beforeEach(() => { db = new Database(':memory:'); });
-  afterEach(() => { db.close(); });
+  beforeEach(() => {
+    db = new Database(':memory:');
+  });
+  afterEach(() => {
+    db.close();
+  });
 
   it('runs v1 migration on fresh db', () => {
     runMigrations(db);
@@ -51,7 +55,7 @@ describe('schema', () => {
 
   it('rejects VERSION_MISMATCH when db version > code version', () => {
     runMigrations(db);
-    db.prepare("UPDATE schema_version SET version = 999").run();
+    db.prepare('UPDATE schema_version SET version = 999').run();
     const db2 = new Database(':memory:');
     // Run migrations on the same db — version check should fail
     expect(() => runMigrations(db)).toThrow(/VERSION_MISMATCH|upgrade tff-tools/i);
@@ -60,8 +64,10 @@ describe('schema', () => {
 
   it('creates all expected tables', () => {
     runMigrations(db);
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all() as { name: string }[];
-    const tableNames = tables.map(t => t.name);
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all() as {
+      name: string;
+    }[];
+    const tableNames = tables.map((t) => t.name);
     expect(tableNames).toContain('project');
     expect(tableNames).toContain('milestone');
     expect(tableNames).toContain('slice');
@@ -81,7 +87,7 @@ describe('schema', () => {
     db.prepare("INSERT INTO dependency (from_id, to_id, type) VALUES ('t1', 't2', 'blocks')").run();
 
     db.prepare("DELETE FROM task WHERE id = 't1'").run();
-    const deps = db.prepare("SELECT * FROM dependency").all();
+    const deps = db.prepare('SELECT * FROM dependency').all();
     expect(deps).toHaveLength(0);
   });
 

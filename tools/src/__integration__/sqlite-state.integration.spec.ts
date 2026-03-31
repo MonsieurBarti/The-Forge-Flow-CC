@@ -1,7 +1,12 @@
-import Database from 'better-sqlite3';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import type Database from 'better-sqlite3';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { isErr, isOk } from '../domain/result.js';
 import { SQLiteStateAdapter } from '../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
-import { isOk, isErr } from '../domain/result.js';
+
+// Integration tests access the private `db` field for direct SQL operations.
+// biome-ignore lint/suspicious/noExplicitAny: accessing private db for integration tests
+type AdapterWithDb = { db: Database.Database };
+const getDb = (adapter: SQLiteStateAdapter): Database.Database => (adapter as unknown as AdapterWithDb).db;
 
 describe('SQLite integration', () => {
   let adapter: SQLiteStateAdapter;
@@ -22,9 +27,7 @@ describe('SQLite integration', () => {
     adapter.saveProject({ name: 'P' });
     adapter.createMilestone({ number: 1, name: 'M' });
     adapter.createSlice({ milestoneId: 'M01', number: 1, title: 'S' });
-    // Direct SQL to attempt delete — adapter doesn't expose delete
-    // Access internal db via reflection for integration test
-    const db = (adapter as any).db as Database.Database;
+    const db = getDb(adapter);
     expect(() => {
       db.prepare("DELETE FROM milestone WHERE id = 'M01'").run();
     }).toThrow();
@@ -38,24 +41,26 @@ describe('SQLite integration', () => {
     adapter.createTask({ sliceId: 'M01-S01', number: 2, title: 'T2' });
     adapter.addDependency('M01-S01-T01', 'M01-S01-T02', 'blocks');
 
-    const db = (adapter as any).db as Database.Database;
+    const db = getDb(adapter);
     db.prepare("DELETE FROM task WHERE id = 'M01-S01-T01'").run();
-    const deps = db.prepare("SELECT * FROM dependency").all();
+    const deps = db.prepare('SELECT * FROM dependency').all();
     expect(deps).toHaveLength(0);
   });
 
   it('singleton: second project insert fails at DB level', () => {
     adapter.saveProject({ name: 'P1' });
-    const db = (adapter as any).db as Database.Database;
+    const db = getDb(adapter);
     expect(() => {
       db.prepare("INSERT INTO project (id, name) VALUES ('other', 'P2')").run();
     }).toThrow();
   });
 
   it('migration: v1 creates all tables', () => {
-    const db = (adapter as any).db as Database.Database;
-    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all() as { name: string }[];
-    const tableNames = tables.map(t => t.name);
+    const db = getDb(adapter);
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all() as {
+      name: string;
+    }[];
+    const tableNames = tables.map((t) => t.name);
     expect(tableNames).toContain('project');
     expect(tableNames).toContain('milestone');
     expect(tableNames).toContain('slice');
@@ -66,11 +71,14 @@ describe('SQLite integration', () => {
   });
 
   it('init() returns VERSION_MISMATCH when db schema is ahead of code', () => {
-    const db = (adapter as any).db as Database.Database;
-    db.prepare("UPDATE schema_version SET version = 999").run();
-    const freshAdapter = SQLiteStateAdapter.createInMemory();
-    // Reuse same underlying db by creating adapter with the existing db
-    const adapterWithFutureSchema = new (SQLiteStateAdapter as any)(db);
+    const db = getDb(adapter);
+    db.prepare('UPDATE schema_version SET version = 999').run();
+    // biome-ignore lint/suspicious/noExplicitAny: constructing adapter with existing db for test
+    const adapterWithFutureSchema = new (
+      SQLiteStateAdapter as unknown as new (
+        db: Database.Database,
+      ) => SQLiteStateAdapter
+    )(db);
     const result = adapterWithFutureSchema.init();
     expect(isErr(result)).toBe(true);
     if (isErr(result)) expect(result.error.code).toBe('VERSION_MISMATCH');

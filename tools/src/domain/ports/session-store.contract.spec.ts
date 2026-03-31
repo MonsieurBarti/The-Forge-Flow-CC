@@ -1,12 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import type { SessionStore } from './session-store.port.js';
-import type { DatabaseInit } from './database-init.port.js';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../result.js';
+import type { DatabaseInit } from './database-init.port.js';
+import type { SessionStore } from './session-store.port.js';
 
-export const runSessionStoreContractTests = (
-  name: string,
-  createAdapter: () => SessionStore & DatabaseInit,
-) => {
+export const runSessionStoreContractTests = (name: string, createAdapter: () => SessionStore & DatabaseInit) => {
   describe(`SessionStore contract [${name}]`, () => {
     let store: SessionStore & DatabaseInit;
     beforeEach(() => {

@@ -1,18 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import type { TaskStore } from './task-store.port.js';
-import type { SliceStore } from './slice-store.port.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { isErr, isOk } from '../result.js';
+import type { DatabaseInit } from './database-init.port.js';
+import type { DependencyStore } from './dependency-store.port.js';
 import type { MilestoneStore } from './milestone-store.port.js';
 import type { ProjectStore } from './project-store.port.js';
-import type { DependencyStore } from './dependency-store.port.js';
-import type { DatabaseInit } from './database-init.port.js';
-import { isOk, isErr } from '../result.js';
+import type { SliceStore } from './slice-store.port.js';
+import type { TaskStore } from './task-store.port.js';
 
 type FullAdapter = TaskStore & SliceStore & MilestoneStore & ProjectStore & DependencyStore & DatabaseInit;
 
-export const runTaskStoreContractTests = (
-  name: string,
-  createAdapter: () => FullAdapter,
-) => {
+export const runTaskStoreContractTests = (name: string, createAdapter: () => FullAdapter) => {
   describe(`TaskStore contract [${name}]`, () => {
     let store: FullAdapter;
 

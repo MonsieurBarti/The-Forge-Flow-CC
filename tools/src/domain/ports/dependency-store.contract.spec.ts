@@ -1,18 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import type { DependencyStore } from './dependency-store.port.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { isOk } from '../result.js';
 import type { DatabaseInit } from './database-init.port.js';
-import type { ProjectStore } from './project-store.port.js';
+import type { DependencyStore } from './dependency-store.port.js';
 import type { MilestoneStore } from './milestone-store.port.js';
+import type { ProjectStore } from './project-store.port.js';
 import type { SliceStore } from './slice-store.port.js';
 import type { TaskStore } from './task-store.port.js';
-import { isOk, isErr } from '../result.js';
 
 type DependencyTestAdapter = DependencyStore & DatabaseInit & ProjectStore & MilestoneStore & SliceStore & TaskStore;
 
-export const runDependencyStoreContractTests = (
-  name: string,
-  createAdapter: () => DependencyTestAdapter,
-) => {
+export const runDependencyStoreContractTests = (name: string, createAdapter: () => DependencyTestAdapter) => {
   describe(`DependencyStore contract [${name}]`, () => {
     let store: DependencyTestAdapter;
 
@@ -41,14 +38,14 @@ export const runDependencyStoreContractTests = (
       expect(isOk(t1Deps)).toBe(true);
       if (isOk(t1Deps)) {
         expect(t1Deps.data.length).toBeGreaterThanOrEqual(1);
-        expect(t1Deps.data.some(d => d.fromId === 'M01-S01-T01' && d.toId === 'M01-S01-T02')).toBe(true);
+        expect(t1Deps.data.some((d) => d.fromId === 'M01-S01-T01' && d.toId === 'M01-S01-T02')).toBe(true);
       }
 
       // T02 should also show the edge (as it blocks T01)
       const t2Deps = store.getDependencies('M01-S01-T02');
       expect(isOk(t2Deps)).toBe(true);
       if (isOk(t2Deps)) {
-        expect(t2Deps.data.some(d => d.fromId === 'M01-S01-T01' && d.toId === 'M01-S01-T02')).toBe(true);
+        expect(t2Deps.data.some((d) => d.fromId === 'M01-S01-T01' && d.toId === 'M01-S01-T02')).toBe(true);
       }
     });
 

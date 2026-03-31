@@ -1,34 +1,36 @@
-import type { Project } from '../../domain/entities/project.js';
 import type { Milestone } from '../../domain/entities/milestone.js';
 import { formatMilestoneNumber } from '../../domain/entities/milestone.js';
+import type { Project } from '../../domain/entities/project.js';
 import type { Slice } from '../../domain/entities/slice.js';
 import { formatSliceId, transitionSlice } from '../../domain/entities/slice.js';
 import type { Task } from '../../domain/entities/task.js';
+import { alreadyClaimedError } from '../../domain/errors/already-claimed.error.js';
 import type { DomainError } from '../../domain/errors/domain-error.js';
 import { createDomainError } from '../../domain/errors/domain-error.js';
 import { hasOpenChildrenError } from '../../domain/errors/has-open-children.error.js';
-import { alreadyClaimedError } from '../../domain/errors/already-claimed.error.js';
-import { Ok, Err, type Result } from '../../domain/result.js';
-import type { ProjectProps } from '../../domain/value-objects/project-props.js';
+import type { DomainEvent } from '../../domain/events/domain-event.js';
+import type { DatabaseInit } from '../../domain/ports/database-init.port.js';
+import type { DependencyStore } from '../../domain/ports/dependency-store.port.js';
+import type { MilestoneStore } from '../../domain/ports/milestone-store.port.js';
+import type { ProjectStore } from '../../domain/ports/project-store.port.js';
+import type { SessionStore } from '../../domain/ports/session-store.port.js';
+import type { SliceStore } from '../../domain/ports/slice-store.port.js';
+import type { TaskStore } from '../../domain/ports/task-store.port.js';
+import { Err, Ok, type Result } from '../../domain/result.js';
+import type { Dependency } from '../../domain/value-objects/dependency.js';
 import type { MilestoneProps } from '../../domain/value-objects/milestone-props.js';
 import type { MilestoneUpdateProps } from '../../domain/value-objects/milestone-update-props.js';
+import type { ProjectProps } from '../../domain/value-objects/project-props.js';
 import type { SliceProps } from '../../domain/value-objects/slice-props.js';
-import type { SliceUpdateProps } from '../../domain/value-objects/slice-update-props.js';
 import type { SliceStatus } from '../../domain/value-objects/slice-status.js';
+import type { SliceUpdateProps } from '../../domain/value-objects/slice-update-props.js';
 import type { TaskProps } from '../../domain/value-objects/task-props.js';
 import type { TaskUpdateProps } from '../../domain/value-objects/task-update-props.js';
 import type { WorkflowSession } from '../../domain/value-objects/workflow-session.js';
-import type { Dependency } from '../../domain/value-objects/dependency.js';
-import type { DomainEvent } from '../../domain/events/domain-event.js';
-import type { DatabaseInit } from '../../domain/ports/database-init.port.js';
-import type { ProjectStore } from '../../domain/ports/project-store.port.js';
-import type { MilestoneStore } from '../../domain/ports/milestone-store.port.js';
-import type { SliceStore } from '../../domain/ports/slice-store.port.js';
-import type { TaskStore } from '../../domain/ports/task-store.port.js';
-import type { DependencyStore } from '../../domain/ports/dependency-store.port.js';
-import type { SessionStore } from '../../domain/ports/session-store.port.js';
 
-export class InMemoryStateAdapter implements DatabaseInit, ProjectStore, MilestoneStore, SliceStore, TaskStore, DependencyStore, SessionStore {
+export class InMemoryStateAdapter
+  implements DatabaseInit, ProjectStore, MilestoneStore, SliceStore, TaskStore, DependencyStore, SessionStore
+{
   private project: Project | null = null;
   private milestones = new Map<string, Milestone>();
   private slices = new Map<string, Slice>();
@@ -91,9 +93,7 @@ export class InMemoryStateAdapter implements DatabaseInit, ProjectStore, Milesto
   closeMilestone(id: string, reason?: string): Result<void, DomainError> {
     const ms = this.milestones.get(id);
     if (!ms) return Ok(undefined);
-    const openSlices = [...this.slices.values()].filter(
-      (s) => s.milestoneId === id && s.status !== 'closed',
-    );
+    const openSlices = [...this.slices.values()].filter((s) => s.milestoneId === id && s.status !== 'closed');
     if (openSlices.length > 0) {
       return Err(hasOpenChildrenError(id, openSlices.length));
     }

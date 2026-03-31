@@ -93,10 +93,7 @@ describe('detectWavesFromStores', () => {
     adapter.addDependency('M01-S01-T02', 'M01-S01-T01', 'blocks');
     adapter.addDependency('M01-S01-T03', 'M01-S01-T01', 'blocks');
 
-    const result = detectWavesFromStores(
-      { taskStore: adapter, dependencyStore: adapter },
-      'M01-S01'
-    );
+    const result = detectWavesFromStores({ taskStore: adapter, dependencyStore: adapter }, 'M01-S01');
 
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
@@ -113,10 +110,7 @@ describe('detectWavesFromStores', () => {
     adapter.createMilestone({ number: 1, name: 'M1' });
     adapter.createSlice({ milestoneId: 'M01', number: 1, title: 'S1' });
 
-    const result = detectWavesFromStores(
-      { taskStore: adapter, dependencyStore: adapter },
-      'M01-S01'
-    );
+    const result = detectWavesFromStores({ taskStore: adapter, dependencyStore: adapter }, 'M01-S01');
     expect(isOk(result)).toBe(true);
     if (isOk(result)) expect(result.data).toHaveLength(0);
   });

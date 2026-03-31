@@ -22,12 +22,7 @@ export const TaskSchema = z.object({
 
 export type Task = z.infer<typeof TaskSchema>;
 
-export const createTask = (input: {
-  sliceId: string;
-  number: number;
-  title: string;
-  description?: string;
-}): Task => {
+export const createTask = (input: { sliceId: string; number: number; title: string; description?: string }): Task => {
   const task = {
     id: `${input.sliceId}-T${input.number.toString().padStart(2, '0')}`,
     sliceId: input.sliceId,

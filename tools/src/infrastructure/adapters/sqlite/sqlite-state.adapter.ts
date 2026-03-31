@@ -1,37 +1,39 @@
 import Database from 'better-sqlite3';
-import type { Project } from '../../../domain/entities/project.js';
 import type { Milestone } from '../../../domain/entities/milestone.js';
 import { formatMilestoneNumber } from '../../../domain/entities/milestone.js';
+import type { Project } from '../../../domain/entities/project.js';
 import type { Slice } from '../../../domain/entities/slice.js';
 import { formatSliceId, transitionSlice } from '../../../domain/entities/slice.js';
 import type { Task } from '../../../domain/entities/task.js';
+import { alreadyClaimedError } from '../../../domain/errors/already-claimed.error.js';
 import type { DomainError } from '../../../domain/errors/domain-error.js';
 import { createDomainError } from '../../../domain/errors/domain-error.js';
 import { hasOpenChildrenError } from '../../../domain/errors/has-open-children.error.js';
-import { alreadyClaimedError } from '../../../domain/errors/already-claimed.error.js';
 import { versionMismatchError } from '../../../domain/errors/version-mismatch.error.js';
-import { Ok, Err, type Result } from '../../../domain/result.js';
-import type { ProjectProps } from '../../../domain/value-objects/project-props.js';
+import type { DomainEvent } from '../../../domain/events/domain-event.js';
+import type { DatabaseInit } from '../../../domain/ports/database-init.port.js';
+import type { DependencyStore } from '../../../domain/ports/dependency-store.port.js';
+import type { MilestoneStore } from '../../../domain/ports/milestone-store.port.js';
+import type { ProjectStore } from '../../../domain/ports/project-store.port.js';
+import type { SessionStore } from '../../../domain/ports/session-store.port.js';
+import type { SliceStore } from '../../../domain/ports/slice-store.port.js';
+import type { TaskStore } from '../../../domain/ports/task-store.port.js';
+import { Err, Ok, type Result } from '../../../domain/result.js';
+import type { Dependency } from '../../../domain/value-objects/dependency.js';
 import type { MilestoneProps } from '../../../domain/value-objects/milestone-props.js';
 import type { MilestoneUpdateProps } from '../../../domain/value-objects/milestone-update-props.js';
+import type { ProjectProps } from '../../../domain/value-objects/project-props.js';
 import type { SliceProps } from '../../../domain/value-objects/slice-props.js';
-import type { SliceUpdateProps } from '../../../domain/value-objects/slice-update-props.js';
 import type { SliceStatus } from '../../../domain/value-objects/slice-status.js';
+import type { SliceUpdateProps } from '../../../domain/value-objects/slice-update-props.js';
 import type { TaskProps } from '../../../domain/value-objects/task-props.js';
 import type { TaskUpdateProps } from '../../../domain/value-objects/task-update-props.js';
 import type { WorkflowSession } from '../../../domain/value-objects/workflow-session.js';
-import type { Dependency } from '../../../domain/value-objects/dependency.js';
-import type { DomainEvent } from '../../../domain/events/domain-event.js';
-import type { DatabaseInit } from '../../../domain/ports/database-init.port.js';
-import type { ProjectStore } from '../../../domain/ports/project-store.port.js';
-import type { MilestoneStore } from '../../../domain/ports/milestone-store.port.js';
-import type { SliceStore } from '../../../domain/ports/slice-store.port.js';
-import type { TaskStore } from '../../../domain/ports/task-store.port.js';
-import type { DependencyStore } from '../../../domain/ports/dependency-store.port.js';
-import type { SessionStore } from '../../../domain/ports/session-store.port.js';
 import { runMigrations } from './schema.js';
 
-export class SQLiteStateAdapter implements DatabaseInit, ProjectStore, MilestoneStore, SliceStore, TaskStore, DependencyStore, SessionStore {
+export class SQLiteStateAdapter
+  implements DatabaseInit, ProjectStore, MilestoneStore, SliceStore, TaskStore, DependencyStore, SessionStore
+{
   constructor(private db: Database.Database) {}
 
   static create(dbPath: string): SQLiteStateAdapter {
@@ -63,9 +65,9 @@ export class SQLiteStateAdapter implements DatabaseInit, ProjectStore, Milestone
   // ProjectStore
   getProject(): Result<Project | null, DomainError> {
     try {
-      const row = this.db
-        .prepare("SELECT id, name, vision, created_at FROM project WHERE id = 'singleton'")
-        .get() as { id: string; name: string; vision: string | null; created_at: string } | undefined;
+      const row = this.db.prepare("SELECT id, name, vision, created_at FROM project WHERE id = 'singleton'").get() as
+        | { id: string; name: string; vision: string | null; created_at: string }
+        | undefined;
       if (!row) return Ok(null);
       return Ok({
         id: row.id,
@@ -192,9 +194,7 @@ export class SQLiteStateAdapter implements DatabaseInit, ProjectStore, Milestone
         return Err(hasOpenChildrenError(id, openSlices.count));
       }
       this.db
-        .prepare(
-          "UPDATE milestone SET status = 'closed', close_reason = ?, updated_at = datetime('now') WHERE id = ?",
-        )
+        .prepare("UPDATE milestone SET status = 'closed', close_reason = ?, updated_at = datetime('now') WHERE id = ?")
         .run(reason ?? null, id);
       return Ok(undefined);
     } catch (e) {
@@ -311,9 +311,7 @@ export class SQLiteStateAdapter implements DatabaseInit, ProjectStore, Milestone
       }
       const domainResult = transitionSlice(getResult.data, target);
       if (!domainResult.ok) return domainResult;
-      this.db
-        .prepare("UPDATE slice SET status = ?, updated_at = datetime('now') WHERE id = ?")
-        .run(target, id);
+      this.db.prepare("UPDATE slice SET status = ?, updated_at = datetime('now') WHERE id = ?").run(target, id);
       return Ok(domainResult.data.events);
     } catch (e) {
       return Err(createDomainError('WRITE_FAILURE', `Failed to transition slice: ${e}`));
@@ -434,9 +432,7 @@ export class SQLiteStateAdapter implements DatabaseInit, ProjectStore, Milestone
   closeTask(id: string, reason?: string): Result<void, DomainError> {
     try {
       this.db
-        .prepare(
-          "UPDATE task SET status = 'closed', closed_reason = ?, updated_at = datetime('now') WHERE id = ?",
-        )
+        .prepare("UPDATE task SET status = 'closed', closed_reason = ?, updated_at = datetime('now') WHERE id = ?")
         .run(reason ?? null, id);
       return Ok(undefined);
     } catch (e) {

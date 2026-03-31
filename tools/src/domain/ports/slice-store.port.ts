@@ -2,8 +2,8 @@ import type { Slice } from '../entities/slice.js';
 import type { DomainError } from '../errors/domain-error.js';
 import type { DomainEvent } from '../events/domain-event.js';
 import type { Result } from '../result.js';
-import type { SliceStatus } from '../value-objects/slice-status.js';
 import type { SliceProps } from '../value-objects/slice-props.js';
+import type { SliceStatus } from '../value-objects/slice-status.js';
 import type { SliceUpdateProps } from '../value-objects/slice-update-props.js';
 
 export interface SliceStore {

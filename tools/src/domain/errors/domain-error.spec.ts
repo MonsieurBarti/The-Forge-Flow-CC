@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { DomainErrorCodeSchema } from './domain-error.js';
 import { alreadyClaimedError } from './already-claimed.error.js';
-import { versionMismatchError } from './version-mismatch.error.js';
+import { DomainErrorCodeSchema } from './domain-error.js';
 import { hasOpenChildrenError } from './has-open-children.error.js';
+import { versionMismatchError } from './version-mismatch.error.js';
 
 describe('DomainErrorCodeSchema', () => {
   it('includes ALREADY_CLAIMED', () => {

@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { MilestoneStatusSchema, type MilestoneStatus } from '../value-objects/milestone-status.js';
+import { type MilestoneStatus, MilestoneStatusSchema } from '../value-objects/milestone-status.js';
 
-export { MilestoneStatusSchema, type MilestoneStatus };
+export { type MilestoneStatus, MilestoneStatusSchema };
 
 export const MilestoneSchema = z.object({
   id: z.string().min(1),

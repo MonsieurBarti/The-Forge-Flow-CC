@@ -1,12 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import type { ProjectStore } from './project-store.port.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { isOk } from '../result.js';
 import type { DatabaseInit } from './database-init.port.js';
-import { isOk, isErr } from '../result.js';
+import type { ProjectStore } from './project-store.port.js';
 
-export const runProjectStoreContractTests = (
-  name: string,
-  createAdapter: () => ProjectStore & DatabaseInit,
-) => {
+export const runProjectStoreContractTests = (name: string, createAdapter: () => ProjectStore & DatabaseInit) => {
   describe(`ProjectStore contract [${name}]`, () => {
     let store: ProjectStore & DatabaseInit;
     beforeEach(() => {

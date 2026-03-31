@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { ProjectPropsSchema } from './project-props.js';
-import { MilestonePropsSchema } from './milestone-props.js';
-import { SlicePropsSchema } from './slice-props.js';
-import { TaskPropsSchema } from './task-props.js';
 import { DependencySchema } from './dependency.js';
-import { WorkflowSessionSchema } from './workflow-session.js';
-import { MilestoneUpdatePropsSchema } from './milestone-update-props.js';
-import { SliceUpdatePropsSchema } from './slice-update-props.js';
-import { TaskUpdatePropsSchema } from './task-update-props.js';
+import { MilestonePropsSchema } from './milestone-props.js';
 import { MilestoneStatusSchema } from './milestone-status.js';
+import { MilestoneUpdatePropsSchema } from './milestone-update-props.js';
+import { ProjectPropsSchema } from './project-props.js';
+import { SlicePropsSchema } from './slice-props.js';
+import { SliceUpdatePropsSchema } from './slice-update-props.js';
+import { TaskPropsSchema } from './task-props.js';
+import { TaskUpdatePropsSchema } from './task-update-props.js';
+import { WorkflowSessionSchema } from './workflow-session.js';
 
 describe('MilestoneStatus (extracted)', () => {
   it('accepts valid statuses', () => {
@@ -53,7 +53,9 @@ describe('SliceProps', () => {
     expect(SlicePropsSchema.safeParse({ milestoneId: 'M01', number: 1, title: 'Slice' }).success).toBe(true);
   });
   it('tier is optional', () => {
-    expect(SlicePropsSchema.safeParse({ milestoneId: 'M01', number: 1, title: 'S', tier: 'F-lite' }).success).toBe(true);
+    expect(SlicePropsSchema.safeParse({ milestoneId: 'M01', number: 1, title: 'S', tier: 'F-lite' }).success).toBe(
+      true,
+    );
   });
 });
 

@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { isErr, isOk } from '../result.js';
+import type { DatabaseInit } from './database-init.port.js';
 import type { MilestoneStore } from './milestone-store.port.js';
 import type { ProjectStore } from './project-store.port.js';
 import type { SliceStore } from './slice-store.port.js';
-import type { DatabaseInit } from './database-init.port.js';
-import { isOk, isErr } from '../result.js';
 
 export const runMilestoneStoreContractTests = (
   name: string,
