@@ -1,22 +1,22 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createSlice } from '../../domain/entities/slice.js';
 import { isErr, isOk } from '../../domain/result.js';
-import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { InMemoryStateAdapter } from '../../infrastructure/testing/in-memory-state-adapter.js';
 import { transitionSliceUseCase } from './transition-slice.js';
 
 describe('transitionSliceUseCase', () => {
-  let beadStore: InMemoryBeadStore;
+  let adapter: InMemoryStateAdapter;
 
   beforeEach(() => {
-    beadStore = new InMemoryBeadStore();
+    adapter = new InMemoryStateAdapter();
+    adapter.saveProject({ name: 'Test', vision: 'v' });
+    adapter.createMilestone({ number: 1, name: 'MVP' });
+    adapter.createSlice({ milestoneId: 'M01', number: 1, title: 'Auth' });
   });
 
-  it('should transition slice and update bead status', async () => {
-    const slice = createSlice({ milestoneId: crypto.randomUUID(), title: 'Auth', milestoneNumber: 1, sliceNumber: 1 });
-    beadStore.seed([{ id: 'bead-1', label: 'tff:slice', title: 'Auth', status: 'discussing' }]);
+  it('should transition slice and update store status', async () => {
     const result = await transitionSliceUseCase(
-      { slice, beadId: 'bead-1', targetStatus: 'researching' },
-      { beadStore },
+      { sliceId: 'M01-S01', targetStatus: 'researching' },
+      { sliceStore: adapter },
     );
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
@@ -26,8 +26,10 @@ describe('transitionSliceUseCase', () => {
   });
 
   it('should reject invalid transition', async () => {
-    const slice = createSlice({ milestoneId: crypto.randomUUID(), title: 'Auth', milestoneNumber: 1, sliceNumber: 1 });
-    const result = await transitionSliceUseCase({ slice, beadId: 'bead-1', targetStatus: 'executing' }, { beadStore });
+    const result = await transitionSliceUseCase(
+      { sliceId: 'M01-S01', targetStatus: 'executing' },
+      { sliceStore: adapter },
+    );
     expect(isErr(result)).toBe(true);
     if (isErr(result)) expect(result.error.code).toBe('INVALID_TRANSITION');
   });

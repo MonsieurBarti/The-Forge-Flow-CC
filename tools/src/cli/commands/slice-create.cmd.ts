@@ -1,7 +1,7 @@
 import { createSliceUseCase } from '../../application/slice/create-slice.js';
 import { isOk } from '../../domain/result.js';
-import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
+import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 
 export const sliceCreateCmd = async (args: string[]): Promise<string> => {
   // Parse --title flag or fall back to positional arg
@@ -28,11 +28,11 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
     });
   }
 
-  const { store: beadStore } = await createBeadAdapter();
+  const { milestoneStore, sliceStore } = createStateStores();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
 
   // Auto-detect active milestone (most recent open one)
-  const milestonesResult = await beadStore.list({ label: 'tff:milestone' });
+  const milestonesResult = milestoneStore.listMilestones();
   if (!isOk(milestonesResult) || milestonesResult.data.length === 0) {
     return JSON.stringify({
       ok: false,
@@ -41,31 +41,13 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
   }
   // Use the last open milestone, or the last one if none are open
   const openMilestones = milestonesResult.data.filter((m) => m.status !== 'closed');
-  const milestone = openMilestones.length > 0 ? openMilestones[0] : milestonesResult.data[0];
-  const milestoneBeadId = milestone.id;
+  const milestone =
+    openMilestones.length > 0
+      ? openMilestones[openMilestones.length - 1]
+      : milestonesResult.data[milestonesResult.data.length - 1];
+  const milestoneId = milestone.id;
 
-  // Detect milestone number from design field (e.g., "Milestone M02: ..." → 2)
-  const milestoneMatch = milestone.design?.match(/M(\d+)/);
-  const milestoneNumber = milestoneMatch ? parseInt(milestoneMatch[1], 10) : 1;
-
-  // Auto-number slice: find highest existing slice number and increment from there
-  const slicesResult = await beadStore.list({ label: 'tff:slice', parentId: milestoneBeadId, includeAll: true });
-  let maxSliceNumber = 0;
-  if (isOk(slicesResult)) {
-    for (const s of slicesResult.data) {
-      const match = s.design?.match(/Slice M\d+-S(\d+)/);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxSliceNumber) maxSliceNumber = num;
-      }
-    }
-  }
-  const sliceNumber = maxSliceNumber + 1;
-
-  const result = await createSliceUseCase(
-    { milestoneBeadId, title: name, milestoneNumber, sliceNumber },
-    { beadStore, artifactStore },
-  );
+  const result = await createSliceUseCase({ milestoneId, title: name }, { milestoneStore, sliceStore, artifactStore });
 
   if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
   return JSON.stringify({ ok: false, error: result.error });

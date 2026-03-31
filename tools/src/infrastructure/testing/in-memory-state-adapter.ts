@@ -13,6 +13,7 @@ import type { DatabaseInit } from '../../domain/ports/database-init.port.js';
 import type { DependencyStore } from '../../domain/ports/dependency-store.port.js';
 import type { MilestoneStore } from '../../domain/ports/milestone-store.port.js';
 import type { ProjectStore } from '../../domain/ports/project-store.port.js';
+import type { ReviewStore } from '../../domain/ports/review-store.port.js';
 import type { SessionStore } from '../../domain/ports/session-store.port.js';
 import type { SliceStore } from '../../domain/ports/slice-store.port.js';
 import type { TaskStore } from '../../domain/ports/task-store.port.js';
@@ -21,6 +22,7 @@ import type { Dependency } from '../../domain/value-objects/dependency.js';
 import type { MilestoneProps } from '../../domain/value-objects/milestone-props.js';
 import type { MilestoneUpdateProps } from '../../domain/value-objects/milestone-update-props.js';
 import type { ProjectProps } from '../../domain/value-objects/project-props.js';
+import type { ReviewRecord, ReviewType } from '../../domain/value-objects/review-record.js';
 import type { SliceProps } from '../../domain/value-objects/slice-props.js';
 import type { SliceStatus } from '../../domain/value-objects/slice-status.js';
 import type { SliceUpdateProps } from '../../domain/value-objects/slice-update-props.js';
@@ -29,7 +31,15 @@ import type { TaskUpdateProps } from '../../domain/value-objects/task-update-pro
 import type { WorkflowSession } from '../../domain/value-objects/workflow-session.js';
 
 export class InMemoryStateAdapter
-  implements DatabaseInit, ProjectStore, MilestoneStore, SliceStore, TaskStore, DependencyStore, SessionStore
+  implements
+    DatabaseInit,
+    ProjectStore,
+    MilestoneStore,
+    SliceStore,
+    TaskStore,
+    DependencyStore,
+    SessionStore,
+    ReviewStore
 {
   private project: Project | null = null;
   private milestones = new Map<string, Milestone>();
@@ -37,6 +47,7 @@ export class InMemoryStateAdapter
   private tasks = new Map<string, Task>();
   public dependencies: Array<{ fromId: string; toId: string; type: string }> = [];
   private session: WorkflowSession | null = null;
+  private reviews: ReviewRecord[] = [];
 
   init(): Result<void, DomainError> {
     return Ok(undefined);
@@ -190,15 +201,29 @@ export class InMemoryStateAdapter
     return Ok(undefined);
   }
 
-  claimTask(id: string): Result<void, DomainError> {
+  claimTask(id: string, claimedBy?: string): Result<void, DomainError> {
     const task = this.tasks.get(id);
     if (!task || task.status !== 'open') {
       return Err(alreadyClaimedError(id));
     }
     task.status = 'in_progress';
     task.claimedAt = new Date();
+    if (claimedBy !== undefined) {
+      task.claimedBy = claimedBy;
+    }
     this.tasks.set(id, task);
     return Ok(undefined);
+  }
+
+  getExecutorsForSlice(sliceId: string): Result<string[], DomainError> {
+    const executors = [
+      ...new Set(
+        [...this.tasks.values()]
+          .filter((t) => t.sliceId === sliceId && t.claimedBy !== undefined)
+          .map((t) => t.claimedBy as string),
+      ),
+    ];
+    return Ok(executors);
   }
 
   closeTask(id: string, reason?: string): Result<void, DomainError> {
@@ -260,5 +285,50 @@ export class InMemoryStateAdapter
   saveSession(session: WorkflowSession): Result<void, DomainError> {
     this.session = session;
     return Ok(undefined);
+  }
+
+  // ReviewStore
+  recordReview(review: ReviewRecord): Result<void, DomainError> {
+    this.reviews.push(review);
+    return Ok(undefined);
+  }
+
+  getLatestReview(sliceId: string, type: ReviewType): Result<ReviewRecord | null, DomainError> {
+    const matching = this.reviews
+      .filter((r) => r.sliceId === sliceId && r.type === type)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return Ok(matching[0] ?? null);
+  }
+
+  listReviews(sliceId: string): Result<ReviewRecord[], DomainError> {
+    return Ok(this.reviews.filter((r) => r.sliceId === sliceId));
+  }
+
+  // Test helpers
+  seedReviews(reviews: ReviewRecord[]): void {
+    this.reviews.push(...reviews);
+  }
+
+  seedExecutors(sliceId: string, agents: string[]): void {
+    agents.forEach((agent, idx) => {
+      const id = `${sliceId}-executor-seed-${idx}`;
+      const existing = this.tasks.get(id);
+      if (existing) {
+        existing.claimedBy = agent;
+        this.tasks.set(id, existing);
+      } else {
+        const task: Task = {
+          id,
+          sliceId,
+          number: 9000 + idx,
+          title: `__seed_executor_${agent}`,
+          status: 'in_progress',
+          claimedBy: agent,
+          claimedAt: new Date(),
+          createdAt: new Date(),
+        };
+        this.tasks.set(id, task);
+      }
+    });
   }
 }

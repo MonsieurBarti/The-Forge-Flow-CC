@@ -1,20 +1,42 @@
 import { recordReviewUseCase } from '../../application/review/record-review.js';
 import { isOk } from '../../domain/result.js';
-import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
-import { ReviewMetadataAdapter } from '../../infrastructure/adapters/review/review-metadata.adapter.js';
+import { ReviewTypeSchema } from '../../domain/value-objects/review-record.js';
+import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 
 export const reviewRecordCmd = async (args: string[]): Promise<string> => {
-  const [sliceId, agent, status] = args;
-  if (!sliceId || !agent || !status) {
+  const [sliceId, agent, verdict, type, commitSha] = args;
+  if (!sliceId || !agent || !verdict || !type || !commitSha) {
     return JSON.stringify({
       ok: false,
-      error: { code: 'INVALID_ARGS', message: 'Usage: review:record <slice-id> <agent> <approved|changes_requested>' },
+      error: {
+        code: 'INVALID_ARGS',
+        message: 'Usage: review:record <slice-id> <agent> <verdict> <type> <commit-sha>',
+      },
     });
   }
-  const { store: beadStore } = await createBeadAdapter();
-  const reviewStore = new ReviewMetadataAdapter(beadStore);
+  const parsedType = ReviewTypeSchema.safeParse(type);
+  if (!parsedType.success) {
+    return JSON.stringify({
+      ok: false,
+      error: { code: 'INVALID_ARGS', message: `Invalid type "${type}". Must be: code, security, spec` },
+    });
+  }
+  const validVerdicts = ['approved', 'changes_requested'];
+  if (!validVerdicts.includes(verdict)) {
+    return JSON.stringify({
+      ok: false,
+      error: { code: 'INVALID_ARGS', message: `Invalid verdict "${verdict}". Must be: approved, changes_requested` },
+    });
+  }
+  const { reviewStore } = createStateStores();
   const result = await recordReviewUseCase(
-    { sliceId, reviewerAgent: agent, status: status as 'approved' | 'changes_requested' },
+    {
+      sliceId,
+      reviewer: agent,
+      verdict: verdict as 'approved' | 'changes_requested',
+      type: parsedType.data,
+      commitSha,
+    },
     { reviewStore },
   );
   if (isOk(result)) return JSON.stringify({ ok: true, data: null });

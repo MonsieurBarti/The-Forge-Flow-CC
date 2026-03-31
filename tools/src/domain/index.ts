@@ -36,7 +36,7 @@ export type { MilestoneStore } from './ports/milestone-store.port.js';
 // Observation store port
 export type { ObservationStore } from './ports/observation-store.port.js';
 export type { ProjectStore } from './ports/project-store.port.js';
-export type { ReviewRecord, ReviewStore } from './ports/review-store.port.js';
+export type { ReviewStore } from './ports/review-store.port.js';
 export type { SessionStore } from './ports/session-store.port.js';
 export type { SliceStore } from './ports/slice-store.port.js';
 export type { TaskStore } from './ports/task-store.port.js';
@@ -66,6 +66,8 @@ export type { Pattern } from './value-objects/pattern.js';
 export { PatternSchema } from './value-objects/pattern.js';
 export type { ProjectProps } from './value-objects/project-props.js';
 export { ProjectPropsSchema } from './value-objects/project-props.js';
+export type { ReviewRecord, ReviewType } from './value-objects/review-record.js';
+export { ReviewRecordSchema, ReviewTypeSchema } from './value-objects/review-record.js';
 export type { SliceProps } from './value-objects/slice-props.js';
 export { SlicePropsSchema } from './value-objects/slice-props.js';
 export type { SliceStatus } from './value-objects/slice-status.js';

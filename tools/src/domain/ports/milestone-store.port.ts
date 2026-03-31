@@ -1,6 +1,5 @@
 import type { Milestone } from '../entities/milestone.js';
 import type { DomainError } from '../errors/domain-error.js';
-import type { DomainEvent } from '../events/domain-event.js';
 import type { Result } from '../result.js';
 import type { MilestoneProps } from '../value-objects/milestone-props.js';
 import type { MilestoneUpdateProps } from '../value-objects/milestone-update-props.js';

@@ -11,15 +11,13 @@ import { patternsRankCmd } from './commands/patterns-rank.cmd.js';
 import { projectGetCmd } from './commands/project-get.cmd.js';
 import { projectInitCmd } from './commands/project-init.cmd.js';
 import { reviewCheckFreshCmd } from './commands/review-check-fresh.cmd.js';
+import { reviewRecordCmd } from './commands/review-record.cmd.js';
 import { skillsDriftCmd } from './commands/skills-drift.cmd.js';
 import { skillsValidateCmd } from './commands/skills-validate.cmd.js';
 import { sliceClassifyCmd } from './commands/slice-classify.cmd.js';
 import { sliceCreateCmd } from './commands/slice-create.cmd.js';
 import { sliceTransitionCmd } from './commands/slice-transition.cmd.js';
-import { snapshotLoadCmd } from './commands/snapshot-load.cmd.js';
 import { snapshotMergeCmd } from './commands/snapshot-merge.cmd.js';
-import { snapshotSaveCmd } from './commands/snapshot-save.cmd.js';
-import { syncReconcileCmd } from './commands/sync-reconcile.cmd.js';
 import { syncStateCmd } from './commands/sync-state.cmd.js';
 import { wavesDetectCmd } from './commands/waves-detect.cmd.js';
 import { workflowNextCmd } from './commands/workflow-next.cmd.js';
@@ -40,11 +38,11 @@ const commands: Record<string, CommandFn> = {
   'slice:classify': sliceClassifyCmd,
   'waves:detect': wavesDetectCmd,
   'sync:state': syncStateCmd,
-  'sync:reconcile': syncReconcileCmd,
   'worktree:create': worktreeCreateCmd,
   'worktree:delete': worktreeDeleteCmd,
   'worktree:list': worktreeListCmd,
   'review:check-fresh': reviewCheckFreshCmd,
+  'review:record': reviewRecordCmd,
   'checkpoint:save': checkpointSaveCmd,
   'checkpoint:load': checkpointLoadCmd,
   'observe:record': observeRecordCmd,
@@ -56,8 +54,6 @@ const commands: Record<string, CommandFn> = {
   'skills:validate': skillsValidateCmd,
   'workflow:next': workflowNextCmd,
   'workflow:should-auto': workflowShouldAutoCmd,
-  'snapshot:save': snapshotSaveCmd,
-  'snapshot:load': snapshotLoadCmd,
   'snapshot:merge': snapshotMergeCmd,
   'claim:check-stale': claimCheckStaleCmd,
 };
