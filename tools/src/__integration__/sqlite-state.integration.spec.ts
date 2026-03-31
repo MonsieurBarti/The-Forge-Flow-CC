@@ -65,6 +65,17 @@ describe('SQLite integration', () => {
     expect(tableNames).toContain('schema_version');
   });
 
+  it('init() returns VERSION_MISMATCH when db schema is ahead of code', () => {
+    const db = (adapter as any).db as Database.Database;
+    db.prepare("UPDATE schema_version SET version = 999").run();
+    const freshAdapter = SQLiteStateAdapter.createInMemory();
+    // Reuse same underlying db by creating adapter with the existing db
+    const adapterWithFutureSchema = new (SQLiteStateAdapter as any)(db);
+    const result = adapterWithFutureSchema.init();
+    expect(isErr(result)).toBe(true);
+    if (isErr(result)) expect(result.error.code).toBe('VERSION_MISMATCH');
+  });
+
   it('closeMilestone with open slices returns HAS_OPEN_CHILDREN', () => {
     adapter.saveProject({ name: 'P' });
     adapter.createMilestone({ number: 1, name: 'M' });

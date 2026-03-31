@@ -9,6 +9,7 @@ import type { DomainError } from '../../../domain/errors/domain-error.js';
 import { createDomainError } from '../../../domain/errors/domain-error.js';
 import { hasOpenChildrenError } from '../../../domain/errors/has-open-children.error.js';
 import { alreadyClaimedError } from '../../../domain/errors/already-claimed.error.js';
+import { versionMismatchError } from '../../../domain/errors/version-mismatch.error.js';
 import { Ok, Err, type Result } from '../../../domain/result.js';
 import type { ProjectProps } from '../../../domain/value-objects/project-props.js';
 import type { MilestoneProps } from '../../../domain/value-objects/milestone-props.js';
@@ -49,7 +50,13 @@ export class SQLiteStateAdapter implements DatabaseInit, ProjectStore, Milestone
       runMigrations(this.db);
       return Ok(undefined);
     } catch (e) {
-      return Err(createDomainError('WRITE_FAILURE', `Migration failed: ${e}`));
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes('VERSION_MISMATCH')) {
+        const dbVer = Number(msg.match(/version (\d+)/)?.[1] ?? 0);
+        const codeVer = Number(msg.match(/code version (\d+)/)?.[1] ?? 0);
+        return Err(versionMismatchError(dbVer, codeVer));
+      }
+      return Err(createDomainError('WRITE_FAILURE', `Migration failed: ${msg}`));
     }
   }
 
