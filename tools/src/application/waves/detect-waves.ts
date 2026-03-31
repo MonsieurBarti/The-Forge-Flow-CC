@@ -1,4 +1,6 @@
 import { createDomainError, type DomainError } from '../../domain/errors/domain-error.js';
+import type { DependencyStore } from '../../domain/ports/dependency-store.port.js';
+import type { TaskStore } from '../../domain/ports/task-store.port.js';
 import { Err, Ok, type Result } from '../../domain/result.js';
 import type { Wave } from '../../domain/value-objects/wave.js';
 
@@ -65,4 +67,22 @@ export const detectWaves = (tasks: TaskDep[]): Result<Wave[], DomainError> => {
     );
   }
   return Ok(waves);
+};
+
+export const detectWavesFromStores = (
+  deps: { taskStore: TaskStore; dependencyStore: DependencyStore },
+  sliceId: string,
+): Result<Wave[], DomainError> => {
+  const tasksResult = deps.taskStore.listTasks(sliceId);
+  if (!tasksResult.ok) return tasksResult;
+
+  const taskDeps: TaskDep[] = tasksResult.data.map((task) => {
+    const depsResult = deps.dependencyStore.getDependencies(task.id);
+    const outbound = depsResult.ok
+      ? depsResult.data.filter((d) => d.fromId === task.id).map((d) => d.toId)
+      : [];
+    return { id: task.id, dependsOn: outbound };
+  });
+
+  return detectWaves(taskDeps);
 };

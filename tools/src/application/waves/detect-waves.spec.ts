@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isErr, isOk } from '../../domain/result.js';
-import { detectWaves } from './detect-waves.js';
+import { InMemoryStateAdapter } from '../../infrastructure/testing/in-memory-state-adapter.js';
+import { detectWaves, detectWavesFromStores } from './detect-waves.js';
 
 describe('detectWaves', () => {
   it('should put independent tasks in wave 0', () => {
@@ -74,6 +75,48 @@ describe('detectWaves', () => {
 
   it('should handle empty input', () => {
     const result = detectWaves([]);
+    expect(isOk(result)).toBe(true);
+    if (isOk(result)) expect(result.data).toHaveLength(0);
+  });
+});
+
+describe('detectWavesFromStores', () => {
+  it('loads tasks and deps from stores and delegates to detectWaves', () => {
+    const adapter = new InMemoryStateAdapter();
+    adapter.init();
+    adapter.saveProject({ name: 'Test' });
+    adapter.createMilestone({ number: 1, name: 'M1' });
+    adapter.createSlice({ milestoneId: 'M01', number: 1, title: 'S1' });
+    adapter.createTask({ sliceId: 'M01-S01', number: 1, title: 'Foundation' });
+    adapter.createTask({ sliceId: 'M01-S01', number: 2, title: 'Build', wave: 1 });
+    adapter.createTask({ sliceId: 'M01-S01', number: 3, title: 'Test', wave: 1 });
+    adapter.addDependency('M01-S01-T02', 'M01-S01-T01', 'blocks');
+    adapter.addDependency('M01-S01-T03', 'M01-S01-T01', 'blocks');
+
+    const result = detectWavesFromStores(
+      { taskStore: adapter, dependencyStore: adapter },
+      'M01-S01'
+    );
+
+    expect(isOk(result)).toBe(true);
+    if (isOk(result)) {
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].taskIds).toEqual(['M01-S01-T01']);
+      expect(result.data[1].taskIds).toEqual(['M01-S01-T02', 'M01-S01-T03']);
+    }
+  });
+
+  it('returns empty waves for slice with no tasks', () => {
+    const adapter = new InMemoryStateAdapter();
+    adapter.init();
+    adapter.saveProject({ name: 'Test' });
+    adapter.createMilestone({ number: 1, name: 'M1' });
+    adapter.createSlice({ milestoneId: 'M01', number: 1, title: 'S1' });
+
+    const result = detectWavesFromStores(
+      { taskStore: adapter, dependencyStore: adapter },
+      'M01-S01'
+    );
     expect(isOk(result)).toBe(true);
     if (isOk(result)) expect(result.data).toHaveLength(0);
   });
