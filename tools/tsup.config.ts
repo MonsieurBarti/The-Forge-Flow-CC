@@ -7,5 +7,6 @@ export default defineConfig({
   target: 'node20',
   clean: true,
   noExternal: [/(.*)/],
+  external: ['better-sqlite3'],
   banner: { js: '#!/usr/bin/env node' },
 });
