@@ -15,21 +15,21 @@ describe('createSliceUseCase', () => {
 
   it('should create a slice with bead and markdown', async () => {
     const result = await createSliceUseCase(
-      { milestoneBeadId: '00000000-0000-4000-8000-000000000002', name: 'Auth', milestoneNumber: 1, sliceNumber: 1 },
+      { milestoneBeadId: '00000000-0000-4000-8000-000000000002', title: 'Auth', milestoneNumber: 1, sliceNumber: 1 },
       { beadStore, artifactStore },
     );
 
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
-      expect(result.data.slice.name).toBe('Auth');
-      expect(result.data.slice.sliceId).toBe('M01-S01');
+      expect(result.data.slice.title).toBe('Auth');
+      expect(result.data.slice.id).toBe('M01-S01');
       expect(result.data.slice.status).toBe('discussing');
     }
   });
 
   it('should create slice directory', async () => {
     await createSliceUseCase(
-      { milestoneBeadId: '00000000-0000-4000-8000-000000000002', name: 'Auth', milestoneNumber: 1, sliceNumber: 1 },
+      { milestoneBeadId: '00000000-0000-4000-8000-000000000002', title: 'Auth', milestoneNumber: 1, sliceNumber: 1 },
       { beadStore, artifactStore },
     );
 

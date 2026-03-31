@@ -6,7 +6,7 @@ import { isOk, Ok, type Result } from '../../domain/result.js';
 
 interface CreateSliceInput {
   milestoneBeadId: string;
-  name: string;
+  title: string;
   milestoneNumber: number;
   sliceNumber: number;
 }
@@ -27,26 +27,26 @@ export const createSliceUseCase = async (
 ): Promise<Result<CreateSliceOutput, DomainError>> => {
   const slice = createSlice({
     milestoneId: input.milestoneBeadId,
-    name: input.name,
+    title: input.title,
     milestoneNumber: input.milestoneNumber,
     sliceNumber: input.sliceNumber,
   });
 
   const beadResult = await deps.beadStore.create({
     label: 'tff:slice',
-    title: input.name,
-    design: `Slice ${slice.sliceId}: ${input.name}`,
+    title: input.title,
+    design: `Slice ${slice.id}: ${input.title}`,
     parentId: input.milestoneBeadId,
   });
   if (!isOk(beadResult)) return beadResult;
 
   // Create slice directory with stub PLAN.md
   const milestoneDir = `.tff/milestones/M${String(input.milestoneNumber).padStart(2, '0')}`;
-  const sliceDir = `${milestoneDir}/slices/${slice.sliceId}`;
+  const sliceDir = `${milestoneDir}/slices/${slice.id}`;
   await deps.artifactStore.mkdir(sliceDir);
   await deps.artifactStore.write(
     `${sliceDir}/PLAN.md`,
-    `# Plan — ${slice.sliceId}: ${input.name}\n\n_Plan will be defined during /tff:plan._\n`,
+    `# Plan — ${slice.id}: ${input.title}\n\n_Plan will be defined during /tff:plan._\n`,
   );
 
   return Ok({ slice, beadId: beadResult.data.id });
