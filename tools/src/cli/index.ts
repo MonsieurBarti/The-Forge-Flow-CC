@@ -11,6 +11,7 @@ import { patternsRankCmd } from './commands/patterns-rank.cmd.js';
 import { projectGetCmd } from './commands/project-get.cmd.js';
 import { projectInitCmd } from './commands/project-init.cmd.js';
 import { reviewCheckFreshCmd } from './commands/review-check-fresh.cmd.js';
+import { reviewRecordCmd } from './commands/review-record.cmd.js';
 import { skillsDriftCmd } from './commands/skills-drift.cmd.js';
 import { skillsValidateCmd } from './commands/skills-validate.cmd.js';
 import { sliceClassifyCmd } from './commands/slice-classify.cmd.js';
@@ -41,6 +42,7 @@ const commands: Record<string, CommandFn> = {
   'worktree:delete': worktreeDeleteCmd,
   'worktree:list': worktreeListCmd,
   'review:check-fresh': reviewCheckFreshCmd,
+  'review:record': reviewRecordCmd,
   'checkpoint:save': checkpointSaveCmd,
   'checkpoint:load': checkpointLoadCmd,
   'observe:record': observeRecordCmd,

@@ -1,6 +1,6 @@
 import { checkStaleClaims } from '../../application/claims/check-stale-claims.js';
 import { isOk } from '../../domain/result.js';
-import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
+import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 
 export const claimCheckStaleCmd = async (args: string[]): Promise<string> => {
   const ttlMinutes = args[0] ? parseInt(args[0], 10) : 30;
@@ -10,17 +10,16 @@ export const claimCheckStaleCmd = async (args: string[]): Promise<string> => {
       error: { code: 'INVALID_ARGS', message: 'Usage: claim:check-stale [ttl-minutes]' },
     });
   }
-  const { store: beadStore } = await createBeadAdapter();
-  const result = await checkStaleClaims({ ttlMinutes }, { beadStore });
+  const { taskStore } = createStateStores();
+  const result = await checkStaleClaims({ ttlMinutes }, { taskStore });
   if (isOk(result)) {
     return JSON.stringify({
       ok: true,
       data: {
-        staleClaims: result.data.staleClaims.map((b) => ({
-          id: b.id,
-          title: b.title,
-          claimedAt: b.claimedAt,
-          label: b.label,
+        staleClaims: result.data.staleClaims.map((t) => ({
+          id: t.id,
+          title: t.title,
+          claimedAt: t.claimedAt,
         })),
         count: result.data.staleClaims.length,
       },
