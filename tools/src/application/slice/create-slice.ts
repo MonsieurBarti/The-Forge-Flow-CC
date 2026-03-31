@@ -1,9 +1,9 @@
 import type { Slice } from '../../domain/entities/slice.js';
-import type { DomainError } from '../../domain/errors/domain-error.js';
+import { createDomainError, type DomainError } from '../../domain/errors/domain-error.js';
 import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
 import type { MilestoneStore } from '../../domain/ports/milestone-store.port.js';
 import type { SliceStore } from '../../domain/ports/slice-store.port.js';
-import { isOk, Ok, type Result } from '../../domain/result.js';
+import { Err, isOk, Ok, type Result } from '../../domain/result.js';
 
 interface CreateSliceInput {
   milestoneId: string;
@@ -28,7 +28,7 @@ export const createSliceUseCase = async (
   if (!isOk(milestoneResult)) return milestoneResult;
   const milestone = milestoneResult.data;
   if (!milestone) {
-    return { ok: false, error: { code: 'NOT_FOUND', message: `Milestone "${input.milestoneId}" not found` } };
+    return Err(createDomainError('NOT_FOUND', `Milestone "${input.milestoneId}" not found`));
   }
 
   const existingSlicesResult = deps.sliceStore.listSlices(input.milestoneId);

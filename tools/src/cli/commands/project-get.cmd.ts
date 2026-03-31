@@ -5,6 +5,11 @@ import { createStateStores } from '../../infrastructure/adapters/sqlite/create-s
 export const projectGetCmd = async (_args: string[]): Promise<string> => {
   const { projectStore } = createStateStores();
   const result = await getProject({ projectStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  if (isOk(result)) {
+    if (result.data === null) {
+      return JSON.stringify({ ok: false, error: { code: 'NOT_FOUND', message: 'No tff project found. Run /tff:new first.' } });
+    }
+    return JSON.stringify({ ok: true, data: result.data });
+  }
   return JSON.stringify({ ok: false, error: result.error });
 };

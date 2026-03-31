@@ -22,6 +22,7 @@ describe('generateState', () => {
     adapter.transitionSlice('M01-S01', 'planning');
     adapter.transitionSlice('M01-S01', 'executing');
     adapter.transitionSlice('M01-S01', 'reviewing');
+    adapter.transitionSlice('M01-S01', 'completing');
     adapter.transitionSlice('M01-S01', 'closed');
     adapter.transitionSlice('M01-S02', 'researching');
     adapter.transitionSlice('M01-S02', 'planning');

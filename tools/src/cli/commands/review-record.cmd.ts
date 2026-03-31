@@ -1,6 +1,6 @@
 import { recordReviewUseCase } from '../../application/review/record-review.js';
 import { isOk } from '../../domain/result.js';
-import type { ReviewType } from '../../domain/value-objects/review-record.js';
+import { ReviewTypeSchema } from '../../domain/value-objects/review-record.js';
 import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 
 export const reviewRecordCmd = async (args: string[]): Promise<string> => {
@@ -14,13 +14,21 @@ export const reviewRecordCmd = async (args: string[]): Promise<string> => {
       },
     });
   }
+  const parsedType = ReviewTypeSchema.safeParse(type);
+  if (!parsedType.success) {
+    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: `Invalid type "${type}". Must be: code, security, spec` } });
+  }
+  const validVerdicts = ['approved', 'changes_requested'];
+  if (!validVerdicts.includes(verdict)) {
+    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: `Invalid verdict "${verdict}". Must be: approved, changes_requested` } });
+  }
   const { reviewStore } = createStateStores();
   const result = await recordReviewUseCase(
     {
       sliceId,
       reviewer: agent,
       verdict: verdict as 'approved' | 'changes_requested',
-      type: type as ReviewType,
+      type: parsedType.data,
       commitSha,
     },
     { reviewStore },
