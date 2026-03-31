@@ -1,7 +1,11 @@
 import type Database from 'better-sqlite3';
 import { v1Migration } from './migrations/v1.js';
+import { v2Migration } from './migrations/v2.js';
 
-const migrations: Array<{ version: number; sql: string }> = [{ version: 1, sql: v1Migration }];
+const migrations: Array<{ version: number; sql: string }> = [
+  { version: 1, sql: v1Migration },
+  { version: 2, sql: v2Migration },
+];
 
 export const getCurrentVersion = (db: Database.Database): number => {
   try {

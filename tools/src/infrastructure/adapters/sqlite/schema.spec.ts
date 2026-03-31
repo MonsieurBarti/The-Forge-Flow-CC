@@ -14,15 +14,15 @@ describe('schema', () => {
     db.close();
   });
 
-  it('runs v1 migration on fresh db', () => {
+  it('runs migrations on fresh db', () => {
     runMigrations(db);
-    expect(getCurrentVersion(db)).toBe(1);
+    expect(getCurrentVersion(db)).toBe(2);
   });
 
   it('is idempotent', () => {
     runMigrations(db);
     runMigrations(db);
-    expect(getCurrentVersion(db)).toBe(1);
+    expect(getCurrentVersion(db)).toBe(2);
   });
 
   it('enables WAL mode', () => {
@@ -55,11 +55,10 @@ describe('schema', () => {
 
   it('rejects VERSION_MISMATCH when db version > code version', () => {
     runMigrations(db);
-    db.prepare('UPDATE schema_version SET version = 999').run();
-    const db2 = new Database(':memory:');
+    db.prepare('DELETE FROM schema_version').run();
+    db.prepare('INSERT INTO schema_version (version) VALUES (999)').run();
     // Run migrations on the same db — version check should fail
     expect(() => runMigrations(db)).toThrow(/VERSION_MISMATCH|upgrade tff-tools/i);
-    db2.close();
   });
 
   it('creates all expected tables', () => {

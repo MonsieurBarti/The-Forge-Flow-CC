@@ -72,7 +72,8 @@ describe('SQLite integration', () => {
 
   it('init() returns VERSION_MISMATCH when db schema is ahead of code', () => {
     const db = getDb(adapter);
-    db.prepare('UPDATE schema_version SET version = 999').run();
+    db.prepare('DELETE FROM schema_version').run();
+    db.prepare('INSERT INTO schema_version (version) VALUES (999)').run();
     // biome-ignore lint/suspicious/noExplicitAny: constructing adapter with existing db for test
     const adapterWithFutureSchema = new (
       SQLiteStateAdapter as unknown as new (

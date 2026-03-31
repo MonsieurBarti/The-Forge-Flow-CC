@@ -15,6 +15,7 @@ import type { DatabaseInit } from '../../../domain/ports/database-init.port.js';
 import type { DependencyStore } from '../../../domain/ports/dependency-store.port.js';
 import type { MilestoneStore } from '../../../domain/ports/milestone-store.port.js';
 import type { ProjectStore } from '../../../domain/ports/project-store.port.js';
+import type { ReviewStore } from '../../../domain/ports/review-store.port.js';
 import type { SessionStore } from '../../../domain/ports/session-store.port.js';
 import type { SliceStore } from '../../../domain/ports/slice-store.port.js';
 import type { TaskStore } from '../../../domain/ports/task-store.port.js';
@@ -29,10 +30,11 @@ import type { SliceUpdateProps } from '../../../domain/value-objects/slice-updat
 import type { TaskProps } from '../../../domain/value-objects/task-props.js';
 import type { TaskUpdateProps } from '../../../domain/value-objects/task-update-props.js';
 import type { WorkflowSession } from '../../../domain/value-objects/workflow-session.js';
+import type { ReviewRecord, ReviewType } from '../../../domain/value-objects/review-record.js';
 import { runMigrations } from './schema.js';
 
 export class SQLiteStateAdapter
-  implements DatabaseInit, ProjectStore, MilestoneStore, SliceStore, TaskStore, DependencyStore, SessionStore
+  implements DatabaseInit, ProjectStore, MilestoneStore, SliceStore, TaskStore, DependencyStore, SessionStore, ReviewStore
 {
   constructor(private db: Database.Database) {}
 
@@ -356,6 +358,7 @@ export class SQLiteStateAdapter
             status: string;
             wave: number | null;
             claimed_at: string | null;
+            claimed_by: string | null;
             closed_reason: string | null;
             created_at: string;
           }
@@ -378,6 +381,7 @@ export class SQLiteStateAdapter
         status: string;
         wave: number | null;
         claimed_at: string | null;
+        claimed_by: string | null;
         closed_reason: string | null;
         created_at: string;
       }>;
@@ -413,13 +417,19 @@ export class SQLiteStateAdapter
     }
   }
 
-  claimTask(id: string): Result<void, DomainError> {
+  claimTask(id: string, claimedBy?: string): Result<void, DomainError> {
     try {
-      const info = this.db
-        .prepare(
-          "UPDATE task SET status = 'in_progress', claimed_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND status = 'open'",
-        )
-        .run(id);
+      const info = claimedBy !== undefined
+        ? this.db
+            .prepare(
+              "UPDATE task SET status = 'in_progress', claimed_at = datetime('now'), claimed_by = ?, updated_at = datetime('now') WHERE id = ? AND status = 'open'",
+            )
+            .run(claimedBy, id)
+        : this.db
+            .prepare(
+              "UPDATE task SET status = 'in_progress', claimed_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND status = 'open'",
+            )
+            .run(id);
       if (info.changes === 0) {
         return Err(alreadyClaimedError(id));
       }
@@ -462,6 +472,7 @@ export class SQLiteStateAdapter
         status: string;
         wave: number | null;
         claimed_at: string | null;
+        claimed_by: string | null;
         closed_reason: string | null;
         created_at: string;
       }>;
@@ -489,12 +500,24 @@ export class SQLiteStateAdapter
         status: string;
         wave: number | null;
         claimed_at: string | null;
+        claimed_by: string | null;
         closed_reason: string | null;
         created_at: string;
       }>;
       return Ok(rows.map((r) => this.rowToTask(r)));
     } catch (e) {
       return Err(createDomainError('WRITE_FAILURE', `Failed to list stale claims: ${e}`));
+    }
+  }
+
+  getExecutorsForSlice(sliceId: string): Result<string[], DomainError> {
+    try {
+      const rows = this.db
+        .prepare('SELECT DISTINCT claimed_by FROM task WHERE slice_id = ? AND claimed_by IS NOT NULL')
+        .all(sliceId) as Array<{ claimed_by: string }>;
+      return Ok(rows.map((r) => r.claimed_by));
+    } catch (e) {
+      return Err(createDomainError('WRITE_FAILURE', `Failed to get executors for slice: ${e}`));
     }
   }
 
@@ -585,6 +608,72 @@ export class SQLiteStateAdapter
     }
   }
 
+  // ReviewStore
+  recordReview(review: ReviewRecord): Result<void, DomainError> {
+    try {
+      this.db
+        .prepare(
+          `INSERT INTO review (slice_id, type, reviewer, verdict, commit_sha, notes, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .run(
+          review.sliceId,
+          review.type,
+          review.reviewer,
+          review.verdict,
+          review.commitSha,
+          review.notes ?? null,
+          review.createdAt,
+        );
+      return Ok(undefined);
+    } catch (e) {
+      return Err(createDomainError('WRITE_FAILURE', `Failed to record review: ${e}`));
+    }
+  }
+
+  getLatestReview(sliceId: string, type: ReviewType): Result<ReviewRecord | null, DomainError> {
+    try {
+      const row = this.db
+        .prepare(
+          'SELECT * FROM review WHERE slice_id = ? AND type = ? ORDER BY created_at DESC LIMIT 1',
+        )
+        .get(sliceId, type) as
+        | {
+            slice_id: string;
+            type: string;
+            reviewer: string;
+            verdict: string;
+            commit_sha: string;
+            notes: string | null;
+            created_at: string;
+          }
+        | undefined;
+      if (!row) return Ok(null);
+      return Ok(this.rowToReview(row));
+    } catch (e) {
+      return Err(createDomainError('WRITE_FAILURE', `Failed to get latest review: ${e}`));
+    }
+  }
+
+  listReviews(sliceId: string): Result<ReviewRecord[], DomainError> {
+    try {
+      const rows = this.db
+        .prepare('SELECT * FROM review WHERE slice_id = ? ORDER BY created_at')
+        .all(sliceId) as Array<{
+        slice_id: string;
+        type: string;
+        reviewer: string;
+        verdict: string;
+        commit_sha: string;
+        notes: string | null;
+        created_at: string;
+      }>;
+      return Ok(rows.map((r) => this.rowToReview(r)));
+    } catch (e) {
+      return Err(createDomainError('WRITE_FAILURE', `Failed to list reviews: ${e}`));
+    }
+  }
+
   // Helpers
   private rowToSlice(row: {
     id: string;
@@ -615,6 +704,7 @@ export class SQLiteStateAdapter
     status: string;
     wave: number | null;
     claimed_at: string | null;
+    claimed_by: string | null;
     closed_reason: string | null;
     created_at: string;
   }): Task {
@@ -627,6 +717,7 @@ export class SQLiteStateAdapter
       status: row.status as Task['status'],
       wave: row.wave ?? undefined,
       claimedAt: row.claimed_at ? new Date(row.claimed_at) : undefined,
+      claimedBy: row.claimed_by ?? undefined,
       closedReason: row.closed_reason ?? undefined,
       createdAt: new Date(row.created_at),
     };
@@ -649,6 +740,26 @@ export class SQLiteStateAdapter
       status: row.status as Milestone['status'],
       closeReason: row.close_reason ?? undefined,
       createdAt: new Date(row.created_at),
+    };
+  }
+
+  private rowToReview(row: {
+    slice_id: string;
+    type: string;
+    reviewer: string;
+    verdict: string;
+    commit_sha: string;
+    notes: string | null;
+    created_at: string;
+  }): ReviewRecord {
+    return {
+      sliceId: row.slice_id,
+      type: row.type as ReviewType,
+      reviewer: row.reviewer,
+      verdict: row.verdict as ReviewRecord['verdict'],
+      commitSha: row.commit_sha,
+      notes: row.notes ?? undefined,
+      createdAt: row.created_at,
     };
   }
 }
