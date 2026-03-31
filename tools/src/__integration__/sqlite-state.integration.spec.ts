@@ -1,0 +1,76 @@
+import Database from 'better-sqlite3';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { SQLiteStateAdapter } from '../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
+import { isOk, isErr } from '../domain/result.js';
+
+describe('SQLite integration', () => {
+  let adapter: SQLiteStateAdapter;
+
+  beforeEach(() => {
+    adapter = SQLiteStateAdapter.createInMemory();
+    adapter.init();
+  });
+
+  it('FK: task with invalid slice_id fails', () => {
+    adapter.saveProject({ name: 'P' });
+    adapter.createMilestone({ number: 1, name: 'M' });
+    const result = adapter.createTask({ sliceId: 'nonexistent', number: 1, title: 'T' });
+    expect(isErr(result)).toBe(true);
+  });
+
+  it('FK: cannot delete milestone with slices', () => {
+    adapter.saveProject({ name: 'P' });
+    adapter.createMilestone({ number: 1, name: 'M' });
+    adapter.createSlice({ milestoneId: 'M01', number: 1, title: 'S' });
+    // Direct SQL to attempt delete — adapter doesn't expose delete
+    // Access internal db via reflection for integration test
+    const db = (adapter as any).db as Database.Database;
+    expect(() => {
+      db.prepare("DELETE FROM milestone WHERE id = 'M01'").run();
+    }).toThrow();
+  });
+
+  it('CASCADE: deleting task removes dependency edges', () => {
+    adapter.saveProject({ name: 'P' });
+    adapter.createMilestone({ number: 1, name: 'M' });
+    adapter.createSlice({ milestoneId: 'M01', number: 1, title: 'S' });
+    adapter.createTask({ sliceId: 'M01-S01', number: 1, title: 'T1' });
+    adapter.createTask({ sliceId: 'M01-S01', number: 2, title: 'T2' });
+    adapter.addDependency('M01-S01-T01', 'M01-S01-T02', 'blocks');
+
+    const db = (adapter as any).db as Database.Database;
+    db.prepare("DELETE FROM task WHERE id = 'M01-S01-T01'").run();
+    const deps = db.prepare("SELECT * FROM dependency").all();
+    expect(deps).toHaveLength(0);
+  });
+
+  it('singleton: second project insert fails at DB level', () => {
+    adapter.saveProject({ name: 'P1' });
+    const db = (adapter as any).db as Database.Database;
+    expect(() => {
+      db.prepare("INSERT INTO project (id, name) VALUES ('other', 'P2')").run();
+    }).toThrow();
+  });
+
+  it('migration: v1 creates all tables', () => {
+    const db = (adapter as any).db as Database.Database;
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all() as { name: string }[];
+    const tableNames = tables.map(t => t.name);
+    expect(tableNames).toContain('project');
+    expect(tableNames).toContain('milestone');
+    expect(tableNames).toContain('slice');
+    expect(tableNames).toContain('task');
+    expect(tableNames).toContain('dependency');
+    expect(tableNames).toContain('workflow_session');
+    expect(tableNames).toContain('schema_version');
+  });
+
+  it('closeMilestone with open slices returns HAS_OPEN_CHILDREN', () => {
+    adapter.saveProject({ name: 'P' });
+    adapter.createMilestone({ number: 1, name: 'M' });
+    adapter.createSlice({ milestoneId: 'M01', number: 1, title: 'S' });
+    const result = adapter.closeMilestone('M01');
+    expect(isErr(result)).toBe(true);
+    if (isErr(result)) expect(result.error.code).toBe('HAS_OPEN_CHILDREN');
+  });
+});
