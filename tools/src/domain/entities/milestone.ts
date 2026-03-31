@@ -1,7 +1,7 @@
 import { z } from 'zod';
+import { MilestoneStatusSchema, type MilestoneStatus } from '../value-objects/milestone-status.js';
 
-export const MilestoneStatusSchema = z.enum(['open', 'in_progress', 'closed']);
-export type MilestoneStatus = z.infer<typeof MilestoneStatusSchema>;
+export { MilestoneStatusSchema, type MilestoneStatus };
 
 export const MilestoneSchema = z.object({
   id: z.string().min(1),
