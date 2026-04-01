@@ -16,12 +16,12 @@ describe('createStateStores guard', () => {
     mkdirSync(tffDir, { recursive: true });
     dbPath = join(tffDir, 'state.db');
 
-    // Init git repo so execSync('git branch --show-current') works
-    execSync('git init', { cwd: tmpDir, stdio: 'ignore' });
-    execSync('git commit --allow-empty -m "init"', {
-      cwd: tmpDir,
-      stdio: 'ignore',
-    });
+    // Init git repo — strip GIT_* env vars for CI compatibility
+    const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_')));
+    execSync('git init', { cwd: tmpDir, stdio: 'ignore', env });
+    execSync('git config user.email "test@test.com"', { cwd: tmpDir, stdio: 'ignore', env });
+    execSync('git config user.name "Test"', { cwd: tmpDir, stdio: 'ignore', env });
+    execSync('git commit --allow-empty -m "init"', { cwd: tmpDir, stdio: 'ignore', env });
   });
 
   afterEach(() => {

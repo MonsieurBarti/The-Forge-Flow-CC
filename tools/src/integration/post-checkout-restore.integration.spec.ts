@@ -19,11 +19,12 @@ describe('post-checkout restore integration', () => {
     mkdirSync(tmpDir, { recursive: true });
     tffDir = join(tmpDir, '.tff');
     mkdirSync(tffDir, { recursive: true });
-    execSync('git init', { cwd: tmpDir, stdio: 'ignore' });
-    execSync('git commit --allow-empty -m "init"', {
-      cwd: tmpDir,
-      stdio: 'ignore',
-    });
+    // Strip GIT_* env vars for CI compatibility
+    const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_')));
+    execSync('git init', { cwd: tmpDir, stdio: 'ignore', env });
+    execSync('git config user.email "test@test.com"', { cwd: tmpDir, stdio: 'ignore', env });
+    execSync('git config user.name "Test"', { cwd: tmpDir, stdio: 'ignore', env });
+    execSync('git commit --allow-empty -m "init"', { cwd: tmpDir, stdio: 'ignore', env });
   });
 
   afterEach(() => {

@@ -12,7 +12,8 @@ describe('installPostCheckoutHook', () => {
   beforeEach(() => {
     tmpDir = join(os.tmpdir(), `tff-hook-install-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(tmpDir, { recursive: true });
-    execSync('git init', { cwd: tmpDir, stdio: 'ignore' });
+    const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_')));
+    execSync('git init', { cwd: tmpDir, stdio: 'ignore', env });
   });
 
   afterEach(() => {
