@@ -92,8 +92,42 @@ export class GitStateBranchAdapter implements StateBranchPort {
     return this.gitOps.branchExists(this.stateBranch(codeBranch));
   }
 
-  async fork(_codeBranch: string, _parentStateBranch: string): Promise<Result<void, DomainError>> {
-    throw new Error('Not implemented — see T09');
+  async fork(codeBranch: string, parentStateBranch: string): Promise<Result<void, DomainError>> {
+    const parentExistsR = await this.gitOps.branchExists(parentStateBranch);
+    if (!isOk(parentExistsR)) return parentExistsR;
+    if (!parentExistsR.data) {
+      return Err(stateBranchNotFoundError(parentStateBranch));
+    }
+
+    const childBranch = this.stateBranch(codeBranch);
+    const createR = await this.gitOps.createBranch(childBranch, parentStateBranch);
+    if (!isOk(createR)) return createR;
+
+    const tmpPath = this.tmpWorktreePath();
+    mkdirSync(tmpPath, { recursive: true });
+    const wtR = await this.gitOps.checkoutWorktree(tmpPath, childBranch);
+    if (!isOk(wtR)) return wtR;
+
+    try {
+      const meta: BranchMeta = {
+        stateId: randomUUID(),
+        codeBranch,
+        parentStateBranch,
+        createdAt: new Date().toISOString(),
+      };
+
+      this.writeBranchMeta(tmpPath, meta);
+
+      const commitR = await this.gitOps.commit(
+        `chore: fork state branch for ${codeBranch}`,
+        ['branch-meta.json'],
+        tmpPath,
+      );
+      if (!isOk(commitR)) return Err(syncFailedError(`Fork commit failed: ${commitR.error.message}`));
+      return Ok(undefined);
+    } finally {
+      await this.gitOps.deleteWorktree(tmpPath);
+    }
   }
 
   async sync(_codeBranch: string, _message: string): Promise<Result<void, DomainError>> {

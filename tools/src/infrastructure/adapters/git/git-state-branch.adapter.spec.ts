@@ -38,4 +38,18 @@ describe('GitStateBranchAdapter', () => {
       expect(isOk(r) && r.data).toBe(true);
     });
   });
+
+  describe('fork', () => {
+    it('should create child state branch from parent', async () => {
+      await adapter.createRoot();
+      const r = await adapter.fork('milestone/M01', 'tff-state/main');
+      expect(isOk(r)).toBe(true);
+      expect(gitOps.hasBranch('tff-state/milestone/M01')).toBe(true);
+    });
+
+    it('should fail if parent state branch does not exist', async () => {
+      const r = await adapter.fork('milestone/M01', 'tff-state/nonexistent');
+      expect(isOk(r)).toBe(false);
+    });
+  });
 });
