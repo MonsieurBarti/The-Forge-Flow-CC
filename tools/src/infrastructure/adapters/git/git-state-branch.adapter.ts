@@ -161,8 +161,29 @@ export class GitStateBranchAdapter implements StateBranchPort {
     }
   }
 
-  async restore(_codeBranch: string, _targetDir: string): Promise<Result<RestoreResult | null, DomainError>> {
-    throw new Error('Not implemented — see T11');
+  async restore(
+    codeBranch: string,
+    targetDir: string,
+  ): Promise<Result<RestoreResult | null, DomainError>> {
+    const stateBr = this.stateBranch(codeBranch);
+    const existsR = await this.gitOps.branchExists(stateBr);
+    if (!isOk(existsR)) return existsR;
+    if (!existsR.data) return Ok(null);
+
+    const filesR = await this.gitOps.lsTree(stateBr);
+    if (!isOk(filesR)) return filesR;
+
+    let filesRestored = 0;
+    for (const filePath of filesR.data) {
+      const bufR = await this.gitOps.extractFile(stateBr, filePath);
+      if (!isOk(bufR)) continue;
+      const destPath = path.join(targetDir, filePath);
+      mkdirSync(path.dirname(destPath), { recursive: true });
+      writeFileSync(destPath, bufR.data);
+      filesRestored++;
+    }
+
+    return Ok({ filesRestored, schemaVersion: 0 });
   }
 
   async merge(_childBranch: string, _parentBranch: string, _sliceId: string): Promise<Result<MergeResult, DomainError>> {

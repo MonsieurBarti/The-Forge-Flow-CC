@@ -1,3 +1,6 @@
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../../domain/result.js';
 import { InMemoryGitOps } from '../../testing/in-memory-git-ops.js';
@@ -65,6 +68,30 @@ describe('GitStateBranchAdapter', () => {
     it('should fail if state branch does not exist', async () => {
       const r = await adapter.sync('nonexistent', 'test');
       expect(isOk(r)).toBe(false);
+    });
+  });
+
+  describe('restore', () => {
+    it('should return null when state branch does not exist', async () => {
+      const r = await adapter.restore('nonexistent', '/tmp/target');
+      expect(isOk(r) && r.data).toBeNull();
+    });
+
+    it('should restore files from state branch', async () => {
+      await adapter.createRoot();
+      gitOps.setTreeFiles('tff-state/main', ['.tff/PROJECT.md', '.tff/state.db']);
+      gitOps.setFileContent('tff-state/main', '.tff/PROJECT.md', Buffer.from('# Test'));
+      gitOps.setFileContent('tff-state/main', '.tff/state.db', Buffer.from('binary-data'));
+
+      const targetDir = mkdtempSync(path.join(tmpdir(), 'restore-'));
+      const r = await adapter.restore('main', targetDir);
+      expect(isOk(r)).toBe(true);
+      if (isOk(r) && r.data) {
+        expect(r.data.filesRestored).toBe(2);
+        // Verify files actually written to disk
+        expect(readFileSync(path.join(targetDir, '.tff', 'PROJECT.md'), 'utf-8')).toBe('# Test');
+        expect(readFileSync(path.join(targetDir, '.tff', 'state.db'), 'utf-8')).toBe('binary-data');
+      }
     });
   });
 });
