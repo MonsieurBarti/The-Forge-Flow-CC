@@ -20,7 +20,7 @@ export interface StateBranchPort {
   merge(childBranch: string, parentBranch: string, sliceId: string): Promise<Result<MergeResult, DomainError>>;
 
   /** Delete state branch (after successful merge). */
-  deleteBranch(stateBranch: string): Promise<Result<void, DomainError>>;
+  deleteBranch(codeBranch: string): Promise<Result<void, DomainError>>;
 
   /** Check if state branch exists. */
   exists(codeBranch: string): Promise<Result<boolean, DomainError>>;

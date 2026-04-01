@@ -25,7 +25,8 @@ export function mergeStateDbs(
     childDb.close();
 
     // ATTACH child DB and merge owned entities
-    parentDb.exec(`ATTACH DATABASE '${childDbPath}' AS child`);
+    const safePath = childDbPath.replace(/'/g, "''");
+    parentDb.exec(`ATTACH DATABASE '${safePath}' AS child`);
 
     let entitiesMerged = 0;
 

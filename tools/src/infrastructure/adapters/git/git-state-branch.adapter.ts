@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { mergeStateDbs } from '../../../application/state-branch/merge-state-dbs.js';
@@ -166,10 +166,15 @@ export class GitStateBranchAdapter implements StateBranchPort {
     if (!isOk(filesR)) return filesR;
 
     let filesRestored = 0;
+    const resolvedTargetDir = path.resolve(targetDir);
     for (const filePath of filesR.data) {
+      const destPath = path.join(targetDir, filePath);
+      const resolved = path.resolve(destPath);
+      if (!resolved.startsWith(resolvedTargetDir + path.sep) && resolved !== resolvedTargetDir) {
+        continue; // skip path traversal attempt
+      }
       const bufR = await this.gitOps.extractFile(stateBr, filePath);
       if (!isOk(bufR)) continue;
-      const destPath = path.join(targetDir, filePath);
       mkdirSync(path.dirname(destPath), { recursive: true });
       writeFileSync(destPath, bufR.data);
       filesRestored++;
@@ -230,11 +235,16 @@ export class GitStateBranchAdapter implements StateBranchPort {
         const milestoneId = sliceId.split('-')[0]; // "M01"
         const sliceArtifactPrefix = `.tff/milestones/${milestoneId}/slices/${sliceId}/`;
 
+        const resolvedTmpPath = path.resolve(tmpPath);
         for (const filePath of childFilesR.data) {
           if (!filePath.startsWith(sliceArtifactPrefix)) continue;
+          const destPath = path.join(tmpPath, filePath);
+          const resolved = path.resolve(destPath);
+          if (!resolved.startsWith(resolvedTmpPath + path.sep) && resolved !== resolvedTmpPath) {
+            continue; // skip path traversal attempt
+          }
           const bufR = await this.gitOps.extractFile(childStateBr, filePath);
           if (!isOk(bufR)) continue;
-          const destPath = path.join(tmpPath, filePath);
           mkdirSync(path.dirname(destPath), { recursive: true });
           writeFileSync(destPath, bufR.data);
           artifactsCopied++;
@@ -252,6 +262,11 @@ export class GitStateBranchAdapter implements StateBranchPort {
       return Ok({ entitiesMerged: sqlMergeR.data.entitiesMerged, artifactsCopied });
     } finally {
       await this.gitOps.deleteWorktree(tmpPath);
+      try {
+        rmSync(tmpMergeDir, { recursive: true, force: true });
+      } catch {
+        /* best-effort */
+      }
     }
   }
 
