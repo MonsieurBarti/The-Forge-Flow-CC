@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+// Run with InMemory adapter when executed standalone (avoids "No test suite found" error)
+import { InMemoryJournalAdapter } from '../../infrastructure/testing/in-memory-journal.adapter.js';
 import { isOk } from '../result.js';
 import { JournalEntryBuilder } from '../value-objects/journal-entry.builder.js';
 import type { JournalRepository } from './journal-repository.port.js';
@@ -65,3 +67,5 @@ export function runJournalContractTests(name: string, factory: () => JournalRepo
     });
   });
 }
+
+runJournalContractTests('InMemoryJournalAdapter', () => new InMemoryJournalAdapter());
