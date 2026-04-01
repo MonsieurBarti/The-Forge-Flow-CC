@@ -13,8 +13,11 @@ const runGit = async (args: string[], cwd?: string): Promise<Result<string, Doma
   try {
     const { stdout } = await exec('git', args, { cwd, timeout: 30_000 });
     return Ok(stdout.trim());
-  } catch (err) {
-    return Err(gitError(`git ${args.join(' ')} failed: ${err}`, { args }));
+  } catch (err: unknown) {
+    // execFile errors include stdout/stderr on the error object
+    const e = err as { stdout?: string; stderr?: string; message?: string };
+    const detail = e.stderr?.trim() || e.stdout?.trim() || e.message || String(err);
+    return Err(gitError(`git ${args.join(' ')} failed: ${detail}`, { args }));
   }
 };
 

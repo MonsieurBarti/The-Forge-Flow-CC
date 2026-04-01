@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { GitCliAdapter } from '../infrastructure/adapters/git/git-cli.adapter.js';
 import { GitStateBranchAdapter } from '../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { SQLiteStateAdapter } from '../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
@@ -88,5 +88,28 @@ describe('State Branch Integration', () => {
 
     const existsR = await adapter.exists('milestone/M01');
     expect(isOk(existsR) && existsR.data).toBe(true);
+  });
+
+  it('parallel slices: fork, modify independently, merge both', async () => {
+    await adapter.createRoot();
+
+    const forkMR = await adapter.fork('milestone/M01', 'tff-state/main');
+    expect(isOk(forkMR)).toBe(true);
+
+    const forkS1R = await adapter.fork('slice/M01-S01', 'tff-state/milestone/M01');
+    const forkS2R = await adapter.fork('slice/M01-S02', 'tff-state/milestone/M01');
+    expect(isOk(forkS1R)).toBe(true);
+    expect(isOk(forkS2R)).toBe(true);
+
+    // Merge both slice state branches back into milestone
+    const merge1R = await adapter.merge('slice/M01-S01', 'milestone/M01', 's01-id');
+    expect(isOk(merge1R)).toBe(true);
+
+    const merge2R = await adapter.merge('slice/M01-S02', 'milestone/M01', 's02-id');
+    expect(isOk(merge2R)).toBe(true);
+
+    // Milestone state branch should still exist
+    const milestoneExistsR = await adapter.exists('milestone/M01');
+    expect(isOk(milestoneExistsR) && milestoneExistsR.data).toBe(true);
   });
 });
