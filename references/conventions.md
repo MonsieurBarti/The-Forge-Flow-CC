@@ -1,15 +1,14 @@
 # tff Conventions
 
-## Bead Labels
+## Entity Types
 
-| Concept | Label | Parent |
-|---|---|---|
-| Project | `tff:project` | — |
-| Milestone | `tff:milestone` | project |
-| Slice | `tff:slice` | milestone |
-| Requirement | `tff:req` | milestone |
-| Task | `tff:task` | slice |
-| Research | `tff:research` | slice |
+| Entity | Description |
+|---|---|
+| Project | Top-level singleton |
+| Milestone | Versioned delivery unit |
+| Slice | Scoped unit of work within a milestone |
+| Task | Atomic work item within a slice |
+| Requirement | Acceptance criterion scoped to a milestone |
 
 ## Status Flow
 
@@ -41,7 +40,7 @@ One project per repo (singleton enforcement).
 ```
 Project
   └── Milestone (M01, M02, ...)
-        ├── Requirements (tff:req)
+        ├── Requirements
         └── Slices (M01-S01, M01-S02, ...)
               └── Tasks (T01, T02, ...)
 ```
@@ -85,12 +84,11 @@ Special formats:
     M01-S01/              ← git worktree (gitignored)
 ```
 
-## Dual State Rules
+## State Rules
 
-- Content changes: markdown wins → sync to bead design field
-- Status changes: beads wins → regenerate STATE.md
-- On conflict: beads status wins, markdown content wins
+- State is managed by SQLite via tff-tools
 - STATE.md is always derived, never hand-edited
+- tff-tools is the single source of truth for status and dependencies
 
 ## Complexity Tiers
 
@@ -106,53 +104,38 @@ All tiers follow the same pipeline. Tiers control **depth**, not which steps run
 | F-lite (default) | Full | Optional | Plannotator | TDD | Agent-only |
 | F-full (complex) | Full + brainstormer | Required | Plannotator | TDD | Agent-only, multi-reviewer |
 
-## Beads Best Practices
+## tff-tools Patterns
 
 ### Task Claiming
 
-Use `bd update <id> --claim` to atomically claim a task (sets assignee + status to in_progress). Never manually set status and assignee separately.
+Use `tff-tools task:claim <id>` to atomically claim a task (sets assignee + status to in_progress).
 
 ### Adding Dependencies
 
-Use `bd dep add` to create blocking dependencies between slices or tasks:
-```bash
-bd dep add <from-id> <to-id> -t blocks
-```
-This means `<from-id>` depends on (is blocked by) `<to-id>`. Do NOT use `bd link` — it does not exist.
+Use `tff-tools dep:add <from-id> <to-id>` to create blocking dependencies between slices or tasks.
+This means `<from-id>` depends on (is blocked by) `<to-id>`.
 
 ### Finding Ready Work
 
-Use `bd ready --json` to list unblocked tasks. This respects the dependency graph — only tasks whose blockers are all resolved appear.
-
-### Descriptions with Special Characters
-
-Use `--stdin` for descriptions containing backticks, quotes, or special characters:
-```bash
-echo 'Description with `backticks` and "quotes"' | bd create "Title" --stdin
-```
-
-Or use `--body-file` for longer content:
-```bash
-bd create "Title" --body-file=description.md
-```
+Use `tff-tools task:ready` to list unblocked tasks. This respects the dependency graph — only tasks whose blockers are all resolved appear.
 
 ### Closing with Reason
 
 Always close with a reason:
 ```bash
-bd close <id> --reason "Completed — all acceptance criteria met"
+tff-tools slice:close <id> --reason "Completed — all acceptance criteria met"
 ```
 
 ### Agent Session Pattern
 
 ```bash
 # Claim task atomically
-bd update <task-id> --claim
+tff-tools task:claim <task-id>
 
 # Do the work...
 
 # Close with reason
-bd close <task-id> --reason "Completed"
+tff-tools task:close <task-id> --reason "Completed"
 ```
 
 ## Tooling CLI
