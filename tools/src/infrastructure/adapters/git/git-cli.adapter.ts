@@ -116,4 +116,77 @@ export class GitCliAdapter implements GitOps {
     if (r.ok) this.setCache(cacheKey, r.data);
     return r;
   }
+
+  async createOrphanWorktree(path: string, branchName: string): Promise<Result<void, DomainError>> {
+    const r = await runGit(['worktree', 'add', '--detach', path], this.repoRoot);
+    if (!r.ok) return r;
+    const orphanR = await runGit(['checkout', '--orphan', branchName], path);
+    if (!orphanR.ok) {
+      await runGit(['worktree', 'remove', path, '--force'], this.repoRoot);
+      return orphanR;
+    }
+    await runGit(['rm', '-rf', '--cached', '.'], path);
+    return Ok(undefined);
+  }
+
+  async checkoutWorktree(path: string, existingBranch: string): Promise<Result<void, DomainError>> {
+    const r = await runGit(['worktree', 'add', path, existingBranch], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
+
+  async branchExists(name: string): Promise<Result<boolean, DomainError>> {
+    const r = await runGit(['rev-parse', '--verify', `refs/heads/${name}`], this.repoRoot);
+    return Ok(r.ok);
+  }
+
+  async deleteBranch(name: string): Promise<Result<void, DomainError>> {
+    const r = await runGit(['branch', '-D', name], this.repoRoot);
+    if (!r.ok) return r;
+    this.invalidateCache();
+    return Ok(undefined);
+  }
+
+  async pruneWorktrees(): Promise<Result<void, DomainError>> {
+    const r = await runGit(['worktree', 'prune'], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
+
+  async lsTree(ref: string): Promise<Result<string[], DomainError>> {
+    const r = await runGit(['ls-tree', '-r', '--name-only', ref], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(r.data.split('\n').filter(Boolean));
+  }
+
+  async extractFile(ref: string, filePath: string): Promise<Result<Buffer, DomainError>> {
+    // CRITICAL: Cannot use runGit — it calls stdout.trim() which corrupts binary data.
+    // Use raw execFile with encoding: 'buffer' for binary-safe extraction.
+    const { execFile: execFileRaw } = await import('node:child_process');
+    return new Promise((resolve) => {
+      execFileRaw('git', ['show', `${ref}:${filePath}`], {
+        cwd: this.repoRoot,
+        timeout: 30_000,
+        encoding: 'buffer',
+        maxBuffer: 10 * 1024 * 1024,
+      }, (err, stdout) => {
+        if (err) {
+          resolve(Err(gitError(`git show ${ref}:${filePath} failed: ${err}`, { ref, filePath })));
+        } else {
+          resolve(Ok(stdout as unknown as Buffer));
+        }
+      });
+    });
+  }
+
+  async detectDefaultBranch(): Promise<Result<string, DomainError>> {
+    const originR = await runGit(['symbolic-ref', 'refs/remotes/origin/HEAD'], this.repoRoot);
+    if (originR.ok) {
+      const ref = originR.data.replace('refs/remotes/origin/', '');
+      if (ref) return Ok(ref);
+    }
+    const configR = await runGit(['config', 'init.defaultBranch'], this.repoRoot);
+    if (configR.ok && configR.data) return Ok(configR.data);
+    return Ok('main');
+  }
 }
