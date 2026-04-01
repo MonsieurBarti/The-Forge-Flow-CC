@@ -16,6 +16,9 @@ export const DomainErrorCodeSchema = z.enum([
   'MERGE_CONFLICT',
   'CORRUPTED_STATE',
   'STATE_BRANCH_NOT_FOUND',
+  'JOURNAL_WRITE_FAILED',
+  'JOURNAL_READ_FAILED',
+  'JOURNAL_REPLAY_INCONSISTENT',
 ]);
 
 export type DomainErrorCode = z.infer<typeof DomainErrorCodeSchema>;
