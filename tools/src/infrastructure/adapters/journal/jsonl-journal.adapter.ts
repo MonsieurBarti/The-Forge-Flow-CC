@@ -24,8 +24,8 @@ export class JsonlJournalAdapter implements JournalRepository {
     const countResult = this.count(sliceId);
     if (!countResult.ok) return countResult;
     const seq = countResult.data;
-    const fullEntry = JournalEntrySchema.parse({ ...entry, seq });
     try {
+      const fullEntry = JournalEntrySchema.parse({ ...entry, seq });
       mkdirSync(this.basePath, { recursive: true });
       appendFileSync(this.filePath(sliceId), `${JSON.stringify(fullEntry)}\n`, 'utf-8');
       return Ok(seq);
