@@ -24,12 +24,15 @@ export class JsonlJournalAdapter implements JournalRepository {
     const countResult = this.count(sliceId);
     if (!countResult.ok) return countResult;
     const seq = countResult.data;
-    const fullEntry = { ...entry, seq };
+    const fullEntry = JournalEntrySchema.parse({ ...entry, seq });
     try {
       mkdirSync(this.basePath, { recursive: true });
       appendFileSync(this.filePath(sliceId), `${JSON.stringify(fullEntry)}\n`, 'utf-8');
       return Ok(seq);
     } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'ZodError') {
+        return Err(createDomainError('JOURNAL_WRITE_FAILED', `Invalid journal entry: ${error.message}`));
+      }
       return Err(createDomainError('JOURNAL_WRITE_FAILED', error instanceof Error ? error.message : String(error)));
     }
   }
