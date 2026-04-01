@@ -1,10 +1,13 @@
 import { transitionSliceUseCase } from '../../application/lifecycle/transition-slice.js';
+import { syncBranchUseCase } from '../../application/state-branch/sync-branch.js';
 import { generateState } from '../../application/sync/generate-state.js';
 import { isOk } from '../../domain/result.js';
 import { type SliceStatus, SliceStatusSchema } from '../../domain/value-objects/slice-status.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
+import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
+import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { tffWarn } from '../../infrastructure/adapters/logging/warn.js';
-import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
+import { createClosableStateStores, createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 
 export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
   const [sliceId, targetStatus] = args;
@@ -37,6 +40,32 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
       const msg = `state sync failed: ${String(e)}`;
       tffWarn(msg);
       warnings.push(msg);
+    }
+
+    // Auto-sync state branch (S03)
+    try {
+      const closableStores = createClosableStateStores();
+      try {
+        closableStores.checkpoint();
+      } finally {
+        closableStores.close();
+      }
+      const gitOps = new GitCliAdapter(process.cwd());
+      const stateBranchAdapter = new GitStateBranchAdapter(gitOps, process.cwd());
+      const branchR = await gitOps.getCurrentBranch();
+      if (isOk(branchR)) {
+        const existsR = await stateBranchAdapter.exists(branchR.data);
+        if (isOk(existsR) && existsR.data) {
+          await syncBranchUseCase(
+            { codeBranch: branchR.data, message: `sync: ${sliceId} -> ${targetStatus}` },
+            { stateBranch: stateBranchAdapter },
+          );
+        }
+      }
+    } catch (e) {
+      const syncMsg = `state branch sync failed: ${String(e)}`;
+      tffWarn(syncMsg);
+      warnings.push(syncMsg);
     }
 
     // Auto-save CHECKPOINT.md (CRITICAL — blocks transition)
