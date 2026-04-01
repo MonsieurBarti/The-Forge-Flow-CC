@@ -94,4 +94,34 @@ describe('GitStateBranchAdapter', () => {
       }
     });
   });
+
+  describe('merge', () => {
+    it('should merge child into parent', async () => {
+      await adapter.createRoot();
+      await adapter.fork('slice/M01-S01', 'tff-state/main');
+      const r = await adapter.merge('slice/M01-S01', 'main', 'test-slice-id');
+      expect(isOk(r)).toBe(true);
+      if (isOk(r)) {
+        expect(r.data.entitiesMerged).toBeGreaterThanOrEqual(0);
+        expect(r.data.artifactsCopied).toBeGreaterThanOrEqual(0);
+      }
+    });
+
+    it('should fail if child state branch does not exist', async () => {
+      await adapter.createRoot();
+      const r = await adapter.merge('nonexistent', 'main', 'test-id');
+      expect(isOk(r)).toBe(false);
+    });
+  });
+
+  describe('deleteBranch', () => {
+    it('should delete an existing state branch (takes CODE branch name)', async () => {
+      await adapter.createRoot();
+      await adapter.fork('milestone/M01', 'tff-state/main');
+      const r = await adapter.deleteBranch('milestone/M01');
+      expect(isOk(r)).toBe(true);
+      const existsR = await adapter.exists('milestone/M01');
+      expect(isOk(existsR) && existsR.data).toBe(false);
+    });
+  });
 });

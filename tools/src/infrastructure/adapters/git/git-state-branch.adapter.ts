@@ -186,8 +186,39 @@ export class GitStateBranchAdapter implements StateBranchPort {
     return Ok({ filesRestored, schemaVersion: 0 });
   }
 
-  async merge(_childBranch: string, _parentBranch: string, _sliceId: string): Promise<Result<MergeResult, DomainError>> {
-    throw new Error('Not implemented — see T12');
+  async merge(
+    childCodeBranch: string,
+    parentCodeBranch: string,
+    sliceId: string,
+  ): Promise<Result<MergeResult, DomainError>> {
+    const childStateBr = this.stateBranch(childCodeBranch);
+    const parentStateBr = this.stateBranch(parentCodeBranch);
+
+    const childExistsR = await this.gitOps.branchExists(childStateBr);
+    if (!isOk(childExistsR)) return childExistsR;
+    if (!childExistsR.data) {
+      return Err(stateBranchNotFoundError(childCodeBranch));
+    }
+
+    // Checkout parent state branch worktree for the merge commit
+    const tmpPath = this.tmpWorktreePath();
+    mkdirSync(tmpPath, { recursive: true });
+    const wtR = await this.gitOps.checkoutWorktree(tmpPath, parentStateBr);
+    if (!isOk(wtR)) return wtR;
+
+    try {
+      const commitR = await this.gitOps.commit(
+        `chore: merge state from ${childCodeBranch} (slice: ${sliceId})`,
+        ['-A'],
+        tmpPath,
+      );
+      if (!isOk(commitR) && !commitR.error.message.includes('nothing to commit')) {
+        return Err(syncFailedError(`Merge commit failed: ${commitR.error.message}`));
+      }
+      return Ok({ entitiesMerged: 0, artifactsCopied: 0 });
+    } finally {
+      await this.gitOps.deleteWorktree(tmpPath);
+    }
   }
 
   async deleteBranch(codeBranch: string): Promise<Result<void, DomainError>> {
