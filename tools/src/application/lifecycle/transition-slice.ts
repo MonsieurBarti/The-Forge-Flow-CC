@@ -2,6 +2,7 @@ import type { Slice } from '../../domain/entities/slice.js';
 import type { DomainError } from '../../domain/errors/domain-error.js';
 import { createDomainError } from '../../domain/errors/domain-error.js';
 import type { DomainEvent } from '../../domain/events/domain-event.js';
+import type { EventBus } from '../../domain/ports/event-bus.port.js';
 import type { SliceStore } from '../../domain/ports/slice-store.port.js';
 import { Err, isOk, type Result } from '../../domain/result.js';
 import type { SliceStatus } from '../../domain/value-objects/slice-status.js';
@@ -12,6 +13,7 @@ interface TransitionInput {
 }
 interface TransitionDeps {
   sliceStore: SliceStore;
+  eventBus?: EventBus;
 }
 interface TransitionOutput {
   slice: Slice;
@@ -24,6 +26,12 @@ export const transitionSliceUseCase = async (
 ): Promise<Result<TransitionOutput, DomainError>> => {
   const transitionResult = deps.sliceStore.transitionSlice(input.sliceId, input.targetStatus);
   if (!isOk(transitionResult)) return transitionResult;
+
+  if (deps.eventBus) {
+    for (const event of transitionResult.data) {
+      deps.eventBus.publish(event);
+    }
+  }
 
   const sliceResult = deps.sliceStore.getSlice(input.sliceId);
   if (!isOk(sliceResult)) return sliceResult;

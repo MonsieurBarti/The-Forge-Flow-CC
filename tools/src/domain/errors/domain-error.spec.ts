@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { alreadyClaimedError } from './already-claimed.error.js';
-import { DomainErrorCodeSchema } from './domain-error.js';
+import { createDomainError, DomainErrorCodeSchema } from './domain-error.js';
 import { hasOpenChildrenError } from './has-open-children.error.js';
 import { versionMismatchError } from './version-mismatch.error.js';
 
@@ -21,6 +21,20 @@ describe('DomainErrorCodeSchema S03 codes', () => {
     for (const code of ['SYNC_FAILED', 'MERGE_CONFLICT', 'CORRUPTED_STATE', 'STATE_BRANCH_NOT_FOUND']) {
       expect(DomainErrorCodeSchema.safeParse(code).success).toBe(true);
     }
+  });
+});
+
+describe('DomainErrorCodeSchema S04 journal codes', () => {
+  it('should accept journal error codes', () => {
+    for (const code of ['JOURNAL_WRITE_FAILED', 'JOURNAL_READ_FAILED', 'JOURNAL_REPLAY_INCONSISTENT']) {
+      expect(DomainErrorCodeSchema.safeParse(code).success).toBe(true);
+    }
+  });
+
+  it('should create journal domain errors with context', () => {
+    const error = createDomainError('JOURNAL_READ_FAILED', 'Corrupt entry at line 5', { lineNumber: 5 });
+    expect(error.code).toBe('JOURNAL_READ_FAILED');
+    expect(error.context?.lineNumber).toBe(5);
   });
 });
 
