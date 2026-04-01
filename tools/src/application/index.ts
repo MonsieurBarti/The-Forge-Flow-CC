@@ -16,3 +16,8 @@ export { validateSkill } from './skills/validate-skill.js';
 export { createSliceUseCase } from './slice/create-slice.js';
 export { generateState } from './sync/generate-state.js';
 export { detectWaves } from './waves/detect-waves.js';
+export { createRootBranchUseCase } from './state-branch/create-root-branch.js';
+export { forkBranchUseCase } from './state-branch/fork-branch.js';
+export { syncBranchUseCase } from './state-branch/sync-branch.js';
+export { restoreBranchUseCase } from './state-branch/restore-branch.js';
+export { mergeBranchUseCase } from './state-branch/merge-branch.js';

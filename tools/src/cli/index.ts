@@ -25,6 +25,9 @@ import { workflowShouldAutoCmd } from './commands/workflow-should-auto.cmd.js';
 import { worktreeCreateCmd } from './commands/worktree-create.cmd.js';
 import { worktreeDeleteCmd } from './commands/worktree-delete.cmd.js';
 import { worktreeListCmd } from './commands/worktree-list.cmd.js';
+import { syncBranchCmd } from './commands/sync-branch.cmd.js';
+import { restoreBranchCmd } from './commands/restore-branch.cmd.js';
+import { branchMergeCmd } from './commands/branch-merge.cmd.js';
 
 type CommandFn = (args: string[]) => Promise<string>;
 
@@ -56,6 +59,9 @@ const commands: Record<string, CommandFn> = {
   'workflow:should-auto': workflowShouldAutoCmd,
   'snapshot:merge': snapshotMergeCmd,
   'claim:check-stale': claimCheckStaleCmd,
+  'sync:branch': syncBranchCmd,
+  'restore:branch': restoreBranchCmd,
+  'branch:merge': branchMergeCmd,
 };
 
 const main = async () => {
