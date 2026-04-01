@@ -64,3 +64,7 @@ describe('JsonlJournalAdapter — adapter-specific', () => {
     expect(isOk(result)).toBe(true);
   });
 });
+
+import { runJournalContractTests } from '../../../domain/ports/journal-repository.contract.spec.js';
+
+runJournalContractTests('JsonlJournalAdapter', () => new JsonlJournalAdapter(basePath));
