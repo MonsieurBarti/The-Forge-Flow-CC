@@ -10,7 +10,7 @@ status = discussing
 ## Steps
 
 ### 1. Load Context
-CHECK: read slice bead + notes
+CHECK: read slice state + notes
 
 ### 2. Interactive Design
 LOAD @skills/brainstorming/SKILL.md
@@ -33,7 +33,6 @@ LOAD @skills/brainstorming/SKILL.md
 
 ### 3. Write Spec
 WRITE `.tff/milestones/<milestone>/slices/<id>/SPEC.md` w/ validated design
-UPDATE bead design field: `beadStore.updateDesign(id, spec_content)`
 
 ### 4. Challenge Spec (F-full only — determined in step 8)
 LOAD @skills/stress-testing-specs/SKILL.md → SPAWN subagent: {spec_content}
@@ -63,7 +62,7 @@ PRESENT result to user via AskUserQuestion:
 - "Based on scope: **<tier>** (S / F-lite / F-full). Confirm or override?"
 - Options: S (single-file fix), F-lite (standard), F-full (complex)
 
-User confirms → record tier on bead.
+User confirms → `tff-tools slice:classify` records tier.
 If F-full confirmed → run step 4 (Challenge Spec) now if not already done.
 
 ### 9. Transition

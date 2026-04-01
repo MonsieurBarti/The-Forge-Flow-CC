@@ -36,7 +36,7 @@ Display tff command reference:
 | `/tff:rollback [slice-id]` | Revert slice commits |
 | `/tff:pause` | Save checkpoint |
 | `/tff:resume` | Restore from checkpoint |
-| `/tff:sync` | Sync markdown <> beads |
+| `/tff:sync` | Regenerate STATE.md from SQLite |
 | `/tff:health` | Diagnose state consistency |
 | `/tff:settings` | Configure model profiles |
 | `/tff:detect-patterns` | Extract and rank tool-use patterns |

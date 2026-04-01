@@ -9,7 +9,7 @@ active milestone exists
 
 ## Steps
 1. CREATE slice:
-   - Create slice bead via `tff-tools`
+   - Create slice via `tff-tools`
    - Create worktree: `tff-tools worktree:create <slice-id>` → worktree at `.tff/worktrees/<slice-id>/`
 2. CLASSIFY: AskUserQuestion → user picks tier (S / F-lite / F-full)
    - Default suggestion: S (if user described a single-file fix) or F-lite

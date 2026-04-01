@@ -17,12 +17,10 @@ tff project exists
    - Autonomy: current mode with explanation of alternatives
    - Auto-Learn: weights, guardrails, clustering thresholds
      - Note: "these fields are forward-looking — modifying them has no runtime effect yet"
-   - Dolt: remote config (or "not configured")
 4. ASK: which section to modify? (or "done" to exit)
 5. ACCEPT changes per section:
    - Model profiles: quality/balanced/budget model selection
    - Autonomy: mode selection with explanation of guided vs plan-to-pr
    - Auto-learn: weights, guardrails, clustering values
-   - Dolt: remote name, auto-sync toggle
 6. WRITE updated `.tff/settings.yaml` (preserve comments where possible)
 7. NEXT: @references/next-steps.md
