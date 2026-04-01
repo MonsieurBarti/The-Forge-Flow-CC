@@ -17,18 +17,15 @@ export { freshReviewerViolationError } from './errors/fresh-reviewer-violation.e
 export { hasOpenChildrenError } from './errors/has-open-children.error.js';
 export { invalidTransitionError } from './errors/invalid-transition.error.js';
 export { projectExistsError } from './errors/project-exists.error.js';
-export { syncConflictError } from './errors/sync-conflict.error.js';
 export { versionMismatchError } from './errors/version-mismatch.error.js';
 export type { DomainEvent, DomainEventType } from './events/domain-event.js';
 // Events
 export { createDomainEvent } from './events/domain-event.js';
 export { slicePlannedEvent } from './events/slice-planned.event.js';
 export { sliceStatusChangedEvent } from './events/slice-status-changed.event.js';
-export { syncConflictEvent } from './events/sync-conflict.event.js';
 export { taskCompletedEvent } from './events/task-completed.event.js';
 export type { ArtifactStore } from './ports/artifact-store.port.js';
 // Ports
-export type { BeadData, BeadStore } from './ports/bead-store.port.js';
 export type { DatabaseInit } from './ports/database-init.port.js';
 export type { DependencyStore } from './ports/dependency-store.port.js';
 export type { EventBus } from './ports/event-bus.port.js';
@@ -44,8 +41,6 @@ export type { SliceStore } from './ports/slice-store.port.js';
 export type { TaskStore } from './ports/task-store.port.js';
 export type { ErrResult, OkResult, Result } from './result.js';
 export { Err, isErr, isOk, match, Ok } from './result.js';
-export type { BeadLabel } from './value-objects/bead-label.js';
-export { BeadLabelSchema } from './value-objects/bead-label.js';
 export type { Candidate, CandidateEvidence } from './value-objects/candidate.js';
 export { CandidateEvidenceSchema, CandidateSchema } from './value-objects/candidate.js';
 export type { CommitRef } from './value-objects/commit-ref.js';
@@ -79,8 +74,6 @@ export type { SliceStatus } from './value-objects/slice-status.js';
 export { canTransition, SliceStatusSchema, validTransitionsFrom } from './value-objects/slice-status.js';
 export type { SliceUpdateProps } from './value-objects/slice-update-props.js';
 export { SliceUpdatePropsSchema } from './value-objects/slice-update-props.js';
-export type { SyncReport } from './value-objects/sync-report.js';
-export { emptySyncReport, SyncReportSchema } from './value-objects/sync-report.js';
 export type { TaskProps } from './value-objects/task-props.js';
 export { TaskPropsSchema } from './value-objects/task-props.js';
 export type { TaskUpdateProps } from './value-objects/task-update-props.js';
