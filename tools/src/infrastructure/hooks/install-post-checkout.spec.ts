@@ -1,0 +1,59 @@
+import { describe, expect, it, beforeEach, afterEach } from 'vitest';
+import { mkdirSync, rmSync, writeFileSync, readFileSync, existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import os from 'node:os';
+import { execSync } from 'node:child_process';
+import { installPostCheckoutHook } from './install-post-checkout.js';
+import { TFF_HOOK_MARKER } from './post-checkout-template.js';
+
+describe('installPostCheckoutHook', () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = join(os.tmpdir(), `tff-hook-install-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    mkdirSync(tmpDir, { recursive: true });
+    execSync('git init', { cwd: tmpDir, stdio: 'ignore' });
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('installs hook with executable permissions', () => {
+    installPostCheckoutHook(tmpDir);
+    const hookPath = join(tmpDir, '.git', 'hooks', 'post-checkout');
+    expect(existsSync(hookPath)).toBe(true);
+    const mode = statSync(hookPath).mode;
+    expect(mode & 0o111).toBeTruthy();
+  });
+
+  it('contains tff marker', () => {
+    installPostCheckoutHook(tmpDir);
+    const hookPath = join(tmpDir, '.git', 'hooks', 'post-checkout');
+    expect(readFileSync(hookPath, 'utf8')).toContain(TFF_HOOK_MARKER);
+  });
+
+  it('renames existing non-tff hook to .pre-tff', () => {
+    const hooksDir = join(tmpDir, '.git', 'hooks');
+    mkdirSync(hooksDir, { recursive: true });
+    writeFileSync(join(hooksDir, 'post-checkout'), '#!/bin/sh\necho existing', { mode: 0o755 });
+
+    installPostCheckoutHook(tmpDir);
+
+    expect(existsSync(join(hooksDir, 'post-checkout.pre-tff'))).toBe(true);
+    const preTff = readFileSync(join(hooksDir, 'post-checkout.pre-tff'), 'utf8');
+    expect(preTff).toContain('echo existing');
+    expect(readFileSync(join(hooksDir, 'post-checkout'), 'utf8')).toContain(TFF_HOOK_MARKER);
+  });
+
+  it('overwrites existing tff hook without creating .pre-tff', () => {
+    const hooksDir = join(tmpDir, '.git', 'hooks');
+    mkdirSync(hooksDir, { recursive: true });
+    writeFileSync(join(hooksDir, 'post-checkout'), `#!/bin/sh\n${TFF_HOOK_MARKER}\nold version`, { mode: 0o755 });
+
+    installPostCheckoutHook(tmpDir);
+
+    expect(existsSync(join(hooksDir, 'post-checkout.pre-tff'))).toBe(false);
+    expect(readFileSync(join(hooksDir, 'post-checkout'), 'utf8')).toContain(TFF_HOOK_MARKER);
+  });
+});
