@@ -5,6 +5,7 @@ export const BranchMetaSchema = z.object({
   codeBranch: z.string().min(1),
   parentStateBranch: z.string().min(1).nullable(),
   createdAt: z.string().datetime(),
+  restoredAt: z.string().datetime().optional(),
 });
 
 export type BranchMeta = z.infer<typeof BranchMetaSchema>;
