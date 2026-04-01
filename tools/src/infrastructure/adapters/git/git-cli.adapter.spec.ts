@@ -27,19 +27,18 @@ describe('GitCliAdapter - caching', () => {
 describe('GitCliAdapter — S03 branch methods', () => {
   const adapter = new GitCliAdapter(process.cwd());
 
-  it('branchExists should return true for a known branch', async () => {
-    // Use 'main' or the default branch — CI may be in detached HEAD
-    // so getCurrentBranch may return a non-branch ref
-    const candidates = ['main', 'master', 'milestone/M01'];
-    let found = false;
-    for (const name of candidates) {
-      const r = await adapter.branchExists(name);
-      if (isOk(r) && r.data) {
-        found = true;
-        break;
-      }
+  it('branchExists should return true for a branch we create', async () => {
+    // CI checks out in detached HEAD with no local branches,
+    // so create a temp branch from HEAD and verify it exists
+    const { execFileSync } = await import('node:child_process');
+    const branchName = `test-branch-${Date.now()}`;
+    execFileSync('git', ['branch', branchName, 'HEAD'], { cwd: process.cwd() });
+    try {
+      const r = await adapter.branchExists(branchName);
+      expect(isOk(r) && r.data).toBe(true);
+    } finally {
+      execFileSync('git', ['branch', '-D', branchName], { cwd: process.cwd() });
     }
-    expect(found).toBe(true);
   });
 
   it('branchExists should return false for non-existing branch', async () => {
