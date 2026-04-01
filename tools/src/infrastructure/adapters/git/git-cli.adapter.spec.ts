@@ -27,12 +27,19 @@ describe('GitCliAdapter - caching', () => {
 describe('GitCliAdapter — S03 branch methods', () => {
   const adapter = new GitCliAdapter(process.cwd());
 
-  it('branchExists should return true for current branch', async () => {
-    const branchR = await adapter.getCurrentBranch();
-    expect(isOk(branchR)).toBe(true);
-    if (!isOk(branchR)) return;
-    const r = await adapter.branchExists(branchR.data);
-    expect(isOk(r) && r.data).toBe(true);
+  it('branchExists should return true for a known branch', async () => {
+    // Use 'main' or the default branch — CI may be in detached HEAD
+    // so getCurrentBranch may return a non-branch ref
+    const candidates = ['main', 'master', 'milestone/M01'];
+    let found = false;
+    for (const name of candidates) {
+      const r = await adapter.branchExists(name);
+      if (isOk(r) && r.data) {
+        found = true;
+        break;
+      }
+    }
+    expect(found).toBe(true);
   });
 
   it('branchExists should return false for non-existing branch', async () => {
