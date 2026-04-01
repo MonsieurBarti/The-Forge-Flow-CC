@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createStateStores } from './create-state-stores.js';
+import { createClosableStateStores, createStateStores } from './create-state-stores.js';
 
 describe('createStateStores', () => {
   it('returns object with all 8 port keys', () => {
@@ -26,5 +26,14 @@ describe('createStateStores', () => {
     // Verify reviewStore works (review table created by v2 migration)
     const listResult = reviewStore.listReviews('M01-S01');
     expect(listResult.ok).toBe(true);
+  });
+});
+
+describe('createClosableStateStores', () => {
+  it('should return stores with close and checkpoint methods', () => {
+    const stores = createClosableStateStores(':memory:');
+    expect(typeof stores.close).toBe('function');
+    expect(typeof stores.checkpoint).toBe('function');
+    stores.close();
   });
 });
