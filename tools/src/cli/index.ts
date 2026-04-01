@@ -3,6 +3,7 @@ import { checkpointLoadCmd } from './commands/checkpoint-load.cmd.js';
 import { checkpointSaveCmd } from './commands/checkpoint-save.cmd.js';
 import { claimCheckStaleCmd } from './commands/claim-check-stale.cmd.js';
 import { composeDetectCmd } from './commands/compose-detect.cmd.js';
+import { hookPostCheckoutCmd } from './commands/hook-post-checkout.cmd.js';
 import { milestoneCreateCmd } from './commands/milestone-create.cmd.js';
 import { milestoneListCmd } from './commands/milestone-list.cmd.js';
 import { observeRecordCmd } from './commands/observe-record.cmd.js';
@@ -62,6 +63,7 @@ const commands: Record<string, CommandFn> = {
   'sync:branch': syncBranchCmd,
   'restore:branch': restoreBranchCmd,
   'branch:merge': branchMergeCmd,
+  'hook:post-checkout': hookPostCheckoutCmd,
 };
 
 const main = async () => {

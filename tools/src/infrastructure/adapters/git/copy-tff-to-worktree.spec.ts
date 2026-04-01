@@ -1,26 +1,54 @@
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { copyTffToWorktree } from './copy-tff-to-worktree.js';
 
 describe('copyTffToWorktree', () => {
-  it('should copy .tff/ excluding worktrees/', () => {
-    const src = mkdtempSync(path.join(tmpdir(), 'tff-src-'));
-    const dest = mkdtempSync(path.join(tmpdir(), 'tff-dest-'));
-    writeFileSync(path.join(src, 'state.db'), 'db-content');
-    writeFileSync(path.join(src, 'PROJECT.md'), '# P');
-    mkdirSync(path.join(src, 'worktrees'));
-    writeFileSync(path.join(src, 'worktrees', 'M01-S01'), 'should-be-excluded');
-    mkdirSync(path.join(src, 'milestones'), { recursive: true });
-    writeFileSync(path.join(src, 'milestones', 'M01.md'), '# M01');
+  let tmpDir: string;
+  let tffDir: string;
+  let worktreePath: string;
 
-    copyTffToWorktree(src, dest);
+  beforeEach(() => {
+    tmpDir = path.join(os.tmpdir(), `tff-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    mkdirSync(tmpDir, { recursive: true });
+    tffDir = path.join(tmpDir, '.tff');
+    worktreePath = path.join(tmpDir, 'worktree');
+    mkdirSync(tffDir, { recursive: true });
+    mkdirSync(worktreePath, { recursive: true });
+  });
 
-    expect(readFileSync(path.join(dest, '.tff', 'state.db'), 'utf-8')).toBe('db-content');
-    expect(readFileSync(path.join(dest, '.tff', 'PROJECT.md'), 'utf-8')).toBe('# P');
-    expect(readFileSync(path.join(dest, '.tff', 'milestones', 'M01.md'), 'utf-8')).toBe('# M01');
-    // worktrees/ should NOT be copied
-    expect(() => readFileSync(path.join(dest, '.tff', 'worktrees', 'M01-S01'))).toThrow();
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('copies state.db but excludes branch-meta.json', () => {
+    writeFileSync(path.join(tffDir, 'state.db'), 'data');
+    writeFileSync(path.join(tffDir, 'branch-meta.json'), '{}');
+    copyTffToWorktree(tffDir, worktreePath);
+    expect(existsSync(path.join(worktreePath, '.tff', 'state.db'))).toBe(true);
+    expect(existsSync(path.join(worktreePath, '.tff', 'branch-meta.json'))).toBe(false);
+  });
+
+  it('still excludes worktrees directory', () => {
+    mkdirSync(path.join(tffDir, 'worktrees'), { recursive: true });
+    writeFileSync(path.join(tffDir, 'worktrees', 'dummy'), 'data');
+    writeFileSync(path.join(tffDir, 'state.db'), 'data');
+    copyTffToWorktree(tffDir, worktreePath);
+    expect(existsSync(path.join(worktreePath, '.tff', 'state.db'))).toBe(true);
+    expect(existsSync(path.join(worktreePath, '.tff', 'worktrees'))).toBe(false);
+  });
+
+  it('copies subdirectories recursively', () => {
+    const subDir = path.join(tffDir, 'milestones', 'M01');
+    mkdirSync(subDir, { recursive: true });
+    writeFileSync(path.join(subDir, 'REQUIREMENTS.md'), '# Req');
+    copyTffToWorktree(tffDir, worktreePath);
+    expect(existsSync(path.join(worktreePath, '.tff', 'milestones', 'M01', 'REQUIREMENTS.md'))).toBe(true);
+  });
+
+  it('no-ops when tff dir does not exist', () => {
+    rmSync(tffDir, { recursive: true, force: true });
+    expect(() => copyTffToWorktree(tffDir, worktreePath)).not.toThrow();
   });
 });

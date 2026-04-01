@@ -9,3 +9,4 @@ docs/
 *.db
 .beads/
 .worktrees/
+/branch-meta.json

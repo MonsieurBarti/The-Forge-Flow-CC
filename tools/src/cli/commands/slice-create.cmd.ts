@@ -1,7 +1,7 @@
 import { createSliceUseCase } from '../../application/slice/create-slice.js';
 import { isOk } from '../../domain/result.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
-import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
+import { withBranchGuard } from '../with-branch-guard.js';
 
 export const sliceCreateCmd = async (args: string[]): Promise<string> => {
   // Parse --title flag or fall back to positional arg
@@ -28,27 +28,31 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
     });
   }
 
-  const { milestoneStore, sliceStore } = createStateStores();
-  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  return withBranchGuard(async ({ milestoneStore, sliceStore }) => {
+    const artifactStore = new MarkdownArtifactAdapter(process.cwd());
 
-  // Auto-detect active milestone (most recent open one)
-  const milestonesResult = milestoneStore.listMilestones();
-  if (!isOk(milestonesResult) || milestonesResult.data.length === 0) {
-    return JSON.stringify({
-      ok: false,
-      error: { code: 'NOT_FOUND', message: 'No milestone found. Run /tff:new-milestone first.' },
-    });
-  }
-  // Use the last open milestone, or the last one if none are open
-  const openMilestones = milestonesResult.data.filter((m) => m.status !== 'closed');
-  const milestone =
-    openMilestones.length > 0
-      ? openMilestones[openMilestones.length - 1]
-      : milestonesResult.data[milestonesResult.data.length - 1];
-  const milestoneId = milestone.id;
+    // Auto-detect active milestone (most recent open one)
+    const milestonesResult = milestoneStore.listMilestones();
+    if (!isOk(milestonesResult) || milestonesResult.data.length === 0) {
+      return JSON.stringify({
+        ok: false,
+        error: { code: 'NOT_FOUND', message: 'No milestone found. Run /tff:new-milestone first.' },
+      });
+    }
+    // Use the last open milestone, or the last one if none are open
+    const openMilestones = milestonesResult.data.filter((m) => m.status !== 'closed');
+    const milestone =
+      openMilestones.length > 0
+        ? openMilestones[openMilestones.length - 1]
+        : milestonesResult.data[milestonesResult.data.length - 1];
+    const milestoneId = milestone.id;
 
-  const result = await createSliceUseCase({ milestoneId, title: name }, { milestoneStore, sliceStore, artifactStore });
+    const result = await createSliceUseCase(
+      { milestoneId, title: name },
+      { milestoneStore, sliceStore, artifactStore },
+    );
 
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
+    if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };
