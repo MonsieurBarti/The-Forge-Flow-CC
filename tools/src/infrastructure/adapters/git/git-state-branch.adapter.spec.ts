@@ -52,4 +52,19 @@ describe('GitStateBranchAdapter', () => {
       expect(isOk(r)).toBe(false);
     });
   });
+
+  describe('sync', () => {
+    it('should sync to existing state branch', async () => {
+      await adapter.createRoot();
+      const r = await adapter.sync('main', 'test sync');
+      expect(isOk(r)).toBe(true);
+      const commits = gitOps.getCommits();
+      expect(commits.some((c) => c.message.includes('test sync'))).toBe(true);
+    });
+
+    it('should fail if state branch does not exist', async () => {
+      const r = await adapter.sync('nonexistent', 'test');
+      expect(isOk(r)).toBe(false);
+    });
+  });
 });

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { copyTffToWorktree } from './copy-tff-to-worktree.js';
 import type { DomainError } from '../../../domain/errors/domain-error.js';
 import { syncFailedError } from '../../../domain/errors/sync-failed.error.js';
 import { stateBranchNotFoundError } from '../../../domain/errors/state-branch-not-found.error.js';
@@ -130,8 +131,34 @@ export class GitStateBranchAdapter implements StateBranchPort {
     }
   }
 
-  async sync(_codeBranch: string, _message: string): Promise<Result<void, DomainError>> {
-    throw new Error('Not implemented — see T10');
+  async sync(codeBranch: string, message: string): Promise<Result<void, DomainError>> {
+    const stateBr = this.stateBranch(codeBranch);
+    const existsR = await this.gitOps.branchExists(stateBr);
+    if (!isOk(existsR)) return existsR;
+    if (!existsR.data) {
+      return Err(stateBranchNotFoundError(codeBranch));
+    }
+
+    await this.gitOps.pruneWorktrees();
+
+    const tmpPath = this.tmpWorktreePath();
+    mkdirSync(tmpPath, { recursive: true });
+    const wtR = await this.gitOps.checkoutWorktree(tmpPath, stateBr);
+    if (!isOk(wtR)) return wtR;
+
+    try {
+      const tffDir = path.join(this.repoRoot, '.tff');
+      copyTffToWorktree(tffDir, tmpPath);
+
+      const commitR = await this.gitOps.commit(message, ['-A'], tmpPath);
+      if (!isOk(commitR)) {
+        if (commitR.error.message.includes('nothing to commit')) return Ok(undefined);
+        return Err(syncFailedError(`Sync commit failed: ${commitR.error.message}`));
+      }
+      return Ok(undefined);
+    } finally {
+      await this.gitOps.deleteWorktree(tmpPath);
+    }
   }
 
   async restore(_codeBranch: string, _targetDir: string): Promise<Result<RestoreResult | null, DomainError>> {
