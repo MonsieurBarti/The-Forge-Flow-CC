@@ -31,7 +31,9 @@ export type { ArtifactStore } from './ports/artifact-store.port.js';
 export type { BeadData, BeadStore } from './ports/bead-store.port.js';
 export type { DatabaseInit } from './ports/database-init.port.js';
 export type { DependencyStore } from './ports/dependency-store.port.js';
+export type { EventBus } from './ports/event-bus.port.js';
 export type { GitOps } from './ports/git-ops.port.js';
+export type { JournalRepository } from './ports/journal-repository.port.js';
 export type { MilestoneStore } from './ports/milestone-store.port.js';
 // Observation store port
 export type { ObservationStore } from './ports/observation-store.port.js';
@@ -53,6 +55,9 @@ export type { ComplexityTier, TierConfig } from './value-objects/complexity-tier
 export { ComplexityTierSchema, tierConfig } from './value-objects/complexity-tier.js';
 export type { Dependency } from './value-objects/dependency.js';
 export { DependencySchema, DependencyTypeSchema } from './value-objects/dependency.js';
+// Journal
+export type { JournalEntry } from './value-objects/journal-entry.js';
+export { JournalEntrySchema } from './value-objects/journal-entry.js';
 export type { MilestoneProps } from './value-objects/milestone-props.js';
 export { MilestonePropsSchema } from './value-objects/milestone-props.js';
 export type { MilestoneStatus } from './value-objects/milestone-status.js';
@@ -84,9 +89,3 @@ export type { Wave } from './value-objects/wave.js';
 export { WaveSchema } from './value-objects/wave.js';
 export type { WorkflowSession } from './value-objects/workflow-session.js';
 export { WorkflowSessionSchema } from './value-objects/workflow-session.js';
-
-// Journal
-export type { JournalEntry } from './value-objects/journal-entry.js';
-export { JournalEntrySchema } from './value-objects/journal-entry.js';
-export type { JournalRepository } from './ports/journal-repository.port.js';
-export type { EventBus } from './ports/event-bus.port.js';

@@ -32,7 +32,9 @@ export const replayJournal = (input: ReplayInput, deps: ReplayDeps): Result<Repl
   // Empty journal + non-empty checkpoint → reject
   if (entries.length === 0 && input.checkpoint.completedTasks.length > 0) {
     return Err(
-      createDomainError('JOURNAL_REPLAY_INCONSISTENT', 'Journal is empty but checkpoint has completed tasks', { reason: 'empty-journal-nonempty-checkpoint' }),
+      createDomainError('JOURNAL_REPLAY_INCONSISTENT', 'Journal is empty but checkpoint has completed tasks', {
+        reason: 'empty-journal-nonempty-checkpoint',
+      }),
     );
   }
 
@@ -50,7 +52,11 @@ export const replayJournal = (input: ReplayInput, deps: ReplayDeps): Result<Repl
   for (const taskId of input.checkpoint.completedTasks) {
     if (!completedTaskIds.has(taskId)) {
       return Err(
-        createDomainError('JOURNAL_REPLAY_INCONSISTENT', `Checkpoint claims task ${taskId} completed but no journal entry found`, { reason: 'missing-task-completed', taskId }),
+        createDomainError(
+          'JOURNAL_REPLAY_INCONSISTENT',
+          `Checkpoint claims task ${taskId} completed but no journal entry found`,
+          { reason: 'missing-task-completed', taskId },
+        ),
       );
     }
   }

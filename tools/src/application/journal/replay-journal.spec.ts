@@ -64,7 +64,10 @@ describe('replayJournal', () => {
     ];
     journal.seed(sliceId, entries);
 
-    const result = replayJournal({ sliceId, checkpoint: { completedTasks: ['T01', 'T02'], currentWave: 2 } }, { journal });
+    const result = replayJournal(
+      { sliceId, checkpoint: { completedTasks: ['T01', 'T02'], currentWave: 2 } },
+      { journal },
+    );
     expect(isOk(result)).toBe(true);
     if (isOk(result)) expect(result.data.resumeFromWave).toBe(2);
   });

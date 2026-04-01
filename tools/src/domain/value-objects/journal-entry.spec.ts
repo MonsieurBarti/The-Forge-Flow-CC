@@ -15,12 +15,27 @@ describe('JournalEntrySchema', () => {
   });
 
   it('validates task-completed with optional commitHash', () => {
-    const entry = { ...base, type: 'task-completed', taskId: 'T01', waveIndex: 0, durationMs: 1000, commitHash: 'abc123' };
+    const entry = {
+      ...base,
+      type: 'task-completed',
+      taskId: 'T01',
+      waveIndex: 0,
+      durationMs: 1000,
+      commitHash: 'abc123',
+    };
     expect(JournalEntrySchema.safeParse(entry).success).toBe(true);
   });
 
   it('validates task-failed entry', () => {
-    const entry = { ...base, type: 'task-failed', taskId: 'T01', waveIndex: 0, errorCode: 'AGENT.FAILURE', errorMessage: 'fail', retryable: true };
+    const entry = {
+      ...base,
+      type: 'task-failed',
+      taskId: 'T01',
+      waveIndex: 0,
+      errorCode: 'AGENT.FAILURE',
+      errorMessage: 'fail',
+      retryable: true,
+    };
     expect(JournalEntrySchema.safeParse(entry).success).toBe(true);
   });
 
@@ -40,17 +55,37 @@ describe('JournalEntrySchema', () => {
   });
 
   it('validates artifact-written entry', () => {
-    const entry = { ...base, type: 'artifact-written', artifactPath: '.tff/milestones/M01/slices/M01-S04/SPEC.md', artifactType: 'spec' };
+    const entry = {
+      ...base,
+      type: 'artifact-written',
+      artifactPath: '.tff/milestones/M01/slices/M01-S04/SPEC.md',
+      artifactType: 'spec',
+    };
     expect(JournalEntrySchema.safeParse(entry).success).toBe(true);
   });
 
   it('validates guardrail-violation entry', () => {
-    const entry = { ...base, type: 'guardrail-violation', taskId: 'T01', waveIndex: 0, violations: [{ ruleId: 'NO_SECRETS', message: 'Secret detected', severity: 'error' }], action: 'blocked' };
+    const entry = {
+      ...base,
+      type: 'guardrail-violation',
+      taskId: 'T01',
+      waveIndex: 0,
+      violations: [{ ruleId: 'NO_SECRETS', message: 'Secret detected', severity: 'error' }],
+      action: 'blocked',
+    };
     expect(JournalEntrySchema.safeParse(entry).success).toBe(true);
   });
 
   it('validates overseer-intervention entry', () => {
-    const entry = { ...base, type: 'overseer-intervention', taskId: 'T01', strategy: 'timeout', reason: 'Took too long', action: 'aborted', retryCount: 0 };
+    const entry = {
+      ...base,
+      type: 'overseer-intervention',
+      taskId: 'T01',
+      strategy: 'timeout',
+      reason: 'Took too long',
+      action: 'aborted',
+      retryCount: 0,
+    };
     expect(JournalEntrySchema.safeParse(entry).success).toBe(true);
   });
 

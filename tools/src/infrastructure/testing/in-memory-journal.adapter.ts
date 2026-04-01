@@ -2,7 +2,7 @@ import type { DomainError } from '../../domain/errors/domain-error.js';
 import type { JournalRepository } from '../../domain/ports/journal-repository.port.js';
 import type { Result } from '../../domain/result.js';
 import { Ok } from '../../domain/result.js';
-import { JournalEntrySchema, type JournalEntry } from '../../domain/value-objects/journal-entry.js';
+import { type JournalEntry, JournalEntrySchema } from '../../domain/value-objects/journal-entry.js';
 
 export class InMemoryJournalAdapter implements JournalRepository {
   private store = new Map<string, JournalEntry[]>();

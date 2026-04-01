@@ -3,10 +3,7 @@ import { isOk } from '../result.js';
 import { JournalEntryBuilder } from '../value-objects/journal-entry.builder.js';
 import type { JournalRepository } from './journal-repository.port.js';
 
-export function runJournalContractTests(
-  name: string,
-  factory: () => JournalRepository & { reset(): void },
-) {
+export function runJournalContractTests(name: string, factory: () => JournalRepository & { reset(): void }) {
   describe(`${name} contract`, () => {
     let repo: JournalRepository & { reset(): void };
     const sliceId = crypto.randomUUID();

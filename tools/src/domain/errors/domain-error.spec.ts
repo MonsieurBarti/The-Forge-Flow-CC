@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { alreadyClaimedError } from './already-claimed.error.js';
-import { DomainErrorCodeSchema, createDomainError } from './domain-error.js';
+import { createDomainError, DomainErrorCodeSchema } from './domain-error.js';
 import { hasOpenChildrenError } from './has-open-children.error.js';
 import { versionMismatchError } from './version-mismatch.error.js';
 
