@@ -1,11 +1,11 @@
 ---
 name: tff:sync
-description: Manual bidirectional markdown ↔ beads sync
+description: Regenerate STATE.md from SQLite
 allowed-tools: Read, Write, Bash, Grep, Glob
 ---
 
 <objective>
-Run full bidirectional reconciliation between markdown files and beads.
+Regenerate STATE.md from current SQLite state.
 </objective>
 
 <execution_context>

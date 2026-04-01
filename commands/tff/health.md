@@ -5,7 +5,7 @@ allowed-tools: Read, Bash, Grep, Glob
 ---
 
 <objective>
-Check beads CLI, plannotator, state consistency, and worktree integrity.
+Check plannotator, state consistency, and worktree integrity.
 </objective>
 
 <execution_context>
