@@ -92,6 +92,22 @@ describe('State Branch Integration', () => {
   it('parallel slices: fork, modify independently, merge both', async () => {
     await adapter.createRoot();
 
+    // Create .tff/ with real state DB and sync to root
+    const tffDir = path.join(repoDir, '.tff');
+    mkdirSync(tffDir, { recursive: true });
+    const dbPath = path.join(tffDir, 'state.db');
+    const db = SQLiteStateAdapter.create(dbPath);
+    db.init();
+    db.saveProject({ name: 'P', vision: 'V' });
+    db.createMilestone({ number: 1, name: 'M1' });
+    db.createSlice({ milestoneId: 'M01', number: 1, title: 'S1', tier: 'F-lite' });
+    db.createSlice({ milestoneId: 'M01', number: 2, title: 'S2', tier: 'F-lite' });
+    db.checkpoint();
+    db.close();
+
+    const syncRootR = await adapter.sync('main', 'initial sync');
+    expect(isOk(syncRootR)).toBe(true);
+
     const forkMR = await adapter.fork('milestone/M01', 'tff-state/main');
     expect(isOk(forkMR)).toBe(true);
 
@@ -101,10 +117,10 @@ describe('State Branch Integration', () => {
     expect(isOk(forkS2R)).toBe(true);
 
     // Merge both slice state branches back into milestone
-    const merge1R = await adapter.merge('slice/M01-S01', 'milestone/M01', 's01-id');
+    const merge1R = await adapter.merge('slice/M01-S01', 'milestone/M01', 'M01-S01');
     expect(isOk(merge1R)).toBe(true);
 
-    const merge2R = await adapter.merge('slice/M01-S02', 'milestone/M01', 's02-id');
+    const merge2R = await adapter.merge('slice/M01-S02', 'milestone/M01', 'M01-S02');
     expect(isOk(merge2R)).toBe(true);
 
     // Milestone state branch should still exist

@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { mergeStateDbs } from '../../../application/state-branch/merge-state-dbs.js';
 import type { DomainError } from '../../../domain/errors/domain-error.js';
 import { stateBranchNotFoundError } from '../../../domain/errors/state-branch-not-found.error.js';
 import { syncFailedError } from '../../../domain/errors/sync-failed.error.js';
@@ -191,13 +192,55 @@ export class GitStateBranchAdapter implements StateBranchPort {
       return Err(stateBranchNotFoundError(childCodeBranch));
     }
 
-    // Checkout parent state branch worktree for the merge commit
+    // Step 1: Extract both DBs to temp directory for SQL merge
+    const tmpMergeDir = path.join(tmpdir(), `tff-merge-${randomUUID().slice(0, 8)}`);
+    mkdirSync(tmpMergeDir, { recursive: true });
+    const parentDbPath = path.join(tmpMergeDir, 'parent.db');
+    const childDbPath = path.join(tmpMergeDir, 'child.db');
+
+    const parentDbR = await this.gitOps.extractFile(parentStateBr, '.tff/state.db');
+    if (!isOk(parentDbR)) return Err(syncFailedError('Failed to extract parent DB'));
+    writeFileSync(parentDbPath, parentDbR.data);
+
+    const childDbR = await this.gitOps.extractFile(childStateBr, '.tff/state.db');
+    if (!isOk(childDbR)) return Err(syncFailedError('Failed to extract child DB'));
+    writeFileSync(childDbPath, childDbR.data);
+
+    // Step 2: Entity-level SQL merge via ATTACH (AC8)
+    const sqlMergeR = mergeStateDbs(parentDbPath, childDbPath, sliceId);
+    if (!sqlMergeR.ok) return sqlMergeR;
+
+    // Step 3: Checkout parent worktree, copy merged DB + child artifacts
     const tmpPath = this.tmpWorktreePath();
     mkdirSync(tmpPath, { recursive: true });
     const wtR = await this.gitOps.checkoutWorktree(tmpPath, parentStateBr);
     if (!isOk(wtR)) return wtR;
 
     try {
+      // Copy merged DB into parent worktree
+      const destDb = path.join(tmpPath, '.tff', 'state.db');
+      mkdirSync(path.dirname(destDb), { recursive: true });
+      cpSync(parentDbPath, destDb);
+
+      // Step 4: Artifact merge — copy child's slice-scoped files to parent (AC9)
+      let artifactsCopied = 0;
+      const childFilesR = await this.gitOps.lsTree(childStateBr);
+      if (isOk(childFilesR)) {
+        // Derive the slice directory pattern from sliceId (e.g., "M01-S01" → milestones/M01/slices/M01-S01/)
+        const milestoneId = sliceId.split('-')[0]; // "M01"
+        const sliceArtifactPrefix = `.tff/milestones/${milestoneId}/slices/${sliceId}/`;
+
+        for (const filePath of childFilesR.data) {
+          if (!filePath.startsWith(sliceArtifactPrefix)) continue;
+          const bufR = await this.gitOps.extractFile(childStateBr, filePath);
+          if (!isOk(bufR)) continue;
+          const destPath = path.join(tmpPath, filePath);
+          mkdirSync(path.dirname(destPath), { recursive: true });
+          writeFileSync(destPath, bufR.data);
+          artifactsCopied++;
+        }
+      }
+
       const commitR = await this.gitOps.commit(
         `chore: merge state from ${childCodeBranch} (slice: ${sliceId})`,
         ['-A'],
@@ -206,7 +249,7 @@ export class GitStateBranchAdapter implements StateBranchPort {
       if (!isOk(commitR) && !commitR.error.message.includes('nothing to commit')) {
         return Err(syncFailedError(`Merge commit failed: ${commitR.error.message}`));
       }
-      return Ok({ entitiesMerged: 0, artifactsCopied: 0 });
+      return Ok({ entitiesMerged: sqlMergeR.data.entitiesMerged, artifactsCopied });
     } finally {
       await this.gitOps.deleteWorktree(tmpPath);
     }
