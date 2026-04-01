@@ -8,4 +8,4 @@ docs/
 .dolt/
 *.db
 .beads/
-.worktrees/
+.worktrees/branch-meta.json
