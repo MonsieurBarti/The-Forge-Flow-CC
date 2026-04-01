@@ -84,7 +84,6 @@ describe('parseProjectSettings', () => {
     expect(settings['auto-learn'].weights.breadth).toBe(0.3);
     expect(settings['auto-learn'].guardrails['min-corrections']).toBe(3);
   });
-
 });
 
 describe('ProjectSettings - new keys', () => {
