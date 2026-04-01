@@ -12,4 +12,16 @@ export interface GitOps {
   merge(source: string, target: string): Promise<Result<void, DomainError>>;
   getCurrentBranch(worktreePath?: string): Promise<Result<string, DomainError>>;
   getHeadSha(worktreePath?: string): Promise<Result<string, DomainError>>;
+
+  // S03: State branch support
+  /** Create a TRUE orphan branch in a worktree (no shared history with any branch). */
+  createOrphanWorktree(path: string, branchName: string): Promise<Result<void, DomainError>>;
+  checkoutWorktree(path: string, existingBranch: string): Promise<Result<void, DomainError>>;
+  branchExists(name: string): Promise<Result<boolean, DomainError>>;
+  deleteBranch(name: string): Promise<Result<void, DomainError>>;
+  pruneWorktrees(): Promise<Result<void, DomainError>>;
+  lsTree(ref: string): Promise<Result<string[], DomainError>>;
+  extractFile(ref: string, filePath: string): Promise<Result<Buffer, DomainError>>;
+  /** Detect the default branch name: origin/HEAD -> git config -> 'main' fallback. */
+  detectDefaultBranch(): Promise<Result<string, DomainError>>;
 }

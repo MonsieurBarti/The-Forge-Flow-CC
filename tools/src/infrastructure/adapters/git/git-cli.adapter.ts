@@ -9,12 +9,24 @@ const exec = promisify(execFile);
 const gitError = (message: string, context?: Record<string, unknown>): DomainError =>
   createDomainError('SYNC_CONFLICT', message, context);
 
+/** Strip GIT_* env vars to prevent CI runner state from leaking into subprocesses. */
+const cleanGitEnv = (): Record<string, string> => {
+  const env: Record<string, string> = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    if (!k.startsWith('GIT_') && v !== undefined) env[k] = v;
+  }
+  return env;
+};
+
 const runGit = async (args: string[], cwd?: string): Promise<Result<string, DomainError>> => {
   try {
-    const { stdout } = await exec('git', args, { cwd, timeout: 30_000 });
+    const { stdout } = await exec('git', args, { cwd, timeout: 30_000, env: cleanGitEnv() });
     return Ok(stdout.trim());
-  } catch (err) {
-    return Err(gitError(`git ${args.join(' ')} failed: ${err}`, { args }));
+  } catch (err: unknown) {
+    // execFile errors include stdout/stderr on the error object
+    const e = err as { stdout?: string; stderr?: string; message?: string };
+    const detail = e.stderr?.trim() || e.stdout?.trim() || e.message || String(err);
+    return Err(gitError(`git ${args.join(' ')} failed: ${detail}`, { args }));
   }
 };
 
@@ -115,5 +127,84 @@ export class GitCliAdapter implements GitOps {
     const r = await runGit(['rev-parse', '--short', 'HEAD'], cwd);
     if (r.ok) this.setCache(cacheKey, r.data);
     return r;
+  }
+
+  async createOrphanWorktree(path: string, branchName: string): Promise<Result<void, DomainError>> {
+    const r = await runGit(['worktree', 'add', '--detach', path], this.repoRoot);
+    if (!r.ok) return r;
+    const orphanR = await runGit(['checkout', '--orphan', branchName], path);
+    if (!orphanR.ok) {
+      await runGit(['worktree', 'remove', path, '--force'], this.repoRoot);
+      return orphanR;
+    }
+    await runGit(['rm', '-rf', '--cached', '.'], path);
+    return Ok(undefined);
+  }
+
+  async checkoutWorktree(path: string, existingBranch: string): Promise<Result<void, DomainError>> {
+    const r = await runGit(['worktree', 'add', path, existingBranch], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
+
+  async branchExists(name: string): Promise<Result<boolean, DomainError>> {
+    const r = await runGit(['rev-parse', '--verify', `refs/heads/${name}`], this.repoRoot);
+    return Ok(r.ok);
+  }
+
+  async deleteBranch(name: string): Promise<Result<void, DomainError>> {
+    const r = await runGit(['branch', '-D', name], this.repoRoot);
+    if (!r.ok) return r;
+    this.invalidateCache();
+    return Ok(undefined);
+  }
+
+  async pruneWorktrees(): Promise<Result<void, DomainError>> {
+    const r = await runGit(['worktree', 'prune'], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
+
+  async lsTree(ref: string): Promise<Result<string[], DomainError>> {
+    const r = await runGit(['ls-tree', '-r', '--name-only', ref], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(r.data.split('\n').filter(Boolean));
+  }
+
+  async extractFile(ref: string, filePath: string): Promise<Result<Buffer, DomainError>> {
+    // CRITICAL: Cannot use runGit — it calls stdout.trim() which corrupts binary data.
+    // Use raw execFile with encoding: 'buffer' for binary-safe extraction.
+    const { execFile: execFileRaw } = await import('node:child_process');
+    return new Promise((resolve) => {
+      execFileRaw(
+        'git',
+        ['show', `${ref}:${filePath}`],
+        {
+          cwd: this.repoRoot,
+          timeout: 30_000,
+          encoding: 'buffer',
+          maxBuffer: 10 * 1024 * 1024,
+          env: cleanGitEnv(),
+        },
+        (err, stdout) => {
+          if (err) {
+            resolve(Err(gitError(`git show ${ref}:${filePath} failed: ${err}`, { ref, filePath })));
+          } else {
+            resolve(Ok(stdout as unknown as Buffer));
+          }
+        },
+      );
+    });
+  }
+
+  async detectDefaultBranch(): Promise<Result<string, DomainError>> {
+    const originR = await runGit(['symbolic-ref', 'refs/remotes/origin/HEAD'], this.repoRoot);
+    if (originR.ok) {
+      const ref = originR.data.replace('refs/remotes/origin/', '');
+      if (ref) return Ok(ref);
+    }
+    const configR = await runGit(['config', 'init.defaultBranch'], this.repoRoot);
+    if (configR.ok && configR.data) return Ok(configR.data);
+    return Ok('main');
   }
 }

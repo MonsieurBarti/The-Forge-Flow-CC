@@ -72,6 +72,14 @@ export class SQLiteStateAdapter
     }
   }
 
+  close(): void {
+    this.db.close();
+  }
+
+  checkpoint(): void {
+    this.db.pragma('wal_checkpoint(PASSIVE)');
+  }
+
   // ProjectStore
   getProject(): Result<Project | null, DomainError> {
     try {

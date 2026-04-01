@@ -1,3 +1,4 @@
+import { branchMergeCmd } from './commands/branch-merge.cmd.js';
 import { checkpointLoadCmd } from './commands/checkpoint-load.cmd.js';
 import { checkpointSaveCmd } from './commands/checkpoint-save.cmd.js';
 import { claimCheckStaleCmd } from './commands/claim-check-stale.cmd.js';
@@ -10,6 +11,7 @@ import { patternsExtractCmd } from './commands/patterns-extract.cmd.js';
 import { patternsRankCmd } from './commands/patterns-rank.cmd.js';
 import { projectGetCmd } from './commands/project-get.cmd.js';
 import { projectInitCmd } from './commands/project-init.cmd.js';
+import { restoreBranchCmd } from './commands/restore-branch.cmd.js';
 import { reviewCheckFreshCmd } from './commands/review-check-fresh.cmd.js';
 import { reviewRecordCmd } from './commands/review-record.cmd.js';
 import { skillsDriftCmd } from './commands/skills-drift.cmd.js';
@@ -18,6 +20,7 @@ import { sliceClassifyCmd } from './commands/slice-classify.cmd.js';
 import { sliceCreateCmd } from './commands/slice-create.cmd.js';
 import { sliceTransitionCmd } from './commands/slice-transition.cmd.js';
 import { snapshotMergeCmd } from './commands/snapshot-merge.cmd.js';
+import { syncBranchCmd } from './commands/sync-branch.cmd.js';
 import { syncStateCmd } from './commands/sync-state.cmd.js';
 import { wavesDetectCmd } from './commands/waves-detect.cmd.js';
 import { workflowNextCmd } from './commands/workflow-next.cmd.js';
@@ -56,6 +59,9 @@ const commands: Record<string, CommandFn> = {
   'workflow:should-auto': workflowShouldAutoCmd,
   'snapshot:merge': snapshotMergeCmd,
   'claim:check-stale': claimCheckStaleCmd,
+  'sync:branch': syncBranchCmd,
+  'restore:branch': restoreBranchCmd,
+  'branch:merge': branchMergeCmd,
 };
 
 const main = async () => {

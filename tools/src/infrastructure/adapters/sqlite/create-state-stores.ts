@@ -36,3 +36,27 @@ export function createStateStores(dbPath?: string): StateStores {
     reviewStore: adapter,
   };
 }
+
+export interface ClosableStateStores extends StateStores {
+  close(): void;
+  checkpoint(): void;
+}
+
+export function createClosableStateStores(dbPath?: string): ClosableStateStores {
+  const resolvedPath = dbPath ?? path.join(process.cwd(), '.tff', 'state.db');
+  const adapter = SQLiteStateAdapter.create(resolvedPath);
+  const initResult = adapter.init();
+  if (!initResult.ok) throw new Error(`DB init failed: ${initResult.error.message}`);
+  return {
+    db: adapter,
+    projectStore: adapter,
+    milestoneStore: adapter,
+    sliceStore: adapter,
+    taskStore: adapter,
+    dependencyStore: adapter,
+    sessionStore: adapter,
+    reviewStore: adapter,
+    close: () => adapter.close(),
+    checkpoint: () => adapter.checkpoint(),
+  };
+}
