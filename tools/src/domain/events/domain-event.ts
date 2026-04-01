@@ -4,7 +4,6 @@ export const DomainEventTypeSchema = z.enum([
   'SLICE_PLANNED',
   'SLICE_STATUS_CHANGED',
   'TASK_COMPLETED',
-  'SYNC_CONFLICT',
 ]);
 
 export type DomainEventType = z.infer<typeof DomainEventTypeSchema>;

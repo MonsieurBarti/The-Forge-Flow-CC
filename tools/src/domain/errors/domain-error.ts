@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const DomainErrorCodeSchema = z.enum([
   'PROJECT_EXISTS',
   'INVALID_TRANSITION',
-  'SYNC_CONFLICT',
+  'GIT_CONFLICT',
   'FRESH_REVIEWER_VIOLATION',
   'NOT_FOUND',
   'VALIDATION_ERROR',

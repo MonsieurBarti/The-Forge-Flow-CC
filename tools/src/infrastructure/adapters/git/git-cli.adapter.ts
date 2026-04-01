@@ -7,7 +7,7 @@ import type { CommitRef } from '../../../domain/value-objects/commit-ref.js';
 
 const exec = promisify(execFile);
 const gitError = (message: string, context?: Record<string, unknown>): DomainError =>
-  createDomainError('SYNC_CONFLICT', message, context);
+  createDomainError('GIT_CONFLICT', message, context);
 
 /** Strip GIT_* env vars to prevent CI runner state from leaking into subprocesses. */
 const cleanGitEnv = (): Record<string, string> => {

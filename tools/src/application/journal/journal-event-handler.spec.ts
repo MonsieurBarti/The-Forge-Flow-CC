@@ -33,10 +33,10 @@ describe('JournalEventHandler', () => {
     const handler = new JournalEventHandler(journal);
     handler.register(bus);
 
-    const event = createDomainEvent('SYNC_CONFLICT', { entityId: 'x', field: 'y', winner: 'markdown' });
+    const event = createDomainEvent('TASK_COMPLETED', { taskId: 'T99', sliceId: 'x', executor: 'test' });
     bus.publish(event);
 
-    // Should not write anything — SYNC_CONFLICT is not subscribed
+    // Should not write anything — TASK_COMPLETED is not subscribed
     const result = journal.count('x');
     expect(isOk(result)).toBe(true);
     if (isOk(result)) expect(result.data).toBe(0);
