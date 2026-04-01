@@ -84,3 +84,9 @@ export type { Wave } from './value-objects/wave.js';
 export { WaveSchema } from './value-objects/wave.js';
 export type { WorkflowSession } from './value-objects/workflow-session.js';
 export { WorkflowSessionSchema } from './value-objects/workflow-session.js';
+
+// Journal
+export type { JournalEntry } from './value-objects/journal-entry.js';
+export { JournalEntrySchema } from './value-objects/journal-entry.js';
+export type { JournalRepository } from './ports/journal-repository.port.js';
+export type { EventBus } from './ports/event-bus.port.js';
