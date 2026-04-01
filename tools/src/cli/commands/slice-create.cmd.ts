@@ -47,7 +47,10 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
         : milestonesResult.data[milestonesResult.data.length - 1];
     const milestoneId = milestone.id;
 
-    const result = await createSliceUseCase({ milestoneId, title: name }, { milestoneStore, sliceStore, artifactStore });
+    const result = await createSliceUseCase(
+      { milestoneId, title: name },
+      { milestoneStore, sliceStore, artifactStore },
+    );
 
     if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
     return JSON.stringify({ ok: false, error: result.error });

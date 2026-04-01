@@ -17,7 +17,10 @@ export const syncBranchCmd = async (args: string[]): Promise<string> => {
     const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
     try {
       stores.checkpoint();
-      const result = await syncBranchUseCase({ codeBranch, message: message ?? `sync: ${codeBranch}` }, { stateBranch });
+      const result = await syncBranchUseCase(
+        { codeBranch, message: message ?? `sync: ${codeBranch}` },
+        { stateBranch },
+      );
       if (isOk(result)) return JSON.stringify({ ok: true, data: { synced: codeBranch } });
       return JSON.stringify({ ok: false, error: result.error });
     } finally {

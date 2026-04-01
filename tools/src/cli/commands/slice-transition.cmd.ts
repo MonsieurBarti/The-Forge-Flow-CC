@@ -36,7 +36,10 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 
       // Auto-regenerate STATE.md (non-critical)
       try {
-        await generateState({ milestoneId: slice.milestoneId }, { milestoneStore, sliceStore, taskStore, artifactStore });
+        await generateState(
+          { milestoneId: slice.milestoneId },
+          { milestoneStore, sliceStore, taskStore, artifactStore },
+        );
       } catch (e) {
         const msg = `state sync failed: ${String(e)}`;
         tffWarn(msg);
