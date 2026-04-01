@@ -16,6 +16,14 @@ describe('DomainErrorCodeSchema', () => {
   });
 });
 
+describe('DomainErrorCodeSchema S03 codes', () => {
+  it('should accept new S03 error codes', () => {
+    for (const code of ['SYNC_FAILED', 'MERGE_CONFLICT', 'CORRUPTED_STATE', 'STATE_BRANCH_NOT_FOUND']) {
+      expect(DomainErrorCodeSchema.safeParse(code).success).toBe(true);
+    }
+  });
+});
+
 describe('Error factories', () => {
   it('alreadyClaimedError creates correct error', () => {
     const err = alreadyClaimedError('task-1');

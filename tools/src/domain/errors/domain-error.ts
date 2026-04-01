@@ -12,6 +12,10 @@ export const DomainErrorCodeSchema = z.enum([
   'ALREADY_CLAIMED',
   'VERSION_MISMATCH',
   'HAS_OPEN_CHILDREN',
+  'SYNC_FAILED',
+  'MERGE_CONFLICT',
+  'CORRUPTED_STATE',
+  'STATE_BRANCH_NOT_FOUND',
 ]);
 
 export type DomainErrorCode = z.infer<typeof DomainErrorCodeSchema>;
