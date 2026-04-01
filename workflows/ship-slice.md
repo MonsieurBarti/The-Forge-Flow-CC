@@ -28,7 +28,7 @@ LOAD @skills/finishing-work/SKILL.md
    - **"PR needs changes"** → SPAWN tff-fixer with requested changes → push fixes → go back to step 6
 7. CLOSE + CLEANUP:
    - `tff-tools worktree:delete <slice-id>` (if worktree exists)
-   - `bd close <slice-bead-id> --reason "Slice PR merged"`
+   - `tff-tools slice:close <slice-id> --reason "Slice PR merged"`
    - `git push origin --delete slice/<slice-id>` (delete remote slice branch)
    - `git branch -d slice/<slice-id>` (delete local slice branch, if exists)
    - `git fetch origin milestone/<milestone> && git rebase origin/milestone/<milestone>` (keep milestone branch up to date)

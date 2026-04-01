@@ -6,9 +6,9 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 milestone audit passed
 
 ## Steps
-1. CLOSE SLICES: `bd list --label tff:slice --json` → for each non-closed slice under this milestone:
+1. CLOSE SLICES: `tff-tools slice:list` → filter for non-closed slices under this milestone:
    - verify its PR is merged: `gh pr list --state merged --head slice/<slice-id>`
-   - if merged → `bd close <id> --reason "Slice PR merged"`
+   - if merged → `tff-tools slice:close <id> --reason "Slice PR merged"`
    - if not merged → warn user, block milestone completion
 2. PR: `gh pr create` milestone/<milestone> → main — **ALWAYS show PR URL**
 3. SPAWN tff-security-auditor: milestone-level review
@@ -20,7 +20,7 @@ milestone audit passed
    - merged → continue to step 6
    - needs changes → fix → push → go back to step 5
 6. CLOSE MILESTONE + CLEANUP:
-   - `bd close <milestone-bead-id> --reason "Milestone merged to main"`
+   - `tff-tools milestone:close <id> --reason "Milestone merged to main"`
    - update STATE.md: `tff-tools sync:state`
    - delete stale slice branches: `∀ slice branch → git push origin --delete slice/<id>`
    - delete milestone branch: `git push origin --delete milestone/<milestone>`

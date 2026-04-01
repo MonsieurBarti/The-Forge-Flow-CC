@@ -34,11 +34,10 @@ status = executing ∧ worktree exists at `.tff/worktrees/<slice-id>/`
     tester writes failing .spec.ts + commits in worktree
   ∀ task ∈ wave (parallel):
     IF task.ref ∈ checkpoint.completedTasks → SKIP
-    bd update <id> --claim
+    tff-tools task:claim <id>
     LOAD @skills/executing-plans/SKILL.md + domain skills (see routing below) → SPAWN subagent: {task.description, task.criteria, task.files, @references/conventions.md}
     agent works in worktree → implement → tests pass → commit
-    record executor → bead metadata
-    bd close <id> --reason "Completed"
+    tff-tools task:close <id> --reason "Completed"
     checkpoint:save <slice-id> '<updated-data-json>'   ← per-task checkpoint
   sync:state
 ```

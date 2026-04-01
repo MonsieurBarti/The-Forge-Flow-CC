@@ -61,8 +61,8 @@ WRITE `.tff/milestones/<milestone>/slices/<id>/PLAN.md`:
 - [ ] Step 5: Commit [exact git command]
 ```
 
-### 5. Create Task Beads + Detect Waves
-CREATE beads: `tff-tools` ∀ task w/ deps
+### 5. Create Tasks + Detect Waves
+CREATE tasks: `tff-tools` ∀ task w/ deps
 DETECT: `tff-tools waves:detect '<tasks-json>'` → show user
 
 ### 6. Architecture Review (F-lite ∧ F-full)

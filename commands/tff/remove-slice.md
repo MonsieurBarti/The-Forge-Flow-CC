@@ -11,6 +11,6 @@ Remove a slice that hasn't been started yet. Only future slices (discussing stat
 
 <execution_context>
 1. Verify slice is in discussing status (not started)
-2. Remove bead and update dependencies
+2. Remove slice and update dependencies
 3. Renumber subsequent slices
 </execution_context>
