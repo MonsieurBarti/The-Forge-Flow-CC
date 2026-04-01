@@ -63,24 +63,11 @@ const AutoLearnSchema = withDefault(
   }),
 );
 
-const BeadsSchema = withDefault(
-  z.object({
-    timeout: z.number().catch(30000),
-  }),
-);
-
-const DoltSchema = z.object({
-  remote: z.string(),
-  'auto-sync': z.boolean().catch(false),
-});
-
 export const ProjectSettingsSchema = withDefault(
   z.object({
     'model-profiles': ModelProfilesSchema,
     autonomy: AutonomySchema,
     'auto-learn': AutoLearnSchema,
-    beads: BeadsSchema,
-    dolt: DoltSchema.optional(),
   }),
 );
 
