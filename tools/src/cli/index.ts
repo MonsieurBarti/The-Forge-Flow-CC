@@ -20,7 +20,6 @@ import { skillsValidateCmd } from './commands/skills-validate.cmd.js';
 import { sliceClassifyCmd } from './commands/slice-classify.cmd.js';
 import { sliceCreateCmd } from './commands/slice-create.cmd.js';
 import { sliceTransitionCmd } from './commands/slice-transition.cmd.js';
-import { snapshotMergeCmd } from './commands/snapshot-merge.cmd.js';
 import { syncBranchCmd } from './commands/sync-branch.cmd.js';
 import { syncStateCmd } from './commands/sync-state.cmd.js';
 import { wavesDetectCmd } from './commands/waves-detect.cmd.js';
@@ -58,7 +57,6 @@ const commands: Record<string, CommandFn> = {
   'skills:validate': skillsValidateCmd,
   'workflow:next': workflowNextCmd,
   'workflow:should-auto': workflowShouldAutoCmd,
-  'snapshot:merge': snapshotMergeCmd,
   'claim:check-stale': claimCheckStaleCmd,
   'sync:branch': syncBranchCmd,
   'restore:branch': restoreBranchCmd,

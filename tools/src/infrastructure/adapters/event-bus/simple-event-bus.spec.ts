@@ -36,7 +36,7 @@ describe('SimpleEventBus', () => {
 
   it('does not throw when publishing with no subscribers', () => {
     const bus = new SimpleEventBus();
-    const event = createDomainEvent('SYNC_CONFLICT', { entityId: 'x', field: 'y', winner: 'markdown' });
+    const event = createDomainEvent('SLICE_PLANNED', { sliceId: 'x' });
     expect(() => bus.publish(event)).not.toThrow();
   });
 });
