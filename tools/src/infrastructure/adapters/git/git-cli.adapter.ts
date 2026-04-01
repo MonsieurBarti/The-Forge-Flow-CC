@@ -9,9 +9,18 @@ const exec = promisify(execFile);
 const gitError = (message: string, context?: Record<string, unknown>): DomainError =>
   createDomainError('SYNC_CONFLICT', message, context);
 
+/** Strip GIT_* env vars to prevent CI runner state from leaking into subprocesses. */
+const cleanGitEnv = (): Record<string, string> => {
+  const env: Record<string, string> = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    if (!k.startsWith('GIT_') && v !== undefined) env[k] = v;
+  }
+  return env;
+};
+
 const runGit = async (args: string[], cwd?: string): Promise<Result<string, DomainError>> => {
   try {
-    const { stdout } = await exec('git', args, { cwd, timeout: 30_000 });
+    const { stdout } = await exec('git', args, { cwd, timeout: 30_000, env: cleanGitEnv() });
     return Ok(stdout.trim());
   } catch (err: unknown) {
     // execFile errors include stdout/stderr on the error object
@@ -175,6 +184,7 @@ export class GitCliAdapter implements GitOps {
           timeout: 30_000,
           encoding: 'buffer',
           maxBuffer: 10 * 1024 * 1024,
+          env: cleanGitEnv(),
         },
         (err, stdout) => {
           if (err) {

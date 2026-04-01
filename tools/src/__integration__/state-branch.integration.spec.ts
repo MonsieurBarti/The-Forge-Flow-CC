@@ -8,7 +8,17 @@ import { GitCliAdapter } from '../infrastructure/adapters/git/git-cli.adapter.js
 import { GitStateBranchAdapter } from '../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { SQLiteStateAdapter } from '../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
 
-const git = (args: string[], cwd: string) => execFileSync('git', args, { cwd, encoding: 'utf-8', timeout: 10_000 });
+/** Strip GIT_* env vars to prevent CI runner state from leaking into test subprocesses. */
+const cleanEnv = (): Record<string, string> => {
+  const env: Record<string, string> = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    if (!k.startsWith('GIT_') && v !== undefined) env[k] = v;
+  }
+  return env;
+};
+
+const git = (args: string[], cwd: string) =>
+  execFileSync('git', args, { cwd, encoding: 'utf-8', timeout: 10_000, env: cleanEnv() });
 
 describe('State Branch Integration', () => {
   let repoDir: string;
