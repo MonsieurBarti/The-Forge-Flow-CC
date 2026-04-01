@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { DomainError } from '../../domain/errors/domain-error.js';
 import type { StateBranchPort } from '../../domain/ports/state-branch.port.js';
-import { Ok, type Result } from '../../domain/result.js';
-import { isOk } from '../../domain/result.js';
+import { isOk, Ok, type Result } from '../../domain/result.js';
 import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
 import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
 import { InMemoryStateAdapter } from '../../infrastructure/testing/in-memory-state-adapter.js';
@@ -27,7 +26,11 @@ class InMemoryStateBranch implements StateBranchPort {
   async restore(_codeBranch: string, _targetDir: string): Promise<Result<null, DomainError>> {
     return Ok(null);
   }
-  async merge(_child: string, _parent: string, _sliceId: string): Promise<Result<{ entitiesMerged: number; artifactsCopied: number }, DomainError>> {
+  async merge(
+    _child: string,
+    _parent: string,
+    _sliceId: string,
+  ): Promise<Result<{ entitiesMerged: number; artifactsCopied: number }, DomainError>> {
     return Ok({ entitiesMerged: 0, artifactsCopied: 0 });
   }
   async deleteBranch(_stateBranch: string): Promise<Result<void, DomainError>> {

@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
-import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
+import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
 import { createRootBranchUseCase } from './create-root-branch.js';
 
 describe('createRootBranchUseCase', () => {
   let gitOps: InMemoryGitOps;
 
-  beforeEach(() => { gitOps = new InMemoryGitOps(); });
+  beforeEach(() => {
+    gitOps = new InMemoryGitOps();
+  });
 
   it('should create root state branch', async () => {
     const stateBranch = new GitStateBranchAdapter(gitOps, '/tmp/repo');

@@ -17,11 +17,7 @@ export interface StateBranchPort {
   restore(codeBranch: string, targetDir: string): Promise<Result<RestoreResult | null, DomainError>>;
 
   /** Merge child state into parent (entity-level SQL + artifact copy). */
-  merge(
-    childBranch: string,
-    parentBranch: string,
-    sliceId: string,
-  ): Promise<Result<MergeResult, DomainError>>;
+  merge(childBranch: string, parentBranch: string, sliceId: string): Promise<Result<MergeResult, DomainError>>;
 
   /** Delete state branch (after successful merge). */
   deleteBranch(stateBranch: string): Promise<Result<void, DomainError>>;

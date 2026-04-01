@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
-import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
+import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
 import { syncBranchUseCase } from './sync-branch.js';
 
 describe('syncBranchUseCase', () => {
@@ -14,10 +14,7 @@ describe('syncBranchUseCase', () => {
   });
 
   it('should sync state to branch', async () => {
-    const r = await syncBranchUseCase(
-      { codeBranch: 'main', message: 'sync after transition' },
-      { stateBranch },
-    );
+    const r = await syncBranchUseCase({ codeBranch: 'main', message: 'sync after transition' }, { stateBranch });
     expect(isOk(r)).toBe(true);
   });
 });

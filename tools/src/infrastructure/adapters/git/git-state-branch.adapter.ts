@@ -2,16 +2,16 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { copyTffToWorktree } from './copy-tff-to-worktree.js';
 import type { DomainError } from '../../../domain/errors/domain-error.js';
-import { syncFailedError } from '../../../domain/errors/sync-failed.error.js';
 import { stateBranchNotFoundError } from '../../../domain/errors/state-branch-not-found.error.js';
+import { syncFailedError } from '../../../domain/errors/sync-failed.error.js';
 import type { GitOps } from '../../../domain/ports/git-ops.port.js';
 import type { StateBranchPort } from '../../../domain/ports/state-branch.port.js';
-import { Err, Ok, isOk, type Result } from '../../../domain/result.js';
+import { Err, isOk, Ok, type Result } from '../../../domain/result.js';
 import type { BranchMeta } from '../../../domain/value-objects/branch-meta.js';
 import type { MergeResult } from '../../../domain/value-objects/merge-result.js';
 import type { RestoreResult } from '../../../domain/value-objects/restore-result.js';
+import { copyTffToWorktree } from './copy-tff-to-worktree.js';
 
 const STATE_PREFIX = 'tff-state/';
 
@@ -39,17 +39,11 @@ export class GitStateBranchAdapter implements StateBranchPort {
   }
 
   private writeBranchMeta(worktreePath: string, meta: BranchMeta): void {
-    writeFileSync(
-      path.join(worktreePath, 'branch-meta.json'),
-      JSON.stringify(meta, null, 2),
-    );
+    writeFileSync(path.join(worktreePath, 'branch-meta.json'), JSON.stringify(meta, null, 2));
   }
 
   private writeGitignore(worktreePath: string): void {
-    writeFileSync(
-      path.join(worktreePath, '.gitignore'),
-      '.DS_Store\nThumbs.db\n*.swp\n',
-    );
+    writeFileSync(path.join(worktreePath, '.gitignore'), '.DS_Store\nThumbs.db\n*.swp\n');
   }
 
   async createRoot(): Promise<Result<void, DomainError>> {
@@ -161,10 +155,7 @@ export class GitStateBranchAdapter implements StateBranchPort {
     }
   }
 
-  async restore(
-    codeBranch: string,
-    targetDir: string,
-  ): Promise<Result<RestoreResult | null, DomainError>> {
+  async restore(codeBranch: string, targetDir: string): Promise<Result<RestoreResult | null, DomainError>> {
     const stateBr = this.stateBranch(codeBranch);
     const existsR = await this.gitOps.branchExists(stateBr);
     if (!isOk(existsR)) return existsR;

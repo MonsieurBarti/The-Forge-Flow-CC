@@ -7,7 +7,10 @@ import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesyste
 import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { tffWarn } from '../../infrastructure/adapters/logging/warn.js';
-import { createClosableStateStores, createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
+import {
+  createClosableStateStores,
+  createStateStores,
+} from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 
 export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
   const [sliceId, targetStatus] = args;

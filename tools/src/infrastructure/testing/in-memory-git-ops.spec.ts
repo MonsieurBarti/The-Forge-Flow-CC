@@ -4,7 +4,9 @@ import { InMemoryGitOps } from './in-memory-git-ops.js';
 
 describe('InMemoryGitOps — S03 extensions', () => {
   let git: InMemoryGitOps;
-  beforeEach(() => { git = new InMemoryGitOps(); });
+  beforeEach(() => {
+    git = new InMemoryGitOps();
+  });
 
   it('createOrphanWorktree should create branch without parent history', async () => {
     const r = await git.createOrphanWorktree('/tmp/wt', 'tff-state/main');

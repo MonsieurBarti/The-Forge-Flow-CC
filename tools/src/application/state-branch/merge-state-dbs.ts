@@ -51,9 +51,7 @@ export function mergeStateDbs(
 
     // Child's dependencies win (for owned tasks)
     parentDb
-      .prepare(
-        `DELETE FROM dependency WHERE from_id IN (SELECT id FROM child.task WHERE slice_id = ?)`,
-      )
+      .prepare(`DELETE FROM dependency WHERE from_id IN (SELECT id FROM child.task WHERE slice_id = ?)`)
       .run(sliceId);
     const depR = parentDb
       .prepare(

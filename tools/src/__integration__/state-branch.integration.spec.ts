@@ -3,13 +3,12 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { isOk } from '../domain/result.js';
 import { GitCliAdapter } from '../infrastructure/adapters/git/git-cli.adapter.js';
 import { GitStateBranchAdapter } from '../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { SQLiteStateAdapter } from '../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
-import { isOk } from '../domain/result.js';
 
-const git = (args: string[], cwd: string) =>
-  execFileSync('git', args, { cwd, encoding: 'utf-8', timeout: 10_000 });
+const git = (args: string[], cwd: string) => execFileSync('git', args, { cwd, encoding: 'utf-8', timeout: 10_000 });
 
 describe('State Branch Integration', () => {
   let repoDir: string;

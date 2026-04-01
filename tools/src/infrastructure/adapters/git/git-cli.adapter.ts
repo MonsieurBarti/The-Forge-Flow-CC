@@ -167,18 +167,23 @@ export class GitCliAdapter implements GitOps {
     // Use raw execFile with encoding: 'buffer' for binary-safe extraction.
     const { execFile: execFileRaw } = await import('node:child_process');
     return new Promise((resolve) => {
-      execFileRaw('git', ['show', `${ref}:${filePath}`], {
-        cwd: this.repoRoot,
-        timeout: 30_000,
-        encoding: 'buffer',
-        maxBuffer: 10 * 1024 * 1024,
-      }, (err, stdout) => {
-        if (err) {
-          resolve(Err(gitError(`git show ${ref}:${filePath} failed: ${err}`, { ref, filePath })));
-        } else {
-          resolve(Ok(stdout as unknown as Buffer));
-        }
-      });
+      execFileRaw(
+        'git',
+        ['show', `${ref}:${filePath}`],
+        {
+          cwd: this.repoRoot,
+          timeout: 30_000,
+          encoding: 'buffer',
+          maxBuffer: 10 * 1024 * 1024,
+        },
+        (err, stdout) => {
+          if (err) {
+            resolve(Err(gitError(`git show ${ref}:${filePath} failed: ${err}`, { ref, filePath })));
+          } else {
+            resolve(Ok(stdout as unknown as Buffer));
+          }
+        },
+      );
     });
   }
 

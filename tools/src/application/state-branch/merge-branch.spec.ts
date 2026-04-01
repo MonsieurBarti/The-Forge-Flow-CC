@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
-import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
+import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
 import { mergeBranchUseCase } from './merge-branch.js';
 
 describe('mergeBranchUseCase', () => {
