@@ -32,6 +32,16 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
+// tools/src/domain/result.ts
+var Ok, Err, isOk;
+var init_result = __esm({
+  "tools/src/domain/result.ts"() {
+    Ok = (data) => ({ ok: true, data });
+    Err = (error48) => ({ ok: false, error: error48 });
+    isOk = (result) => result.ok === true;
+  }
+});
+
 // node_modules/zod/v4/core/core.js
 // @__NO_SIDE_EFFECTS__
 function $constructor(name, initializer3, params) {
@@ -284,10 +294,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path2) {
-  if (!path2)
+function getElementAtPath(obj, path10) {
+  if (!path10)
     return obj;
-  return path2.reduce((acc, key) => acc?.[key], obj);
+  return path10.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -599,11 +609,11 @@ function aborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path2, issues) {
+function prefixIssues(path10, issues) {
   return issues.map((iss) => {
     var _a2;
     (_a2 = iss).path ?? (_a2.path = []);
-    iss.path.unshift(path2);
+    iss.path.unshift(path10);
     return iss;
   });
 }
@@ -845,7 +855,7 @@ function formatError(error48, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error48, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error49, path2 = []) => {
+  const processError = (error49, path10 = []) => {
     var _a2, _b;
     for (const issue2 of error49.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
@@ -855,7 +865,7 @@ function treeifyError(error48, mapper = (issue2) => issue2.message) {
       } else if (issue2.code === "invalid_element") {
         processError({ issues: issue2.issues }, issue2.path);
       } else {
-        const fullpath = [...path2, ...issue2.path];
+        const fullpath = [...path10, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -887,8 +897,8 @@ function treeifyError(error48, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path2 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path2) {
+  const path10 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path10) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -13582,13 +13592,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path2 = ref.slice(1).split("/").filter(Boolean);
-  if (path2.length === 0) {
+  const path10 = ref.slice(1).split("/").filter(Boolean);
+  if (path10.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path2[0] === defsKey) {
-    const key = path2[1];
+  if (path10[0] === defsKey) {
+    const key = path10[1];
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -14355,7 +14365,7 @@ var init_domain_error = __esm({
     DomainErrorCodeSchema = external_exports.enum([
       "PROJECT_EXISTS",
       "INVALID_TRANSITION",
-      "SYNC_CONFLICT",
+      "GIT_CONFLICT",
       "FRESH_REVIEWER_VIOLATION",
       "NOT_FOUND",
       "VALIDATION_ERROR",
@@ -14363,7 +14373,14 @@ var init_domain_error = __esm({
       "WRITE_FAILURE",
       "ALREADY_CLAIMED",
       "VERSION_MISMATCH",
-      "HAS_OPEN_CHILDREN"
+      "HAS_OPEN_CHILDREN",
+      "SYNC_FAILED",
+      "MERGE_CONFLICT",
+      "CORRUPTED_STATE",
+      "STATE_BRANCH_NOT_FOUND",
+      "JOURNAL_WRITE_FAILED",
+      "JOURNAL_READ_FAILED",
+      "JOURNAL_REPLAY_INCONSISTENT"
     ]);
     DomainErrorSchema = external_exports.object({
       code: DomainErrorCodeSchema,
@@ -14371,142 +14388,6 @@ var init_domain_error = __esm({
       context: external_exports.record(external_exports.string(), external_exports.unknown()).optional()
     });
     createDomainError = (code, message, context) => DomainErrorSchema.parse({ code, message, context });
-  }
-});
-
-// tools/src/domain/result.ts
-var Ok, Err, isOk;
-var init_result = __esm({
-  "tools/src/domain/result.ts"() {
-    Ok = (data) => ({ ok: true, data });
-    Err = (error48) => ({ ok: false, error: error48 });
-    isOk = (result) => result.ok === true;
-  }
-});
-
-// tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts
-var import_promises, import_node_path, MarkdownArtifactAdapter;
-var init_markdown_artifact_adapter = __esm({
-  "tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts"() {
-    import_promises = require("fs/promises");
-    import_node_path = require("path");
-    init_domain_error();
-    init_result();
-    MarkdownArtifactAdapter = class {
-      constructor(basePath) {
-        this.basePath = basePath;
-      }
-      resolve(path2) {
-        const resolved = (0, import_node_path.resolve)((0, import_node_path.join)(this.basePath, path2));
-        const base = (0, import_node_path.resolve)(this.basePath);
-        if (!resolved.startsWith(`${base}/`) && resolved !== base) {
-          throw new Error(`Path traversal rejected: ${path2}`);
-        }
-        return resolved;
-      }
-      async read(path2) {
-        try {
-          return Ok(await (0, import_promises.readFile)(this.resolve(path2), "utf-8"));
-        } catch {
-          return Err(createDomainError("NOT_FOUND", `File not found: ${path2}`, { path: path2 }));
-        }
-      }
-      async write(path2, content) {
-        try {
-          const fullPath = this.resolve(path2);
-          await (0, import_promises.mkdir)((0, import_node_path.dirname)(fullPath), { recursive: true });
-          await (0, import_promises.writeFile)(fullPath, content, "utf-8");
-          return Ok(void 0);
-        } catch (err) {
-          return Err(createDomainError("VALIDATION_ERROR", `Failed to write: ${path2}`, { path: path2, error: String(err) }));
-        }
-      }
-      async exists(path2) {
-        try {
-          await (0, import_promises.access)(this.resolve(path2));
-          return true;
-        } catch {
-          return false;
-        }
-      }
-      async list(directory) {
-        try {
-          const entries = await (0, import_promises.readdir)(this.resolve(directory));
-          return Ok(entries.map((e) => (0, import_node_path.join)(directory, e)));
-        } catch {
-          return Ok([]);
-        }
-      }
-      async mkdir(path2) {
-        try {
-          await (0, import_promises.mkdir)(this.resolve(path2), { recursive: true });
-          return Ok(void 0);
-        } catch (err) {
-          return Err(createDomainError("VALIDATION_ERROR", `Failed to mkdir: ${path2}`, { path: path2, error: String(err) }));
-        }
-      }
-    };
-  }
-});
-
-// tools/src/application/checkpoint/save-checkpoint.ts
-var saveCheckpoint;
-var init_save_checkpoint = __esm({
-  "tools/src/application/checkpoint/save-checkpoint.ts"() {
-    init_result();
-    saveCheckpoint = async (data, deps) => {
-      const lines = [
-        `# Checkpoint \u2014 ${data.sliceId}`,
-        `- Base commit: ${data.baseCommit}`,
-        `- Current wave: ${data.currentWave}`,
-        `- Completed waves: [${data.completedWaves.join(", ")}]`,
-        `- Completed tasks: [${data.completedTasks.join(", ")}]`,
-        `- Executor log: ${data.executorLog.map((e) => `${e.agent}\u2192${e.taskRef}`).join(", ")}`,
-        "",
-        `<!-- checkpoint-json: ${JSON.stringify(data)} -->`,
-        ""
-      ];
-      const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-      const dir = `.tff/milestones/${milestoneId}/slices/${data.sliceId}`;
-      const path2 = `${dir}/CHECKPOINT.md`;
-      const mkdirResult = await deps.artifactStore.mkdir(dir);
-      if (!isOk(mkdirResult)) return mkdirResult;
-      const writeResult = await deps.artifactStore.write(path2, lines.join("\n"));
-      if (!isOk(writeResult)) return writeResult;
-      return Ok(void 0);
-    };
-  }
-});
-
-// tools/src/cli/commands/checkpoint-save.cmd.ts
-var checkpoint_save_cmd_exports = {};
-__export(checkpoint_save_cmd_exports, {
-  checkpointSaveCmd: () => checkpointSaveCmd
-});
-var checkpointSaveCmd;
-var init_checkpoint_save_cmd = __esm({
-  "tools/src/cli/commands/checkpoint-save.cmd.ts"() {
-    init_save_checkpoint();
-    init_result();
-    init_markdown_artifact_adapter();
-    checkpointSaveCmd = async (args) => {
-      const [dataJson] = args;
-      if (!dataJson) {
-        return JSON.stringify({
-          ok: false,
-          error: { code: "INVALID_ARGS", message: "Usage: checkpoint:save <checkpoint-data-json>" }
-        });
-      }
-      try {
-        const data = JSON.parse(dataJson);
-        const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-        const result = await saveCheckpoint(data, { artifactStore });
-        if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-        return JSON.stringify({ ok: false, error: result.error });
-      } catch {
-        return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON input" } });
-      }
-    };
   }
 });
 
@@ -14563,20 +14444,20 @@ var require_file_uri_to_path = __commonJS({
       var rest = decodeURI(uri.substring(7));
       var firstSlash = rest.indexOf("/");
       var host = rest.substring(0, firstSlash);
-      var path2 = rest.substring(firstSlash + 1);
+      var path10 = rest.substring(firstSlash + 1);
       if ("localhost" == host) host = "";
       if (host) {
         host = sep + sep + host;
       }
-      path2 = path2.replace(/^(.+)\|/, "$1:");
+      path10 = path10.replace(/^(.+)\|/, "$1:");
       if (sep == "\\") {
-        path2 = path2.replace(/\//g, "\\");
+        path10 = path10.replace(/\//g, "\\");
       }
-      if (/^.+\:/.test(path2)) {
+      if (/^.+\:/.test(path10)) {
       } else {
-        path2 = sep + path2;
+        path10 = sep + path10;
       }
-      return host + path2;
+      return host + path10;
     }
   }
 });
@@ -14585,18 +14466,18 @@ var require_file_uri_to_path = __commonJS({
 var require_bindings = __commonJS({
   "node_modules/bindings/bindings.js"(exports2, module2) {
     var fs = require("fs");
-    var path2 = require("path");
+    var path10 = require("path");
     var fileURLToPath = require_file_uri_to_path();
-    var join3 = path2.join;
-    var dirname2 = path2.dirname;
-    var exists = fs.accessSync && function(path3) {
+    var join3 = path10.join;
+    var dirname2 = path10.dirname;
+    var exists = fs.accessSync && function(path11) {
       try {
-        fs.accessSync(path3);
+        fs.accessSync(path11);
       } catch (e) {
         return false;
       }
       return true;
-    } || fs.existsSync || path2.existsSync;
+    } || fs.existsSync || path10.existsSync;
     var defaults = {
       arrow: process.env.NODE_BINDINGS_ARROW || " \u2192 ",
       compiled: process.env.NODE_BINDINGS_COMPILED_DIR || "compiled",
@@ -14641,7 +14522,7 @@ var require_bindings = __commonJS({
       if (!opts.module_root) {
         opts.module_root = exports2.getRoot(exports2.getFileName());
       }
-      if (path2.extname(opts.bindings) != ".node") {
+      if (path10.extname(opts.bindings) != ".node") {
         opts.bindings += ".node";
       }
       var requireFunc = typeof __webpack_require__ === "function" ? __non_webpack_require__ : require;
@@ -14880,7 +14761,7 @@ var require_backup = __commonJS({
   "node_modules/better-sqlite3/lib/methods/backup.js"(exports2, module2) {
     "use strict";
     var fs = require("fs");
-    var path2 = require("path");
+    var path10 = require("path");
     var { promisify: promisify2 } = require("util");
     var { cppdb } = require_util();
     var fsAccess = promisify2(fs.access);
@@ -14896,7 +14777,7 @@ var require_backup = __commonJS({
       if (typeof attachedName !== "string") throw new TypeError('Expected the "attached" option to be a string');
       if (!attachedName) throw new TypeError('The "attached" option cannot be an empty string');
       if (handler != null && typeof handler !== "function") throw new TypeError('Expected the "progress" option to be a function');
-      await fsAccess(path2.dirname(filename)).catch(() => {
+      await fsAccess(path10.dirname(filename)).catch(() => {
         throw new TypeError("Cannot save backup because the directory does not exist");
       });
       const isNewFile = await fsAccess(filename).then(() => false, () => true);
@@ -15189,7 +15070,7 @@ var require_table = __commonJS({
 var require_inspect = __commonJS({
   "node_modules/better-sqlite3/lib/methods/inspect.js"(exports2, module2) {
     "use strict";
-    var DatabaseInspection = function Database2() {
+    var DatabaseInspection = function Database3() {
     };
     module2.exports = function inspect(depth, opts) {
       return Object.assign(new DatabaseInspection(), this);
@@ -15202,13 +15083,13 @@ var require_database = __commonJS({
   "node_modules/better-sqlite3/lib/database.js"(exports2, module2) {
     "use strict";
     var fs = require("fs");
-    var path2 = require("path");
+    var path10 = require("path");
     var util = require_util();
     var SqliteError = require_sqlite_error();
     var DEFAULT_ADDON;
-    function Database2(filenameGiven, options) {
+    function Database3(filenameGiven, options) {
       if (new.target == null) {
-        return new Database2(filenameGiven, options);
+        return new Database3(filenameGiven, options);
       }
       let buffer;
       if (Buffer.isBuffer(filenameGiven)) {
@@ -15238,7 +15119,7 @@ var require_database = __commonJS({
         addon = DEFAULT_ADDON || (DEFAULT_ADDON = require_bindings()("better_sqlite3.node"));
       } else if (typeof nativeBinding === "string") {
         const requireFunc = typeof __non_webpack_require__ === "function" ? __non_webpack_require__ : require;
-        addon = requireFunc(path2.resolve(nativeBinding).replace(/(\.node)?$/, ".node"));
+        addon = requireFunc(path10.resolve(nativeBinding).replace(/(\.node)?$/, ".node"));
       } else {
         addon = nativeBinding;
       }
@@ -15246,7 +15127,7 @@ var require_database = __commonJS({
         addon.setErrorConstructor(SqliteError);
         addon.isInitialized = true;
       }
-      if (!anonymous && !filename.startsWith("file:") && !fs.existsSync(path2.dirname(filename))) {
+      if (!anonymous && !filename.startsWith("file:") && !fs.existsSync(path10.dirname(filename))) {
         throw new TypeError("Cannot open database because the directory does not exist");
       }
       Object.defineProperties(this, {
@@ -15255,21 +15136,21 @@ var require_database = __commonJS({
       });
     }
     var wrappers = require_wrappers();
-    Database2.prototype.prepare = wrappers.prepare;
-    Database2.prototype.transaction = require_transaction();
-    Database2.prototype.pragma = require_pragma();
-    Database2.prototype.backup = require_backup();
-    Database2.prototype.serialize = require_serialize();
-    Database2.prototype.function = require_function();
-    Database2.prototype.aggregate = require_aggregate();
-    Database2.prototype.table = require_table();
-    Database2.prototype.loadExtension = wrappers.loadExtension;
-    Database2.prototype.exec = wrappers.exec;
-    Database2.prototype.close = wrappers.close;
-    Database2.prototype.defaultSafeIntegers = wrappers.defaultSafeIntegers;
-    Database2.prototype.unsafeMode = wrappers.unsafeMode;
-    Database2.prototype[util.inspect] = require_inspect();
-    module2.exports = Database2;
+    Database3.prototype.prepare = wrappers.prepare;
+    Database3.prototype.transaction = require_transaction();
+    Database3.prototype.pragma = require_pragma();
+    Database3.prototype.backup = require_backup();
+    Database3.prototype.serialize = require_serialize();
+    Database3.prototype.function = require_function();
+    Database3.prototype.aggregate = require_aggregate();
+    Database3.prototype.table = require_table();
+    Database3.prototype.loadExtension = wrappers.loadExtension;
+    Database3.prototype.exec = wrappers.exec;
+    Database3.prototype.close = wrappers.close;
+    Database3.prototype.defaultSafeIntegers = wrappers.defaultSafeIntegers;
+    Database3.prototype.unsafeMode = wrappers.unsafeMode;
+    Database3.prototype[util.inspect] = require_inspect();
+    module2.exports = Database3;
   }
 });
 
@@ -15282,193 +15163,1938 @@ var require_lib = __commonJS({
   }
 });
 
-// tools/src/application/checkpoint/load-checkpoint.ts
+// tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts
+var import_promises, import_node_path4, MarkdownArtifactAdapter;
+var init_markdown_artifact_adapter = __esm({
+  "tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts"() {
+    import_promises = require("fs/promises");
+    import_node_path4 = require("path");
+    init_domain_error();
+    init_result();
+    MarkdownArtifactAdapter = class {
+      constructor(basePath) {
+        this.basePath = basePath;
+      }
+      resolve(path10) {
+        const resolved = (0, import_node_path4.resolve)((0, import_node_path4.join)(this.basePath, path10));
+        const base = (0, import_node_path4.resolve)(this.basePath);
+        if (!resolved.startsWith(`${base}/`) && resolved !== base) {
+          throw new Error(`Path traversal rejected: ${path10}`);
+        }
+        return resolved;
+      }
+      async read(path10) {
+        try {
+          return Ok(await (0, import_promises.readFile)(this.resolve(path10), "utf-8"));
+        } catch {
+          return Err(createDomainError("NOT_FOUND", `File not found: ${path10}`, { path: path10 }));
+        }
+      }
+      async write(path10, content) {
+        try {
+          const fullPath = this.resolve(path10);
+          await (0, import_promises.mkdir)((0, import_node_path4.dirname)(fullPath), { recursive: true });
+          await (0, import_promises.writeFile)(fullPath, content, "utf-8");
+          return Ok(void 0);
+        } catch (err) {
+          return Err(createDomainError("VALIDATION_ERROR", `Failed to write: ${path10}`, { path: path10, error: String(err) }));
+        }
+      }
+      async exists(path10) {
+        try {
+          await (0, import_promises.access)(this.resolve(path10));
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      async list(directory) {
+        try {
+          const entries = await (0, import_promises.readdir)(this.resolve(directory));
+          return Ok(entries.map((e) => (0, import_node_path4.join)(directory, e)));
+        } catch {
+          return Ok([]);
+        }
+      }
+      async mkdir(path10) {
+        try {
+          await (0, import_promises.mkdir)(this.resolve(path10), { recursive: true });
+          return Ok(void 0);
+        } catch (err) {
+          return Err(createDomainError("VALIDATION_ERROR", `Failed to mkdir: ${path10}`, { path: path10, error: String(err) }));
+        }
+      }
+    };
+  }
+});
+
+// tools/src/application/checkpoint/save-checkpoint.ts
+var saveCheckpoint;
+var init_save_checkpoint = __esm({
+  "tools/src/application/checkpoint/save-checkpoint.ts"() {
+    init_result();
+    saveCheckpoint = async (data, deps) => {
+      const lines = [
+        `# Checkpoint \u2014 ${data.sliceId}`,
+        `- Base commit: ${data.baseCommit}`,
+        `- Current wave: ${data.currentWave}`,
+        `- Completed waves: [${data.completedWaves.join(", ")}]`,
+        `- Completed tasks: [${data.completedTasks.join(", ")}]`,
+        `- Executor log: ${data.executorLog.map((e) => `${e.agent}\u2192${e.taskRef}`).join(", ")}`,
+        "",
+        `<!-- checkpoint-json: ${JSON.stringify(data)} -->`,
+        ""
+      ];
+      const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
+      const dir = `.tff/milestones/${milestoneId}/slices/${data.sliceId}`;
+      const path10 = `${dir}/CHECKPOINT.md`;
+      const mkdirResult = await deps.artifactStore.mkdir(dir);
+      if (!isOk(mkdirResult)) return mkdirResult;
+      const writeResult = await deps.artifactStore.write(path10, lines.join("\n"));
+      if (!isOk(writeResult)) return writeResult;
+      return Ok(void 0);
+    };
+  }
+});
+
+// tools/src/cli/commands/checkpoint-save.cmd.ts
+var checkpoint_save_cmd_exports = {};
+__export(checkpoint_save_cmd_exports, {
+  checkpointSaveCmd: () => checkpointSaveCmd
+});
+var USAGE, checkpointSaveCmd;
+var init_checkpoint_save_cmd = __esm({
+  "tools/src/cli/commands/checkpoint-save.cmd.ts"() {
+    init_save_checkpoint();
+    init_result();
+    init_markdown_artifact_adapter();
+    USAGE = `Usage: checkpoint:save '{"sliceId":"M01-S01","baseCommit":"abc123","currentWave":0,"completedWaves":[],"completedTasks":[],"executorLog":[]}'`;
+    checkpointSaveCmd = async (args) => {
+      const [dataJson] = args;
+      if (!dataJson) {
+        return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: USAGE } });
+      }
+      let data;
+      try {
+        data = JSON.parse(dataJson);
+      } catch {
+        return JSON.stringify({
+          ok: false,
+          error: { code: "INVALID_ARGS", message: `Invalid JSON. ${USAGE}` }
+        });
+      }
+      if (typeof data?.sliceId !== "string") {
+        return JSON.stringify({
+          ok: false,
+          error: { code: "INVALID_ARGS", message: `Missing required field "sliceId". ${USAGE}` }
+        });
+      }
+      const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+      const result = await saveCheckpoint(data, { artifactStore });
+      if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+      return JSON.stringify({ ok: false, error: result.error });
+    };
+  }
+});
+
+// node_modules/graceful-fs/polyfills.js
+var require_polyfills = __commonJS({
+  "node_modules/graceful-fs/polyfills.js"(exports2, module2) {
+    var constants = require("constants");
+    var origCwd = process.cwd;
+    var cwd = null;
+    var platform = process.env.GRACEFUL_FS_PLATFORM || process.platform;
+    process.cwd = function() {
+      if (!cwd)
+        cwd = origCwd.call(process);
+      return cwd;
+    };
+    try {
+      process.cwd();
+    } catch (er) {
+    }
+    if (typeof process.chdir === "function") {
+      chdir = process.chdir;
+      process.chdir = function(d) {
+        cwd = null;
+        chdir.call(process, d);
+      };
+      if (Object.setPrototypeOf) Object.setPrototypeOf(process.chdir, chdir);
+    }
+    var chdir;
+    module2.exports = patch;
+    function patch(fs) {
+      if (constants.hasOwnProperty("O_SYMLINK") && process.version.match(/^v0\.6\.[0-2]|^v0\.5\./)) {
+        patchLchmod(fs);
+      }
+      if (!fs.lutimes) {
+        patchLutimes(fs);
+      }
+      fs.chown = chownFix(fs.chown);
+      fs.fchown = chownFix(fs.fchown);
+      fs.lchown = chownFix(fs.lchown);
+      fs.chmod = chmodFix(fs.chmod);
+      fs.fchmod = chmodFix(fs.fchmod);
+      fs.lchmod = chmodFix(fs.lchmod);
+      fs.chownSync = chownFixSync(fs.chownSync);
+      fs.fchownSync = chownFixSync(fs.fchownSync);
+      fs.lchownSync = chownFixSync(fs.lchownSync);
+      fs.chmodSync = chmodFixSync(fs.chmodSync);
+      fs.fchmodSync = chmodFixSync(fs.fchmodSync);
+      fs.lchmodSync = chmodFixSync(fs.lchmodSync);
+      fs.stat = statFix(fs.stat);
+      fs.fstat = statFix(fs.fstat);
+      fs.lstat = statFix(fs.lstat);
+      fs.statSync = statFixSync(fs.statSync);
+      fs.fstatSync = statFixSync(fs.fstatSync);
+      fs.lstatSync = statFixSync(fs.lstatSync);
+      if (fs.chmod && !fs.lchmod) {
+        fs.lchmod = function(path10, mode, cb) {
+          if (cb) process.nextTick(cb);
+        };
+        fs.lchmodSync = function() {
+        };
+      }
+      if (fs.chown && !fs.lchown) {
+        fs.lchown = function(path10, uid, gid, cb) {
+          if (cb) process.nextTick(cb);
+        };
+        fs.lchownSync = function() {
+        };
+      }
+      if (platform === "win32") {
+        fs.rename = typeof fs.rename !== "function" ? fs.rename : (function(fs$rename) {
+          function rename(from, to, cb) {
+            var start = Date.now();
+            var backoff = 0;
+            fs$rename(from, to, function CB(er) {
+              if (er && (er.code === "EACCES" || er.code === "EPERM" || er.code === "EBUSY") && Date.now() - start < 6e4) {
+                setTimeout(function() {
+                  fs.stat(to, function(stater, st) {
+                    if (stater && stater.code === "ENOENT")
+                      fs$rename(from, to, CB);
+                    else
+                      cb(er);
+                  });
+                }, backoff);
+                if (backoff < 100)
+                  backoff += 10;
+                return;
+              }
+              if (cb) cb(er);
+            });
+          }
+          if (Object.setPrototypeOf) Object.setPrototypeOf(rename, fs$rename);
+          return rename;
+        })(fs.rename);
+      }
+      fs.read = typeof fs.read !== "function" ? fs.read : (function(fs$read) {
+        function read(fd, buffer, offset, length, position, callback_) {
+          var callback;
+          if (callback_ && typeof callback_ === "function") {
+            var eagCounter = 0;
+            callback = function(er, _, __) {
+              if (er && er.code === "EAGAIN" && eagCounter < 10) {
+                eagCounter++;
+                return fs$read.call(fs, fd, buffer, offset, length, position, callback);
+              }
+              callback_.apply(this, arguments);
+            };
+          }
+          return fs$read.call(fs, fd, buffer, offset, length, position, callback);
+        }
+        if (Object.setPrototypeOf) Object.setPrototypeOf(read, fs$read);
+        return read;
+      })(fs.read);
+      fs.readSync = typeof fs.readSync !== "function" ? fs.readSync : /* @__PURE__ */ (function(fs$readSync) {
+        return function(fd, buffer, offset, length, position) {
+          var eagCounter = 0;
+          while (true) {
+            try {
+              return fs$readSync.call(fs, fd, buffer, offset, length, position);
+            } catch (er) {
+              if (er.code === "EAGAIN" && eagCounter < 10) {
+                eagCounter++;
+                continue;
+              }
+              throw er;
+            }
+          }
+        };
+      })(fs.readSync);
+      function patchLchmod(fs2) {
+        fs2.lchmod = function(path10, mode, callback) {
+          fs2.open(
+            path10,
+            constants.O_WRONLY | constants.O_SYMLINK,
+            mode,
+            function(err, fd) {
+              if (err) {
+                if (callback) callback(err);
+                return;
+              }
+              fs2.fchmod(fd, mode, function(err2) {
+                fs2.close(fd, function(err22) {
+                  if (callback) callback(err2 || err22);
+                });
+              });
+            }
+          );
+        };
+        fs2.lchmodSync = function(path10, mode) {
+          var fd = fs2.openSync(path10, constants.O_WRONLY | constants.O_SYMLINK, mode);
+          var threw = true;
+          var ret;
+          try {
+            ret = fs2.fchmodSync(fd, mode);
+            threw = false;
+          } finally {
+            if (threw) {
+              try {
+                fs2.closeSync(fd);
+              } catch (er) {
+              }
+            } else {
+              fs2.closeSync(fd);
+            }
+          }
+          return ret;
+        };
+      }
+      function patchLutimes(fs2) {
+        if (constants.hasOwnProperty("O_SYMLINK") && fs2.futimes) {
+          fs2.lutimes = function(path10, at, mt, cb) {
+            fs2.open(path10, constants.O_SYMLINK, function(er, fd) {
+              if (er) {
+                if (cb) cb(er);
+                return;
+              }
+              fs2.futimes(fd, at, mt, function(er2) {
+                fs2.close(fd, function(er22) {
+                  if (cb) cb(er2 || er22);
+                });
+              });
+            });
+          };
+          fs2.lutimesSync = function(path10, at, mt) {
+            var fd = fs2.openSync(path10, constants.O_SYMLINK);
+            var ret;
+            var threw = true;
+            try {
+              ret = fs2.futimesSync(fd, at, mt);
+              threw = false;
+            } finally {
+              if (threw) {
+                try {
+                  fs2.closeSync(fd);
+                } catch (er) {
+                }
+              } else {
+                fs2.closeSync(fd);
+              }
+            }
+            return ret;
+          };
+        } else if (fs2.futimes) {
+          fs2.lutimes = function(_a2, _b, _c, cb) {
+            if (cb) process.nextTick(cb);
+          };
+          fs2.lutimesSync = function() {
+          };
+        }
+      }
+      function chmodFix(orig) {
+        if (!orig) return orig;
+        return function(target, mode, cb) {
+          return orig.call(fs, target, mode, function(er) {
+            if (chownErOk(er)) er = null;
+            if (cb) cb.apply(this, arguments);
+          });
+        };
+      }
+      function chmodFixSync(orig) {
+        if (!orig) return orig;
+        return function(target, mode) {
+          try {
+            return orig.call(fs, target, mode);
+          } catch (er) {
+            if (!chownErOk(er)) throw er;
+          }
+        };
+      }
+      function chownFix(orig) {
+        if (!orig) return orig;
+        return function(target, uid, gid, cb) {
+          return orig.call(fs, target, uid, gid, function(er) {
+            if (chownErOk(er)) er = null;
+            if (cb) cb.apply(this, arguments);
+          });
+        };
+      }
+      function chownFixSync(orig) {
+        if (!orig) return orig;
+        return function(target, uid, gid) {
+          try {
+            return orig.call(fs, target, uid, gid);
+          } catch (er) {
+            if (!chownErOk(er)) throw er;
+          }
+        };
+      }
+      function statFix(orig) {
+        if (!orig) return orig;
+        return function(target, options, cb) {
+          if (typeof options === "function") {
+            cb = options;
+            options = null;
+          }
+          function callback(er, stats) {
+            if (stats) {
+              if (stats.uid < 0) stats.uid += 4294967296;
+              if (stats.gid < 0) stats.gid += 4294967296;
+            }
+            if (cb) cb.apply(this, arguments);
+          }
+          return options ? orig.call(fs, target, options, callback) : orig.call(fs, target, callback);
+        };
+      }
+      function statFixSync(orig) {
+        if (!orig) return orig;
+        return function(target, options) {
+          var stats = options ? orig.call(fs, target, options) : orig.call(fs, target);
+          if (stats) {
+            if (stats.uid < 0) stats.uid += 4294967296;
+            if (stats.gid < 0) stats.gid += 4294967296;
+          }
+          return stats;
+        };
+      }
+      function chownErOk(er) {
+        if (!er)
+          return true;
+        if (er.code === "ENOSYS")
+          return true;
+        var nonroot = !process.getuid || process.getuid() !== 0;
+        if (nonroot) {
+          if (er.code === "EINVAL" || er.code === "EPERM")
+            return true;
+        }
+        return false;
+      }
+    }
+  }
+});
+
+// node_modules/graceful-fs/legacy-streams.js
+var require_legacy_streams = __commonJS({
+  "node_modules/graceful-fs/legacy-streams.js"(exports2, module2) {
+    var Stream = require("stream").Stream;
+    module2.exports = legacy;
+    function legacy(fs) {
+      return {
+        ReadStream,
+        WriteStream
+      };
+      function ReadStream(path10, options) {
+        if (!(this instanceof ReadStream)) return new ReadStream(path10, options);
+        Stream.call(this);
+        var self = this;
+        this.path = path10;
+        this.fd = null;
+        this.readable = true;
+        this.paused = false;
+        this.flags = "r";
+        this.mode = 438;
+        this.bufferSize = 64 * 1024;
+        options = options || {};
+        var keys = Object.keys(options);
+        for (var index = 0, length = keys.length; index < length; index++) {
+          var key = keys[index];
+          this[key] = options[key];
+        }
+        if (this.encoding) this.setEncoding(this.encoding);
+        if (this.start !== void 0) {
+          if ("number" !== typeof this.start) {
+            throw TypeError("start must be a Number");
+          }
+          if (this.end === void 0) {
+            this.end = Infinity;
+          } else if ("number" !== typeof this.end) {
+            throw TypeError("end must be a Number");
+          }
+          if (this.start > this.end) {
+            throw new Error("start must be <= end");
+          }
+          this.pos = this.start;
+        }
+        if (this.fd !== null) {
+          process.nextTick(function() {
+            self._read();
+          });
+          return;
+        }
+        fs.open(this.path, this.flags, this.mode, function(err, fd) {
+          if (err) {
+            self.emit("error", err);
+            self.readable = false;
+            return;
+          }
+          self.fd = fd;
+          self.emit("open", fd);
+          self._read();
+        });
+      }
+      function WriteStream(path10, options) {
+        if (!(this instanceof WriteStream)) return new WriteStream(path10, options);
+        Stream.call(this);
+        this.path = path10;
+        this.fd = null;
+        this.writable = true;
+        this.flags = "w";
+        this.encoding = "binary";
+        this.mode = 438;
+        this.bytesWritten = 0;
+        options = options || {};
+        var keys = Object.keys(options);
+        for (var index = 0, length = keys.length; index < length; index++) {
+          var key = keys[index];
+          this[key] = options[key];
+        }
+        if (this.start !== void 0) {
+          if ("number" !== typeof this.start) {
+            throw TypeError("start must be a Number");
+          }
+          if (this.start < 0) {
+            throw new Error("start must be >= zero");
+          }
+          this.pos = this.start;
+        }
+        this.busy = false;
+        this._queue = [];
+        if (this.fd === null) {
+          this._open = fs.open;
+          this._queue.push([this._open, this.path, this.flags, this.mode, void 0]);
+          this.flush();
+        }
+      }
+    }
+  }
+});
+
+// node_modules/graceful-fs/clone.js
+var require_clone = __commonJS({
+  "node_modules/graceful-fs/clone.js"(exports2, module2) {
+    "use strict";
+    module2.exports = clone2;
+    var getPrototypeOf = Object.getPrototypeOf || function(obj) {
+      return obj.__proto__;
+    };
+    function clone2(obj) {
+      if (obj === null || typeof obj !== "object")
+        return obj;
+      if (obj instanceof Object)
+        var copy = { __proto__: getPrototypeOf(obj) };
+      else
+        var copy = /* @__PURE__ */ Object.create(null);
+      Object.getOwnPropertyNames(obj).forEach(function(key) {
+        Object.defineProperty(copy, key, Object.getOwnPropertyDescriptor(obj, key));
+      });
+      return copy;
+    }
+  }
+});
+
+// node_modules/graceful-fs/graceful-fs.js
+var require_graceful_fs = __commonJS({
+  "node_modules/graceful-fs/graceful-fs.js"(exports2, module2) {
+    var fs = require("fs");
+    var polyfills = require_polyfills();
+    var legacy = require_legacy_streams();
+    var clone2 = require_clone();
+    var util = require("util");
+    var gracefulQueue;
+    var previousSymbol;
+    if (typeof Symbol === "function" && typeof Symbol.for === "function") {
+      gracefulQueue = /* @__PURE__ */ Symbol.for("graceful-fs.queue");
+      previousSymbol = /* @__PURE__ */ Symbol.for("graceful-fs.previous");
+    } else {
+      gracefulQueue = "___graceful-fs.queue";
+      previousSymbol = "___graceful-fs.previous";
+    }
+    function noop() {
+    }
+    function publishQueue(context, queue2) {
+      Object.defineProperty(context, gracefulQueue, {
+        get: function() {
+          return queue2;
+        }
+      });
+    }
+    var debug = noop;
+    if (util.debuglog)
+      debug = util.debuglog("gfs4");
+    else if (/\bgfs4\b/i.test(process.env.NODE_DEBUG || ""))
+      debug = function() {
+        var m = util.format.apply(util, arguments);
+        m = "GFS4: " + m.split(/\n/).join("\nGFS4: ");
+        console.error(m);
+      };
+    if (!fs[gracefulQueue]) {
+      queue = global[gracefulQueue] || [];
+      publishQueue(fs, queue);
+      fs.close = (function(fs$close) {
+        function close(fd, cb) {
+          return fs$close.call(fs, fd, function(err) {
+            if (!err) {
+              resetQueue();
+            }
+            if (typeof cb === "function")
+              cb.apply(this, arguments);
+          });
+        }
+        Object.defineProperty(close, previousSymbol, {
+          value: fs$close
+        });
+        return close;
+      })(fs.close);
+      fs.closeSync = (function(fs$closeSync) {
+        function closeSync(fd) {
+          fs$closeSync.apply(fs, arguments);
+          resetQueue();
+        }
+        Object.defineProperty(closeSync, previousSymbol, {
+          value: fs$closeSync
+        });
+        return closeSync;
+      })(fs.closeSync);
+      if (/\bgfs4\b/i.test(process.env.NODE_DEBUG || "")) {
+        process.on("exit", function() {
+          debug(fs[gracefulQueue]);
+          require("assert").equal(fs[gracefulQueue].length, 0);
+        });
+      }
+    }
+    var queue;
+    if (!global[gracefulQueue]) {
+      publishQueue(global, fs[gracefulQueue]);
+    }
+    module2.exports = patch(clone2(fs));
+    if (process.env.TEST_GRACEFUL_FS_GLOBAL_PATCH && !fs.__patched) {
+      module2.exports = patch(fs);
+      fs.__patched = true;
+    }
+    function patch(fs2) {
+      polyfills(fs2);
+      fs2.gracefulify = patch;
+      fs2.createReadStream = createReadStream;
+      fs2.createWriteStream = createWriteStream;
+      var fs$readFile = fs2.readFile;
+      fs2.readFile = readFile3;
+      function readFile3(path10, options, cb) {
+        if (typeof options === "function")
+          cb = options, options = null;
+        return go$readFile(path10, options, cb);
+        function go$readFile(path11, options2, cb2, startTime) {
+          return fs$readFile(path11, options2, function(err) {
+            if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
+              enqueue([go$readFile, [path11, options2, cb2], err, startTime || Date.now(), Date.now()]);
+            else {
+              if (typeof cb2 === "function")
+                cb2.apply(this, arguments);
+            }
+          });
+        }
+      }
+      var fs$writeFile = fs2.writeFile;
+      fs2.writeFile = writeFile3;
+      function writeFile3(path10, data, options, cb) {
+        if (typeof options === "function")
+          cb = options, options = null;
+        return go$writeFile(path10, data, options, cb);
+        function go$writeFile(path11, data2, options2, cb2, startTime) {
+          return fs$writeFile(path11, data2, options2, function(err) {
+            if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
+              enqueue([go$writeFile, [path11, data2, options2, cb2], err, startTime || Date.now(), Date.now()]);
+            else {
+              if (typeof cb2 === "function")
+                cb2.apply(this, arguments);
+            }
+          });
+        }
+      }
+      var fs$appendFile = fs2.appendFile;
+      if (fs$appendFile)
+        fs2.appendFile = appendFile2;
+      function appendFile2(path10, data, options, cb) {
+        if (typeof options === "function")
+          cb = options, options = null;
+        return go$appendFile(path10, data, options, cb);
+        function go$appendFile(path11, data2, options2, cb2, startTime) {
+          return fs$appendFile(path11, data2, options2, function(err) {
+            if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
+              enqueue([go$appendFile, [path11, data2, options2, cb2], err, startTime || Date.now(), Date.now()]);
+            else {
+              if (typeof cb2 === "function")
+                cb2.apply(this, arguments);
+            }
+          });
+        }
+      }
+      var fs$copyFile = fs2.copyFile;
+      if (fs$copyFile)
+        fs2.copyFile = copyFile;
+      function copyFile(src, dest, flags, cb) {
+        if (typeof flags === "function") {
+          cb = flags;
+          flags = 0;
+        }
+        return go$copyFile(src, dest, flags, cb);
+        function go$copyFile(src2, dest2, flags2, cb2, startTime) {
+          return fs$copyFile(src2, dest2, flags2, function(err) {
+            if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
+              enqueue([go$copyFile, [src2, dest2, flags2, cb2], err, startTime || Date.now(), Date.now()]);
+            else {
+              if (typeof cb2 === "function")
+                cb2.apply(this, arguments);
+            }
+          });
+        }
+      }
+      var fs$readdir = fs2.readdir;
+      fs2.readdir = readdir2;
+      var noReaddirOptionVersions = /^v[0-5]\./;
+      function readdir2(path10, options, cb) {
+        if (typeof options === "function")
+          cb = options, options = null;
+        var go$readdir = noReaddirOptionVersions.test(process.version) ? function go$readdir2(path11, options2, cb2, startTime) {
+          return fs$readdir(path11, fs$readdirCallback(
+            path11,
+            options2,
+            cb2,
+            startTime
+          ));
+        } : function go$readdir2(path11, options2, cb2, startTime) {
+          return fs$readdir(path11, options2, fs$readdirCallback(
+            path11,
+            options2,
+            cb2,
+            startTime
+          ));
+        };
+        return go$readdir(path10, options, cb);
+        function fs$readdirCallback(path11, options2, cb2, startTime) {
+          return function(err, files) {
+            if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
+              enqueue([
+                go$readdir,
+                [path11, options2, cb2],
+                err,
+                startTime || Date.now(),
+                Date.now()
+              ]);
+            else {
+              if (files && files.sort)
+                files.sort();
+              if (typeof cb2 === "function")
+                cb2.call(this, err, files);
+            }
+          };
+        }
+      }
+      if (process.version.substr(0, 4) === "v0.8") {
+        var legStreams = legacy(fs2);
+        ReadStream = legStreams.ReadStream;
+        WriteStream = legStreams.WriteStream;
+      }
+      var fs$ReadStream = fs2.ReadStream;
+      if (fs$ReadStream) {
+        ReadStream.prototype = Object.create(fs$ReadStream.prototype);
+        ReadStream.prototype.open = ReadStream$open;
+      }
+      var fs$WriteStream = fs2.WriteStream;
+      if (fs$WriteStream) {
+        WriteStream.prototype = Object.create(fs$WriteStream.prototype);
+        WriteStream.prototype.open = WriteStream$open;
+      }
+      Object.defineProperty(fs2, "ReadStream", {
+        get: function() {
+          return ReadStream;
+        },
+        set: function(val) {
+          ReadStream = val;
+        },
+        enumerable: true,
+        configurable: true
+      });
+      Object.defineProperty(fs2, "WriteStream", {
+        get: function() {
+          return WriteStream;
+        },
+        set: function(val) {
+          WriteStream = val;
+        },
+        enumerable: true,
+        configurable: true
+      });
+      var FileReadStream = ReadStream;
+      Object.defineProperty(fs2, "FileReadStream", {
+        get: function() {
+          return FileReadStream;
+        },
+        set: function(val) {
+          FileReadStream = val;
+        },
+        enumerable: true,
+        configurable: true
+      });
+      var FileWriteStream = WriteStream;
+      Object.defineProperty(fs2, "FileWriteStream", {
+        get: function() {
+          return FileWriteStream;
+        },
+        set: function(val) {
+          FileWriteStream = val;
+        },
+        enumerable: true,
+        configurable: true
+      });
+      function ReadStream(path10, options) {
+        if (this instanceof ReadStream)
+          return fs$ReadStream.apply(this, arguments), this;
+        else
+          return ReadStream.apply(Object.create(ReadStream.prototype), arguments);
+      }
+      function ReadStream$open() {
+        var that = this;
+        open(that.path, that.flags, that.mode, function(err, fd) {
+          if (err) {
+            if (that.autoClose)
+              that.destroy();
+            that.emit("error", err);
+          } else {
+            that.fd = fd;
+            that.emit("open", fd);
+            that.read();
+          }
+        });
+      }
+      function WriteStream(path10, options) {
+        if (this instanceof WriteStream)
+          return fs$WriteStream.apply(this, arguments), this;
+        else
+          return WriteStream.apply(Object.create(WriteStream.prototype), arguments);
+      }
+      function WriteStream$open() {
+        var that = this;
+        open(that.path, that.flags, that.mode, function(err, fd) {
+          if (err) {
+            that.destroy();
+            that.emit("error", err);
+          } else {
+            that.fd = fd;
+            that.emit("open", fd);
+          }
+        });
+      }
+      function createReadStream(path10, options) {
+        return new fs2.ReadStream(path10, options);
+      }
+      function createWriteStream(path10, options) {
+        return new fs2.WriteStream(path10, options);
+      }
+      var fs$open = fs2.open;
+      fs2.open = open;
+      function open(path10, flags, mode, cb) {
+        if (typeof mode === "function")
+          cb = mode, mode = null;
+        return go$open(path10, flags, mode, cb);
+        function go$open(path11, flags2, mode2, cb2, startTime) {
+          return fs$open(path11, flags2, mode2, function(err, fd) {
+            if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
+              enqueue([go$open, [path11, flags2, mode2, cb2], err, startTime || Date.now(), Date.now()]);
+            else {
+              if (typeof cb2 === "function")
+                cb2.apply(this, arguments);
+            }
+          });
+        }
+      }
+      return fs2;
+    }
+    function enqueue(elem) {
+      debug("ENQUEUE", elem[0].name, elem[1]);
+      fs[gracefulQueue].push(elem);
+      retry();
+    }
+    var retryTimer;
+    function resetQueue() {
+      var now = Date.now();
+      for (var i = 0; i < fs[gracefulQueue].length; ++i) {
+        if (fs[gracefulQueue][i].length > 2) {
+          fs[gracefulQueue][i][3] = now;
+          fs[gracefulQueue][i][4] = now;
+        }
+      }
+      retry();
+    }
+    function retry() {
+      clearTimeout(retryTimer);
+      retryTimer = void 0;
+      if (fs[gracefulQueue].length === 0)
+        return;
+      var elem = fs[gracefulQueue].shift();
+      var fn = elem[0];
+      var args = elem[1];
+      var err = elem[2];
+      var startTime = elem[3];
+      var lastTime = elem[4];
+      if (startTime === void 0) {
+        debug("RETRY", fn.name, args);
+        fn.apply(null, args);
+      } else if (Date.now() - startTime >= 6e4) {
+        debug("TIMEOUT", fn.name, args);
+        var cb = args.pop();
+        if (typeof cb === "function")
+          cb.call(null, err);
+      } else {
+        var sinceAttempt = Date.now() - lastTime;
+        var sinceStart = Math.max(lastTime - startTime, 1);
+        var desiredDelay = Math.min(sinceStart * 1.2, 100);
+        if (sinceAttempt >= desiredDelay) {
+          debug("RETRY", fn.name, args);
+          fn.apply(null, args.concat([startTime]));
+        } else {
+          fs[gracefulQueue].push(elem);
+        }
+      }
+      if (retryTimer === void 0) {
+        retryTimer = setTimeout(retry, 0);
+      }
+    }
+  }
+});
+
+// node_modules/retry/lib/retry_operation.js
+var require_retry_operation = __commonJS({
+  "node_modules/retry/lib/retry_operation.js"(exports2, module2) {
+    function RetryOperation(timeouts, options) {
+      if (typeof options === "boolean") {
+        options = { forever: options };
+      }
+      this._originalTimeouts = JSON.parse(JSON.stringify(timeouts));
+      this._timeouts = timeouts;
+      this._options = options || {};
+      this._maxRetryTime = options && options.maxRetryTime || Infinity;
+      this._fn = null;
+      this._errors = [];
+      this._attempts = 1;
+      this._operationTimeout = null;
+      this._operationTimeoutCb = null;
+      this._timeout = null;
+      this._operationStart = null;
+      if (this._options.forever) {
+        this._cachedTimeouts = this._timeouts.slice(0);
+      }
+    }
+    module2.exports = RetryOperation;
+    RetryOperation.prototype.reset = function() {
+      this._attempts = 1;
+      this._timeouts = this._originalTimeouts;
+    };
+    RetryOperation.prototype.stop = function() {
+      if (this._timeout) {
+        clearTimeout(this._timeout);
+      }
+      this._timeouts = [];
+      this._cachedTimeouts = null;
+    };
+    RetryOperation.prototype.retry = function(err) {
+      if (this._timeout) {
+        clearTimeout(this._timeout);
+      }
+      if (!err) {
+        return false;
+      }
+      var currentTime = (/* @__PURE__ */ new Date()).getTime();
+      if (err && currentTime - this._operationStart >= this._maxRetryTime) {
+        this._errors.unshift(new Error("RetryOperation timeout occurred"));
+        return false;
+      }
+      this._errors.push(err);
+      var timeout = this._timeouts.shift();
+      if (timeout === void 0) {
+        if (this._cachedTimeouts) {
+          this._errors.splice(this._errors.length - 1, this._errors.length);
+          this._timeouts = this._cachedTimeouts.slice(0);
+          timeout = this._timeouts.shift();
+        } else {
+          return false;
+        }
+      }
+      var self = this;
+      var timer = setTimeout(function() {
+        self._attempts++;
+        if (self._operationTimeoutCb) {
+          self._timeout = setTimeout(function() {
+            self._operationTimeoutCb(self._attempts);
+          }, self._operationTimeout);
+          if (self._options.unref) {
+            self._timeout.unref();
+          }
+        }
+        self._fn(self._attempts);
+      }, timeout);
+      if (this._options.unref) {
+        timer.unref();
+      }
+      return true;
+    };
+    RetryOperation.prototype.attempt = function(fn, timeoutOps) {
+      this._fn = fn;
+      if (timeoutOps) {
+        if (timeoutOps.timeout) {
+          this._operationTimeout = timeoutOps.timeout;
+        }
+        if (timeoutOps.cb) {
+          this._operationTimeoutCb = timeoutOps.cb;
+        }
+      }
+      var self = this;
+      if (this._operationTimeoutCb) {
+        this._timeout = setTimeout(function() {
+          self._operationTimeoutCb();
+        }, self._operationTimeout);
+      }
+      this._operationStart = (/* @__PURE__ */ new Date()).getTime();
+      this._fn(this._attempts);
+    };
+    RetryOperation.prototype.try = function(fn) {
+      console.log("Using RetryOperation.try() is deprecated");
+      this.attempt(fn);
+    };
+    RetryOperation.prototype.start = function(fn) {
+      console.log("Using RetryOperation.start() is deprecated");
+      this.attempt(fn);
+    };
+    RetryOperation.prototype.start = RetryOperation.prototype.try;
+    RetryOperation.prototype.errors = function() {
+      return this._errors;
+    };
+    RetryOperation.prototype.attempts = function() {
+      return this._attempts;
+    };
+    RetryOperation.prototype.mainError = function() {
+      if (this._errors.length === 0) {
+        return null;
+      }
+      var counts = {};
+      var mainError = null;
+      var mainErrorCount = 0;
+      for (var i = 0; i < this._errors.length; i++) {
+        var error48 = this._errors[i];
+        var message = error48.message;
+        var count = (counts[message] || 0) + 1;
+        counts[message] = count;
+        if (count >= mainErrorCount) {
+          mainError = error48;
+          mainErrorCount = count;
+        }
+      }
+      return mainError;
+    };
+  }
+});
+
+// node_modules/retry/lib/retry.js
+var require_retry = __commonJS({
+  "node_modules/retry/lib/retry.js"(exports2) {
+    var RetryOperation = require_retry_operation();
+    exports2.operation = function(options) {
+      var timeouts = exports2.timeouts(options);
+      return new RetryOperation(timeouts, {
+        forever: options && options.forever,
+        unref: options && options.unref,
+        maxRetryTime: options && options.maxRetryTime
+      });
+    };
+    exports2.timeouts = function(options) {
+      if (options instanceof Array) {
+        return [].concat(options);
+      }
+      var opts = {
+        retries: 10,
+        factor: 2,
+        minTimeout: 1 * 1e3,
+        maxTimeout: Infinity,
+        randomize: false
+      };
+      for (var key in options) {
+        opts[key] = options[key];
+      }
+      if (opts.minTimeout > opts.maxTimeout) {
+        throw new Error("minTimeout is greater than maxTimeout");
+      }
+      var timeouts = [];
+      for (var i = 0; i < opts.retries; i++) {
+        timeouts.push(this.createTimeout(i, opts));
+      }
+      if (options && options.forever && !timeouts.length) {
+        timeouts.push(this.createTimeout(i, opts));
+      }
+      timeouts.sort(function(a, b) {
+        return a - b;
+      });
+      return timeouts;
+    };
+    exports2.createTimeout = function(attempt, opts) {
+      var random = opts.randomize ? Math.random() + 1 : 1;
+      var timeout = Math.round(random * opts.minTimeout * Math.pow(opts.factor, attempt));
+      timeout = Math.min(timeout, opts.maxTimeout);
+      return timeout;
+    };
+    exports2.wrap = function(obj, options, methods) {
+      if (options instanceof Array) {
+        methods = options;
+        options = null;
+      }
+      if (!methods) {
+        methods = [];
+        for (var key in obj) {
+          if (typeof obj[key] === "function") {
+            methods.push(key);
+          }
+        }
+      }
+      for (var i = 0; i < methods.length; i++) {
+        var method = methods[i];
+        var original = obj[method];
+        obj[method] = function retryWrapper(original2) {
+          var op = exports2.operation(options);
+          var args = Array.prototype.slice.call(arguments, 1);
+          var callback = args.pop();
+          args.push(function(err) {
+            if (op.retry(err)) {
+              return;
+            }
+            if (err) {
+              arguments[0] = op.mainError();
+            }
+            callback.apply(this, arguments);
+          });
+          op.attempt(function() {
+            original2.apply(obj, args);
+          });
+        }.bind(obj, original);
+        obj[method].options = options;
+      }
+    };
+  }
+});
+
+// node_modules/retry/index.js
+var require_retry2 = __commonJS({
+  "node_modules/retry/index.js"(exports2, module2) {
+    module2.exports = require_retry();
+  }
+});
+
+// node_modules/signal-exit/signals.js
+var require_signals = __commonJS({
+  "node_modules/signal-exit/signals.js"(exports2, module2) {
+    module2.exports = [
+      "SIGABRT",
+      "SIGALRM",
+      "SIGHUP",
+      "SIGINT",
+      "SIGTERM"
+    ];
+    if (process.platform !== "win32") {
+      module2.exports.push(
+        "SIGVTALRM",
+        "SIGXCPU",
+        "SIGXFSZ",
+        "SIGUSR2",
+        "SIGTRAP",
+        "SIGSYS",
+        "SIGQUIT",
+        "SIGIOT"
+        // should detect profiler and enable/disable accordingly.
+        // see #21
+        // 'SIGPROF'
+      );
+    }
+    if (process.platform === "linux") {
+      module2.exports.push(
+        "SIGIO",
+        "SIGPOLL",
+        "SIGPWR",
+        "SIGSTKFLT",
+        "SIGUNUSED"
+      );
+    }
+  }
+});
+
+// node_modules/signal-exit/index.js
+var require_signal_exit = __commonJS({
+  "node_modules/signal-exit/index.js"(exports2, module2) {
+    var process3 = global.process;
+    var processOk = function(process4) {
+      return process4 && typeof process4 === "object" && typeof process4.removeListener === "function" && typeof process4.emit === "function" && typeof process4.reallyExit === "function" && typeof process4.listeners === "function" && typeof process4.kill === "function" && typeof process4.pid === "number" && typeof process4.on === "function";
+    };
+    if (!processOk(process3)) {
+      module2.exports = function() {
+        return function() {
+        };
+      };
+    } else {
+      assert2 = require("assert");
+      signals = require_signals();
+      isWin = /^win/i.test(process3.platform);
+      EE = require("events");
+      if (typeof EE !== "function") {
+        EE = EE.EventEmitter;
+      }
+      if (process3.__signal_exit_emitter__) {
+        emitter = process3.__signal_exit_emitter__;
+      } else {
+        emitter = process3.__signal_exit_emitter__ = new EE();
+        emitter.count = 0;
+        emitter.emitted = {};
+      }
+      if (!emitter.infinite) {
+        emitter.setMaxListeners(Infinity);
+        emitter.infinite = true;
+      }
+      module2.exports = function(cb, opts) {
+        if (!processOk(global.process)) {
+          return function() {
+          };
+        }
+        assert2.equal(typeof cb, "function", "a callback must be provided for exit handler");
+        if (loaded === false) {
+          load();
+        }
+        var ev = "exit";
+        if (opts && opts.alwaysLast) {
+          ev = "afterexit";
+        }
+        var remove = function() {
+          emitter.removeListener(ev, cb);
+          if (emitter.listeners("exit").length === 0 && emitter.listeners("afterexit").length === 0) {
+            unload();
+          }
+        };
+        emitter.on(ev, cb);
+        return remove;
+      };
+      unload = function unload2() {
+        if (!loaded || !processOk(global.process)) {
+          return;
+        }
+        loaded = false;
+        signals.forEach(function(sig) {
+          try {
+            process3.removeListener(sig, sigListeners[sig]);
+          } catch (er) {
+          }
+        });
+        process3.emit = originalProcessEmit;
+        process3.reallyExit = originalProcessReallyExit;
+        emitter.count -= 1;
+      };
+      module2.exports.unload = unload;
+      emit = function emit2(event, code, signal) {
+        if (emitter.emitted[event]) {
+          return;
+        }
+        emitter.emitted[event] = true;
+        emitter.emit(event, code, signal);
+      };
+      sigListeners = {};
+      signals.forEach(function(sig) {
+        sigListeners[sig] = function listener() {
+          if (!processOk(global.process)) {
+            return;
+          }
+          var listeners = process3.listeners(sig);
+          if (listeners.length === emitter.count) {
+            unload();
+            emit("exit", null, sig);
+            emit("afterexit", null, sig);
+            if (isWin && sig === "SIGHUP") {
+              sig = "SIGINT";
+            }
+            process3.kill(process3.pid, sig);
+          }
+        };
+      });
+      module2.exports.signals = function() {
+        return signals;
+      };
+      loaded = false;
+      load = function load2() {
+        if (loaded || !processOk(global.process)) {
+          return;
+        }
+        loaded = true;
+        emitter.count += 1;
+        signals = signals.filter(function(sig) {
+          try {
+            process3.on(sig, sigListeners[sig]);
+            return true;
+          } catch (er) {
+            return false;
+          }
+        });
+        process3.emit = processEmit;
+        process3.reallyExit = processReallyExit;
+      };
+      module2.exports.load = load;
+      originalProcessReallyExit = process3.reallyExit;
+      processReallyExit = function processReallyExit2(code) {
+        if (!processOk(global.process)) {
+          return;
+        }
+        process3.exitCode = code || /* istanbul ignore next */
+        0;
+        emit("exit", process3.exitCode, null);
+        emit("afterexit", process3.exitCode, null);
+        originalProcessReallyExit.call(process3, process3.exitCode);
+      };
+      originalProcessEmit = process3.emit;
+      processEmit = function processEmit2(ev, arg) {
+        if (ev === "exit" && processOk(global.process)) {
+          if (arg !== void 0) {
+            process3.exitCode = arg;
+          }
+          var ret = originalProcessEmit.apply(this, arguments);
+          emit("exit", process3.exitCode, null);
+          emit("afterexit", process3.exitCode, null);
+          return ret;
+        } else {
+          return originalProcessEmit.apply(this, arguments);
+        }
+      };
+    }
+    var assert2;
+    var signals;
+    var isWin;
+    var EE;
+    var emitter;
+    var unload;
+    var emit;
+    var sigListeners;
+    var loaded;
+    var load;
+    var originalProcessReallyExit;
+    var processReallyExit;
+    var originalProcessEmit;
+    var processEmit;
+  }
+});
+
+// node_modules/proper-lockfile/lib/mtime-precision.js
+var require_mtime_precision = __commonJS({
+  "node_modules/proper-lockfile/lib/mtime-precision.js"(exports2, module2) {
+    "use strict";
+    var cacheSymbol = /* @__PURE__ */ Symbol();
+    function probe(file2, fs, callback) {
+      const cachedPrecision = fs[cacheSymbol];
+      if (cachedPrecision) {
+        return fs.stat(file2, (err, stat) => {
+          if (err) {
+            return callback(err);
+          }
+          callback(null, stat.mtime, cachedPrecision);
+        });
+      }
+      const mtime = new Date(Math.ceil(Date.now() / 1e3) * 1e3 + 5);
+      fs.utimes(file2, mtime, mtime, (err) => {
+        if (err) {
+          return callback(err);
+        }
+        fs.stat(file2, (err2, stat) => {
+          if (err2) {
+            return callback(err2);
+          }
+          const precision = stat.mtime.getTime() % 1e3 === 0 ? "s" : "ms";
+          Object.defineProperty(fs, cacheSymbol, { value: precision });
+          callback(null, stat.mtime, precision);
+        });
+      });
+    }
+    function getMtime(precision) {
+      let now = Date.now();
+      if (precision === "s") {
+        now = Math.ceil(now / 1e3) * 1e3;
+      }
+      return new Date(now);
+    }
+    module2.exports.probe = probe;
+    module2.exports.getMtime = getMtime;
+  }
+});
+
+// node_modules/proper-lockfile/lib/lockfile.js
+var require_lockfile = __commonJS({
+  "node_modules/proper-lockfile/lib/lockfile.js"(exports2, module2) {
+    "use strict";
+    var path10 = require("path");
+    var fs = require_graceful_fs();
+    var retry = require_retry2();
+    var onExit = require_signal_exit();
+    var mtimePrecision = require_mtime_precision();
+    var locks = {};
+    function getLockFile(file2, options) {
+      return options.lockfilePath || `${file2}.lock`;
+    }
+    function resolveCanonicalPath(file2, options, callback) {
+      if (!options.realpath) {
+        return callback(null, path10.resolve(file2));
+      }
+      options.fs.realpath(file2, callback);
+    }
+    function acquireLock(file2, options, callback) {
+      const lockfilePath = getLockFile(file2, options);
+      options.fs.mkdir(lockfilePath, (err) => {
+        if (!err) {
+          return mtimePrecision.probe(lockfilePath, options.fs, (err2, mtime, mtimePrecision2) => {
+            if (err2) {
+              options.fs.rmdir(lockfilePath, () => {
+              });
+              return callback(err2);
+            }
+            callback(null, mtime, mtimePrecision2);
+          });
+        }
+        if (err.code !== "EEXIST") {
+          return callback(err);
+        }
+        if (options.stale <= 0) {
+          return callback(Object.assign(new Error("Lock file is already being held"), { code: "ELOCKED", file: file2 }));
+        }
+        options.fs.stat(lockfilePath, (err2, stat) => {
+          if (err2) {
+            if (err2.code === "ENOENT") {
+              return acquireLock(file2, { ...options, stale: 0 }, callback);
+            }
+            return callback(err2);
+          }
+          if (!isLockStale(stat, options)) {
+            return callback(Object.assign(new Error("Lock file is already being held"), { code: "ELOCKED", file: file2 }));
+          }
+          removeLock(file2, options, (err3) => {
+            if (err3) {
+              return callback(err3);
+            }
+            acquireLock(file2, { ...options, stale: 0 }, callback);
+          });
+        });
+      });
+    }
+    function isLockStale(stat, options) {
+      return stat.mtime.getTime() < Date.now() - options.stale;
+    }
+    function removeLock(file2, options, callback) {
+      options.fs.rmdir(getLockFile(file2, options), (err) => {
+        if (err && err.code !== "ENOENT") {
+          return callback(err);
+        }
+        callback();
+      });
+    }
+    function updateLock(file2, options) {
+      const lock2 = locks[file2];
+      if (lock2.updateTimeout) {
+        return;
+      }
+      lock2.updateDelay = lock2.updateDelay || options.update;
+      lock2.updateTimeout = setTimeout(() => {
+        lock2.updateTimeout = null;
+        options.fs.stat(lock2.lockfilePath, (err, stat) => {
+          const isOverThreshold = lock2.lastUpdate + options.stale < Date.now();
+          if (err) {
+            if (err.code === "ENOENT" || isOverThreshold) {
+              return setLockAsCompromised(file2, lock2, Object.assign(err, { code: "ECOMPROMISED" }));
+            }
+            lock2.updateDelay = 1e3;
+            return updateLock(file2, options);
+          }
+          const isMtimeOurs = lock2.mtime.getTime() === stat.mtime.getTime();
+          if (!isMtimeOurs) {
+            return setLockAsCompromised(
+              file2,
+              lock2,
+              Object.assign(
+                new Error("Unable to update lock within the stale threshold"),
+                { code: "ECOMPROMISED" }
+              )
+            );
+          }
+          const mtime = mtimePrecision.getMtime(lock2.mtimePrecision);
+          options.fs.utimes(lock2.lockfilePath, mtime, mtime, (err2) => {
+            const isOverThreshold2 = lock2.lastUpdate + options.stale < Date.now();
+            if (lock2.released) {
+              return;
+            }
+            if (err2) {
+              if (err2.code === "ENOENT" || isOverThreshold2) {
+                return setLockAsCompromised(file2, lock2, Object.assign(err2, { code: "ECOMPROMISED" }));
+              }
+              lock2.updateDelay = 1e3;
+              return updateLock(file2, options);
+            }
+            lock2.mtime = mtime;
+            lock2.lastUpdate = Date.now();
+            lock2.updateDelay = null;
+            updateLock(file2, options);
+          });
+        });
+      }, lock2.updateDelay);
+      if (lock2.updateTimeout.unref) {
+        lock2.updateTimeout.unref();
+      }
+    }
+    function setLockAsCompromised(file2, lock2, err) {
+      lock2.released = true;
+      if (lock2.updateTimeout) {
+        clearTimeout(lock2.updateTimeout);
+      }
+      if (locks[file2] === lock2) {
+        delete locks[file2];
+      }
+      lock2.options.onCompromised(err);
+    }
+    function lock(file2, options, callback) {
+      options = {
+        stale: 1e4,
+        update: null,
+        realpath: true,
+        retries: 0,
+        fs,
+        onCompromised: (err) => {
+          throw err;
+        },
+        ...options
+      };
+      options.retries = options.retries || 0;
+      options.retries = typeof options.retries === "number" ? { retries: options.retries } : options.retries;
+      options.stale = Math.max(options.stale || 0, 2e3);
+      options.update = options.update == null ? options.stale / 2 : options.update || 0;
+      options.update = Math.max(Math.min(options.update, options.stale / 2), 1e3);
+      resolveCanonicalPath(file2, options, (err, file3) => {
+        if (err) {
+          return callback(err);
+        }
+        const operation = retry.operation(options.retries);
+        operation.attempt(() => {
+          acquireLock(file3, options, (err2, mtime, mtimePrecision2) => {
+            if (operation.retry(err2)) {
+              return;
+            }
+            if (err2) {
+              return callback(operation.mainError());
+            }
+            const lock2 = locks[file3] = {
+              lockfilePath: getLockFile(file3, options),
+              mtime,
+              mtimePrecision: mtimePrecision2,
+              options,
+              lastUpdate: Date.now()
+            };
+            updateLock(file3, options);
+            callback(null, (releasedCallback) => {
+              if (lock2.released) {
+                return releasedCallback && releasedCallback(Object.assign(new Error("Lock is already released"), { code: "ERELEASED" }));
+              }
+              unlock(file3, { ...options, realpath: false }, releasedCallback);
+            });
+          });
+        });
+      });
+    }
+    function unlock(file2, options, callback) {
+      options = {
+        fs,
+        realpath: true,
+        ...options
+      };
+      resolveCanonicalPath(file2, options, (err, file3) => {
+        if (err) {
+          return callback(err);
+        }
+        const lock2 = locks[file3];
+        if (!lock2) {
+          return callback(Object.assign(new Error("Lock is not acquired/owned by you"), { code: "ENOTACQUIRED" }));
+        }
+        lock2.updateTimeout && clearTimeout(lock2.updateTimeout);
+        lock2.released = true;
+        delete locks[file3];
+        removeLock(file3, options, callback);
+      });
+    }
+    function check2(file2, options, callback) {
+      options = {
+        stale: 1e4,
+        realpath: true,
+        fs,
+        ...options
+      };
+      options.stale = Math.max(options.stale || 0, 2e3);
+      resolveCanonicalPath(file2, options, (err, file3) => {
+        if (err) {
+          return callback(err);
+        }
+        options.fs.stat(getLockFile(file3, options), (err2, stat) => {
+          if (err2) {
+            return err2.code === "ENOENT" ? callback(null, false) : callback(err2);
+          }
+          return callback(null, !isLockStale(stat, options));
+        });
+      });
+    }
+    function getLocks() {
+      return locks;
+    }
+    onExit(() => {
+      for (const file2 in locks) {
+        const options = locks[file2].options;
+        try {
+          options.fs.rmdirSync(getLockFile(file2, options));
+        } catch (e) {
+        }
+      }
+    });
+    module2.exports.lock = lock;
+    module2.exports.unlock = unlock;
+    module2.exports.check = check2;
+    module2.exports.getLocks = getLocks;
+  }
+});
+
+// node_modules/proper-lockfile/lib/adapter.js
+var require_adapter = __commonJS({
+  "node_modules/proper-lockfile/lib/adapter.js"(exports2, module2) {
+    "use strict";
+    var fs = require_graceful_fs();
+    function createSyncFs(fs2) {
+      const methods = ["mkdir", "realpath", "stat", "rmdir", "utimes"];
+      const newFs = { ...fs2 };
+      methods.forEach((method) => {
+        newFs[method] = (...args) => {
+          const callback = args.pop();
+          let ret;
+          try {
+            ret = fs2[`${method}Sync`](...args);
+          } catch (err) {
+            return callback(err);
+          }
+          callback(null, ret);
+        };
+      });
+      return newFs;
+    }
+    function toPromise(method) {
+      return (...args) => new Promise((resolve2, reject) => {
+        args.push((err, result) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve2(result);
+          }
+        });
+        method(...args);
+      });
+    }
+    function toSync(method) {
+      return (...args) => {
+        let err;
+        let result;
+        args.push((_err, _result) => {
+          err = _err;
+          result = _result;
+        });
+        method(...args);
+        if (err) {
+          throw err;
+        }
+        return result;
+      };
+    }
+    function toSyncOptions(options) {
+      options = { ...options };
+      options.fs = createSyncFs(options.fs || fs);
+      if (typeof options.retries === "number" && options.retries > 0 || options.retries && typeof options.retries.retries === "number" && options.retries.retries > 0) {
+        throw Object.assign(new Error("Cannot use retries with the sync api"), { code: "ESYNC" });
+      }
+      return options;
+    }
+    module2.exports = {
+      toPromise,
+      toSync,
+      toSyncOptions
+    };
+  }
+});
+
+// node_modules/proper-lockfile/index.js
+var require_proper_lockfile = __commonJS({
+  "node_modules/proper-lockfile/index.js"(exports2, module2) {
+    "use strict";
+    var lockfile2 = require_lockfile();
+    var { toPromise, toSync, toSyncOptions } = require_adapter();
+    async function lock(file2, options) {
+      const release = await toPromise(lockfile2.lock)(file2, options);
+      return toPromise(release);
+    }
+    function lockSync(file2, options) {
+      const release = toSync(lockfile2.lock)(file2, toSyncOptions(options));
+      return toSync(release);
+    }
+    function unlock(file2, options) {
+      return toPromise(lockfile2.unlock)(file2, options);
+    }
+    function unlockSync(file2, options) {
+      return toSync(lockfile2.unlock)(file2, toSyncOptions(options));
+    }
+    function check2(file2, options) {
+      return toPromise(lockfile2.check)(file2, options);
+    }
+    function checkSync(file2, options) {
+      return toSync(lockfile2.check)(file2, toSyncOptions(options));
+    }
+    module2.exports = lock;
+    module2.exports.lock = lock;
+    module2.exports.unlock = unlock;
+    module2.exports.lockSync = lockSync;
+    module2.exports.unlockSync = unlockSync;
+    module2.exports.check = check2;
+    module2.exports.checkSync = checkSync;
+  }
+});
+
+// tools/src/application/state-branch/merge-branch.ts
+init_result();
+var mergeBranchUseCase = async (input, deps) => {
+  const mergeR = await deps.stateBranch.merge(input.childCodeBranch, input.parentCodeBranch, input.sliceId);
+  if (!isOk(mergeR)) return mergeR;
+  await deps.stateBranch.deleteBranch(input.childCodeBranch);
+  return mergeR;
+};
+
+// tools/src/cli/commands/branch-merge.cmd.ts
+init_result();
+
+// tools/src/infrastructure/adapters/git/git-cli.adapter.ts
+var import_node_child_process = require("child_process");
+var import_node_util = require("util");
 init_domain_error();
 init_result();
-var loadCheckpoint = async (sliceId, deps) => {
-  const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-  const path2 = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
-  const contentResult = await deps.artifactStore.read(path2);
-  if (!isOk(contentResult))
-    return Err(createDomainError("NOT_FOUND", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
-  const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);
-  if (!match)
-    return Err(createDomainError("VALIDATION_ERROR", `Checkpoint file for "${sliceId}" is corrupted`, { sliceId }));
-  const data = JSON.parse(match[1]);
-  return Ok(data);
-};
-
-// tools/src/cli/commands/checkpoint-load.cmd.ts
-init_result();
-init_markdown_artifact_adapter();
-var checkpointLoadCmd = async (args) => {
-  const [sliceId] = args;
-  if (!sliceId) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: checkpoint:load <slice-id>" } });
+var exec = (0, import_node_util.promisify)(import_node_child_process.execFile);
+var gitError = (message, context) => createDomainError("GIT_CONFLICT", message, context);
+var cleanGitEnv = () => {
+  const env = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    if (!k.startsWith("GIT_") && v !== void 0) env[k] = v;
   }
-  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  const result = await loadCheckpoint(sliceId, { artifactStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
+  return env;
+};
+var runGit = async (args, cwd) => {
+  try {
+    const { stdout } = await exec("git", args, { cwd, timeout: 3e4, env: cleanGitEnv() });
+    return Ok(stdout.trim());
+  } catch (err) {
+    const e = err;
+    const detail = e.stderr?.trim() || e.stdout?.trim() || e.message || String(err);
+    return Err(gitError(`git ${args.join(" ")} failed: ${detail}`, { args }));
+  }
+};
+var GitCliAdapter = class {
+  constructor(repoRoot) {
+    this.repoRoot = repoRoot;
+  }
+  cache = /* @__PURE__ */ new Map();
+  TTL_MS = 5e3;
+  getCached(key) {
+    const entry = this.cache.get(key);
+    if (!entry || Date.now() > entry.expiresAt) {
+      this.cache.delete(key);
+      return void 0;
+    }
+    return entry.value;
+  }
+  setCache(key, value) {
+    this.cache.set(key, { value, expiresAt: Date.now() + this.TTL_MS });
+  }
+  invalidateCache() {
+    this.cache.clear();
+  }
+  async createBranch(name, from) {
+    const r = await runGit(["branch", name, from], this.repoRoot);
+    if (!r.ok) return r;
+    this.invalidateCache();
+    return Ok(void 0);
+  }
+  async createWorktree(path10, branch, startPoint) {
+    const args = ["worktree", "add", path10, "-b", branch];
+    if (startPoint) args.push(startPoint);
+    const r = await runGit(args, this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
+  async deleteWorktree(path10) {
+    const r = await runGit(["worktree", "remove", path10, "--force"], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
+  async listWorktrees() {
+    const r = await runGit(["worktree", "list", "--porcelain"], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(
+      r.data.split("\n").filter((l) => l.startsWith("worktree ")).map((l) => l.replace("worktree ", ""))
+    );
+  }
+  async commit(message, files, worktreePath) {
+    const cwd = worktreePath ?? this.repoRoot;
+    const addR = await runGit(["add", ...files], cwd);
+    if (!addR.ok) return addR;
+    const commitR = await runGit(["commit", "-m", message], cwd);
+    if (!commitR.ok) return commitR;
+    const shaR = await runGit(["rev-parse", "--short", "HEAD"], cwd);
+    if (!shaR.ok) return shaR;
+    this.invalidateCache();
+    return Ok({ sha: shaR.data, message });
+  }
+  async revert(commitSha, worktreePath) {
+    const cwd = worktreePath ?? this.repoRoot;
+    const r = await runGit(["revert", "--no-edit", commitSha], cwd);
+    if (!r.ok) return r;
+    const shaR = await runGit(["rev-parse", "--short", "HEAD"], cwd);
+    if (!shaR.ok) return shaR;
+    return Ok({ sha: shaR.data, message: `Revert "${commitSha}"` });
+  }
+  async merge(source, target) {
+    await runGit(["checkout", target], this.repoRoot);
+    const r = await runGit(["merge", source, "--no-ff"], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
+  async getCurrentBranch(worktreePath) {
+    const cwd = worktreePath ?? this.repoRoot;
+    const cacheKey = `branch:${cwd}`;
+    const cached2 = this.getCached(cacheKey);
+    if (cached2) return Ok(cached2);
+    const r = await runGit(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
+    if (r.ok) this.setCache(cacheKey, r.data);
+    return r;
+  }
+  async getHeadSha(worktreePath) {
+    const cwd = worktreePath ?? this.repoRoot;
+    const cacheKey = `sha:${cwd}`;
+    const cached2 = this.getCached(cacheKey);
+    if (cached2) return Ok(cached2);
+    const r = await runGit(["rev-parse", "--short", "HEAD"], cwd);
+    if (r.ok) this.setCache(cacheKey, r.data);
+    return r;
+  }
+  async createOrphanWorktree(path10, branchName) {
+    const r = await runGit(["worktree", "add", "--detach", path10], this.repoRoot);
+    if (!r.ok) return r;
+    const orphanR = await runGit(["checkout", "--orphan", branchName], path10);
+    if (!orphanR.ok) {
+      await runGit(["worktree", "remove", path10, "--force"], this.repoRoot);
+      return orphanR;
+    }
+    await runGit(["rm", "-rf", "--cached", "."], path10);
+    return Ok(void 0);
+  }
+  async checkoutWorktree(path10, existingBranch) {
+    const r = await runGit(["worktree", "add", path10, existingBranch], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
+  async branchExists(name) {
+    const r = await runGit(["rev-parse", "--verify", `refs/heads/${name}`], this.repoRoot);
+    return Ok(r.ok);
+  }
+  async deleteBranch(name) {
+    const r = await runGit(["branch", "-D", name], this.repoRoot);
+    if (!r.ok) return r;
+    this.invalidateCache();
+    return Ok(void 0);
+  }
+  async pruneWorktrees() {
+    const r = await runGit(["worktree", "prune"], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
+  async lsTree(ref) {
+    const r = await runGit(["ls-tree", "-r", "--name-only", ref], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(r.data.split("\n").filter(Boolean));
+  }
+  async extractFile(ref, filePath) {
+    const { execFile: execFileRaw } = await import("child_process");
+    return new Promise((resolve2) => {
+      execFileRaw(
+        "git",
+        ["show", `${ref}:${filePath}`],
+        {
+          cwd: this.repoRoot,
+          timeout: 3e4,
+          encoding: "buffer",
+          maxBuffer: 10 * 1024 * 1024,
+          env: cleanGitEnv()
+        },
+        (err, stdout) => {
+          if (err) {
+            resolve2(Err(gitError(`git show ${ref}:${filePath} failed: ${err}`, { ref, filePath })));
+          } else {
+            resolve2(Ok(stdout));
+          }
+        }
+      );
+    });
+  }
+  async detectDefaultBranch() {
+    const originR = await runGit(["symbolic-ref", "refs/remotes/origin/HEAD"], this.repoRoot);
+    if (originR.ok) {
+      const ref = originR.data.replace("refs/remotes/origin/", "");
+      if (ref) return Ok(ref);
+    }
+    const configR = await runGit(["config", "init.defaultBranch"], this.repoRoot);
+    if (configR.ok && configR.data) return Ok(configR.data);
+    return Ok("main");
+  }
 };
 
-// tools/src/cli/index.ts
-init_checkpoint_save_cmd();
+// tools/src/infrastructure/adapters/git/git-state-branch.adapter.ts
+var import_node_crypto = require("crypto");
+var import_node_fs3 = require("fs");
+var import_node_os = require("os");
+var import_node_path3 = __toESM(require("path"), 1);
 
-// tools/src/application/claims/check-stale-claims.ts
-init_result();
-var DEFAULT_TTL_MINUTES = 30;
-var checkStaleClaims = async (input, deps) => {
-  const ttl = input.ttlMinutes ?? DEFAULT_TTL_MINUTES;
-  const result = deps.taskStore.listStaleClaims(ttl);
-  if (!result.ok) return result;
-  return Ok({ staleClaims: result.data });
-};
-
-// tools/src/cli/commands/claim-check-stale.cmd.ts
-init_result();
-
-// tools/src/infrastructure/adapters/sqlite/create-state-stores.ts
-var import_node_path2 = __toESM(require("path"), 1);
-
-// tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
+// tools/src/application/state-branch/merge-state-dbs.ts
 var import_better_sqlite3 = __toESM(require_lib(), 1);
 
-// tools/src/domain/entities/milestone.ts
-init_zod();
-
-// tools/src/domain/value-objects/milestone-status.ts
-init_zod();
-var MilestoneStatusSchema = external_exports.enum(["open", "in_progress", "closed"]);
-
-// tools/src/domain/entities/milestone.ts
-var MilestoneSchema = external_exports.object({
-  id: external_exports.string().min(1),
-  projectId: external_exports.string().min(1),
-  name: external_exports.string().min(1),
-  number: external_exports.number().int().min(1),
-  status: MilestoneStatusSchema,
-  closeReason: external_exports.string().optional(),
-  createdAt: external_exports.date()
-});
-var formatMilestoneNumber = (n) => `M${n.toString().padStart(2, "0")}`;
-
-// tools/src/domain/entities/slice.ts
-init_zod();
-
-// tools/src/domain/errors/invalid-transition.error.ts
+// tools/src/domain/errors/sync-failed.error.ts
 init_domain_error();
-var invalidTransitionError = (sliceId, from, to) => createDomainError("INVALID_TRANSITION", `Cannot transition slice "${sliceId}" from "${from}" to "${to}"`, {
-  sliceId,
-  from,
-  to
-});
+var syncFailedError = (reason, context) => createDomainError("SYNC_FAILED", `State branch sync failed: ${reason}`, context);
 
-// tools/src/domain/events/domain-event.ts
-init_zod();
-var DomainEventTypeSchema = external_exports.enum([
-  "SLICE_PLANNED",
-  "SLICE_STATUS_CHANGED",
-  "TASK_COMPLETED",
-  "SYNC_CONFLICT"
-]);
-var DomainEventSchema = external_exports.object({
-  id: external_exports.string(),
-  type: DomainEventTypeSchema,
-  occurredAt: external_exports.date(),
-  payload: external_exports.record(external_exports.string(), external_exports.unknown())
-});
-var createDomainEvent = (type, payload) => ({
-  id: crypto.randomUUID(),
-  type,
-  occurredAt: /* @__PURE__ */ new Date(),
-  payload
-});
-
-// tools/src/domain/events/slice-status-changed.event.ts
-var sliceStatusChangedEvent = (sliceId, from, to) => createDomainEvent("SLICE_STATUS_CHANGED", { sliceId, from, to });
-
-// tools/src/domain/entities/slice.ts
+// tools/src/application/state-branch/merge-state-dbs.ts
 init_result();
 
-// tools/src/domain/value-objects/complexity-tier.ts
-init_zod();
-var ComplexityTierSchema = external_exports.enum(["S", "F-lite", "F-full"]);
-var TierConfigSchema = external_exports.object({
-  brainstormer: external_exports.boolean(),
-  research: external_exports.enum(["skip", "optional", "required"]),
-  freshReviewer: external_exports.literal(true),
-  tdd: external_exports.boolean()
-});
-
-// tools/src/domain/value-objects/slice-status.ts
-init_zod();
-var SliceStatusSchema = external_exports.enum([
-  "discussing",
-  "researching",
-  "planning",
-  "executing",
-  "verifying",
-  "reviewing",
-  "completing",
-  "closed"
-]);
-var transitions = {
-  discussing: ["researching"],
-  researching: ["planning"],
-  planning: ["planning", "executing"],
-  executing: ["verifying"],
-  verifying: ["reviewing", "executing"],
-  reviewing: ["completing", "executing"],
-  completing: ["closed"],
-  closed: []
-};
-var canTransition = (from, to) => transitions[from].includes(to);
-
-// tools/src/domain/entities/slice.ts
-var SliceSchema = external_exports.object({
-  id: external_exports.string().min(1),
-  milestoneId: external_exports.string().min(1),
-  number: external_exports.number().int().min(1),
-  title: external_exports.string().min(1),
-  status: SliceStatusSchema,
-  tier: ComplexityTierSchema.optional(),
-  createdAt: external_exports.date()
-});
-var formatSliceId = (milestoneNumber, sliceNumber) => `M${milestoneNumber.toString().padStart(2, "0")}-S${sliceNumber.toString().padStart(2, "0")}`;
-var transitionSlice = (slice, to) => {
-  if (!canTransition(slice.status, to)) {
-    return Err(invalidTransitionError(slice.id, slice.status, to));
-  }
-  const updated = { ...slice, status: to };
-  const event = sliceStatusChangedEvent(slice.id, slice.status, to);
-  return Ok({ slice: updated, events: [event] });
-};
-
-// tools/src/domain/errors/already-claimed.error.ts
-init_domain_error();
-var alreadyClaimedError = (taskId) => createDomainError("ALREADY_CLAIMED", `Task "${taskId}" is already claimed`, { taskId });
-
-// tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
-init_domain_error();
-
-// tools/src/domain/errors/has-open-children.error.ts
-init_domain_error();
-var hasOpenChildrenError = (parentId, openCount) => createDomainError("HAS_OPEN_CHILDREN", `Cannot close "${parentId}" \u2014 ${openCount} children are still open`, {
-  parentId,
-  openCount
-});
-
-// tools/src/domain/errors/version-mismatch.error.ts
-init_domain_error();
-var versionMismatchError = (dbVersion, codeVersion) => createDomainError(
-  "VERSION_MISMATCH",
-  `Database schema version ${dbVersion} is newer than code version ${codeVersion}. Upgrade tff-tools.`,
-  { dbVersion, codeVersion }
-);
-
-// tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
-init_result();
+// tools/src/infrastructure/adapters/sqlite/load-native-binding.ts
+var import_node_fs = require("fs");
+var import_node_path = __toESM(require("path"), 1);
+function getNativeBindingPath(dirname2) {
+  const dir = dirname2 ?? __dirname;
+  const bindingFile = `better_sqlite3.${process.platform}-${process.arch}.node`;
+  const bindingPath = import_node_path.default.join(dir, bindingFile);
+  if ((0, import_node_fs.existsSync)(bindingPath)) return bindingPath;
+  return void 0;
+}
 
 // tools/src/infrastructure/adapters/sqlite/migrations/v1.ts
 var v1Migration = `
@@ -15598,17 +17224,524 @@ var runMigrations = (db) => {
   }
 };
 
+// tools/src/application/state-branch/merge-state-dbs.ts
+function mergeStateDbs(parentDbPath, childDbPath, sliceId) {
+  try {
+    const nativeBinding = getNativeBindingPath();
+    const dbOpts = nativeBinding ? { nativeBinding } : void 0;
+    const parentDb = new import_better_sqlite3.default(parentDbPath, dbOpts);
+    runMigrations(parentDb);
+    const childDb = new import_better_sqlite3.default(childDbPath, dbOpts);
+    runMigrations(childDb);
+    childDb.close();
+    const safePath = childDbPath.replace(/'/g, "''");
+    parentDb.exec(`ATTACH DATABASE '${safePath}' AS child`);
+    let entitiesMerged = 0;
+    const sliceR = parentDb.prepare(
+      `INSERT OR REPLACE INTO slice (id, milestone_id, number, title, status, tier, created_at, updated_at)
+         SELECT id, milestone_id, number, title, status, tier, created_at, updated_at
+         FROM child.slice WHERE id = ?`
+    ).run(sliceId);
+    entitiesMerged += sliceR.changes;
+    const taskR = parentDb.prepare(
+      `INSERT OR REPLACE INTO task (id, slice_id, number, title, description, status, wave, claimed_at, claimed_by, closed_reason, created_at, updated_at)
+         SELECT id, slice_id, number, title, description, status, wave, claimed_at, claimed_by, closed_reason, created_at, updated_at
+         FROM child.task WHERE slice_id = ?`
+    ).run(sliceId);
+    entitiesMerged += taskR.changes;
+    parentDb.prepare(`DELETE FROM dependency WHERE from_id IN (SELECT id FROM child.task WHERE slice_id = ?)`).run(sliceId);
+    const depR = parentDb.prepare(
+      `INSERT INTO dependency (from_id, to_id, type)
+         SELECT from_id, to_id, type FROM child.dependency
+         WHERE from_id IN (SELECT id FROM child.task WHERE slice_id = ?)`
+    ).run(sliceId);
+    entitiesMerged += depR.changes;
+    parentDb.exec("DETACH DATABASE child");
+    parentDb.close();
+    return Ok({ entitiesMerged, artifactsCopied: 0 });
+  } catch (e) {
+    return Err(syncFailedError(`SQL merge failed: ${e instanceof Error ? e.message : String(e)}`));
+  }
+}
+
+// tools/src/domain/errors/state-branch-not-found.error.ts
+init_domain_error();
+var stateBranchNotFoundError = (codeBranch) => createDomainError("STATE_BRANCH_NOT_FOUND", `No state branch found for code branch "${codeBranch}"`, { codeBranch });
+
+// tools/src/infrastructure/adapters/git/git-state-branch.adapter.ts
+init_result();
+
+// tools/src/infrastructure/adapters/git/copy-tff-to-worktree.ts
+var import_node_fs2 = require("fs");
+var import_node_path2 = __toESM(require("path"), 1);
+function copyTffToWorktree(tffDir, worktreePath) {
+  if (!(0, import_node_fs2.existsSync)(tffDir)) return;
+  const destTffDir = import_node_path2.default.join(worktreePath, ".tff");
+  (0, import_node_fs2.mkdirSync)(destTffDir, { recursive: true });
+  for (const entry of (0, import_node_fs2.readdirSync)(tffDir)) {
+    if (entry === "worktrees" || entry === "branch-meta.json") continue;
+    const src = import_node_path2.default.join(tffDir, entry);
+    const dest = import_node_path2.default.join(destTffDir, entry);
+    if ((0, import_node_fs2.statSync)(src).isDirectory()) {
+      (0, import_node_fs2.cpSync)(src, dest, { recursive: true });
+    } else {
+      (0, import_node_fs2.cpSync)(src, dest);
+    }
+  }
+}
+
+// tools/src/infrastructure/adapters/git/git-state-branch.adapter.ts
+var STATE_PREFIX = "tff-state/";
+var GitStateBranchAdapter = class {
+  constructor(gitOps, repoRoot) {
+    this.gitOps = gitOps;
+    this.repoRoot = repoRoot;
+  }
+  resolvedDefaultBranch;
+  async getDefaultBranch() {
+    if (this.resolvedDefaultBranch) return this.resolvedDefaultBranch;
+    const r = await this.gitOps.detectDefaultBranch();
+    this.resolvedDefaultBranch = isOk(r) ? r.data : "main";
+    return this.resolvedDefaultBranch;
+  }
+  stateBranch(codeBranch) {
+    return `${STATE_PREFIX}${codeBranch}`;
+  }
+  tmpWorktreePath() {
+    return import_node_path3.default.join((0, import_node_os.tmpdir)(), `tff-state-wt-${(0, import_node_crypto.randomUUID)().slice(0, 8)}`);
+  }
+  writeBranchMeta(worktreePath, meta3) {
+    (0, import_node_fs3.writeFileSync)(import_node_path3.default.join(worktreePath, "branch-meta.json"), JSON.stringify(meta3, null, 2));
+  }
+  writeGitignore(worktreePath) {
+    (0, import_node_fs3.writeFileSync)(import_node_path3.default.join(worktreePath, ".gitignore"), ".DS_Store\nThumbs.db\n*.swp\n");
+  }
+  async createRoot() {
+    const defaultBranch = await this.getDefaultBranch();
+    const rootBranch = this.stateBranch(defaultBranch);
+    const existsR = await this.gitOps.branchExists(rootBranch);
+    if (!isOk(existsR)) return existsR;
+    if (existsR.data) {
+      return Err(syncFailedError(`Root state branch "${rootBranch}" already exists`));
+    }
+    const tmpPath = this.tmpWorktreePath();
+    (0, import_node_fs3.mkdirSync)(tmpPath, { recursive: true });
+    const createR = await this.gitOps.createOrphanWorktree(tmpPath, rootBranch);
+    if (!isOk(createR)) return createR;
+    try {
+      const meta3 = {
+        stateId: (0, import_node_crypto.randomUUID)(),
+        codeBranch: defaultBranch,
+        parentStateBranch: null,
+        createdAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      this.writeBranchMeta(tmpPath, meta3);
+      this.writeGitignore(tmpPath);
+      const commitR = await this.gitOps.commit(
+        `chore: init state branch ${rootBranch}`,
+        ["branch-meta.json", ".gitignore"],
+        tmpPath
+      );
+      if (!isOk(commitR)) return Err(syncFailedError(`Initial commit failed: ${commitR.error.message}`));
+      return Ok(void 0);
+    } finally {
+      await this.gitOps.deleteWorktree(tmpPath);
+    }
+  }
+  async exists(codeBranch) {
+    return this.gitOps.branchExists(this.stateBranch(codeBranch));
+  }
+  async fork(codeBranch, parentStateBranch) {
+    const parentExistsR = await this.gitOps.branchExists(parentStateBranch);
+    if (!isOk(parentExistsR)) return parentExistsR;
+    if (!parentExistsR.data) {
+      return Err(stateBranchNotFoundError(parentStateBranch));
+    }
+    const childBranch = this.stateBranch(codeBranch);
+    const createR = await this.gitOps.createBranch(childBranch, parentStateBranch);
+    if (!isOk(createR)) return createR;
+    const tmpPath = this.tmpWorktreePath();
+    (0, import_node_fs3.mkdirSync)(tmpPath, { recursive: true });
+    const wtR = await this.gitOps.checkoutWorktree(tmpPath, childBranch);
+    if (!isOk(wtR)) return wtR;
+    try {
+      const meta3 = {
+        stateId: (0, import_node_crypto.randomUUID)(),
+        codeBranch,
+        parentStateBranch,
+        createdAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      this.writeBranchMeta(tmpPath, meta3);
+      const commitR = await this.gitOps.commit(
+        `chore: fork state branch for ${codeBranch}`,
+        ["branch-meta.json"],
+        tmpPath
+      );
+      if (!isOk(commitR)) return Err(syncFailedError(`Fork commit failed: ${commitR.error.message}`));
+      return Ok(void 0);
+    } finally {
+      await this.gitOps.deleteWorktree(tmpPath);
+    }
+  }
+  async sync(codeBranch, message) {
+    const stateBr = this.stateBranch(codeBranch);
+    const existsR = await this.gitOps.branchExists(stateBr);
+    if (!isOk(existsR)) return existsR;
+    if (!existsR.data) {
+      return Err(stateBranchNotFoundError(codeBranch));
+    }
+    await this.gitOps.pruneWorktrees();
+    const tmpPath = this.tmpWorktreePath();
+    (0, import_node_fs3.mkdirSync)(tmpPath, { recursive: true });
+    const wtR = await this.gitOps.checkoutWorktree(tmpPath, stateBr);
+    if (!isOk(wtR)) return wtR;
+    try {
+      const tffDir = import_node_path3.default.join(this.repoRoot, ".tff");
+      copyTffToWorktree(tffDir, tmpPath);
+      const commitR = await this.gitOps.commit(message, ["-A"], tmpPath);
+      if (!isOk(commitR)) {
+        if (commitR.error.message.includes("nothing to commit")) return Ok(void 0);
+        return Err(syncFailedError(`Sync commit failed: ${commitR.error.message}`));
+      }
+      return Ok(void 0);
+    } finally {
+      await this.gitOps.deleteWorktree(tmpPath);
+    }
+  }
+  async restore(codeBranch, targetDir) {
+    const stateBr = this.stateBranch(codeBranch);
+    const existsR = await this.gitOps.branchExists(stateBr);
+    if (!isOk(existsR)) return existsR;
+    if (!existsR.data) return Ok(null);
+    const filesR = await this.gitOps.lsTree(stateBr);
+    if (!isOk(filesR)) return filesR;
+    let filesRestored = 0;
+    const resolvedTargetDir = import_node_path3.default.resolve(targetDir);
+    for (const filePath of filesR.data) {
+      const destPath = import_node_path3.default.join(targetDir, filePath);
+      const resolved = import_node_path3.default.resolve(destPath);
+      if (!resolved.startsWith(resolvedTargetDir + import_node_path3.default.sep) && resolved !== resolvedTargetDir) {
+        continue;
+      }
+      const bufR = await this.gitOps.extractFile(stateBr, filePath);
+      if (!isOk(bufR)) continue;
+      (0, import_node_fs3.mkdirSync)(import_node_path3.default.dirname(destPath), { recursive: true });
+      (0, import_node_fs3.writeFileSync)(destPath, bufR.data);
+      filesRestored++;
+    }
+    return Ok({ filesRestored, schemaVersion: 0 });
+  }
+  async merge(childCodeBranch, parentCodeBranch, sliceId) {
+    const childStateBr = this.stateBranch(childCodeBranch);
+    const parentStateBr = this.stateBranch(parentCodeBranch);
+    const childExistsR = await this.gitOps.branchExists(childStateBr);
+    if (!isOk(childExistsR)) return childExistsR;
+    if (!childExistsR.data) {
+      return Err(stateBranchNotFoundError(childCodeBranch));
+    }
+    const tmpMergeDir = import_node_path3.default.join((0, import_node_os.tmpdir)(), `tff-merge-${(0, import_node_crypto.randomUUID)().slice(0, 8)}`);
+    (0, import_node_fs3.mkdirSync)(tmpMergeDir, { recursive: true });
+    const parentDbPath = import_node_path3.default.join(tmpMergeDir, "parent.db");
+    const childDbPath = import_node_path3.default.join(tmpMergeDir, "child.db");
+    const parentDbR = await this.gitOps.extractFile(parentStateBr, ".tff/state.db");
+    if (!isOk(parentDbR)) return Err(syncFailedError("Failed to extract parent DB"));
+    (0, import_node_fs3.writeFileSync)(parentDbPath, parentDbR.data);
+    const childDbR = await this.gitOps.extractFile(childStateBr, ".tff/state.db");
+    if (!isOk(childDbR)) return Err(syncFailedError("Failed to extract child DB"));
+    (0, import_node_fs3.writeFileSync)(childDbPath, childDbR.data);
+    const sqlMergeR = mergeStateDbs(parentDbPath, childDbPath, sliceId);
+    if (!sqlMergeR.ok) return sqlMergeR;
+    const tmpPath = this.tmpWorktreePath();
+    (0, import_node_fs3.mkdirSync)(tmpPath, { recursive: true });
+    const wtR = await this.gitOps.checkoutWorktree(tmpPath, parentStateBr);
+    if (!isOk(wtR)) return wtR;
+    try {
+      const destDb = import_node_path3.default.join(tmpPath, ".tff", "state.db");
+      (0, import_node_fs3.mkdirSync)(import_node_path3.default.dirname(destDb), { recursive: true });
+      (0, import_node_fs3.cpSync)(parentDbPath, destDb);
+      let artifactsCopied = 0;
+      const childFilesR = await this.gitOps.lsTree(childStateBr);
+      if (isOk(childFilesR)) {
+        const milestoneId = sliceId.split("-")[0];
+        const sliceArtifactPrefix = `.tff/milestones/${milestoneId}/slices/${sliceId}/`;
+        const resolvedTmpPath = import_node_path3.default.resolve(tmpPath);
+        for (const filePath of childFilesR.data) {
+          if (!filePath.startsWith(sliceArtifactPrefix)) continue;
+          const destPath = import_node_path3.default.join(tmpPath, filePath);
+          const resolved = import_node_path3.default.resolve(destPath);
+          if (!resolved.startsWith(resolvedTmpPath + import_node_path3.default.sep) && resolved !== resolvedTmpPath) {
+            continue;
+          }
+          const bufR = await this.gitOps.extractFile(childStateBr, filePath);
+          if (!isOk(bufR)) continue;
+          (0, import_node_fs3.mkdirSync)(import_node_path3.default.dirname(destPath), { recursive: true });
+          (0, import_node_fs3.writeFileSync)(destPath, bufR.data);
+          artifactsCopied++;
+        }
+      }
+      const commitR = await this.gitOps.commit(
+        `chore: merge state from ${childCodeBranch} (slice: ${sliceId})`,
+        ["-A"],
+        tmpPath
+      );
+      if (!isOk(commitR) && !commitR.error.message.includes("nothing to commit")) {
+        return Err(syncFailedError(`Merge commit failed: ${commitR.error.message}`));
+      }
+      return Ok({ entitiesMerged: sqlMergeR.data.entitiesMerged, artifactsCopied });
+    } finally {
+      await this.gitOps.deleteWorktree(tmpPath);
+      try {
+        (0, import_node_fs3.rmSync)(tmpMergeDir, { recursive: true, force: true });
+      } catch {
+      }
+    }
+  }
+  async deleteBranch(codeBranch) {
+    return this.gitOps.deleteBranch(this.stateBranch(codeBranch));
+  }
+};
+
+// tools/src/cli/commands/branch-merge.cmd.ts
+var branchMergeCmd = async (args) => {
+  const [childCodeBranch, parentCodeBranch, sliceId] = args;
+  if (!childCodeBranch || !parentCodeBranch || !sliceId)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: branch:merge <child> <parent> <slice-id>" }
+    });
+  const gitOps = new GitCliAdapter(process.cwd());
+  const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
+  const result = await mergeBranchUseCase({ childCodeBranch, parentCodeBranch, sliceId }, { stateBranch });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/application/checkpoint/load-checkpoint.ts
+init_domain_error();
+init_result();
+var loadCheckpoint = async (sliceId, deps) => {
+  const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
+  const path10 = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
+  const contentResult = await deps.artifactStore.read(path10);
+  if (!isOk(contentResult))
+    return Err(createDomainError("NOT_FOUND", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
+  const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);
+  if (!match)
+    return Err(createDomainError("VALIDATION_ERROR", `Checkpoint file for "${sliceId}" is corrupted`, { sliceId }));
+  const data = JSON.parse(match[1]);
+  return Ok(data);
+};
+
+// tools/src/cli/commands/checkpoint-load.cmd.ts
+init_result();
+init_markdown_artifact_adapter();
+var checkpointLoadCmd = async (args) => {
+  const [sliceId] = args;
+  if (!sliceId) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: checkpoint:load <slice-id>" } });
+  }
+  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  const result = await loadCheckpoint(sliceId, { artifactStore });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/cli/index.ts
+init_checkpoint_save_cmd();
+
+// tools/src/application/claims/check-stale-claims.ts
+init_result();
+var DEFAULT_TTL_MINUTES = 30;
+var checkStaleClaims = async (input, deps) => {
+  const ttl = input.ttlMinutes ?? DEFAULT_TTL_MINUTES;
+  const result = deps.taskStore.listStaleClaims(ttl);
+  if (!result.ok) return result;
+  return Ok({ staleClaims: result.data });
+};
+
+// tools/src/cli/commands/claim-check-stale.cmd.ts
+init_result();
+
+// tools/src/cli/with-branch-guard.ts
+var import_node_fs6 = require("fs");
+var import_node_path7 = __toESM(require("path"), 1);
+
+// tools/src/application/state-branch/restore-branch.ts
+var restoreBranchUseCase = async (input, deps) => deps.stateBranch.restore(input.codeBranch, input.targetDir);
+
+// tools/src/domain/errors/branch-mismatch.error.ts
+var BranchMismatchError = class extends Error {
+  constructor(expectedBranch, currentBranch) {
+    super(`Branch mismatch: .tff/ state is for "${expectedBranch}" but current branch is "${currentBranch}"`);
+    this.expectedBranch = expectedBranch;
+    this.currentBranch = currentBranch;
+    this.name = "BranchMismatchError";
+  }
+};
+
+// tools/src/cli/with-branch-guard.ts
+init_result();
+
+// tools/src/domain/value-objects/branch-meta.ts
+init_zod();
+var BranchMetaSchema = external_exports.object({
+  stateId: external_exports.string().uuid(),
+  codeBranch: external_exports.string().min(1),
+  parentStateBranch: external_exports.string().min(1).nullable(),
+  createdAt: external_exports.string().datetime(),
+  restoredAt: external_exports.string().datetime().optional()
+});
+
+// tools/src/infrastructure/adapters/sqlite/create-state-stores.ts
+var import_node_child_process2 = require("child_process");
+var import_node_fs4 = require("fs");
+var import_node_path5 = __toESM(require("path"), 1);
+
 // tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
+var import_better_sqlite32 = __toESM(require_lib(), 1);
+
+// tools/src/domain/entities/milestone.ts
+init_zod();
+
+// tools/src/domain/value-objects/milestone-status.ts
+init_zod();
+var MilestoneStatusSchema = external_exports.enum(["open", "in_progress", "closed"]);
+
+// tools/src/domain/entities/milestone.ts
+var MilestoneSchema = external_exports.object({
+  id: external_exports.string().min(1),
+  projectId: external_exports.string().min(1),
+  name: external_exports.string().min(1),
+  number: external_exports.number().int().min(1),
+  status: MilestoneStatusSchema,
+  closeReason: external_exports.string().optional(),
+  createdAt: external_exports.date()
+});
+var formatMilestoneNumber = (n) => `M${n.toString().padStart(2, "0")}`;
+
+// tools/src/domain/entities/slice.ts
+init_zod();
+
+// tools/src/domain/errors/invalid-transition.error.ts
+init_domain_error();
+var invalidTransitionError = (sliceId, from, to) => createDomainError("INVALID_TRANSITION", `Cannot transition slice "${sliceId}" from "${from}" to "${to}"`, {
+  sliceId,
+  from,
+  to
+});
+
+// tools/src/domain/events/domain-event.ts
+init_zod();
+var DomainEventTypeSchema = external_exports.enum(["SLICE_PLANNED", "SLICE_STATUS_CHANGED", "TASK_COMPLETED"]);
+var DomainEventSchema = external_exports.object({
+  id: external_exports.string(),
+  type: DomainEventTypeSchema,
+  occurredAt: external_exports.date(),
+  payload: external_exports.record(external_exports.string(), external_exports.unknown())
+});
+var createDomainEvent = (type, payload) => ({
+  id: crypto.randomUUID(),
+  type,
+  occurredAt: /* @__PURE__ */ new Date(),
+  payload
+});
+
+// tools/src/domain/events/slice-status-changed.event.ts
+var sliceStatusChangedEvent = (sliceId, from, to) => createDomainEvent("SLICE_STATUS_CHANGED", { sliceId, from, to });
+
+// tools/src/domain/entities/slice.ts
+init_result();
+
+// tools/src/domain/value-objects/complexity-tier.ts
+init_zod();
+var ComplexityTierSchema = external_exports.enum(["S", "F-lite", "F-full"]);
+var TierConfigSchema = external_exports.object({
+  brainstormer: external_exports.boolean(),
+  research: external_exports.enum(["skip", "optional", "required"]),
+  freshReviewer: external_exports.literal(true),
+  tdd: external_exports.boolean()
+});
+
+// tools/src/domain/value-objects/slice-status.ts
+init_zod();
+var SliceStatusSchema = external_exports.enum([
+  "discussing",
+  "researching",
+  "planning",
+  "executing",
+  "verifying",
+  "reviewing",
+  "completing",
+  "closed"
+]);
+var transitions = {
+  discussing: ["researching"],
+  researching: ["planning"],
+  planning: ["planning", "executing"],
+  executing: ["verifying"],
+  verifying: ["reviewing", "executing"],
+  reviewing: ["completing", "executing"],
+  completing: ["closed"],
+  closed: []
+};
+var canTransition = (from, to) => transitions[from].includes(to);
+
+// tools/src/domain/entities/slice.ts
+var SliceSchema = external_exports.object({
+  id: external_exports.string().min(1),
+  milestoneId: external_exports.string().min(1),
+  number: external_exports.number().int().min(1),
+  title: external_exports.string().min(1),
+  status: SliceStatusSchema,
+  tier: ComplexityTierSchema.optional(),
+  createdAt: external_exports.date()
+});
+var formatSliceId = (milestoneNumber, sliceNumber) => `M${milestoneNumber.toString().padStart(2, "0")}-S${sliceNumber.toString().padStart(2, "0")}`;
+var transitionSlice = (slice, to) => {
+  if (!canTransition(slice.status, to)) {
+    return Err(invalidTransitionError(slice.id, slice.status, to));
+  }
+  const updated = { ...slice, status: to };
+  const event = sliceStatusChangedEvent(slice.id, slice.status, to);
+  return Ok({ slice: updated, events: [event] });
+};
+
+// tools/src/domain/errors/already-claimed.error.ts
+init_domain_error();
+var alreadyClaimedError = (taskId) => createDomainError("ALREADY_CLAIMED", `Task "${taskId}" is already claimed`, { taskId });
+
+// tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
+init_domain_error();
+
+// tools/src/domain/errors/has-open-children.error.ts
+init_domain_error();
+var hasOpenChildrenError = (parentId, openCount) => createDomainError("HAS_OPEN_CHILDREN", `Cannot close "${parentId}" \u2014 ${openCount} children are still open`, {
+  parentId,
+  openCount
+});
+
+// tools/src/domain/errors/version-mismatch.error.ts
+init_domain_error();
+var versionMismatchError = (dbVersion, codeVersion) => createDomainError(
+  "VERSION_MISMATCH",
+  `Database schema version ${dbVersion} is newer than code version ${codeVersion}. Upgrade tff-tools.`,
+  { dbVersion, codeVersion }
+);
+
+// tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
+init_result();
 var SQLiteStateAdapter = class _SQLiteStateAdapter {
   constructor(db) {
     this.db = db;
   }
   static create(dbPath) {
-    const db = new import_better_sqlite3.default(dbPath);
+    const nativeBinding = getNativeBindingPath();
+    const db = new import_better_sqlite32.default(dbPath, nativeBinding ? { nativeBinding } : void 0);
     return new _SQLiteStateAdapter(db);
   }
   static createInMemory() {
-    const db = new import_better_sqlite3.default(":memory:");
+    const nativeBinding = getNativeBindingPath();
+    const db = new import_better_sqlite32.default(":memory:", nativeBinding ? { nativeBinding } : void 0);
     return new _SQLiteStateAdapter(db);
   }
   // DatabaseInit
@@ -15625,6 +17758,12 @@ var SQLiteStateAdapter = class _SQLiteStateAdapter {
       }
       return Err(createDomainError("WRITE_FAILURE", `Migration failed: ${msg}`));
     }
+  }
+  close() {
+    this.db.close();
+  }
+  checkpoint() {
+    this.db.pragma("wal_checkpoint(PASSIVE)");
   }
   // ProjectStore
   getProject() {
@@ -16091,8 +18230,34 @@ var SQLiteStateAdapter = class _SQLiteStateAdapter {
 };
 
 // tools/src/infrastructure/adapters/sqlite/create-state-stores.ts
-function createStateStores(dbPath) {
-  const resolvedPath = dbPath ?? import_node_path2.default.join(process.cwd(), ".tff", "state.db");
+function checkBranchAlignment(tffDir) {
+  try {
+    const stampPath = import_node_path5.default.join(tffDir, "branch-meta.json");
+    const dbFilePath = import_node_path5.default.join(tffDir, "state.db");
+    if ((0, import_node_fs4.existsSync)(stampPath)) {
+      const raw = JSON.parse((0, import_node_fs4.readFileSync)(stampPath, "utf8"));
+      const meta3 = BranchMetaSchema.parse(raw);
+      const currentBranch = (0, import_node_child_process2.execSync)("git branch --show-current", {
+        cwd: import_node_path5.default.dirname(tffDir),
+        // run git from parent of .tff/
+        encoding: "utf8"
+      }).trim();
+      if (meta3.codeBranch !== currentBranch) {
+        throw new BranchMismatchError(meta3.codeBranch, currentBranch);
+      }
+    } else if ((0, import_node_fs4.existsSync)(dbFilePath)) {
+      const currentBranch = (0, import_node_child_process2.execSync)("git branch --show-current", {
+        cwd: import_node_path5.default.dirname(tffDir),
+        encoding: "utf8"
+      }).trim();
+      throw new BranchMismatchError("unknown", currentBranch);
+    }
+  } catch (e) {
+    if (e instanceof BranchMismatchError) throw e;
+  }
+}
+function createStateStoresUnchecked(dbPath) {
+  const resolvedPath = dbPath ?? import_node_path5.default.join(process.cwd(), ".tff", "state.db");
   const adapter = SQLiteStateAdapter.create(resolvedPath);
   const initResult = adapter.init();
   if (!initResult.ok) throw new Error(`DB init failed: ${initResult.error.message}`);
@@ -16107,6 +18272,119 @@ function createStateStores(dbPath) {
     reviewStore: adapter
   };
 }
+function createStateStores(dbPath) {
+  const resolvedPath = dbPath ?? import_node_path5.default.join(process.cwd(), ".tff", "state.db");
+  checkBranchAlignment(import_node_path5.default.dirname(resolvedPath));
+  return createStateStoresUnchecked(dbPath);
+}
+function createClosableStateStoresUnchecked(dbPath) {
+  const resolvedPath = dbPath ?? import_node_path5.default.join(process.cwd(), ".tff", "state.db");
+  const adapter = SQLiteStateAdapter.create(resolvedPath);
+  const initResult = adapter.init();
+  if (!initResult.ok) throw new Error(`DB init failed: ${initResult.error.message}`);
+  return {
+    db: adapter,
+    projectStore: adapter,
+    milestoneStore: adapter,
+    sliceStore: adapter,
+    taskStore: adapter,
+    dependencyStore: adapter,
+    sessionStore: adapter,
+    reviewStore: adapter,
+    close: () => adapter.close(),
+    checkpoint: () => adapter.checkpoint()
+  };
+}
+function createClosableStateStores(dbPath) {
+  const resolvedPath = dbPath ?? import_node_path5.default.join(process.cwd(), ".tff", "state.db");
+  checkBranchAlignment(import_node_path5.default.dirname(resolvedPath));
+  return createClosableStateStoresUnchecked(dbPath);
+}
+
+// tools/src/infrastructure/hooks/branch-meta-stamp.ts
+var import_node_crypto2 = require("crypto");
+var import_node_fs5 = require("fs");
+var import_node_path6 = __toESM(require("path"), 1);
+var STAMP_FILE = "branch-meta.json";
+function readLocalStamp(tffDir) {
+  const stampPath = import_node_path6.default.join(tffDir, STAMP_FILE);
+  if (!(0, import_node_fs5.existsSync)(stampPath)) return null;
+  try {
+    const raw = JSON.parse((0, import_node_fs5.readFileSync)(stampPath, "utf8"));
+    return BranchMetaSchema.parse(raw);
+  } catch {
+    return null;
+  }
+}
+function writeLocalStamp(tffDir, meta3) {
+  const stampPath = import_node_path6.default.join(tffDir, STAMP_FILE);
+  const stamp = BranchMetaSchema.parse({ ...meta3, restoredAt: (/* @__PURE__ */ new Date()).toISOString() });
+  (0, import_node_fs5.writeFileSync)(stampPath, JSON.stringify(stamp, null, 2));
+}
+function writeSyntheticStamp(tffDir, codeBranch) {
+  const stamp = BranchMetaSchema.parse({
+    stateId: (0, import_node_crypto2.randomUUID)(),
+    codeBranch,
+    parentStateBranch: null,
+    createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+    restoredAt: (/* @__PURE__ */ new Date()).toISOString()
+  });
+  (0, import_node_fs5.writeFileSync)(import_node_path6.default.join(tffDir, STAMP_FILE), JSON.stringify(stamp, null, 2));
+}
+
+// tools/src/cli/with-branch-guard.ts
+async function handleMismatch(error48) {
+  const cwd = process.cwd();
+  const tffDir = import_node_path7.default.join(cwd, ".tff");
+  const gitOps = new GitCliAdapter(cwd);
+  const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+  const result = await restoreBranchUseCase({ codeBranch: error48.currentBranch, targetDir: cwd }, { stateBranch });
+  if (isOk(result) && result.data !== null) {
+    const rootMetaPath = import_node_path7.default.join(cwd, "branch-meta.json");
+    try {
+      if ((0, import_node_fs6.existsSync)(rootMetaPath)) {
+        const raw = JSON.parse((0, import_node_fs6.readFileSync)(rootMetaPath, "utf8"));
+        const meta3 = BranchMetaSchema.parse(raw);
+        writeLocalStamp(tffDir, {
+          stateId: meta3.stateId,
+          codeBranch: error48.currentBranch,
+          parentStateBranch: meta3.parentStateBranch,
+          createdAt: meta3.createdAt
+        });
+      } else {
+        writeSyntheticStamp(tffDir, error48.currentBranch);
+      }
+    } catch {
+      writeSyntheticStamp(tffDir, error48.currentBranch);
+    }
+    return true;
+  }
+  writeSyntheticStamp(tffDir, error48.currentBranch);
+  console.warn(`[tff] restore failed for branch "${error48.currentBranch}", using existing state`);
+  return false;
+}
+async function withBranchGuard(fn, opts) {
+  try {
+    const stores = createStateStores(opts?.dbPath);
+    return await fn(stores);
+  } catch (e) {
+    if (!(e instanceof BranchMismatchError)) throw e;
+    await handleMismatch(e);
+    const stores = createStateStoresUnchecked(opts?.dbPath);
+    return await fn(stores);
+  }
+}
+async function withClosableBranchGuard(fn, opts) {
+  try {
+    const stores = createClosableStateStores(opts?.dbPath);
+    return await fn(stores);
+  } catch (e) {
+    if (!(e instanceof BranchMismatchError)) throw e;
+    await handleMismatch(e);
+    const stores = createClosableStateStoresUnchecked(opts?.dbPath);
+    return await fn(stores);
+  }
+}
 
 // tools/src/cli/commands/claim-check-stale.cmd.ts
 var claimCheckStaleCmd = async (args) => {
@@ -16117,22 +18395,23 @@ var claimCheckStaleCmd = async (args) => {
       error: { code: "INVALID_ARGS", message: "Usage: claim:check-stale [ttl-minutes]" }
     });
   }
-  const { taskStore } = createStateStores();
-  const result = await checkStaleClaims({ ttlMinutes }, { taskStore });
-  if (isOk(result)) {
-    return JSON.stringify({
-      ok: true,
-      data: {
-        staleClaims: result.data.staleClaims.map((t) => ({
-          id: t.id,
-          title: t.title,
-          claimedAt: t.claimedAt
-        })),
-        count: result.data.staleClaims.length
-      }
-    });
-  }
-  return JSON.stringify({ ok: false, error: result.error });
+  return withBranchGuard(async ({ taskStore }) => {
+    const result = await checkStaleClaims({ ttlMinutes }, { taskStore });
+    if (isOk(result)) {
+      return JSON.stringify({
+        ok: true,
+        data: {
+          staleClaims: result.data.staleClaims.map((t) => ({
+            id: t.id,
+            title: t.title,
+            claimedAt: t.claimedAt
+          })),
+          count: result.data.staleClaims.length
+        }
+      });
+    }
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };
 
 // tools/src/application/compose/detect-clusters.ts
@@ -16222,6 +18501,142 @@ var composeDetectCmd = async (args) => {
   }
 };
 
+// tools/src/cli/commands/dep-add.cmd.ts
+init_result();
+var depAddCmd = async (args) => {
+  const [fromId, toId] = args;
+  if (!fromId || !toId)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: dep:add <from-id> <to-id> \u2014 means <from-id> is blocked by <to-id>" }
+    });
+  return withBranchGuard(async ({ dependencyStore }) => {
+    const result = dependencyStore.addDependency(fromId, toId, "blocks");
+    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
+};
+
+// tools/src/cli/commands/hook-post-checkout.cmd.ts
+var import_node_fs7 = require("fs");
+var import_node_path8 = __toESM(require("path"), 1);
+init_result();
+
+// tools/src/infrastructure/locking/tff-lock.ts
+var import_proper_lockfile = __toESM(require_proper_lockfile(), 1);
+async function acquireRestoreLock(targetPath, timeoutMs = 5e3) {
+  try {
+    const release = await import_proper_lockfile.default.lock(targetPath, {
+      retries: { retries: Math.ceil(timeoutMs / 200), factor: 1, minTimeout: 200 },
+      stale: 3e4
+    });
+    return release;
+  } catch {
+    return null;
+  }
+}
+
+// tools/src/cli/commands/hook-post-checkout.cmd.ts
+var hookPostCheckoutCmd = async (args) => {
+  const [codeBranch] = args;
+  if (!codeBranch) {
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: hook:post-checkout <branch>" }
+    });
+  }
+  const cwd = process.cwd();
+  const tffDir = import_node_path8.default.join(cwd, ".tff");
+  try {
+    const gitOps = new GitCliAdapter(cwd);
+    const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+    const existsResult = await stateBranch.exists(codeBranch);
+    if (!isOk(existsResult) || !existsResult.data) {
+      return JSON.stringify({
+        ok: true,
+        data: { action: "skipped", reason: `No state branch for "${codeBranch}"` }
+      });
+    }
+    const stamp = readLocalStamp(tffDir);
+    if (stamp && stamp.codeBranch === codeBranch) {
+      return JSON.stringify({
+        ok: true,
+        data: { action: "skipped", reason: "Stamp already matches current branch" }
+      });
+    }
+    const dbPath = import_node_path8.default.join(tffDir, "state.db");
+    let release = null;
+    if ((0, import_node_fs7.existsSync)(dbPath)) {
+      release = await acquireRestoreLock(dbPath, 5e3);
+      if (!release) {
+        return JSON.stringify({
+          ok: true,
+          data: { action: "skipped", reason: "Lock held by another process" }
+        });
+      }
+    }
+    try {
+      const result = await restoreBranchUseCase({ codeBranch, targetDir: cwd }, { stateBranch });
+      if (!isOk(result) || result.data === null) {
+        writeSyntheticStamp(tffDir, codeBranch);
+        return JSON.stringify({
+          ok: true,
+          data: { action: "skipped", reason: "Restore returned null" }
+        });
+      }
+      const rootMetaPath = import_node_path8.default.join(cwd, "branch-meta.json");
+      try {
+        if ((0, import_node_fs7.existsSync)(rootMetaPath)) {
+          const raw = JSON.parse((0, import_node_fs7.readFileSync)(rootMetaPath, "utf8"));
+          const meta3 = BranchMetaSchema.parse(raw);
+          writeLocalStamp(tffDir, {
+            stateId: meta3.stateId,
+            codeBranch,
+            parentStateBranch: meta3.parentStateBranch,
+            createdAt: meta3.createdAt
+          });
+        } else {
+          writeSyntheticStamp(tffDir, codeBranch);
+        }
+      } catch {
+        writeSyntheticStamp(tffDir, codeBranch);
+      }
+      return JSON.stringify({
+        ok: true,
+        data: { action: "restored", filesRestored: result.data.filesRestored }
+      });
+    } finally {
+      if (release) await release();
+    }
+  } catch (e) {
+    return JSON.stringify({
+      ok: true,
+      data: { action: "error", reason: String(e) }
+    });
+  }
+};
+
+// tools/src/cli/commands/milestone-close.cmd.ts
+init_result();
+var milestoneCloseCmd = async (args) => {
+  const [milestoneId, ...rest] = args;
+  if (!milestoneId)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: 'Usage: milestone:close <milestone-id> [--reason "..."]' }
+    });
+  let reason;
+  const reasonIdx = rest.indexOf("--reason");
+  if (reasonIdx !== -1 && rest[reasonIdx + 1]) {
+    reason = rest.slice(reasonIdx + 1).join(" ");
+  }
+  return withBranchGuard(async ({ milestoneStore }) => {
+    const result = milestoneStore.closeMilestone(milestoneId, reason);
+    if (isOk(result)) return JSON.stringify({ ok: true, data: { status: "closed", reason } });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
+};
+
 // tools/src/application/milestone/create-milestone.ts
 init_result();
 var createMilestoneUseCase = async (input, deps) => {
@@ -16242,133 +18657,35 @@ var createMilestoneUseCase = async (input, deps) => {
 _Define your requirements here._
 `
   );
+  if (deps.stateBranch) {
+    try {
+      await deps.stateBranch.fork(branchName, "tff-state/main");
+    } catch {
+    }
+  }
   return Ok({ milestone, branchName });
 };
 
 // tools/src/cli/commands/milestone-create.cmd.ts
 init_result();
 init_markdown_artifact_adapter();
-
-// tools/src/infrastructure/adapters/git/git-cli.adapter.ts
-var import_node_child_process = require("child_process");
-var import_node_util = require("util");
-init_domain_error();
-init_result();
-var exec = (0, import_node_util.promisify)(import_node_child_process.execFile);
-var gitError = (message, context) => createDomainError("SYNC_CONFLICT", message, context);
-var runGit = async (args, cwd) => {
-  try {
-    const { stdout } = await exec("git", args, { cwd, timeout: 3e4 });
-    return Ok(stdout.trim());
-  } catch (err) {
-    return Err(gitError(`git ${args.join(" ")} failed: ${err}`, { args }));
-  }
-};
-var GitCliAdapter = class {
-  constructor(repoRoot) {
-    this.repoRoot = repoRoot;
-  }
-  cache = /* @__PURE__ */ new Map();
-  TTL_MS = 5e3;
-  getCached(key) {
-    const entry = this.cache.get(key);
-    if (!entry || Date.now() > entry.expiresAt) {
-      this.cache.delete(key);
-      return void 0;
-    }
-    return entry.value;
-  }
-  setCache(key, value) {
-    this.cache.set(key, { value, expiresAt: Date.now() + this.TTL_MS });
-  }
-  invalidateCache() {
-    this.cache.clear();
-  }
-  async createBranch(name, from) {
-    const r = await runGit(["branch", name, from], this.repoRoot);
-    if (!r.ok) return r;
-    this.invalidateCache();
-    return Ok(void 0);
-  }
-  async createWorktree(path2, branch) {
-    const r = await runGit(["worktree", "add", path2, "-b", branch], this.repoRoot);
-    if (!r.ok) return r;
-    return Ok(void 0);
-  }
-  async deleteWorktree(path2) {
-    const r = await runGit(["worktree", "remove", path2, "--force"], this.repoRoot);
-    if (!r.ok) return r;
-    return Ok(void 0);
-  }
-  async listWorktrees() {
-    const r = await runGit(["worktree", "list", "--porcelain"], this.repoRoot);
-    if (!r.ok) return r;
-    return Ok(
-      r.data.split("\n").filter((l) => l.startsWith("worktree ")).map((l) => l.replace("worktree ", ""))
-    );
-  }
-  async commit(message, files, worktreePath) {
-    const cwd = worktreePath ?? this.repoRoot;
-    const addR = await runGit(["add", ...files], cwd);
-    if (!addR.ok) return addR;
-    const commitR = await runGit(["commit", "-m", message], cwd);
-    if (!commitR.ok) return commitR;
-    const shaR = await runGit(["rev-parse", "--short", "HEAD"], cwd);
-    if (!shaR.ok) return shaR;
-    this.invalidateCache();
-    return Ok({ sha: shaR.data, message });
-  }
-  async revert(commitSha, worktreePath) {
-    const cwd = worktreePath ?? this.repoRoot;
-    const r = await runGit(["revert", "--no-edit", commitSha], cwd);
-    if (!r.ok) return r;
-    const shaR = await runGit(["rev-parse", "--short", "HEAD"], cwd);
-    if (!shaR.ok) return shaR;
-    return Ok({ sha: shaR.data, message: `Revert "${commitSha}"` });
-  }
-  async merge(source, target) {
-    await runGit(["checkout", target], this.repoRoot);
-    const r = await runGit(["merge", source, "--no-ff"], this.repoRoot);
-    if (!r.ok) return r;
-    return Ok(void 0);
-  }
-  async getCurrentBranch(worktreePath) {
-    const cwd = worktreePath ?? this.repoRoot;
-    const cacheKey = `branch:${cwd}`;
-    const cached2 = this.getCached(cacheKey);
-    if (cached2) return Ok(cached2);
-    const r = await runGit(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
-    if (r.ok) this.setCache(cacheKey, r.data);
-    return r;
-  }
-  async getHeadSha(worktreePath) {
-    const cwd = worktreePath ?? this.repoRoot;
-    const cacheKey = `sha:${cwd}`;
-    const cached2 = this.getCached(cacheKey);
-    if (cached2) return Ok(cached2);
-    const r = await runGit(["rev-parse", "--short", "HEAD"], cwd);
-    if (r.ok) this.setCache(cacheKey, r.data);
-    return r;
-  }
-};
-
-// tools/src/cli/commands/milestone-create.cmd.ts
 var milestoneCreateCmd = async (args) => {
   const name = args[0];
   if (!name) {
     return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: milestone:create <name>" } });
   }
-  const { milestoneStore } = createStateStores();
-  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  const gitOps = new GitCliAdapter(process.cwd());
-  const milestonesResult = milestoneStore.listMilestones();
-  if (!isOk(milestonesResult)) {
-    return JSON.stringify({ ok: false, error: milestonesResult.error });
-  }
-  const number4 = milestonesResult.data.length + 1;
-  const result = await createMilestoneUseCase({ name, number: number4 }, { milestoneStore, artifactStore, gitOps });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
+  return withBranchGuard(async ({ milestoneStore }) => {
+    const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+    const gitOps = new GitCliAdapter(process.cwd());
+    const milestonesResult = milestoneStore.listMilestones();
+    if (!isOk(milestonesResult)) {
+      return JSON.stringify({ ok: false, error: milestonesResult.error });
+    }
+    const number4 = milestonesResult.data.length + 1;
+    const result = await createMilestoneUseCase({ name, number: number4 }, { milestoneStore, artifactStore, gitOps });
+    if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };
 
 // tools/src/application/milestone/list-milestones.ts
@@ -16379,10 +18696,11 @@ var listMilestones = async (deps) => {
 // tools/src/cli/commands/milestone-list.cmd.ts
 init_result();
 var milestoneListCmd = async (_args) => {
-  const { milestoneStore } = createStateStores();
-  const result = await listMilestones({ milestoneStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
+  return withBranchGuard(async ({ milestoneStore }) => {
+    const result = await listMilestones({ milestoneStore });
+    if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };
 
 // tools/src/cli/commands/observe-record.cmd.ts
@@ -16400,19 +18718,19 @@ var ObservationSchema = external_exports.object({
 
 // tools/src/infrastructure/adapters/jsonl/jsonl-store.adapter.ts
 var import_promises2 = require("fs/promises");
-var import_node_path3 = require("path");
+var import_node_path9 = require("path");
 init_result();
 var JsonlStoreAdapter = class {
   sessionsPath;
   patternsPath;
   candidatesPath;
   constructor(basePath) {
-    this.sessionsPath = (0, import_node_path3.join)(basePath, "sessions.jsonl");
-    this.patternsPath = (0, import_node_path3.join)(basePath, "patterns.jsonl");
-    this.candidatesPath = (0, import_node_path3.join)(basePath, "candidates.jsonl");
+    this.sessionsPath = (0, import_node_path9.join)(basePath, "sessions.jsonl");
+    this.patternsPath = (0, import_node_path9.join)(basePath, "patterns.jsonl");
+    this.candidatesPath = (0, import_node_path9.join)(basePath, "candidates.jsonl");
   }
   async appendObservation(obs) {
-    await (0, import_promises2.mkdir)((0, import_node_path3.join)(this.sessionsPath, ".."), { recursive: true });
+    await (0, import_promises2.mkdir)((0, import_node_path9.join)(this.sessionsPath, ".."), { recursive: true });
     await (0, import_promises2.appendFile)(this.sessionsPath, `${JSON.stringify(obs)}
 `);
     return Ok(void 0);
@@ -16432,20 +18750,20 @@ var JsonlStoreAdapter = class {
   async readCandidates() {
     return this.readJsonl(this.candidatesPath);
   }
-  async readJsonl(path2) {
+  async readJsonl(path10) {
     try {
-      const content = await (0, import_promises2.readFile)(path2, "utf-8");
+      const content = await (0, import_promises2.readFile)(path10, "utf-8");
       const lines = content.trim().split("\n").filter((l) => l.length > 0);
       return Ok(lines.map((l) => JSON.parse(l)));
     } catch {
       return Ok([]);
     }
   }
-  async writeJsonl(path2, items) {
-    await (0, import_promises2.mkdir)((0, import_node_path3.join)(path2, ".."), { recursive: true });
+  async writeJsonl(path10, items) {
+    await (0, import_promises2.mkdir)((0, import_node_path9.join)(path10, ".."), { recursive: true });
     const content = `${items.map((i) => JSON.stringify(i)).join("\n")}
 `;
-    await (0, import_promises2.writeFile)(path2, content);
+    await (0, import_promises2.writeFile)(path10, content);
     return Ok(void 0);
   }
 };
@@ -16596,19 +18914,23 @@ var getProject = async (deps) => {
 // tools/src/cli/commands/project-get.cmd.ts
 init_result();
 var projectGetCmd = async (_args) => {
-  const { projectStore } = createStateStores();
-  const result = await getProject({ projectStore });
-  if (isOk(result)) {
-    if (result.data === null) {
-      return JSON.stringify({
-        ok: false,
-        error: { code: "NOT_FOUND", message: "No tff project found. Run /tff:new first." }
-      });
+  return withBranchGuard(async ({ projectStore }) => {
+    const result = await getProject({ projectStore });
+    if (isOk(result)) {
+      if (result.data === null) {
+        return JSON.stringify({
+          ok: false,
+          error: { code: "NOT_FOUND", message: "No tff project found. Run /tff:new first." }
+        });
+      }
+      return JSON.stringify({ ok: true, data: result.data });
     }
-    return JSON.stringify({ ok: true, data: result.data });
-  }
-  return JSON.stringify({ ok: false, error: result.error });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };
+
+// tools/src/cli/commands/project-init.cmd.ts
+var import_node_fs9 = require("fs");
 
 // tools/src/domain/entities/project.ts
 init_zod();
@@ -16644,6 +18966,7 @@ var initProject = async (input, deps) => {
   if (!isOk(saveResult)) return saveResult;
   await deps.artifactStore.mkdir(".tff");
   await deps.artifactStore.mkdir(".tff/milestones");
+  await ensureGitignored(deps.artifactStore);
   const projectMd = `# ${project.name}
 
 ## Vision
@@ -16651,12 +18974,113 @@ var initProject = async (input, deps) => {
 ${project.vision}
 `;
   await deps.artifactStore.write(".tff/PROJECT.md", projectMd);
+  if (deps.stateBranch) {
+    try {
+      await deps.stateBranch.createRoot();
+    } catch {
+    }
+  }
   return Ok({ project: saveResult.data });
 };
+var REQUIRED_GITIGNORE_ENTRIES = [".tff/", "build/"];
+async function ensureGitignored(artifactStore) {
+  const gitignorePath = ".gitignore";
+  let existing = "";
+  if (await artifactStore.exists(gitignorePath)) {
+    const readResult = await artifactStore.read(gitignorePath);
+    if (isOk(readResult)) existing = readResult.data;
+  }
+  const lines = existing.split("\n");
+  const missing = REQUIRED_GITIGNORE_ENTRIES.filter(
+    (entry) => !lines.some((line) => line.trim() === entry || line.trim() === entry.replace(/\/$/, ""))
+  );
+  if (missing.length === 0) return;
+  const suffix = missing.map((e) => e).join("\n");
+  const content = existing.length === 0 ? `${suffix}
+` : existing.endsWith("\n") ? `${existing}${suffix}
+` : `${existing}
+${suffix}
+`;
+  await artifactStore.write(gitignorePath, content);
+}
 
 // tools/src/cli/commands/project-init.cmd.ts
 init_result();
 init_markdown_artifact_adapter();
+
+// tools/src/infrastructure/hooks/install-post-checkout.ts
+var import_node_child_process3 = require("child_process");
+var import_node_fs8 = require("fs");
+var import_node_path10 = __toESM(require("path"), 1);
+
+// tools/src/infrastructure/hooks/post-checkout-template.ts
+var TFF_HOOK_MARKER = "# tff post-checkout hook";
+var postCheckoutHookScript = `#!/bin/sh
+# tff post-checkout hook \u2014 restores .tff/ state on branch switch
+# $1=prev HEAD, $2=new HEAD, $3=1 if branch checkout (0 if file checkout)
+
+[ "$3" = "1" ] || exit 0
+
+BRANCH=$(git branch --show-current)
+[ -z "$BRANCH" ] && exit 0
+
+command -v node >/dev/null 2>&1 || exit 0
+
+# Resolve main repo root (works in both main repo and worktrees)
+GIT_COMMON_DIR=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+if [ -z "$GIT_COMMON_DIR" ]; then
+  REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+else
+  # git-common-dir is the .git directory (or .git/worktrees/<name>/..)
+  # For main repo: /path/to/repo/.git -> parent is repo root
+  # For worktrees: /path/to/repo/.git -> same
+  REPO_ROOT=$(dirname "$GIT_COMMON_DIR")
+fi
+TFF_TOOLS="$REPO_ROOT/tools/dist/tff-tools.cjs"
+[ -f "$TFF_TOOLS" ] || exit 0
+
+CWD_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+mkdir -p "$CWD_ROOT/.tff"
+
+node "$TFF_TOOLS" hook:post-checkout "$BRANCH" >> "$CWD_ROOT/.tff/hook.log" 2>&1
+
+if [ -x "$(dirname "$0")/post-checkout.pre-tff" ]; then
+  "$(dirname "$0")/post-checkout.pre-tff" "$@" || true
+fi
+
+exit 0
+`;
+
+// tools/src/infrastructure/hooks/install-post-checkout.ts
+function installPostCheckoutHook(repoDir) {
+  let gitCommonDir;
+  try {
+    gitCommonDir = (0, import_node_child_process3.execSync)("git rev-parse --git-common-dir", {
+      cwd: repoDir,
+      encoding: "utf8"
+    }).trim();
+  } catch {
+    return;
+  }
+  if (!import_node_path10.default.isAbsolute(gitCommonDir)) {
+    gitCommonDir = import_node_path10.default.resolve(repoDir, gitCommonDir);
+  }
+  const hooksDir = import_node_path10.default.join(gitCommonDir, "hooks");
+  (0, import_node_fs8.mkdirSync)(hooksDir, { recursive: true });
+  const hookPath = import_node_path10.default.join(hooksDir, "post-checkout");
+  const preTffPath = import_node_path10.default.join(hooksDir, "post-checkout.pre-tff");
+  if ((0, import_node_fs8.existsSync)(hookPath)) {
+    const existing = (0, import_node_fs8.readFileSync)(hookPath, "utf8");
+    if (existing.includes(TFF_HOOK_MARKER)) {
+    } else {
+      (0, import_node_fs8.renameSync)(hookPath, preTffPath);
+    }
+  }
+  (0, import_node_fs8.writeFileSync)(hookPath, postCheckoutHookScript, { mode: 493 });
+  (0, import_node_fs8.chmodSync)(hookPath, 493);
+}
+
+// tools/src/cli/commands/project-init.cmd.ts
 var projectInitCmd = async (args) => {
   const name = args[0];
   const vision = args.slice(1).join(" ") || name;
@@ -16665,9 +19089,32 @@ var projectInitCmd = async (args) => {
       ok: false,
       error: { code: "INVALID_ARGS", message: "Usage: project:init <name> [vision]" }
     });
+  (0, import_node_fs9.mkdirSync)(".tff", { recursive: true });
   const { projectStore } = createStateStores();
   const artifactStore = new MarkdownArtifactAdapter(process.cwd());
   const result = await initProject({ name, vision }, { projectStore, artifactStore });
+  if (isOk(result)) {
+    try {
+      installPostCheckoutHook(process.cwd());
+    } catch {
+    }
+    return JSON.stringify({ ok: true, data: result.data });
+  }
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/cli/commands/restore-branch.cmd.ts
+init_result();
+var restoreBranchCmd = async (args) => {
+  const [codeBranch] = args;
+  if (!codeBranch)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: restore:branch <code-branch>" }
+    });
+  const gitOps = new GitCliAdapter(process.cwd());
+  const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
+  const result = await restoreBranchUseCase({ codeBranch, targetDir: process.cwd() }, { stateBranch });
   if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
   return JSON.stringify({ ok: false, error: result.error });
 };
@@ -16699,10 +19146,11 @@ var reviewCheckFreshCmd = async (args) => {
       ok: false,
       error: { code: "INVALID_ARGS", message: "Usage: review:check-fresh <slice-id> <agent>" }
     });
-  const { taskStore, reviewStore } = createStateStores();
-  const result = await enforceFreshReviewer({ sliceId, reviewerAgent: agent }, { taskStore, reviewStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-  return JSON.stringify({ ok: false, error: result.error });
+  return withBranchGuard(async ({ taskStore, reviewStore }) => {
+    const result = await enforceFreshReviewer({ sliceId, reviewerAgent: agent }, { taskStore, reviewStore });
+    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };
 
 // tools/src/application/review/record-review.ts
@@ -16760,19 +19208,20 @@ var reviewRecordCmd = async (args) => {
       error: { code: "INVALID_ARGS", message: `Invalid verdict "${verdict}". Must be: approved, changes_requested` }
     });
   }
-  const { reviewStore } = createStateStores();
-  const result = await recordReviewUseCase(
-    {
-      sliceId,
-      reviewer: agent,
-      verdict,
-      type: parsedType2.data,
-      commitSha
-    },
-    { reviewStore }
-  );
-  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-  return JSON.stringify({ ok: false, error: result.error });
+  return withBranchGuard(async ({ reviewStore }) => {
+    const result = await recordReviewUseCase(
+      {
+        sliceId,
+        reviewer: agent,
+        verdict,
+        type: parsedType2.data,
+        commitSha
+      },
+      { reviewStore }
+    );
+    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };
 
 // tools/src/application/skills/check-drift.ts
@@ -16908,6 +19357,27 @@ var sliceClassifyCmd = async (args) => {
   }
 };
 
+// tools/src/cli/commands/slice-close.cmd.ts
+init_result();
+var sliceCloseCmd = async (args) => {
+  const [sliceId, ...rest] = args;
+  if (!sliceId)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: 'Usage: slice:close <slice-id> [--reason "..."]' }
+    });
+  let reason;
+  const reasonIdx = rest.indexOf("--reason");
+  if (reasonIdx !== -1 && rest[reasonIdx + 1]) {
+    reason = rest.slice(reasonIdx + 1).join(" ");
+  }
+  return withBranchGuard(async ({ sliceStore }) => {
+    const result = sliceStore.transitionSlice(sliceId, "closed");
+    if (isOk(result)) return JSON.stringify({ ok: true, data: { status: "closed", reason } });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
+};
+
 // tools/src/application/slice/create-slice.ts
 init_domain_error();
 init_result();
@@ -16965,21 +19435,36 @@ var sliceCreateCmd = async (args) => {
       error: { code: "INVALID_ARGS", message: "Usage: slice:create <name> or slice:create --title <name>" }
     });
   }
-  const { milestoneStore, sliceStore } = createStateStores();
-  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  const milestonesResult = milestoneStore.listMilestones();
-  if (!isOk(milestonesResult) || milestonesResult.data.length === 0) {
-    return JSON.stringify({
-      ok: false,
-      error: { code: "NOT_FOUND", message: "No milestone found. Run /tff:new-milestone first." }
-    });
-  }
-  const openMilestones = milestonesResult.data.filter((m) => m.status !== "closed");
-  const milestone = openMilestones.length > 0 ? openMilestones[openMilestones.length - 1] : milestonesResult.data[milestonesResult.data.length - 1];
-  const milestoneId = milestone.id;
-  const result = await createSliceUseCase({ milestoneId, title: name }, { milestoneStore, sliceStore, artifactStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
+  return withBranchGuard(async ({ milestoneStore, sliceStore }) => {
+    const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+    const milestonesResult = milestoneStore.listMilestones();
+    if (!isOk(milestonesResult) || milestonesResult.data.length === 0) {
+      return JSON.stringify({
+        ok: false,
+        error: { code: "NOT_FOUND", message: "No milestone found. Run /tff:new-milestone first." }
+      });
+    }
+    const openMilestones = milestonesResult.data.filter((m) => m.status !== "closed");
+    const milestone = openMilestones.length > 0 ? openMilestones[openMilestones.length - 1] : milestonesResult.data[milestonesResult.data.length - 1];
+    const milestoneId = milestone.id;
+    const result = await createSliceUseCase(
+      { milestoneId, title: name },
+      { milestoneStore, sliceStore, artifactStore }
+    );
+    if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
+};
+
+// tools/src/cli/commands/slice-list.cmd.ts
+init_result();
+var sliceListCmd = async (args) => {
+  const [milestoneId] = args;
+  return withBranchGuard(async ({ sliceStore }) => {
+    const result = sliceStore.listSlices(milestoneId);
+    if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };
 
 // tools/src/application/lifecycle/transition-slice.ts
@@ -16988,6 +19473,11 @@ init_result();
 var transitionSliceUseCase = async (input, deps) => {
   const transitionResult = deps.sliceStore.transitionSlice(input.sliceId, input.targetStatus);
   if (!isOk(transitionResult)) return transitionResult;
+  if (deps.eventBus) {
+    for (const event of transitionResult.data) {
+      deps.eventBus.publish(event);
+    }
+  }
   const sliceResult = deps.sliceStore.getSlice(input.sliceId);
   if (!isOk(sliceResult)) return sliceResult;
   if (!sliceResult.data) {
@@ -16995,6 +19485,9 @@ var transitionSliceUseCase = async (input, deps) => {
   }
   return { ok: true, data: { slice: sliceResult.data, events: transitionResult.data } };
 };
+
+// tools/src/application/state-branch/sync-branch.ts
+var syncBranchUseCase = async (input, deps) => deps.stateBranch.sync(input.codeBranch, input.message);
 
 // tools/src/application/sync/generate-state.ts
 init_domain_error();
@@ -17068,211 +19561,95 @@ var sliceTransitionCmd = async (args) => {
   } catch {
     return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: `Invalid status: ${targetStatus}` } });
   }
-  const { sliceStore, milestoneStore, taskStore } = createStateStores();
-  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  const result = await transitionSliceUseCase({ sliceId, targetStatus }, { sliceStore });
-  if (isOk(result)) {
-    const warnings = [];
-    const { slice } = result.data;
-    try {
-      await generateState({ milestoneId: slice.milestoneId }, { milestoneStore, sliceStore, taskStore, artifactStore });
-    } catch (e) {
-      const msg = `state sync failed: ${String(e)}`;
-      tffWarn(msg);
-      warnings.push(msg);
+  return withBranchGuard(async ({ sliceStore, milestoneStore, taskStore }) => {
+    const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+    const result = await transitionSliceUseCase({ sliceId, targetStatus }, { sliceStore });
+    if (isOk(result)) {
+      const warnings = [];
+      const { slice } = result.data;
+      try {
+        await generateState(
+          { milestoneId: slice.milestoneId },
+          { milestoneStore, sliceStore, taskStore, artifactStore }
+        );
+      } catch (e) {
+        const msg = `state sync failed: ${String(e)}`;
+        tffWarn(msg);
+        warnings.push(msg);
+      }
+      try {
+        const closableStores = createClosableStateStoresUnchecked();
+        try {
+          closableStores.checkpoint();
+        } finally {
+          closableStores.close();
+        }
+        const gitOps = new GitCliAdapter(process.cwd());
+        const stateBranchAdapter = new GitStateBranchAdapter(gitOps, process.cwd());
+        const branchR = await gitOps.getCurrentBranch();
+        if (isOk(branchR)) {
+          const existsR = await stateBranchAdapter.exists(branchR.data);
+          if (isOk(existsR) && existsR.data) {
+            await syncBranchUseCase(
+              { codeBranch: branchR.data, message: `sync: ${sliceId} -> ${targetStatus}` },
+              { stateBranch: stateBranchAdapter }
+            );
+          }
+        }
+      } catch (e) {
+        const syncMsg = `state branch sync failed: ${String(e)}`;
+        tffWarn(syncMsg);
+        warnings.push(syncMsg);
+      }
+      try {
+        const { checkpointSaveCmd: checkpointSaveCmd2 } = await Promise.resolve().then(() => (init_checkpoint_save_cmd(), checkpoint_save_cmd_exports));
+        const checkpointData = JSON.stringify({
+          sliceId,
+          baseCommit: "",
+          currentWave: 0,
+          completedWaves: [],
+          completedTasks: [],
+          executorLog: []
+        });
+        await checkpointSaveCmd2([checkpointData]);
+      } catch (e) {
+        return JSON.stringify({
+          ok: false,
+          error: { code: "CHECKPOINT_FAILED", message: `Checkpoint save failed: ${String(e)}` },
+          warnings
+        });
+      }
+      return JSON.stringify({ ok: true, data: { status: slice.status }, warnings });
     }
-    try {
-      const { checkpointSaveCmd: checkpointSaveCmd2 } = await Promise.resolve().then(() => (init_checkpoint_save_cmd(), checkpoint_save_cmd_exports));
-      const checkpointData = JSON.stringify({
-        sliceId,
-        baseCommit: "",
-        currentWave: 0,
-        completedWaves: [],
-        completedTasks: [],
-        executorLog: []
-      });
-      await checkpointSaveCmd2([checkpointData]);
-    } catch (e) {
-      return JSON.stringify({
-        ok: false,
-        error: { code: "CHECKPOINT_FAILED", message: `Checkpoint save failed: ${String(e)}` },
-        warnings
-      });
-    }
-    return JSON.stringify({ ok: true, data: { status: slice.status }, warnings });
-  }
-  return JSON.stringify({ ok: false, error: result.error });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };
 
-// tools/src/cli/commands/snapshot-merge.cmd.ts
-var import_promises3 = require("fs/promises");
-
-// tools/src/domain/value-objects/bead-snapshot.ts
-init_zod();
-
-// tools/src/domain/value-objects/bead-label.ts
-init_zod();
-var BeadLabelSchema = external_exports.enum([
-  "tff:project",
-  "tff:milestone",
-  "tff:slice",
-  "tff:req",
-  "tff:task",
-  "tff:research"
-]);
-
-// tools/src/domain/value-objects/bead-snapshot.ts
-var BeadSnapshotSchema = external_exports.object({
-  id: external_exports.string().min(1),
-  label: BeadLabelSchema,
-  title: external_exports.string(),
-  status: external_exports.string(),
-  design: external_exports.string().optional().default(""),
-  deps: external_exports.object({
-    blocks: external_exports.array(external_exports.string()).default([]),
-    validates: external_exports.array(external_exports.string()).default([])
-  }).default({ blocks: [], validates: [] }),
-  kvs: external_exports.record(external_exports.string(), external_exports.string()).default({}),
-  snapshot_ts: external_exports.string()
-});
-function latestById(entries) {
-  const map2 = /* @__PURE__ */ new Map();
-  for (const entry of entries) {
-    const existing = map2.get(entry.id);
-    if (!existing || entry.snapshot_ts > existing.snapshot_ts) {
-      map2.set(entry.id, entry);
-    }
-  }
-  return [...map2.values()];
-}
-
-// tools/src/application/snapshot/merge-snapshot.ts
-function parseToMap(content) {
-  const lines = content.split("\n").filter(Boolean);
-  if (lines.length === 0) return /* @__PURE__ */ new Map();
-  const entries = lines.map((l) => JSON.parse(l));
-  const latest = latestById(entries);
-  const map2 = /* @__PURE__ */ new Map();
-  for (const e of latest) map2.set(e.id, e);
-  return map2;
-}
-function unionArray(a, b) {
-  return [.../* @__PURE__ */ new Set([...a, ...b])].sort();
-}
-function mergeEntry(id, base, ours, theirs, conflicts) {
-  if (!ours && theirs) return theirs;
-  if (!theirs && ours) return ours;
-  if (!ours && !theirs) throw new Error(`mergeEntry called with no ours/theirs for ${id}`);
-  const o = ours;
-  const t = theirs;
-  const oursNewer = o.snapshot_ts >= t.snapshot_ts;
-  const winner = oursNewer ? o : t;
-  const status = winner.status;
-  const baseDesign = base?.design ?? "";
-  const oursDesignChanged = o.design !== baseDesign;
-  const theirsDesignChanged = t.design !== baseDesign;
-  let design;
-  if (oursDesignChanged && theirsDesignChanged && o.design !== t.design) {
-    conflicts.push({ id, field: "design", ours: o.design, theirs: t.design });
-    design = winner.design;
-  } else if (theirsDesignChanged) {
-    design = t.design;
-  } else {
-    design = o.design;
-  }
-  const deps = {
-    blocks: unionArray(o.deps.blocks, t.deps.blocks),
-    validates: unionArray(o.deps.validates, t.deps.validates)
-  };
-  const allKeys = /* @__PURE__ */ new Set([...Object.keys(o.kvs), ...Object.keys(t.kvs)]);
-  const kvs = {};
-  for (const key of allKeys) {
-    const inOurs = key in o.kvs;
-    const inTheirs = key in t.kvs;
-    if (inOurs && inTheirs) {
-      kvs[key] = oursNewer ? o.kvs[key] : t.kvs[key];
-    } else if (inOurs) {
-      kvs[key] = o.kvs[key];
-    } else {
-      kvs[key] = t.kvs[key];
-    }
-  }
-  return {
-    id,
-    label: winner.label,
-    title: winner.title,
-    status,
-    design,
-    deps,
-    kvs,
-    snapshot_ts: winner.snapshot_ts
-  };
-}
-function mergeSnapshots(base, ours, theirs) {
-  const baseMap = parseToMap(base);
-  const oursMap = parseToMap(ours);
-  const theirsMap = parseToMap(theirs);
-  const allIds = /* @__PURE__ */ new Set([...baseMap.keys(), ...oursMap.keys(), ...theirsMap.keys()]);
-  const conflicts = [];
-  const merged = [];
-  for (const id of allIds) {
-    const b = baseMap.get(id);
-    const o = oursMap.get(id);
-    const t = theirsMap.get(id);
-    if (!o && !t) continue;
-    merged.push(mergeEntry(id, b, o, t, conflicts));
-  }
-  const result = merged.sort((a, b) => a.id.localeCompare(b.id)).map((e) => JSON.stringify(e)).join("\n");
-  return { merged: result, conflicts };
-}
-
-// tools/src/cli/commands/snapshot-merge.cmd.ts
-async function snapshotMergeCmd(args) {
-  const [basePath, oursPath, theirsPath] = args;
-  if (!basePath || !oursPath || !theirsPath) {
+// tools/src/cli/commands/sync-branch.cmd.ts
+init_result();
+var syncBranchCmd = async (args) => {
+  const [codeBranch, message] = args;
+  if (!codeBranch)
     return JSON.stringify({
       ok: false,
-      error: { code: "VALIDATION_ERROR", message: "Usage: snapshot:merge <base> <ours> <theirs>" }
+      error: { code: "INVALID_ARGS", message: "Usage: sync:branch <code-branch> [message]" }
     });
-  }
-  const [base, ours, theirs] = await Promise.all([
-    (0, import_promises3.readFile)(basePath, "utf-8").catch(() => ""),
-    (0, import_promises3.readFile)(oursPath, "utf-8").catch(() => ""),
-    (0, import_promises3.readFile)(theirsPath, "utf-8").catch(() => "")
-  ]);
-  const result = mergeSnapshots(base, ours, theirs);
-  await (0, import_promises3.writeFile)(oursPath, result.merged, "utf-8");
-  if (result.conflicts.length > 0) {
-    await (0, import_promises3.mkdir)(".tff", { recursive: true });
-    const conflictMd = result.conflicts.map(
-      (c) => [
-        `## Conflict: ${c.id}`,
-        "### Ours",
-        "```",
-        c.ours,
-        "```",
-        "### Theirs",
-        "```",
-        c.theirs,
-        "```",
-        "### Resolution needed",
-        "Choose one version or merge manually, then run `/tff:sync` to hydrate beads."
-      ].join("\n")
-    ).join("\n\n---\n\n");
-    await (0, import_promises3.writeFile)(".tff/CONFLICT.md", conflictMd, "utf-8");
-    console.error(
-      JSON.stringify({
-        ok: false,
-        error: {
-          code: "SYNC_CONFLICT",
-          message: `${result.conflicts.length} design conflict(s) written to .tff/CONFLICT.md`
-        }
-      })
-    );
-    process.exit(1);
-  }
-  return JSON.stringify({ ok: true, data: { merged: result.merged.split("\n").filter(Boolean).length } });
-}
+  return withClosableBranchGuard(async (stores) => {
+    const gitOps = new GitCliAdapter(process.cwd());
+    const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
+    try {
+      stores.checkpoint();
+      const result = await syncBranchUseCase(
+        { codeBranch, message: message ?? `sync: ${codeBranch}` },
+        { stateBranch }
+      );
+      if (isOk(result)) return JSON.stringify({ ok: true, data: { synced: codeBranch } });
+      return JSON.stringify({ ok: false, error: result.error });
+    } finally {
+      stores.close();
+    }
+  });
+};
 
 // tools/src/cli/commands/sync-state.cmd.ts
 init_result();
@@ -17285,11 +19662,56 @@ var syncStateCmd = async (args) => {
       error: { code: "INVALID_ARGS", message: "Usage: sync:state <milestone-id>" }
     });
   }
-  const { milestoneStore, sliceStore, taskStore } = createStateStores();
-  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  const result = await generateState({ milestoneId }, { milestoneStore, sliceStore, taskStore, artifactStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-  return JSON.stringify({ ok: false, error: result.error });
+  return withBranchGuard(async ({ milestoneStore, sliceStore, taskStore }) => {
+    const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+    const result = await generateState({ milestoneId }, { milestoneStore, sliceStore, taskStore, artifactStore });
+    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
+};
+
+// tools/src/cli/commands/task-claim.cmd.ts
+init_result();
+var taskClaimCmd = async (args) => {
+  const [taskId, claimedBy] = args;
+  if (!taskId)
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: task:claim <task-id> [claimed-by]" } });
+  return withBranchGuard(async ({ taskStore }) => {
+    const result = taskStore.claimTask(taskId, claimedBy);
+    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
+};
+
+// tools/src/cli/commands/task-close.cmd.ts
+init_result();
+var taskCloseCmd = async (args) => {
+  const [taskId, ...rest] = args;
+  if (!taskId)
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: 'Usage: task:close <task-id> [--reason "..."]' } });
+  let reason;
+  const reasonIdx = rest.indexOf("--reason");
+  if (reasonIdx !== -1 && rest[reasonIdx + 1]) {
+    reason = rest.slice(reasonIdx + 1).join(" ");
+  }
+  return withBranchGuard(async ({ taskStore }) => {
+    const result = taskStore.closeTask(taskId, reason);
+    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
+};
+
+// tools/src/cli/commands/task-ready.cmd.ts
+init_result();
+var taskReadyCmd = async (args) => {
+  const [sliceId] = args;
+  if (!sliceId)
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: task:ready <slice-id>" } });
+  return withBranchGuard(async ({ taskStore }) => {
+    const result = taskStore.listReadyTasks(sliceId);
+    if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };
 
 // tools/src/application/waves/detect-waves.ts
@@ -17343,18 +19765,31 @@ var detectWaves = (tasks) => {
 
 // tools/src/cli/commands/waves-detect.cmd.ts
 init_result();
+var USAGE2 = `Usage: waves:detect '[{"id":"T01","dependsOn":[]},{"id":"T02","dependsOn":["T01"]}]'`;
 var wavesDetectCmd = async (args) => {
   const input = args[0];
-  if (!input)
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: waves:detect <json-tasks>" } });
+  if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: USAGE2 } });
+  let tasks;
   try {
-    const tasks = JSON.parse(input);
-    const result = detectWaves(tasks);
-    if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-    return JSON.stringify({ ok: false, error: result.error });
+    tasks = JSON.parse(input);
   } catch {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON input" } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: `Invalid JSON. ${USAGE2}` }
+    });
   }
+  if (!Array.isArray(tasks) || !tasks.every((t) => typeof t?.id === "string" && Array.isArray(t?.dependsOn))) {
+    return JSON.stringify({
+      ok: false,
+      error: {
+        code: "INVALID_ARGS",
+        message: `Each task must have { id: string, dependsOn: string[] }. ${USAGE2}`
+      }
+    });
+  }
+  const result = detectWaves(tasks);
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
 };
 
 // tools/src/application/lifecycle/chain-workflow.ts
@@ -17400,12 +19835,15 @@ var workflowShouldAutoCmd = async (args) => {
   });
 };
 
+// tools/src/cli/commands/worktree-create.cmd.ts
+var import_node_path11 = __toESM(require("path"), 1);
+
 // tools/src/application/worktree/create-worktree.ts
 init_result();
 var createWorktreeUseCase = async (input, deps) => {
   const worktreePath = `.tff/worktrees/${input.sliceId}`;
   const branchName = `slice/${input.sliceId}`;
-  const result = await deps.gitOps.createWorktree(worktreePath, branchName);
+  const result = await deps.gitOps.createWorktree(worktreePath, branchName, input.startPoint);
   if (!isOk(result)) return result;
   return Ok({ worktreePath, branchName });
 };
@@ -17416,9 +19854,17 @@ var worktreeCreateCmd = async (args) => {
   const [sliceId] = args;
   if (!sliceId)
     return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: worktree:create <slice-id>" } });
-  const gitOps = new GitCliAdapter(process.cwd());
-  const result = await createWorktreeUseCase({ sliceId }, { gitOps });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  const cwd = process.cwd();
+  const gitOps = new GitCliAdapter(cwd);
+  const milestoneMatch = sliceId.match(/^(M\d+)/);
+  const startPoint = milestoneMatch ? `milestone/${milestoneMatch[1]}` : void 0;
+  const result = await createWorktreeUseCase({ sliceId, startPoint }, { gitOps });
+  if (isOk(result)) {
+    const tffDir = import_node_path11.default.join(cwd, ".tff");
+    const worktreeAbsPath = import_node_path11.default.resolve(cwd, result.data.worktreePath);
+    copyTffToWorktree(tffDir, worktreeAbsPath);
+    return JSON.stringify({ ok: true, data: result.data });
+  }
   return JSON.stringify({ ok: false, error: result.error });
 };
 
@@ -17460,9 +19906,16 @@ var commands = {
   "project:get": projectGetCmd,
   "milestone:create": milestoneCreateCmd,
   "milestone:list": milestoneListCmd,
+  "milestone:close": milestoneCloseCmd,
   "slice:create": sliceCreateCmd,
+  "slice:list": sliceListCmd,
   "slice:transition": sliceTransitionCmd,
+  "slice:close": sliceCloseCmd,
   "slice:classify": sliceClassifyCmd,
+  "task:claim": taskClaimCmd,
+  "task:close": taskCloseCmd,
+  "task:ready": taskReadyCmd,
+  "dep:add": depAddCmd,
   "waves:detect": wavesDetectCmd,
   "sync:state": syncStateCmd,
   "worktree:create": worktreeCreateCmd,
@@ -17481,8 +19934,11 @@ var commands = {
   "skills:validate": skillsValidateCmd,
   "workflow:next": workflowNextCmd,
   "workflow:should-auto": workflowShouldAutoCmd,
-  "snapshot:merge": snapshotMergeCmd,
-  "claim:check-stale": claimCheckStaleCmd
+  "claim:check-stale": claimCheckStaleCmd,
+  "sync:branch": syncBranchCmd,
+  "restore:branch": restoreBranchCmd,
+  "branch:merge": branchMergeCmd,
+  "hook:post-checkout": hookPostCheckoutCmd
 };
 var main = async () => {
   const [command, ...args] = process.argv.slice(2);
