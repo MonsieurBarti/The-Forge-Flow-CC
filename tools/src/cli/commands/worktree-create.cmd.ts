@@ -10,7 +10,10 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
     return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: worktree:create <slice-id>' } });
   const cwd = process.cwd();
   const gitOps = new GitCliAdapter(cwd);
-  const result = await createWorktreeUseCase({ sliceId }, { gitOps });
+  // Derive milestone branch from slice ID (e.g., M01-S01 → milestone/M01)
+  const milestoneMatch = sliceId.match(/^(M\d+)/);
+  const startPoint = milestoneMatch ? `milestone/${milestoneMatch[1]}` : undefined;
+  const result = await createWorktreeUseCase({ sliceId, startPoint }, { gitOps });
   if (isOk(result)) {
     const tffDir = path.join(cwd, '.tff');
     const worktreeAbsPath = path.resolve(cwd, result.data.worktreePath);

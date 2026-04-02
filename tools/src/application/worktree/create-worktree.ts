@@ -4,6 +4,7 @@ import { isOk, Ok, type Result } from '../../domain/result.js';
 
 interface CreateWorktreeInput {
   sliceId: string;
+  startPoint?: string;
 }
 interface CreateWorktreeDeps {
   gitOps: GitOps;
@@ -20,7 +21,7 @@ export const createWorktreeUseCase = async (
   const worktreePath = `.tff/worktrees/${input.sliceId}`;
   const branchName = `slice/${input.sliceId}`;
 
-  const result = await deps.gitOps.createWorktree(worktreePath, branchName);
+  const result = await deps.gitOps.createWorktree(worktreePath, branchName, input.startPoint);
   if (!isOk(result)) return result;
 
   return Ok({ worktreePath, branchName });

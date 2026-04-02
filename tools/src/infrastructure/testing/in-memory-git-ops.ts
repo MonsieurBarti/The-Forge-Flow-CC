@@ -17,7 +17,7 @@ export class InMemoryGitOps implements GitOps {
     return Ok(undefined);
   }
 
-  async createWorktree(path: string, branch: string): Promise<Result<void, DomainError>> {
+  async createWorktree(path: string, branch: string, _startPoint?: string): Promise<Result<void, DomainError>> {
     this.worktrees.set(path, branch);
     this.branches.add(branch);
     return Ok(undefined);
