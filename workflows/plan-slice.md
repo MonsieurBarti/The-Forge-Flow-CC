@@ -63,7 +63,7 @@ WRITE `.tff/milestones/<milestone>/slices/<id>/PLAN.md`:
 
 ### 5. Create Tasks + Detect Waves
 CREATE tasks: `tff-tools` ∀ task w/ deps
-DETECT: `tff-tools waves:detect '<tasks-json>'` → show user
+DETECT: `tff-tools waves:detect '[{"id":"T01","dependsOn":[]},{"id":"T02","dependsOn":["T01"]}]'` → show user
 
 ### 6. Architecture Review (F-lite ∧ F-full)
 LOAD @skills/architecture-review/SKILL.md + @skills/writing-plans/SKILL.md → SPAWN subagent: {plan_content, spec_content}
