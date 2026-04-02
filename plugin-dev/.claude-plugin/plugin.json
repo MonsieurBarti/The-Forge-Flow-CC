@@ -1,8 +1,0 @@
-{
-  "name": "tff-dev",
-  "description": "Dev build of The Forge Flow — test breaking changes without impacting stable tff",
-  "version": "0.8.0-dev",
-  "author": { "name": "MonsieurBarti" },
-  "repository": "https://github.com/MonsieurBarti/The-Forge-Flow-CC",
-  "keywords": ["orchestration", "sqlite", "plannotator", "agents", "tdd", "dev"]
-}

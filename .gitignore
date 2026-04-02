@@ -7,10 +7,3 @@ docs/
 .beads/
 .worktrees/
 /branch-meta.json
-plugin-dev/commands/
-plugin-dev/workflows/
-plugin-dev/skills/
-plugin-dev/agents/
-plugin-dev/tools/
-plugin-dev/hooks/
-plugin-dev/references/

@@ -9,7 +9,7 @@
     },
     {
       "name": "tff-dev",
-      "source": "./plugin-dev",
+      "source": "./plugin",
       "description": "Dev build — test breaking changes without impacting stable tff"
     }
   ]

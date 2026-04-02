@@ -25,16 +25,16 @@ jobs:
       - name: Build tff-tools
         run: npm run build
 
-      - name: Build dev plugin
-        run: npm run build-dev
-
-      - name: Verify dev plugin structure
+      - name: Patch plugin name for dev release
         run: |
-          test -f plugin-dev/.claude-plugin/plugin.json
-          test -d plugin-dev/commands/tff-dev
-          test -d plugin-dev/workflows
-          test -d plugin-dev/skills
-          ls plugin-dev/commands/tff-dev/*.md | wc -l
+          jq '.name = "tff-dev" | .version = .version + "-dev"' \
+            plugin/.claude-plugin/plugin.json > plugin/.claude-plugin/plugin.json.tmp
+          mv plugin/.claude-plugin/plugin.json.tmp plugin/.claude-plugin/plugin.json
+
+      - name: Verify
+        run: |
+          grep '"tff-dev"' plugin/.claude-plugin/plugin.json
+          node tools/dist/tff-tools.cjs --help
 
       - name: Create dev release
         uses: softprops/action-gh-release@v2
