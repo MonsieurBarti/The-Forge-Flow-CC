@@ -32,28 +32,43 @@ describe('initProject', () => {
     expect(await artifactStore.exists('.tff/PROJECT.md')).toBe(true);
   });
 
-  it('should add .tff/ to .gitignore', async () => {
+  it('should add .tff/ and build/ to .gitignore', async () => {
     await initProject({ name: 'my-app', vision: 'A great app' }, { projectStore: adapter, artifactStore });
     expect(await artifactStore.exists('.gitignore')).toBe(true);
     const content = await artifactStore.read('.gitignore');
     expect(isOk(content) && content.data).toContain('.tff/');
+    expect(isOk(content) && content.data).toContain('build/');
   });
 
-  it('should append .tff/ to existing .gitignore without duplicating', async () => {
-    artifactStore.seed({ '.gitignore': 'node_modules/\nbuild/\n' });
+  it('should append missing entries to existing .gitignore', async () => {
+    artifactStore.seed({ '.gitignore': 'node_modules/\n' });
     await initProject({ name: 'my-app', vision: 'A great app' }, { projectStore: adapter, artifactStore });
     const content = await artifactStore.read('.gitignore');
     expect(isOk(content) && content.data).toContain('node_modules/');
     expect(isOk(content) && content.data).toContain('.tff/');
+    expect(isOk(content) && content.data).toContain('build/');
   });
 
-  it('should not duplicate .tff/ if already in .gitignore', async () => {
-    artifactStore.seed({ '.gitignore': 'node_modules/\n.tff/\n' });
+  it('should not duplicate entries already in .gitignore', async () => {
+    artifactStore.seed({ '.gitignore': 'node_modules/\n.tff/\nbuild/\n' });
     await initProject({ name: 'my-app', vision: 'A great app' }, { projectStore: adapter, artifactStore });
     const content = await artifactStore.read('.gitignore');
     if (isOk(content)) {
-      const matches = content.data.split('\n').filter((l) => l.trim() === '.tff/');
-      expect(matches).toHaveLength(1);
+      const tffMatches = content.data.split('\n').filter((l) => l.trim() === '.tff/');
+      const buildMatches = content.data.split('\n').filter((l) => l.trim() === 'build/');
+      expect(tffMatches).toHaveLength(1);
+      expect(buildMatches).toHaveLength(1);
+    }
+  });
+
+  it('should only add missing entries when some already present', async () => {
+    artifactStore.seed({ '.gitignore': 'node_modules/\nbuild/\n' });
+    await initProject({ name: 'my-app', vision: 'A great app' }, { projectStore: adapter, artifactStore });
+    const content = await artifactStore.read('.gitignore');
+    if (isOk(content)) {
+      expect(content.data).toContain('.tff/');
+      const buildMatches = content.data.split('\n').filter((l) => l.trim() === 'build/');
+      expect(buildMatches).toHaveLength(1);
     }
   });
 
