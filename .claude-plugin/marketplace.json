@@ -6,11 +6,6 @@
       "name": "the-forge-flow",
       "source": "./plugin",
       "description": "Autonomous coding agent orchestrator with SQLite-backed state, plannotator integration, and wave-based parallel execution"
-    },
-    {
-      "name": "tff-dev",
-      "source": "./plugin",
-      "description": "Dev build — test breaking changes without impacting stable tff"
     }
   ]
 }
