@@ -1,0 +1,47 @@
+name: Release Dev Plugin
+
+on:
+  push:
+    branches:
+      - 'milestone/*'
+
+permissions:
+  contents: write
+
+jobs:
+  release-dev:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build tff-tools
+        run: npm run build
+
+      - name: Build dev plugin
+        run: npm run build-dev
+
+      - name: Verify dev plugin structure
+        run: |
+          test -f plugin-dev/.claude-plugin/plugin.json
+          test -d plugin-dev/commands/tff-dev
+          test -d plugin-dev/workflows
+          test -d plugin-dev/skills
+          ls plugin-dev/commands/tff-dev/*.md | wc -l
+
+      - name: Create dev release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: dev-${{ github.sha }}
+          name: "Dev build (${{ github.ref_name }})"
+          prerelease: true
+          generate_release_notes: true
+          files: |
+            tools/dist/tff-tools.cjs

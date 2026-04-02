@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit -p tools/tsconfig.json",
     "lint": "biome check tools/src/",
     "lint:fix": "biome check --fix tools/src/",
-    "format": "biome format --write tools/src/"
+    "format": "biome format --write tools/src/",
+    "build-dev": "bash scripts/build-dev.sh"
   },
   "keywords": [
     "claude-code",
