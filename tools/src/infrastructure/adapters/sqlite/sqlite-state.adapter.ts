@@ -31,6 +31,7 @@ import type { SliceUpdateProps } from '../../../domain/value-objects/slice-updat
 import type { TaskProps } from '../../../domain/value-objects/task-props.js';
 import type { TaskUpdateProps } from '../../../domain/value-objects/task-update-props.js';
 import type { WorkflowSession } from '../../../domain/value-objects/workflow-session.js';
+import { getNativeBindingPath } from './load-native-binding.js';
 import { runMigrations } from './schema.js';
 
 export class SQLiteStateAdapter
@@ -47,12 +48,14 @@ export class SQLiteStateAdapter
   constructor(private db: Database.Database) {}
 
   static create(dbPath: string): SQLiteStateAdapter {
-    const db = new Database(dbPath);
+    const nativeBinding = getNativeBindingPath();
+    const db = new Database(dbPath, nativeBinding ? { nativeBinding } : undefined);
     return new SQLiteStateAdapter(db);
   }
 
   static createInMemory(): SQLiteStateAdapter {
-    const db = new Database(':memory:');
+    const nativeBinding = getNativeBindingPath();
+    const db = new Database(':memory:', nativeBinding ? { nativeBinding } : undefined);
     return new SQLiteStateAdapter(db);
   }
 

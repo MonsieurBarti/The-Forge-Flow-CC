@@ -3,6 +3,7 @@ import type { DomainError } from '../../domain/errors/domain-error.js';
 import { syncFailedError } from '../../domain/errors/sync-failed.error.js';
 import { Err, Ok, type Result } from '../../domain/result.js';
 import type { MergeResult } from '../../domain/value-objects/merge-result.js';
+import { getNativeBindingPath } from '../../infrastructure/adapters/sqlite/load-native-binding.js';
 import { runMigrations } from '../../infrastructure/adapters/sqlite/schema.js';
 
 /**
@@ -16,11 +17,14 @@ export function mergeStateDbs(
   sliceId: string,
 ): Result<MergeResult, DomainError> {
   try {
+    const nativeBinding = getNativeBindingPath();
+    const dbOpts = nativeBinding ? { nativeBinding } : undefined;
+
     // Run migrations on both DBs to ensure schema compatibility
-    const parentDb = new Database(parentDbPath);
+    const parentDb = new Database(parentDbPath, dbOpts);
     runMigrations(parentDb);
 
-    const childDb = new Database(childDbPath);
+    const childDb = new Database(childDbPath, dbOpts);
     runMigrations(childDb);
     childDb.close();
 

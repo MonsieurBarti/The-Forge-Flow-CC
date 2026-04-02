@@ -9,8 +9,18 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: darwin-arm64
+          - os: macos-13
+            platform: darwin-x64
+          - os: ubuntu-latest
+            platform: linux-x64
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -23,12 +33,15 @@ jobs:
       - run: npm ci
 
       - name: Lint
+        if: matrix.platform == 'linux-x64'
         run: npm run lint
 
       - name: Type check
+        if: matrix.platform == 'linux-x64'
         run: npm run typecheck
 
       - name: Run tests
+        if: matrix.platform == 'linux-x64'
         run: npm test
 
       - name: Build
@@ -36,6 +49,39 @@ jobs:
 
       - name: Verify CLI
         run: node tools/dist/tff-tools.cjs --help
+
+      - name: Upload native binding
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.platform }}
+          path: tools/dist/better_sqlite3.*.node
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Download all native bindings
+        uses: actions/download-artifact@v4
+        with:
+          path: tools/dist/
+          pattern: native-*
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la tools/dist/
 
       - name: Extract version from tag
         id: version
@@ -48,3 +94,4 @@ jobs:
           generate_release_notes: true
           files: |
             tools/dist/tff-tools.cjs
+            tools/dist/better_sqlite3.*.node

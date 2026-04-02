@@ -4,7 +4,7 @@ import type { CommitRef } from '../value-objects/commit-ref.js';
 
 export interface GitOps {
   createBranch(name: string, from: string): Promise<Result<void, DomainError>>;
-  createWorktree(path: string, branch: string): Promise<Result<void, DomainError>>;
+  createWorktree(path: string, branch: string, startPoint?: string): Promise<Result<void, DomainError>>;
   deleteWorktree(path: string): Promise<Result<void, DomainError>>;
   listWorktrees(): Promise<Result<string[], DomainError>>;
   commit(message: string, files: string[], worktreePath?: string): Promise<Result<CommitRef, DomainError>>;
