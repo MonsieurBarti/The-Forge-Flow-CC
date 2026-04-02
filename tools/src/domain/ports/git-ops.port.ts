@@ -26,4 +26,6 @@ export interface GitOps {
   detectDefaultBranch(): Promise<Result<string, DomainError>>;
   /** Push a branch to remote (best-effort — non-blocking if no remote). */
   pushBranch(branch: string, remote?: string): Promise<Result<void, DomainError>>;
+  /** Fetch a specific branch from remote into local refs (best-effort). */
+  fetchBranch(branch: string, remote?: string): Promise<Result<void, DomainError>>;
 }

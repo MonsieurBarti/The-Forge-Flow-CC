@@ -21,9 +21,13 @@ export const hookPostCheckoutCmd = async (args: string[]): Promise<string> => {
   const tffDir = path.join(cwd, '.tff');
 
   try {
-    // 1. Check if state branch exists
     const gitOps = new GitCliAdapter(cwd);
     const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+
+    // 1. Fetch state branch from remote (best-effort — works on fresh clones, no-ops if offline)
+    await gitOps.fetchBranch(`tff-state/${codeBranch}`).catch(() => undefined);
+
+    // 2. Check if state branch exists locally (may have just been fetched above)
     const existsResult = await stateBranch.exists(codeBranch);
     if (!isOk(existsResult) || !existsResult.data) {
       return JSON.stringify({

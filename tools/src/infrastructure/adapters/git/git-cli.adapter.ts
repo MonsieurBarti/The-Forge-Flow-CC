@@ -215,4 +215,10 @@ export class GitCliAdapter implements GitOps {
     if (!r.ok) return r;
     return Ok(undefined);
   }
+
+  async fetchBranch(branch: string, remote = 'origin'): Promise<Result<void, DomainError>> {
+    const r = await runGit(['fetch', remote, `${branch}:${branch}`], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
 }

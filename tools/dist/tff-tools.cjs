@@ -17072,6 +17072,11 @@ var GitCliAdapter = class {
     if (!r.ok) return r;
     return Ok(void 0);
   }
+  async fetchBranch(branch, remote = "origin") {
+    const r = await runGit(["fetch", remote, `${branch}:${branch}`], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
 };
 
 // tools/src/infrastructure/adapters/git/git-state-branch.adapter.ts
@@ -18558,6 +18563,7 @@ var hookPostCheckoutCmd = async (args) => {
   try {
     const gitOps = new GitCliAdapter(cwd);
     const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+    await gitOps.fetchBranch(`tff-state/${codeBranch}`).catch(() => void 0);
     const existsResult = await stateBranch.exists(codeBranch);
     if (!isOk(existsResult) || !existsResult.data) {
       return JSON.stringify({
