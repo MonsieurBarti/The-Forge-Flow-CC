@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import { getNativeBindingPath } from './load-native-binding.js';
 import type { Milestone } from '../../../domain/entities/milestone.js';
 import { formatMilestoneNumber } from '../../../domain/entities/milestone.js';
 import type { Project } from '../../../domain/entities/project.js';
@@ -47,12 +48,14 @@ export class SQLiteStateAdapter
   constructor(private db: Database.Database) {}
 
   static create(dbPath: string): SQLiteStateAdapter {
-    const db = new Database(dbPath);
+    const nativeBinding = getNativeBindingPath();
+    const db = new Database(dbPath, nativeBinding ? { nativeBinding } : undefined);
     return new SQLiteStateAdapter(db);
   }
 
   static createInMemory(): SQLiteStateAdapter {
-    const db = new Database(':memory:');
+    const nativeBinding = getNativeBindingPath();
+    const db = new Database(':memory:', nativeBinding ? { nativeBinding } : undefined);
     return new SQLiteStateAdapter(db);
   }
 
