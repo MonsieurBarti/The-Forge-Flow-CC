@@ -7,4 +7,3 @@ docs/
 .beads/
 .worktrees/
 /branch-meta.json
-tools/dist/*.node
