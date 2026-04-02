@@ -31,7 +31,7 @@ describe('GitCliAdapter — S03 branch methods', () => {
     // CI checks out in detached HEAD with no local branches,
     // so create a temp branch from HEAD and verify it exists
     const { execFileSync } = await import('node:child_process');
-    const branchName = `test-branch-${Date.now()}`;
+    const branchName = `test-branch-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
     execFileSync('git', ['branch', branchName, 'HEAD'], { cwd: process.cwd() });
     try {
       const r = await adapter.branchExists(branchName);
