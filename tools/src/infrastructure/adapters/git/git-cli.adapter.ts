@@ -209,4 +209,10 @@ export class GitCliAdapter implements GitOps {
     if (configR.ok && configR.data) return Ok(configR.data);
     return Ok('main');
   }
+
+  async pushBranch(branch: string, remote = 'origin'): Promise<Result<void, DomainError>> {
+    const r = await runGit(['push', remote, `${branch}:${branch}`], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(undefined);
+  }
 }

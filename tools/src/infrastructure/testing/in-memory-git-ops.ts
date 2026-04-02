@@ -100,6 +100,10 @@ export class InMemoryGitOps implements GitOps {
     return Ok('main');
   }
 
+  async pushBranch(_branch: string, _remote?: string): Promise<Result<void, DomainError>> {
+    return Ok(undefined);
+  }
+
   reset(): void {
     this.branches = new Set(['main']);
     this.worktrees.clear();

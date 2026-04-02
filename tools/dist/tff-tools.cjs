@@ -17067,6 +17067,11 @@ var GitCliAdapter = class {
     if (configR.ok && configR.data) return Ok(configR.data);
     return Ok("main");
   }
+  async pushBranch(branch, remote = "origin") {
+    const r = await runGit(["push", remote, `${branch}:${branch}`], this.repoRoot);
+    if (!r.ok) return r;
+    return Ok(void 0);
+  }
 };
 
 // tools/src/infrastructure/adapters/git/git-state-branch.adapter.ts
@@ -17343,6 +17348,7 @@ var GitStateBranchAdapter = class {
         tmpPath
       );
       if (!isOk(commitR)) return Err(syncFailedError(`Initial commit failed: ${commitR.error.message}`));
+      await this.gitOps.pushBranch(rootBranch).catch(() => void 0);
       return Ok(void 0);
     } finally {
       await this.gitOps.deleteWorktree(tmpPath);
@@ -17378,6 +17384,7 @@ var GitStateBranchAdapter = class {
         tmpPath
       );
       if (!isOk(commitR)) return Err(syncFailedError(`Fork commit failed: ${commitR.error.message}`));
+      await this.gitOps.pushBranch(childBranch).catch(() => void 0);
       return Ok(void 0);
     } finally {
       await this.gitOps.deleteWorktree(tmpPath);
@@ -17403,6 +17410,7 @@ var GitStateBranchAdapter = class {
         if (commitR.error.message.includes("nothing to commit")) return Ok(void 0);
         return Err(syncFailedError(`Sync commit failed: ${commitR.error.message}`));
       }
+      await this.gitOps.pushBranch(stateBr).catch(() => void 0);
       return Ok(void 0);
     } finally {
       await this.gitOps.deleteWorktree(tmpPath);

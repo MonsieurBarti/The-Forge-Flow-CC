@@ -24,4 +24,6 @@ export interface GitOps {
   extractFile(ref: string, filePath: string): Promise<Result<Buffer, DomainError>>;
   /** Detect the default branch name: origin/HEAD -> git config -> 'main' fallback. */
   detectDefaultBranch(): Promise<Result<string, DomainError>>;
+  /** Push a branch to remote (best-effort — non-blocking if no remote). */
+  pushBranch(branch: string, remote?: string): Promise<Result<void, DomainError>>;
 }

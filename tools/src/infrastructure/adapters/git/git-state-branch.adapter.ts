@@ -78,6 +78,8 @@ export class GitStateBranchAdapter implements StateBranchPort {
         tmpPath,
       );
       if (!isOk(commitR)) return Err(syncFailedError(`Initial commit failed: ${commitR.error.message}`));
+      // Push best-effort — non-blocking if no remote
+      await this.gitOps.pushBranch(rootBranch).catch(() => undefined);
       return Ok(undefined);
     } finally {
       await this.gitOps.deleteWorktree(tmpPath);
@@ -120,6 +122,8 @@ export class GitStateBranchAdapter implements StateBranchPort {
         tmpPath,
       );
       if (!isOk(commitR)) return Err(syncFailedError(`Fork commit failed: ${commitR.error.message}`));
+      // Push best-effort — non-blocking if no remote
+      await this.gitOps.pushBranch(childBranch).catch(() => undefined);
       return Ok(undefined);
     } finally {
       await this.gitOps.deleteWorktree(tmpPath);
@@ -150,6 +154,8 @@ export class GitStateBranchAdapter implements StateBranchPort {
         if (commitR.error.message.includes('nothing to commit')) return Ok(undefined);
         return Err(syncFailedError(`Sync commit failed: ${commitR.error.message}`));
       }
+      // Push best-effort — non-blocking if no remote
+      await this.gitOps.pushBranch(stateBr).catch(() => undefined);
       return Ok(undefined);
     } finally {
       await this.gitOps.deleteWorktree(tmpPath);
