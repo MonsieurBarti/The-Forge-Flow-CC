@@ -9,13 +9,15 @@ export class InMemoryGitOps implements GitOps {
   private currentBranch = 'main';
   private commits: CommitRef[] = [];
   private headSha = 'abc1234';
+  private treeFiles = new Map<string, string[]>();
+  private fileContents = new Map<string, Buffer>();
 
   async createBranch(name: string, _from: string): Promise<Result<void, DomainError>> {
     this.branches.add(name);
     return Ok(undefined);
   }
 
-  async createWorktree(path: string, branch: string): Promise<Result<void, DomainError>> {
+  async createWorktree(path: string, branch: string, _startPoint?: string): Promise<Result<void, DomainError>> {
     this.worktrees.set(path, branch);
     this.branches.add(branch);
     return Ok(undefined);
@@ -57,17 +59,76 @@ export class InMemoryGitOps implements GitOps {
     return Ok(this.headSha);
   }
 
+  async createOrphanWorktree(path: string, branchName: string): Promise<Result<void, DomainError>> {
+    this.branches.add(branchName);
+    this.worktrees.set(path, branchName);
+    return Ok(undefined);
+  }
+
+  async checkoutWorktree(path: string, existingBranch: string): Promise<Result<void, DomainError>> {
+    if (!this.branches.has(existingBranch))
+      return Err(createDomainError('NOT_FOUND', `Branch not found: ${existingBranch}`, { existingBranch }));
+    this.worktrees.set(path, existingBranch);
+    return Ok(undefined);
+  }
+
+  async branchExists(name: string): Promise<Result<boolean, DomainError>> {
+    return Ok(this.branches.has(name));
+  }
+
+  async deleteBranch(name: string): Promise<Result<void, DomainError>> {
+    this.branches.delete(name);
+    return Ok(undefined);
+  }
+
+  async pruneWorktrees(): Promise<Result<void, DomainError>> {
+    return Ok(undefined);
+  }
+
+  async lsTree(ref: string): Promise<Result<string[], DomainError>> {
+    return Ok(this.treeFiles.get(ref) ?? []);
+  }
+
+  async extractFile(ref: string, filePath: string): Promise<Result<Buffer, DomainError>> {
+    const key = `${ref}:${filePath}`;
+    const buf = this.fileContents.get(key);
+    if (!buf) return Err(createDomainError('NOT_FOUND', `File not found: ${key}`, { ref, filePath }));
+    return Ok(buf);
+  }
+
+  async detectDefaultBranch(): Promise<Result<string, DomainError>> {
+    return Ok('main');
+  }
+
+  async pushBranch(_branch: string, _remote?: string): Promise<Result<void, DomainError>> {
+    return Ok(undefined);
+  }
+
+  async fetchBranch(_branch: string, _remote?: string): Promise<Result<void, DomainError>> {
+    return Ok(undefined);
+  }
+
   reset(): void {
     this.branches = new Set(['main']);
     this.worktrees.clear();
     this.currentBranch = 'main';
     this.commits = [];
     this.headSha = 'abc1234';
+    this.treeFiles.clear();
+    this.fileContents.clear();
   }
   getCommits(): CommitRef[] {
     return [...this.commits];
   }
   hasBranch(name: string): boolean {
     return this.branches.has(name);
+  }
+
+  setTreeFiles(ref: string, files: string[]): void {
+    this.treeFiles.set(ref, files);
+  }
+
+  setFileContent(ref: string, filePath: string, content: Buffer): void {
+    this.fileContents.set(`${ref}:${filePath}`, content);
   }
 }

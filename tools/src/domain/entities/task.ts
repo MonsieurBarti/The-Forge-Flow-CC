@@ -10,40 +10,27 @@ export type TaskStatus = z.infer<typeof TaskStatusSchema>;
 export const TaskSchema = z.object({
   id: z.string().min(1),
   sliceId: z.string().min(1),
-  sliceRef: z.string(),
-  name: z.string().min(1),
-  taskRef: z.string(),
-  taskNumber: z.number().int().min(1),
-  description: z.string(),
-  acceptanceCriteria: z.array(z.string()),
+  number: z.number().int().min(1),
+  title: z.string().min(1),
+  description: z.string().optional(),
   status: TaskStatusSchema,
-  executor: z.string().optional(),
-  dependsOn: z.array(z.string()).default([]),
+  wave: z.number().int().nonnegative().optional(),
+  claimedAt: z.date().optional(),
+  claimedBy: z.string().optional(),
+  closedReason: z.string().optional(),
   createdAt: z.date(),
 });
 
 export type Task = z.infer<typeof TaskSchema>;
 
-export const createTask = (input: {
-  sliceId: string;
-  sliceRef: string;
-  name: string;
-  taskNumber: number;
-  description: string;
-  acceptanceCriteria: string[];
-  dependsOn?: string[];
-}): Task => {
+export const createTask = (input: { sliceId: string; number: number; title: string; description?: string }): Task => {
   const task = {
-    id: crypto.randomUUID(),
+    id: `${input.sliceId}-T${input.number.toString().padStart(2, '0')}`,
     sliceId: input.sliceId,
-    sliceRef: input.sliceRef,
-    name: input.name,
-    taskRef: `T${input.taskNumber.toString().padStart(2, '0')}`,
-    taskNumber: input.taskNumber,
+    number: input.number,
+    title: input.title,
     description: input.description,
-    acceptanceCriteria: input.acceptanceCriteria,
     status: 'open' as const,
-    dependsOn: input.dependsOn ?? [],
     createdAt: new Date(),
   };
   return TaskSchema.parse(task);
@@ -54,8 +41,8 @@ export const startTask = (task: Task): Result<Task, DomainError> => {
     return Err(
       createDomainError(
         'INVALID_TRANSITION',
-        `Cannot start task "${task.taskRef}" — status is "${task.status}", expected "open"`,
-        { taskRef: task.taskRef, status: task.status },
+        `Cannot start task "${task.id}" — status is "${task.status}", expected "open"`,
+        { taskId: task.id, status: task.status },
       ),
     );
   }
@@ -71,14 +58,14 @@ export const completeTask = (
     return Err(
       createDomainError(
         'INVALID_TRANSITION',
-        `Cannot complete task "${task.taskRef}" — status is "${task.status}", expected "in_progress"`,
-        { taskRef: task.taskRef, status: task.status },
+        `Cannot complete task "${task.id}" — status is "${task.status}", expected "in_progress"`,
+        { taskId: task.id, status: task.status },
       ),
     );
   }
 
-  const updated: Task = { ...task, status: 'closed', executor };
-  const event = taskCompletedEvent(task.id, task.sliceRef, executor);
+  const updated: Task = { ...task, status: 'closed' };
+  const event = taskCompletedEvent(task.id, task.sliceId, executor);
 
   return Ok({ task: updated, events: [event] });
 };

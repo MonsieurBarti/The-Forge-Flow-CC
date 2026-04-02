@@ -1,53 +1,66 @@
-import { createSlice, type Slice } from '../../domain/entities/slice.js';
-import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { Slice } from '../../domain/entities/slice.js';
+import { createDomainError, type DomainError } from '../../domain/errors/domain-error.js';
 import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
-import type { BeadStore } from '../../domain/ports/bead-store.port.js';
-import { isOk, Ok, type Result } from '../../domain/result.js';
+import type { MilestoneStore } from '../../domain/ports/milestone-store.port.js';
+import type { SliceStore } from '../../domain/ports/slice-store.port.js';
+import type { StateBranchPort } from '../../domain/ports/state-branch.port.js';
+import { Err, isOk, Ok, type Result } from '../../domain/result.js';
 
 interface CreateSliceInput {
-  milestoneBeadId: string;
-  name: string;
-  milestoneNumber: number;
-  sliceNumber: number;
+  milestoneId: string;
+  title: string;
 }
 
 interface CreateSliceDeps {
-  beadStore: BeadStore;
+  milestoneStore: MilestoneStore;
+  sliceStore: SliceStore;
   artifactStore: ArtifactStore;
+  stateBranch?: StateBranchPort;
 }
 
 interface CreateSliceOutput {
   slice: Slice;
-  beadId: string;
 }
 
 export const createSliceUseCase = async (
   input: CreateSliceInput,
   deps: CreateSliceDeps,
 ): Promise<Result<CreateSliceOutput, DomainError>> => {
-  const slice = createSlice({
-    milestoneId: input.milestoneBeadId,
-    name: input.name,
-    milestoneNumber: input.milestoneNumber,
-    sliceNumber: input.sliceNumber,
-  });
+  const milestoneResult = deps.milestoneStore.getMilestone(input.milestoneId);
+  if (!isOk(milestoneResult)) return milestoneResult;
+  const milestone = milestoneResult.data;
+  if (!milestone) {
+    return Err(createDomainError('NOT_FOUND', `Milestone "${input.milestoneId}" not found`));
+  }
 
-  const beadResult = await deps.beadStore.create({
-    label: 'tff:slice',
-    title: input.name,
-    design: `Slice ${slice.sliceId}: ${input.name}`,
-    parentId: input.milestoneBeadId,
+  const existingSlicesResult = deps.sliceStore.listSlices(input.milestoneId);
+  if (!isOk(existingSlicesResult)) return existingSlicesResult;
+  const sliceNumber = existingSlicesResult.data.length + 1;
+
+  const sliceResult = deps.sliceStore.createSlice({
+    milestoneId: input.milestoneId,
+    number: sliceNumber,
+    title: input.title,
   });
-  if (!isOk(beadResult)) return beadResult;
+  if (!isOk(sliceResult)) return sliceResult;
+  const slice = sliceResult.data;
 
   // Create slice directory with stub PLAN.md
-  const milestoneDir = `.tff/milestones/M${String(input.milestoneNumber).padStart(2, '0')}`;
-  const sliceDir = `${milestoneDir}/slices/${slice.sliceId}`;
+  const milestoneDir = `.tff/milestones/${input.milestoneId}`;
+  const sliceDir = `${milestoneDir}/slices/${slice.id}`;
   await deps.artifactStore.mkdir(sliceDir);
   await deps.artifactStore.write(
     `${sliceDir}/PLAN.md`,
-    `# Plan — ${slice.sliceId}: ${input.name}\n\n_Plan will be defined during /tff:plan._\n`,
+    `# Plan — ${slice.id}: ${input.title}\n\n_Plan will be defined during /tff:plan._\n`,
   );
 
-  return Ok({ slice, beadId: beadResult.data.id });
+  if (deps.stateBranch) {
+    try {
+      await deps.stateBranch.fork(`slice/${slice.id}`, `tff-state/milestone/${input.milestoneId}`);
+    } catch {
+      // State branch fork is best-effort
+    }
+  }
+
+  return Ok({ slice });
 };

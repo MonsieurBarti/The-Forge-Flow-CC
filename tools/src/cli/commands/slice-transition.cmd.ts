@@ -1,15 +1,21 @@
 import { transitionSliceUseCase } from '../../application/lifecycle/transition-slice.js';
+import { syncBranchUseCase } from '../../application/state-branch/sync-branch.js';
+import { generateState } from '../../application/sync/generate-state.js';
 import { isOk } from '../../domain/result.js';
 import { type SliceStatus, SliceStatusSchema } from '../../domain/value-objects/slice-status.js';
-import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
+import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
+import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
+import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { tffWarn } from '../../infrastructure/adapters/logging/warn.js';
+import { createClosableStateStoresUnchecked } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
+import { withBranchGuard } from '../with-branch-guard.js';
 
 export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
-  const [beadId, targetStatus] = args;
-  if (!beadId || !targetStatus) {
+  const [sliceId, targetStatus] = args;
+  if (!sliceId || !targetStatus) {
     return JSON.stringify({
       ok: false,
-      error: { code: 'INVALID_ARGS', message: 'Usage: slice:transition <bead-id> <target-status>' },
+      error: { code: 'INVALID_ARGS', message: 'Usage: slice:transition <slice-id> <target-status>' },
     });
   }
 
@@ -19,110 +25,75 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
     return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: `Invalid status: ${targetStatus}` } });
   }
 
-  const { store: beadStore } = await createBeadAdapter();
+  return withBranchGuard(async ({ sliceStore, milestoneStore, taskStore }) => {
+    const artifactStore = new MarkdownArtifactAdapter(process.cwd());
 
-  // Read actual bead to get current status
-  const beadResult = await beadStore.get(beadId);
-  if (!isOk(beadResult)) {
-    return JSON.stringify({ ok: false, error: { code: 'NOT_FOUND', message: `Bead "${beadId}" not found` } });
-  }
+    const result = await transitionSliceUseCase({ sliceId, targetStatus: targetStatus as SliceStatus }, { sliceStore });
 
-  const bead = beadResult.data;
+    if (isOk(result)) {
+      const warnings: string[] = [];
+      const { slice } = result.data;
 
-  // Validate bead status is a valid slice status
-  const parsedStatus = SliceStatusSchema.safeParse(bead.status);
-  if (!parsedStatus.success) {
-    return JSON.stringify({
-      ok: false,
-      error: { code: 'VALIDATION_ERROR', message: `Bead has invalid slice status: "${bead.status}"` },
-    });
-  }
-
-  if (!bead.parentId) {
-    return JSON.stringify({
-      ok: false,
-      error: { code: 'VALIDATION_ERROR', message: `Bead "${beadId}" has no parent milestone` },
-    });
-  }
-
-  // Extract slice ID from bead design field (format: "Slice M01-S01: ...")
-  const sliceIdMatch = bead.design?.match(/Slice (M\d+-S\d+)/);
-  const sliceId = sliceIdMatch?.[1] ?? 'unknown';
-
-  const slice = {
-    id: bead.id,
-    milestoneId: bead.parentId,
-    name: bead.title,
-    sliceId,
-    status: parsedStatus.data,
-    createdAt: new Date(),
-  };
-
-  const result = await transitionSliceUseCase(
-    { slice, beadId, targetStatus: targetStatus as SliceStatus },
-    { beadStore },
-  );
-
-  if (isOk(result)) {
-    const warnings: string[] = [];
-
-    // Auto-snapshot (non-critical)
-    try {
-      const { snapshotSaveCmd } = await import('./snapshot-save.cmd.js');
-      await snapshotSaveCmd([]);
-    } catch (e) {
-      const msg = `snapshot failed: ${String(e)}`;
-      tffWarn(msg);
-      warnings.push(msg);
-    }
-
-    // Auto-sync to Dolt (non-critical)
-    try {
-      const { readFile } = await import('node:fs/promises');
-      const { loadProjectSettings } = await import('../../domain/value-objects/project-settings.js');
-      const { doltPush } = await import('../../infrastructure/adapters/dolt/dolt-sync.js');
-      const raw = await readFile('.tff/settings.yaml', 'utf-8');
-      const settings = loadProjectSettings(raw);
-      if (settings.dolt?.['auto-sync'] && settings.dolt.remote) {
-        await doltPush(settings.dolt.remote);
+      // Auto-regenerate STATE.md (non-critical)
+      try {
+        await generateState(
+          { milestoneId: slice.milestoneId },
+          { milestoneStore, sliceStore, taskStore, artifactStore },
+        );
+      } catch (e) {
+        const msg = `state sync failed: ${String(e)}`;
+        tffWarn(msg);
+        warnings.push(msg);
       }
-    } catch (e) {
-      const msg = `dolt sync failed: ${String(e)}`;
-      tffWarn(msg);
-      warnings.push(msg);
-    }
 
-    // Auto-regenerate STATE.md (non-critical)
-    try {
-      const { syncStateCmd } = await import('./sync-state.cmd.js');
-      await syncStateCmd([bead.parentId ?? '']);
-    } catch (e) {
-      const msg = `state sync failed: ${String(e)}`;
-      tffWarn(msg);
-      warnings.push(msg);
-    }
+      // Auto-sync state branch (S03)
+      try {
+        const closableStores = createClosableStateStoresUnchecked();
+        try {
+          closableStores.checkpoint();
+        } finally {
+          closableStores.close();
+        }
+        const gitOps = new GitCliAdapter(process.cwd());
+        const stateBranchAdapter = new GitStateBranchAdapter(gitOps, process.cwd());
+        const branchR = await gitOps.getCurrentBranch();
+        if (isOk(branchR)) {
+          const existsR = await stateBranchAdapter.exists(branchR.data);
+          if (isOk(existsR) && existsR.data) {
+            await syncBranchUseCase(
+              { codeBranch: branchR.data, message: `sync: ${sliceId} -> ${targetStatus}` },
+              { stateBranch: stateBranchAdapter },
+            );
+          }
+        }
+      } catch (e) {
+        const syncMsg = `state branch sync failed: ${String(e)}`;
+        tffWarn(syncMsg);
+        warnings.push(syncMsg);
+      }
 
-    // Auto-save CHECKPOINT.md (CRITICAL — blocks transition)
-    try {
-      const { checkpointSaveCmd } = await import('./checkpoint-save.cmd.js');
-      const checkpointData = JSON.stringify({
-        sliceId,
-        baseCommit: '',
-        currentWave: 0,
-        completedWaves: [],
-        completedTasks: [],
-        executorLog: [],
-      });
-      await checkpointSaveCmd([checkpointData]);
-    } catch (e) {
-      return JSON.stringify({
-        ok: false,
-        error: { code: 'CHECKPOINT_FAILED', message: `Checkpoint save failed: ${String(e)}` },
-        warnings,
-      });
-    }
+      // Auto-save CHECKPOINT.md (CRITICAL — blocks transition)
+      try {
+        const { checkpointSaveCmd } = await import('./checkpoint-save.cmd.js');
+        const checkpointData = JSON.stringify({
+          sliceId,
+          baseCommit: '',
+          currentWave: 0,
+          completedWaves: [],
+          completedTasks: [],
+          executorLog: [],
+        });
+        await checkpointSaveCmd([checkpointData]);
+      } catch (e) {
+        return JSON.stringify({
+          ok: false,
+          error: { code: 'CHECKPOINT_FAILED', message: `Checkpoint save failed: ${String(e)}` },
+          warnings,
+        });
+      }
 
-    return JSON.stringify({ ok: true, data: { status: result.data.slice.status }, warnings });
-  }
-  return JSON.stringify({ ok: false, error: result.error });
+      return JSON.stringify({ ok: true, data: { status: slice.status }, warnings });
+    }
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };

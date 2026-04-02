@@ -1,11 +1,15 @@
 import type { DomainError } from '../../domain/errors/domain-error.js';
 import type { ReviewStore } from '../../domain/ports/review-store.port.js';
 import type { Result } from '../../domain/result.js';
+import type { ReviewType } from '../../domain/value-objects/review-record.js';
 
 interface RecordReviewInput {
   sliceId: string;
-  reviewerAgent: string;
-  status: 'approved' | 'changes_requested';
+  reviewer: string;
+  verdict: 'approved' | 'changes_requested';
+  type: ReviewType;
+  commitSha: string;
+  notes?: string;
 }
 
 interface RecordReviewDeps {
@@ -16,10 +20,13 @@ export const recordReviewUseCase = async (
   input: RecordReviewInput,
   deps: RecordReviewDeps,
 ): Promise<Result<void, DomainError>> => {
-  return deps.reviewStore.record({
+  return deps.reviewStore.recordReview({
     sliceId: input.sliceId,
-    reviewerAgent: input.reviewerAgent,
-    status: input.status,
-    reviewedAt: new Date(),
+    reviewer: input.reviewer,
+    verdict: input.verdict,
+    type: input.type,
+    commitSha: input.commitSha,
+    notes: input.notes,
+    createdAt: new Date().toISOString(),
   });
 };

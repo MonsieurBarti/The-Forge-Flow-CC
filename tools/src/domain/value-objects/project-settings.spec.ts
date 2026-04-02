@@ -15,13 +15,11 @@ describe('ProjectSettingsSchema', () => {
         guardrails: { 'min-corrections': 3, 'cooldown-days': 7, 'max-drift-pct': 20 },
         clustering: { 'min-sessions': 3, 'min-patterns': 2 },
       },
-      dolt: { remote: 'origin', 'auto-sync': true },
     };
     const result = ProjectSettingsSchema.safeParse(input);
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.autonomy.mode).toBe('plan-to-pr');
-      expect(result.data.dolt?.remote).toBe('origin');
     }
   });
 
@@ -45,7 +43,6 @@ describe('parseProjectSettings', () => {
     expect(settings['auto-learn'].weights.frequency).toBe(0.25);
     expect(settings['auto-learn'].guardrails['min-corrections']).toBe(3);
     expect(settings['auto-learn'].clustering['min-sessions']).toBe(3);
-    expect(settings.dolt).toBeUndefined();
   });
 
   it('should return all defaults for null input', () => {
@@ -87,30 +84,9 @@ describe('parseProjectSettings', () => {
     expect(settings['auto-learn'].weights.breadth).toBe(0.3);
     expect(settings['auto-learn'].guardrails['min-corrections']).toBe(3);
   });
-
-  it('should parse dolt when present', () => {
-    const settings = parseProjectSettings({ dolt: { remote: 'hub', 'auto-sync': false } });
-    expect(settings.dolt?.remote).toBe('hub');
-    expect(settings.dolt?.['auto-sync']).toBe(false);
-  });
-
-  it('should omit dolt when not present', () => {
-    const settings = parseProjectSettings({});
-    expect(settings.dolt).toBeUndefined();
-  });
 });
 
 describe('ProjectSettings - new keys', () => {
-  it('should parse beads.timeout with default 30000', () => {
-    const settings = parseProjectSettings({});
-    expect(settings.beads?.timeout).toBe(30000);
-  });
-
-  it('should parse beads.timeout from yaml', () => {
-    const settings = loadProjectSettings('beads:\n  timeout: 60000');
-    expect(settings.beads?.timeout).toBe(60000);
-  });
-
   it('should parse autonomy.max-retries with default 2', () => {
     const settings = parseProjectSettings({});
     expect(settings.autonomy['max-retries']).toBe(2);

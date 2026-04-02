@@ -30,7 +30,7 @@ exploration, spawn Explore subagents and reason about their findings.
 ## Phase 2: Fix (converges on standard pipeline)
 
 6. CREATE slice:
-   - Create slice bead via `tff-tools`
+   - Create slice via `tff-tools`
    - Create worktree: `tff-tools worktree:create <slice-id>` → worktree at `.tff/worktrees/<slice-id>/`
 7. CLASSIFY: AskUserQuestion → user picks tier (S / F-lite / F-full)
    - Default suggestion based on diagnosis: single-file root cause → S, multi-file → F-lite

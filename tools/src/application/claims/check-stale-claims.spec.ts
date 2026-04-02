@@ -1,46 +1,56 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
-import { InMemoryBeadStore } from '../../infrastructure/testing/in-memory-bead-store.js';
+import { InMemoryStateAdapter } from '../../infrastructure/testing/in-memory-state-adapter.js';
 import { checkStaleClaims } from './check-stale-claims.js';
 
-describe('InMemoryBeadStore — claim + stale detection', () => {
-  let store: InMemoryBeadStore;
+describe('InMemoryStateAdapter — claim + stale detection', () => {
+  let adapter: InMemoryStateAdapter;
 
   beforeEach(() => {
-    store = new InMemoryBeadStore();
+    adapter = new InMemoryStateAdapter();
+    adapter.saveProject({ name: 'Test Project', vision: 'Test Vision' });
+    adapter.createMilestone({ number: 1, name: 'M01' });
+    adapter.createSlice({ milestoneId: 'M01', number: 1, title: 'S01', tier: 'S' });
   });
 
-  it('should record claimedAt timestamp on claim', async () => {
-    store.seed([{ id: 't1', label: 'tff:task', title: 'Task 1', status: 'open' }]);
-    const before = new Date().toISOString();
-    await store.claim('t1');
-    const result = await store.get('t1');
+  it('should record claimedAt timestamp on claim', () => {
+    adapter.createTask({ sliceId: 'M01-S01', number: 1, title: 'Task 1' });
+    const before = new Date();
+    adapter.claimTask('M01-S01-T01');
+    const result = adapter.getTask('M01-S01-T01');
     expect(isOk(result)).toBe(true);
-    if (isOk(result)) {
+    if (isOk(result) && result.data) {
       expect(result.data.status).toBe('in_progress');
       expect(result.data.claimedAt).toBeDefined();
       expect(result.data.claimedAt! >= before).toBe(true);
     }
   });
 
-  it('should list stale claims exceeding TTL', async () => {
-    const thirtyOneMinutesAgo = new Date(Date.now() - 31 * 60 * 1000).toISOString();
-    store.seed([
-      { id: 't1', label: 'tff:task', title: 'Task 1', status: 'in_progress', claimedAt: thirtyOneMinutesAgo },
-      { id: 't2', label: 'tff:task', title: 'Task 2', status: 'in_progress', claimedAt: new Date().toISOString() },
-      { id: 't3', label: 'tff:task', title: 'Task 3', status: 'open' },
-    ]);
-    const result = await store.listStaleClaims(30);
+  it('should list stale claims exceeding TTL', () => {
+    adapter.createTask({ sliceId: 'M01-S01', number: 1, title: 'Task 1' });
+    adapter.createTask({ sliceId: 'M01-S01', number: 2, title: 'Task 2' });
+    adapter.createTask({ sliceId: 'M01-S01', number: 3, title: 'Task 3' });
+
+    // Manually set up stale claim by claiming then backdating
+    adapter.claimTask('M01-S01-T01');
+    const t1 = adapter.getTask('M01-S01-T01');
+    if (isOk(t1) && t1.data) {
+      t1.data.claimedAt = new Date(Date.now() - 31 * 60 * 1000);
+    }
+
+    adapter.claimTask('M01-S01-T02');
+
+    const result = adapter.listStaleClaims(30);
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
       expect(result.data).toHaveLength(1);
-      expect(result.data[0].id).toBe('t1');
+      expect(result.data[0].id).toBe('M01-S01-T01');
     }
   });
 
-  it('should return empty array when no stale claims', async () => {
-    store.seed([{ id: 't1', label: 'tff:task', title: 'Task 1', status: 'open' }]);
-    const result = await store.listStaleClaims(30);
+  it('should return empty array when no stale claims', () => {
+    adapter.createTask({ sliceId: 'M01-S01', number: 1, title: 'Task 1' });
+    const result = adapter.listStaleClaims(30);
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
       expect(result.data).toHaveLength(0);
@@ -49,21 +59,28 @@ describe('InMemoryBeadStore — claim + stale detection', () => {
 });
 
 describe('checkStaleClaims use case', () => {
-  let store: InMemoryBeadStore;
+  let adapter: InMemoryStateAdapter;
+
   beforeEach(() => {
-    store = new InMemoryBeadStore();
+    adapter = new InMemoryStateAdapter();
+    adapter.saveProject({ name: 'Test Project', vision: 'Test Vision' });
+    adapter.createMilestone({ number: 1, name: 'M01' });
+    adapter.createSlice({ milestoneId: 'M01', number: 1, title: 'S01', tier: 'S' });
   });
 
   it('should return stale claims with given TTL', async () => {
-    const thirtyOneMinutesAgo = new Date(Date.now() - 31 * 60 * 1000).toISOString();
-    store.seed([
-      { id: 't1', label: 'tff:task', title: 'Task 1', status: 'in_progress', claimedAt: thirtyOneMinutesAgo },
-    ]);
-    const result = await checkStaleClaims({ ttlMinutes: 30 }, { beadStore: store });
+    adapter.createTask({ sliceId: 'M01-S01', number: 1, title: 'Task 1' });
+    adapter.claimTask('M01-S01-T01');
+    const t1 = adapter.getTask('M01-S01-T01');
+    if (isOk(t1) && t1.data) {
+      t1.data.claimedAt = new Date(Date.now() - 31 * 60 * 1000);
+    }
+
+    const result = await checkStaleClaims({ ttlMinutes: 30 }, { taskStore: adapter });
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {
       expect(result.data.staleClaims).toHaveLength(1);
-      expect(result.data.staleClaims[0].id).toBe('t1');
+      expect(result.data.staleClaims[0].id).toBe('M01-S01-T01');
     }
   });
 });

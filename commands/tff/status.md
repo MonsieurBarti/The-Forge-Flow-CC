@@ -10,7 +10,7 @@ Lightweight status check — show where you are in the tff lifecycle and suggest
 
 <execution_context>
 1. Read .tff/STATE.md if it exists (don't regenerate)
-2. Check beads for any in-progress slices
+2. Check state for any in-progress slices
 3. Show the current position:
    - Active milestone
    - Current slice and its status

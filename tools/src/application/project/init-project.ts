@@ -2,7 +2,8 @@ import { createProject, type Project } from '../../domain/entities/project.js';
 import type { DomainError } from '../../domain/errors/domain-error.js';
 import { projectExistsError } from '../../domain/errors/project-exists.error.js';
 import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
-import type { BeadStore } from '../../domain/ports/bead-store.port.js';
+import type { ProjectStore } from '../../domain/ports/project-store.port.js';
+import type { StateBranchPort } from '../../domain/ports/state-branch.port.js';
 import { Err, isOk, Ok, type Result } from '../../domain/result.js';
 
 interface InitProjectInput {
@@ -10,12 +11,12 @@ interface InitProjectInput {
   vision: string;
 }
 interface InitProjectDeps {
-  beadStore: BeadStore;
+  projectStore: ProjectStore;
   artifactStore: ArtifactStore;
+  stateBranch?: StateBranchPort;
 }
 interface InitProjectOutput {
   project: Project;
-  beadId: string;
 }
 
 export const initProject = async (
@@ -24,41 +25,59 @@ export const initProject = async (
 ): Promise<Result<InitProjectOutput, DomainError>> => {
   if (await deps.artifactStore.exists('.tff/PROJECT.md')) return Err(projectExistsError(input.name));
 
-  // Initialize beads store if not already initialized
-  // init() is idempotent — if already initialized, bd will exit with an error
-  // which we silently ignore (the list() call below will verify connectivity)
-  await deps.beadStore.init();
-
-  // Register tff slice lifecycle statuses as custom bd statuses
-  const regResult = await deps.beadStore.registerStatuses([
-    'discussing',
-    'researching',
-    'planning',
-    'executing',
-    'verifying',
-    'reviewing',
-    'completing',
-  ]);
-  if (!isOk(regResult)) return regResult;
-
-  // Verify store is ready and check for existing projects with retry backoff
-  let existing = await deps.beadStore.list({ label: 'tff:project' });
-  for (let attempt = 1; attempt < 5 && !isOk(existing); attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    existing = await deps.beadStore.list({ label: 'tff:project' });
-  }
-  if (isOk(existing) && existing.data.length > 0) return Err(projectExistsError(input.name));
+  const existing = deps.projectStore.getProject();
+  if (!isOk(existing)) return existing;
+  if (existing.data !== null) return Err(projectExistsError(input.name));
 
   const project = createProject(input);
 
-  const beadResult = await deps.beadStore.create({ label: 'tff:project', title: project.name, design: project.vision });
-  if (!isOk(beadResult)) return beadResult;
+  const saveResult = deps.projectStore.saveProject({ name: project.name, vision: project.vision });
+  if (!isOk(saveResult)) return saveResult;
 
   await deps.artifactStore.mkdir('.tff');
   await deps.artifactStore.mkdir('.tff/milestones');
 
+  // Ensure .tff/ and build/ are in .gitignore so artifacts never land on code branches
+  await ensureGitignored(deps.artifactStore);
+
   const projectMd = `# ${project.name}\n\n## Vision\n\n${project.vision}\n`;
   await deps.artifactStore.write('.tff/PROJECT.md', projectMd);
 
-  return Ok({ project, beadId: beadResult.data.id });
+  if (deps.stateBranch) {
+    try {
+      await deps.stateBranch.createRoot();
+    } catch {
+      // State branch creation is best-effort during init
+    }
+  }
+
+  return Ok({ project: saveResult.data });
 };
+
+const REQUIRED_GITIGNORE_ENTRIES = ['.tff/', 'build/'];
+
+async function ensureGitignored(artifactStore: ArtifactStore): Promise<void> {
+  const gitignorePath = '.gitignore';
+
+  let existing = '';
+  if (await artifactStore.exists(gitignorePath)) {
+    const readResult = await artifactStore.read(gitignorePath);
+    if (isOk(readResult)) existing = readResult.data;
+  }
+
+  const lines = existing.split('\n');
+  const missing = REQUIRED_GITIGNORE_ENTRIES.filter(
+    (entry) => !lines.some((line) => line.trim() === entry || line.trim() === entry.replace(/\/$/, '')),
+  );
+
+  if (missing.length === 0) return;
+
+  const suffix = missing.map((e) => e).join('\n');
+  const content =
+    existing.length === 0
+      ? `${suffix}\n`
+      : existing.endsWith('\n')
+        ? `${existing}${suffix}\n`
+        : `${existing}\n${suffix}\n`;
+  await artifactStore.write(gitignorePath, content);
+}

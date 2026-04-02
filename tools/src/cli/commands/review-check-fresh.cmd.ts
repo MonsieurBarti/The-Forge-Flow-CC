@@ -1,7 +1,6 @@
 import { enforceFreshReviewer } from '../../application/review/enforce-fresh-reviewer.js';
 import { isOk } from '../../domain/result.js';
-import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
-import { ReviewMetadataAdapter } from '../../infrastructure/adapters/review/review-metadata.adapter.js';
+import { withBranchGuard } from '../with-branch-guard.js';
 
 export const reviewCheckFreshCmd = async (args: string[]): Promise<string> => {
   const [sliceId, agent] = args;
@@ -10,9 +9,9 @@ export const reviewCheckFreshCmd = async (args: string[]): Promise<string> => {
       ok: false,
       error: { code: 'INVALID_ARGS', message: 'Usage: review:check-fresh <slice-id> <agent>' },
     });
-  const { store: beadStore } = await createBeadAdapter();
-  const reviewStore = new ReviewMetadataAdapter(beadStore);
-  const result = await enforceFreshReviewer({ sliceId, reviewerAgent: agent }, { reviewStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-  return JSON.stringify({ ok: false, error: result.error });
+  return withBranchGuard(async ({ taskStore, reviewStore }) => {
+    const result = await enforceFreshReviewer({ sliceId, reviewerAgent: agent }, { taskStore, reviewStore });
+    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+    return JSON.stringify({ ok: false, error: result.error });
+  });
 };

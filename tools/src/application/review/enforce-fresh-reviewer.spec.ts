@@ -1,29 +1,42 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isErr, isOk } from '../../domain/result.js';
-import { InMemoryReviewStore } from '../../infrastructure/testing/in-memory-review-store.js';
+import { InMemoryStateAdapter } from '../../infrastructure/testing/in-memory-state-adapter.js';
 import { enforceFreshReviewer } from './enforce-fresh-reviewer.js';
 
 describe('enforceFreshReviewer', () => {
-  let reviewStore: InMemoryReviewStore;
+  let adapter: InMemoryStateAdapter;
   beforeEach(() => {
-    reviewStore = new InMemoryReviewStore();
+    adapter = new InMemoryStateAdapter();
+    adapter.init();
+    adapter.saveProject({ name: 'test', vision: 'test' });
+    adapter.createMilestone({ number: 1, name: 'M01' });
+    adapter.createSlice({ milestoneId: 'M01', number: 1, title: 'S01', tier: 'S' });
   });
 
   it('should allow review when reviewer was not an executor', async () => {
-    reviewStore.seedExecutors('M01-S01', ['backend-dev']);
-    const result = await enforceFreshReviewer({ sliceId: 'M01-S01', reviewerAgent: 'code-reviewer' }, { reviewStore });
+    adapter.seedExecutors('M01-S01', ['backend-dev']);
+    const result = await enforceFreshReviewer(
+      { sliceId: 'M01-S01', reviewerAgent: 'code-reviewer' },
+      { taskStore: adapter, reviewStore: adapter },
+    );
     expect(isOk(result)).toBe(true);
   });
 
   it('should block review when reviewer was an executor', async () => {
-    reviewStore.seedExecutors('M01-S01', ['backend-dev', 'frontend-dev']);
-    const result = await enforceFreshReviewer({ sliceId: 'M01-S01', reviewerAgent: 'backend-dev' }, { reviewStore });
+    adapter.seedExecutors('M01-S01', ['backend-dev', 'frontend-dev']);
+    const result = await enforceFreshReviewer(
+      { sliceId: 'M01-S01', reviewerAgent: 'backend-dev' },
+      { taskStore: adapter, reviewStore: adapter },
+    );
     expect(isErr(result)).toBe(true);
     if (isErr(result)) expect(result.error.code).toBe('FRESH_REVIEWER_VIOLATION');
   });
 
   it('should allow review when no executors recorded', async () => {
-    const result = await enforceFreshReviewer({ sliceId: 'M01-S01', reviewerAgent: 'code-reviewer' }, { reviewStore });
+    const result = await enforceFreshReviewer(
+      { sliceId: 'M01-S01', reviewerAgent: 'code-reviewer' },
+      { taskStore: adapter, reviewStore: adapter },
+    );
     expect(isOk(result)).toBe(true);
   });
 });

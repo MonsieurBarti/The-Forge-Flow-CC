@@ -6,7 +6,7 @@
 
 <p align="center">
   Autonomous coding agent orchestrator for Claude Code.<br/>
-  Dual markdown+beads state. Plannotator reviews. Wave-based parallel execution.
+  SQLite-backed state. Plannotator reviews. Wave-based parallel execution.
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@
 The Forge Flow (`tff`) is a Claude Code plugin that orchestrates AI agents through a structured software development lifecycle. It coordinates 4 lean agents and 18 skills from project initialization to shipped code.
 
 **Key features:**
-- **Dual state** -- markdown files for human-readable content, beads for status/dependencies
+- **SQLite state** — zero-dependency local state management with automatic persistence
 - **Wave-based execution** -- tasks are topologically sorted into waves, independent tasks run in parallel
 - **Fresh reviewer enforcement** -- code reviewers are never the same agent that wrote the code
 - **Plannotator integration** -- all plan reviews, verification, and code reviews go through plannotator's interactive UI
@@ -39,62 +39,9 @@ The Forge Flow (`tff`) is a Claude Code plugin that orchestrates AI agents throu
 
 ## Setup Guide
 
-The Forge Flow is built on three pillars: **beads** (AI-native issue tracker), **Dolt** (version-controlled database), and **plannotator** (interactive review UI). While tff can run in a degraded markdown-only mode without beads, you'll lose the features that make it powerful: atomic task claiming, dependency-aware wave parallelism, team state sync, and `bd ready` ("what should I work on next?"). **Install all three for the full experience.**
+The Forge Flow requires **Node.js 20+** and **Git**. Optionally install **plannotator** for interactive review UI.
 
-### Step 1: Install Dolt
-
-Beads uses [Dolt](https://www.dolthub.com/), a version-controlled SQL database, as its storage backend.
-
-**macOS:**
-```bash
-brew install dolt
-```
-
-**Linux:**
-```bash
-sudo bash -c 'curl -L https://github.com/dolthub/dolt/releases/latest/download/install.sh | bash'
-```
-
-**Windows:**
-```powershell
-choco install dolt
-```
-
-Verify: `dolt version`
-
-### Step 2: Install beads CLI
-
-```bash
-npm install -g @beads/bd
-```
-
-Verify: `bd --version`
-
-**Initialize beads in your project** (done automatically by `/tff:new`, but you can do it manually):
-
-```bash
-cd your-project
-bd init
-```
-
-This creates a `.beads/` directory with a Dolt database.
-
-**Recommended: Run Dolt as a persistent server.** Beads auto-starts Dolt on each command, but the ephemeral server can be slow and flaky. For a reliable experience, start Dolt in a separate terminal:
-
-```bash
-cd your-project
-dolt sql-server --port=3306
-```
-
-Leave it running while you work. Beads will connect to the existing server instead of auto-starting.
-
-If you see connection warnings, run:
-
-```bash
-bd doctor --fix
-```
-
-### Step 3: Install plannotator
+### Step 1: Install plannotator
 
 Plannotator is a Claude Code plugin that provides an interactive browser UI for reviewing plans and code.
 
@@ -108,7 +55,7 @@ claude /plugin install plannotator@plannotator
 
 Verify: Run `/plannotator-review` in Claude Code -- it should open a browser window.
 
-### Step 4: Install The Forge Flow
+### Step 2: Install The Forge Flow
 
 ```bash
 # Add the marketplace
@@ -122,7 +69,7 @@ Verify: Run `/tff:help` in Claude Code to see the command reference.
 
 ### Verification
 
-Run `/tff:health` to check all dependencies are correctly installed. It will report the status of beads, plannotator, and state consistency.
+Run `/tff:health` to check state consistency and plannotator availability.
 
 ---
 
@@ -140,7 +87,7 @@ Claude asks for your project name and vision. You provide:
 - **Name:** my-saas-app
 - **Vision:** A multi-tenant SaaS platform with team management
 
-This creates `.tff/PROJECT.md`, initializes beads, and asks you to define requirements.
+This creates `.tff/PROJECT.md` and asks you to define requirements.
 
 **Next step suggested:** `/tff:new-milestone`
 
@@ -341,7 +288,7 @@ Systematically diagnoses the issue first (no slice created), then fixes via S-ti
 | `/tff:rollback [slice-id]` | Revert slice commits |
 | `/tff:pause` | Save checkpoint |
 | `/tff:resume` | Restore from checkpoint |
-| `/tff:sync` | Sync markdown and beads |
+| `/tff:sync` | Regenerate STATE.md |
 | `/tff:health` | Diagnose state consistency |
 | `/tff:settings` | View and modify all project settings |
 | `/tff:map-codebase` | Analyze codebase and generate docs |
@@ -372,7 +319,7 @@ the-forge-flow/
     src/
       domain/             # Hexagonal domain layer (Zod, Result<T,E>)
       application/        # Use cases (orchestrate domain via ports)
-      infrastructure/     # Adapters (beads CLI, git CLI, filesystem)
+      infrastructure/     # Adapters (SQLite, git CLI, filesystem)
       cli/                # tff-tools.cjs entry point
     dist/tff-tools.cjs    # Compiled single-file CLI bundle
 ```
@@ -477,9 +424,6 @@ auto-learn:
     min-sessions: 3
     min-patterns: 2
 
-# dolt:               # Uncomment after: dolt remote add origin <url>
-#   remote: origin
-#   auto-sync: true
 ```
 
 Settings are resilient: corrupted or partial files fall back to defaults per field. Run `/tff:settings` to detect and add missing fields.

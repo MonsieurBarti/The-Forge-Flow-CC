@@ -5,7 +5,7 @@ tff workflows are orchestrators. They coordinate — they don't do heavy work.
 ## Rules
 
 1. **Workflows stay small.** The orchestrator's job is to:
-   - Check current state (read beads/markdown)
+   - Check current state (read state via tff-tools)
    - Spawn the right agent for the job (via Agent tool)
    - Pass the agent exactly what it needs (no more, no less)
    - Handle the agent's result (transition state, report to user)

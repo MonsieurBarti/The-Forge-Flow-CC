@@ -1,7 +1,11 @@
+import { mkdirSync } from 'node:fs';
 import { initProject } from '../../application/project/init-project.js';
 import { isOk } from '../../domain/result.js';
-import { createBeadAdapter } from '../../infrastructure/adapters/beads/bead-adapter-factory.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
+import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
+import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
+import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
+import { installPostCheckoutHook } from '../../infrastructure/hooks/install-post-checkout.js';
 
 export const projectInitCmd = async (args: string[]): Promise<string> => {
   const name = args[0];
@@ -11,22 +15,21 @@ export const projectInitCmd = async (args: string[]): Promise<string> => {
       ok: false,
       error: { code: 'INVALID_ARGS', message: 'Usage: project:init <name> [vision]' },
     });
-  const { store: beadStore } = await createBeadAdapter();
-  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  const cwd = process.cwd();
+  mkdirSync('.tff', { recursive: true });
+  const { projectStore } = createStateStores();
+  const artifactStore = new MarkdownArtifactAdapter(cwd);
+  const gitOps = new GitCliAdapter(cwd);
+  const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
 
-  // Hydrate from snapshot if available (clone-and-go)
-  try {
-    const { readFile } = await import('node:fs/promises');
-    const snapshotContent = await readFile('.tff/beads-snapshot.jsonl', 'utf-8');
-    if (snapshotContent.trim()) {
-      const { hydrateSnapshot } = await import('../../application/snapshot/hydrate-snapshot.js');
-      await hydrateSnapshot({ beadStore, snapshotContent });
+  const result = await initProject({ name, vision }, { projectStore, artifactStore, stateBranch });
+  if (isOk(result)) {
+    try {
+      installPostCheckoutHook(process.cwd());
+    } catch {
+      // Hook installation is best-effort
     }
-  } catch {
-    /* no snapshot file = fresh project */
+    return JSON.stringify({ ok: true, data: result.data });
   }
-
-  const result = await initProject({ name, vision }, { beadStore, artifactStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
   return JSON.stringify({ ok: false, error: result.error });
 };

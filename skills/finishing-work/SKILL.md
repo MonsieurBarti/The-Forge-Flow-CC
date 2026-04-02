@@ -43,7 +43,7 @@ EOF
 
 - NEVER merge directly — only create PR
 - User approves and merges via GitHub
-- After merge: cleanup worktree, close bead, delete branches
+- After merge: cleanup worktree, close slice via tff-tools, delete branches
 
 ## Anti-Patterns
 

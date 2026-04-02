@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { sliceTransitionCmd } from './slice-transition.cmd.js';
 
 describe('slice-transition result format', () => {
   it('should include warnings array in success result', () => {
@@ -24,5 +25,23 @@ describe('slice-transition result format', () => {
     };
     expect(blockedResult.ok).toBe(false);
     expect(blockedResult.error.code).toBe('CHECKPOINT_FAILED');
+  });
+});
+
+describe('sliceTransitionCmd — S03 auto-sync', () => {
+  it('should export sliceTransitionCmd as a function', () => {
+    expect(typeof sliceTransitionCmd).toBe('function');
+  });
+
+  it('should reject invalid args', async () => {
+    const result = JSON.parse(await sliceTransitionCmd([]));
+    expect(result.ok).toBe(false);
+    expect(result.error.code).toBe('INVALID_ARGS');
+  });
+
+  it('should reject invalid status', async () => {
+    const result = JSON.parse(await sliceTransitionCmd(['M01-S01', 'invalid-status']));
+    expect(result.ok).toBe(false);
+    expect(result.error.code).toBe('INVALID_ARGS');
   });
 });

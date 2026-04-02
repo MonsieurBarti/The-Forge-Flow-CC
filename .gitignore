@@ -3,9 +3,7 @@ node_modules/
 .tff/
 .claude/
 docs/
-
-# Dolt database files (added by bd init)
-.dolt/
 *.db
 .beads/
 .worktrees/
+/branch-meta.json

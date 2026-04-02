@@ -10,8 +10,8 @@ import { canTransition, type SliceStatus, SliceStatusSchema } from '../value-obj
 export const SliceSchema = z.object({
   id: z.string().min(1),
   milestoneId: z.string().min(1),
-  name: z.string().min(1),
-  sliceId: z.string(),
+  number: z.number().int().min(1),
+  title: z.string().min(1),
   status: SliceStatusSchema,
   tier: ComplexityTierSchema.optional(),
   createdAt: z.date(),
@@ -21,15 +21,15 @@ export type Slice = z.infer<typeof SliceSchema>;
 
 export const createSlice = (input: {
   milestoneId: string;
-  name: string;
+  title: string;
   milestoneNumber: number;
   sliceNumber: number;
 }): Slice => {
   const slice = {
-    id: crypto.randomUUID(),
+    id: formatSliceId(input.milestoneNumber, input.sliceNumber),
     milestoneId: input.milestoneId,
-    name: input.name,
-    sliceId: formatSliceId(input.milestoneNumber, input.sliceNumber),
+    number: input.sliceNumber,
+    title: input.title,
     status: 'discussing' as const,
     createdAt: new Date(),
   };
@@ -44,11 +44,11 @@ export const transitionSlice = (
   to: SliceStatus,
 ): Result<{ slice: Slice; events: DomainEvent[] }, DomainError> => {
   if (!canTransition(slice.status, to)) {
-    return Err(invalidTransitionError(slice.sliceId, slice.status, to));
+    return Err(invalidTransitionError(slice.id, slice.status, to));
   }
 
   const updated: Slice = { ...slice, status: to };
-  const event = sliceStatusChangedEvent(slice.sliceId, slice.status, to);
+  const event = sliceStatusChangedEvent(slice.id, slice.status, to);
 
   return Ok({ slice: updated, events: [event] });
 };
