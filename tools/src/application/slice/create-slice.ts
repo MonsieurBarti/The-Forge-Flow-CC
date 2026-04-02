@@ -2,8 +2,8 @@ import type { Slice } from '../../domain/entities/slice.js';
 import { createDomainError, type DomainError } from '../../domain/errors/domain-error.js';
 import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
 import type { MilestoneStore } from '../../domain/ports/milestone-store.port.js';
-import type { StateBranchPort } from '../../domain/ports/state-branch.port.js';
 import type { SliceStore } from '../../domain/ports/slice-store.port.js';
+import type { StateBranchPort } from '../../domain/ports/state-branch.port.js';
 import { Err, isOk, Ok, type Result } from '../../domain/result.js';
 
 interface CreateSliceInput {

@@ -4,7 +4,10 @@ import { withBranchGuard } from '../with-branch-guard.js';
 export const taskCloseCmd = async (args: string[]): Promise<string> => {
   const [taskId, ...rest] = args;
   if (!taskId)
-    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: task:close <task-id> [--reason "..."]' } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: 'INVALID_ARGS', message: 'Usage: task:close <task-id> [--reason "..."]' },
+    });
 
   let reason: string | undefined;
   const reasonIdx = rest.indexOf('--reason');

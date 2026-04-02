@@ -4,7 +4,10 @@ import { withBranchGuard } from '../with-branch-guard.js';
 export const taskClaimCmd = async (args: string[]): Promise<string> => {
   const [taskId, claimedBy] = args;
   if (!taskId)
-    return JSON.stringify({ ok: false, error: { code: 'INVALID_ARGS', message: 'Usage: task:claim <task-id> [claimed-by]' } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: 'INVALID_ARGS', message: 'Usage: task:claim <task-id> [claimed-by]' },
+    });
 
   return withBranchGuard(async ({ taskStore }) => {
     const result = taskStore.claimTask(taskId, claimedBy);

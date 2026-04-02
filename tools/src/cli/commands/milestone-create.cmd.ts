@@ -25,7 +25,10 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
     }
     const number = milestonesResult.data.length + 1;
 
-    const result = await createMilestoneUseCase({ name, number }, { milestoneStore, artifactStore, gitOps, stateBranch });
+    const result = await createMilestoneUseCase(
+      { name, number },
+      { milestoneStore, artifactStore, gitOps, stateBranch },
+    );
 
     if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
     return JSON.stringify({ ok: false, error: result.error });

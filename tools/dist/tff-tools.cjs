@@ -18521,7 +18521,10 @@ var depAddCmd = async (args) => {
   if (!fromId || !toId)
     return JSON.stringify({
       ok: false,
-      error: { code: "INVALID_ARGS", message: "Usage: dep:add <from-id> <to-id> \u2014 means <from-id> is blocked by <to-id>" }
+      error: {
+        code: "INVALID_ARGS",
+        message: "Usage: dep:add <from-id> <to-id> \u2014 means <from-id> is blocked by <to-id>"
+      }
     });
   return withBranchGuard(async ({ dependencyStore }) => {
     const result = dependencyStore.addDependency(fromId, toId, "blocks");
@@ -18698,7 +18701,10 @@ var milestoneCreateCmd = async (args) => {
       return JSON.stringify({ ok: false, error: milestonesResult.error });
     }
     const number4 = milestonesResult.data.length + 1;
-    const result = await createMilestoneUseCase({ name, number: number4 }, { milestoneStore, artifactStore, gitOps, stateBranch });
+    const result = await createMilestoneUseCase(
+      { name, number: number4 },
+      { milestoneStore, artifactStore, gitOps, stateBranch }
+    );
     if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
     return JSON.stringify({ ok: false, error: result.error });
   });
@@ -19703,7 +19709,10 @@ init_result();
 var taskClaimCmd = async (args) => {
   const [taskId, claimedBy] = args;
   if (!taskId)
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: task:claim <task-id> [claimed-by]" } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: task:claim <task-id> [claimed-by]" }
+    });
   return withBranchGuard(async ({ taskStore }) => {
     const result = taskStore.claimTask(taskId, claimedBy);
     if (isOk(result)) return JSON.stringify({ ok: true, data: null });
@@ -19716,7 +19725,10 @@ init_result();
 var taskCloseCmd = async (args) => {
   const [taskId, ...rest] = args;
   if (!taskId)
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: 'Usage: task:close <task-id> [--reason "..."]' } });
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: 'Usage: task:close <task-id> [--reason "..."]' }
+    });
   let reason;
   const reasonIdx = rest.indexOf("--reason");
   if (reasonIdx !== -1 && rest[reasonIdx + 1]) {

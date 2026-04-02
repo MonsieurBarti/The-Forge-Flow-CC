@@ -6,7 +6,10 @@ export const depAddCmd = async (args: string[]): Promise<string> => {
   if (!fromId || !toId)
     return JSON.stringify({
       ok: false,
-      error: { code: 'INVALID_ARGS', message: 'Usage: dep:add <from-id> <to-id> — means <from-id> is blocked by <to-id>' },
+      error: {
+        code: 'INVALID_ARGS',
+        message: 'Usage: dep:add <from-id> <to-id> — means <from-id> is blocked by <to-id>',
+      },
     });
 
   return withBranchGuard(async ({ dependencyStore }) => {

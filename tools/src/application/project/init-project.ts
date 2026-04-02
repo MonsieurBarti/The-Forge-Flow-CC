@@ -73,6 +73,11 @@ async function ensureGitignored(artifactStore: ArtifactStore): Promise<void> {
   if (missing.length === 0) return;
 
   const suffix = missing.map((e) => e).join('\n');
-  const content = existing.length === 0 ? `${suffix}\n` : existing.endsWith('\n') ? `${existing}${suffix}\n` : `${existing}\n${suffix}\n`;
+  const content =
+    existing.length === 0
+      ? `${suffix}\n`
+      : existing.endsWith('\n')
+        ? `${existing}${suffix}\n`
+        : `${existing}\n${suffix}\n`;
   await artifactStore.write(gitignorePath, content);
 }
