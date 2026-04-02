@@ -2,6 +2,7 @@ import type { Slice } from '../../domain/entities/slice.js';
 import { createDomainError, type DomainError } from '../../domain/errors/domain-error.js';
 import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
 import type { MilestoneStore } from '../../domain/ports/milestone-store.port.js';
+import type { StateBranchPort } from '../../domain/ports/state-branch.port.js';
 import type { SliceStore } from '../../domain/ports/slice-store.port.js';
 import { Err, isOk, Ok, type Result } from '../../domain/result.js';
 
@@ -14,6 +15,7 @@ interface CreateSliceDeps {
   milestoneStore: MilestoneStore;
   sliceStore: SliceStore;
   artifactStore: ArtifactStore;
+  stateBranch?: StateBranchPort;
 }
 
 interface CreateSliceOutput {
@@ -51,6 +53,14 @@ export const createSliceUseCase = async (
     `${sliceDir}/PLAN.md`,
     `# Plan — ${slice.id}: ${input.title}\n\n_Plan will be defined during /tff:plan._\n`,
   );
+
+  if (deps.stateBranch) {
+    try {
+      await deps.stateBranch.fork(`slice/${slice.id}`, `tff-state/milestone/${input.milestoneId}`);
+    } catch {
+      // State branch fork is best-effort
+    }
+  }
 
   return Ok({ slice });
 };

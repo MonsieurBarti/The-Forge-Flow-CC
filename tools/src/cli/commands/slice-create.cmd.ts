@@ -1,6 +1,8 @@
 import { createSliceUseCase } from '../../application/slice/create-slice.js';
 import { isOk } from '../../domain/result.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
+import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
+import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { withBranchGuard } from '../with-branch-guard.js';
 
 export const sliceCreateCmd = async (args: string[]): Promise<string> => {
@@ -29,7 +31,10 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
   }
 
   return withBranchGuard(async ({ milestoneStore, sliceStore }) => {
-    const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+    const cwd = process.cwd();
+    const artifactStore = new MarkdownArtifactAdapter(cwd);
+    const gitOps = new GitCliAdapter(cwd);
+    const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
 
     // Auto-detect active milestone (most recent open one)
     const milestonesResult = milestoneStore.listMilestones();
@@ -49,7 +54,7 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
 
     const result = await createSliceUseCase(
       { milestoneId, title: name },
-      { milestoneStore, sliceStore, artifactStore },
+      { milestoneStore, sliceStore, artifactStore, stateBranch },
     );
 
     if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });

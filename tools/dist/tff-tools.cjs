@@ -18675,14 +18675,16 @@ var milestoneCreateCmd = async (args) => {
     return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: milestone:create <name>" } });
   }
   return withBranchGuard(async ({ milestoneStore }) => {
-    const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-    const gitOps = new GitCliAdapter(process.cwd());
+    const cwd = process.cwd();
+    const artifactStore = new MarkdownArtifactAdapter(cwd);
+    const gitOps = new GitCliAdapter(cwd);
+    const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
     const milestonesResult = milestoneStore.listMilestones();
     if (!isOk(milestonesResult)) {
       return JSON.stringify({ ok: false, error: milestonesResult.error });
     }
     const number4 = milestonesResult.data.length + 1;
-    const result = await createMilestoneUseCase({ name, number: number4 }, { milestoneStore, artifactStore, gitOps });
+    const result = await createMilestoneUseCase({ name, number: number4 }, { milestoneStore, artifactStore, gitOps, stateBranch });
     if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
     return JSON.stringify({ ok: false, error: result.error });
   });
@@ -19089,10 +19091,13 @@ var projectInitCmd = async (args) => {
       ok: false,
       error: { code: "INVALID_ARGS", message: "Usage: project:init <name> [vision]" }
     });
+  const cwd = process.cwd();
   (0, import_node_fs9.mkdirSync)(".tff", { recursive: true });
   const { projectStore } = createStateStores();
-  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  const result = await initProject({ name, vision }, { projectStore, artifactStore });
+  const artifactStore = new MarkdownArtifactAdapter(cwd);
+  const gitOps = new GitCliAdapter(cwd);
+  const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+  const result = await initProject({ name, vision }, { projectStore, artifactStore, stateBranch });
   if (isOk(result)) {
     try {
       installPostCheckoutHook(process.cwd());
@@ -19408,6 +19413,12 @@ var createSliceUseCase = async (input, deps) => {
 _Plan will be defined during /tff:plan._
 `
   );
+  if (deps.stateBranch) {
+    try {
+      await deps.stateBranch.fork(`slice/${slice.id}`, `tff-state/milestone/${input.milestoneId}`);
+    } catch {
+    }
+  }
   return Ok({ slice });
 };
 
@@ -19436,7 +19447,10 @@ var sliceCreateCmd = async (args) => {
     });
   }
   return withBranchGuard(async ({ milestoneStore, sliceStore }) => {
-    const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+    const cwd = process.cwd();
+    const artifactStore = new MarkdownArtifactAdapter(cwd);
+    const gitOps = new GitCliAdapter(cwd);
+    const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
     const milestonesResult = milestoneStore.listMilestones();
     if (!isOk(milestonesResult) || milestonesResult.data.length === 0) {
       return JSON.stringify({
@@ -19449,7 +19463,7 @@ var sliceCreateCmd = async (args) => {
     const milestoneId = milestone.id;
     const result = await createSliceUseCase(
       { milestoneId, title: name },
-      { milestoneStore, sliceStore, artifactStore }
+      { milestoneStore, sliceStore, artifactStore, stateBranch }
     );
     if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
     return JSON.stringify({ ok: false, error: result.error });
