@@ -56,7 +56,9 @@ describe('withBranchGuard', () => {
     }));
 
     vi.doMock('../infrastructure/adapters/git/git-cli.adapter.js', () => ({
-      GitCliAdapter: class MockGitCliAdapter {},
+      GitCliAdapter: class MockGitCliAdapter {
+        extractFile = vi.fn().mockResolvedValue({ ok: false, error: { code: 'NOT_FOUND', message: 'mock' } });
+      },
     }));
     vi.doMock('../infrastructure/adapters/git/git-state-branch.adapter.js', () => ({
       GitStateBranchAdapter: class MockGitStateBranchAdapter {},
@@ -94,7 +96,9 @@ describe('withBranchGuard', () => {
       createClosableStateStoresUnchecked: vi.fn(),
     }));
     vi.doMock('../infrastructure/adapters/git/git-cli.adapter.js', () => ({
-      GitCliAdapter: class MockGitCliAdapter {},
+      GitCliAdapter: class MockGitCliAdapter {
+        extractFile = vi.fn().mockResolvedValue({ ok: false, error: { code: 'NOT_FOUND', message: 'mock' } });
+      },
     }));
     vi.doMock('../infrastructure/adapters/git/git-state-branch.adapter.js', () => ({
       GitStateBranchAdapter: class MockGitStateBranchAdapter {},
@@ -186,7 +190,9 @@ describe('withClosableBranchGuard', () => {
       }),
     }));
     vi.doMock('../infrastructure/adapters/git/git-cli.adapter.js', () => ({
-      GitCliAdapter: class MockGitCliAdapter {},
+      GitCliAdapter: class MockGitCliAdapter {
+        extractFile = vi.fn().mockResolvedValue({ ok: false, error: { code: 'NOT_FOUND', message: 'mock' } });
+      },
     }));
     vi.doMock('../infrastructure/adapters/git/git-state-branch.adapter.js', () => ({
       GitStateBranchAdapter: class MockGitStateBranchAdapter {},

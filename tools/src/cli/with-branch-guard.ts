@@ -1,4 +1,3 @@
-import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { restoreBranchUseCase } from '../application/state-branch/restore-branch.js';
 import { BranchMismatchError } from '../domain/errors/branch-mismatch.error.js';
@@ -25,11 +24,11 @@ async function handleMismatch(error: BranchMismatchError): Promise<boolean> {
   const result = await restoreBranchUseCase({ codeBranch: error.currentBranch, targetDir: cwd }, { stateBranch });
 
   if (isOk(result) && result.data !== null) {
-    // Read stateId from root-level branch-meta.json (extracted by restore)
-    const rootMetaPath = path.join(cwd, 'branch-meta.json');
-    try {
-      if (existsSync(rootMetaPath)) {
-        const raw = JSON.parse(readFileSync(rootMetaPath, 'utf8'));
+    // Extract stateId from branch-meta.json in git (not disk, to avoid leaking root-level artifacts)
+    const metaBufR = await gitOps.extractFile(`tff-state/${error.currentBranch}`, 'branch-meta.json');
+    if (isOk(metaBufR)) {
+      try {
+        const raw = JSON.parse(metaBufR.data.toString('utf8'));
         const meta = BranchMetaSchema.parse(raw);
         writeLocalStamp(tffDir, {
           stateId: meta.stateId,
@@ -37,10 +36,10 @@ async function handleMismatch(error: BranchMismatchError): Promise<boolean> {
           parentStateBranch: meta.parentStateBranch,
           createdAt: meta.createdAt,
         });
-      } else {
+      } catch {
         writeSyntheticStamp(tffDir, error.currentBranch);
       }
-    } catch {
+    } else {
       writeSyntheticStamp(tffDir, error.currentBranch);
     }
     return true;

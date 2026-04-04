@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { restoreBranchUseCase } from '../../application/state-branch/restore-branch.js';
 import { isOk } from '../../domain/result.js';
@@ -70,11 +70,11 @@ export const hookPostCheckoutCmd = async (args: string[]): Promise<string> => {
         });
       }
 
-      // 5. Write stamp — read stateId from root-level branch-meta.json
-      const rootMetaPath = path.join(cwd, 'branch-meta.json');
-      try {
-        if (existsSync(rootMetaPath)) {
-          const raw = JSON.parse(readFileSync(rootMetaPath, 'utf8'));
+      // 5. Write stamp — extract stateId from branch-meta.json in git (not disk, to avoid leaking root-level artifacts)
+      const metaBufR = await gitOps.extractFile(`tff-state/${codeBranch}`, 'branch-meta.json');
+      if (isOk(metaBufR)) {
+        try {
+          const raw = JSON.parse(metaBufR.data.toString('utf8'));
           const meta = BranchMetaSchema.parse(raw);
           writeLocalStamp(tffDir, {
             stateId: meta.stateId,
@@ -82,10 +82,10 @@ export const hookPostCheckoutCmd = async (args: string[]): Promise<string> => {
             parentStateBranch: meta.parentStateBranch,
             createdAt: meta.createdAt,
           });
-        } else {
+        } catch {
           writeSyntheticStamp(tffDir, codeBranch);
         }
-      } catch {
+      } else {
         writeSyntheticStamp(tffDir, codeBranch);
       }
 

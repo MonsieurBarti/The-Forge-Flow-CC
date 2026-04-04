@@ -174,6 +174,7 @@ export class GitStateBranchAdapter implements StateBranchPort {
     let filesRestored = 0;
     const resolvedTargetDir = path.resolve(targetDir);
     for (const filePath of filesR.data) {
+      if (!filePath.startsWith('.tff/')) continue; // only restore .tff/ files, not root-level state artifacts
       const destPath = path.join(targetDir, filePath);
       const resolved = path.resolve(destPath);
       if (!resolved.startsWith(resolvedTargetDir + path.sep) && resolved !== resolvedTargetDir) {
