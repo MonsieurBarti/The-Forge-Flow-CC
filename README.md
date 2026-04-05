@@ -39,11 +39,11 @@ The Forge Flow (`tff`) is a Claude Code plugin that orchestrates AI agents throu
 
 ## Setup Guide
 
-The Forge Flow requires **Node.js 20+** ∧ **Git**. Optionally install **plannotator** for interactive review UI.
+The Forge Flow requires **Node.js 20+** and **Git**. Optionally install **plannotator** for interactive review UI.
 
 ### Step 1: Install plannotator
 
-Plannotator is a Claude Code plugin that provides an interactive browser UI for reviewing plans ∧ code.
+Plannotator is a Claude Code plugin that provides an interactive browser UI for reviewing plans and code.
 
 ```bash
 # Add the plannotator marketplace
@@ -53,7 +53,7 @@ claude /plugin marketplace add backnotprop/plannotator
 claude /plugin install plannotator@plannotator
 ```
 
-Verify: Run `/plannotator-review` ∈ Claude Code -- it should open a browser window.
+Verify: Run `/plannotator-review` in Claude Code -- it should open a browser window.
 
 ### Step 2: Install The Forge Flow
 
@@ -65,17 +65,17 @@ claude /plugin marketplace add MonsieurBarti/The-Forge-Flow-CC
 claude /plugin install the-forge-flow@the-forge-flow
 ```
 
-Verify: Run `/tff:help` ∈ Claude Code to see the command reference.
+Verify: Run `/tff:help` in Claude Code to see the command reference.
 
 ### Verification
 
-Run `/tff:health` to check state consistency ∧ plannotator availability.
+Run `/tff:health` to check state consistency and plannotator availability.
 
 ---
 
 ## Full Workflow Example
 
-Here's a complete walkthrough from ∅ project to shipped milestone: building an authentication system.
+Here's a complete walkthrough from empty project to shipped milestone: building an authentication system.
 
 ### 1. Initialize the project
 
@@ -83,11 +83,11 @@ Here's a complete walkthrough from ∅ project to shipped milestone: building an
 /tff:new
 ```
 
-Claude asks for your project name ∧ vision. You provide:
+Claude asks for your project name and vision. You provide:
 - **Name:** my-saas-app
 - **Vision:** A multi-tenant SaaS platform with team management
 
-This creates `.tff/PROJECT.md` ∧ asks you to define requirements.
+This creates `.tff/PROJECT.md` and asks you to define requirements.
 
 **Next step suggested:** `/tff:new-milestone`
 
@@ -100,7 +100,7 @@ This creates `.tff/PROJECT.md` ∧ asks you to define requirements.
 - **Name:** MVP
 - **Goal:** Basic auth + team CRUD
 
-This creates the `milestone/M01` branch ∧ prompts you to break the milestone into slices.
+This creates the `milestone/M01` branch and prompts you to break the milestone into slices.
 
 You define 3 slices:
 1. **Auth flow** -- signup, login, JWT tokens
@@ -120,9 +120,9 @@ The **brainstormer** agent (opus) challenges your assumptions:
 - "How do JWT tokens refresh? What's the expiry strategy?"
 - "Is email verification required for MVP?"
 
-The **product-lead** agent validates requirements ∧ defines acceptance criteria.
+The **product-lead** agent validates requirements and defines acceptance criteria.
 
-Complexity is auto-classified as **F-lite** (5 tasks, 2 modules, ¬ external integrations).
+Complexity is auto-classified as **F-lite** (5 tasks, 2 modules, no external integrations).
 
 **Next step suggested:** `/tff:research M01-S01`
 
@@ -132,7 +132,7 @@ Complexity is auto-classified as **F-lite** (5 tasks, 2 modules, ¬ external int
 /tff:research M01-S01
 ```
 
-The agent investigates the technical approach: reads the existing codebase, checks what auth libraries are available, documents findings ∈ `.tff/milestones/M01/slices/M01-S01/RESEARCH.md`.
+The agent investigates the technical approach: reads the existing codebase, checks what auth libraries are available, documents findings in `.tff/milestones/M01/slices/M01-S01/RESEARCH.md`.
 
 **Next step suggested:** `/tff:plan M01-S01`
 
@@ -143,8 +143,8 @@ The agent investigates the technical approach: reads the existing codebase, chec
 ```
 
 The agent creates a task decomposition with dependencies:
-- T01: User entity + migration (¬ deps)
-- T02: Password hashing service (¬ deps)
+- T01: User entity + migration (no deps)
+- T02: Password hashing service (no deps)
 - T03: Signup endpoint (depends on T01, T02)
 - T04: Login endpoint (depends on T01, T02)
 - T05: JWT middleware (depends on T04)
@@ -154,7 +154,7 @@ Waves detected:
 - Wave 1: [T03, T04] -- parallel
 - Wave 2: [T05] -- sequential
 
-**Plannotator opens** ∈ your browser. You annotate the plan, suggest changes, approve.
+**Plannotator opens** in your browser. You annotate the plan, suggest changes, approve.
 
 A worktree is created at `.tff/worktrees/M01-S01/` on branch `slice/M01-S01`.
 
@@ -166,11 +166,11 @@ A worktree is created at `.tff/worktrees/M01-S01/` on branch `slice/M01-S01`.
 /tff:execute M01-S01
 ```
 
-∀ wave:
+For each wave:
 
-**Wave 0:** The **tester** agent writes failing specs for T01 ∧ T02. Then **backend-dev** agents are spawned ∈ parallel -- one for T01 (user entity), one for T02 (password hashing). Each implements until tests pass, then commits atomically.
+**Wave 0:** The **tester** agent writes failing specs for T01 and T02. Then **backend-dev** agents are spawned in parallel -- one for T01 (user entity), one for T02 (password hashing). Each implements until tests pass, then commits atomically.
 
-**Wave 1:** Same pattern for T03 ∧ T04. Tests written first, then implementation.
+**Wave 1:** Same pattern for T03 and T04. Tests written first, then implementation.
 
 **Wave 2:** T05 (JWT middleware) -- sequential, single agent.
 
@@ -189,7 +189,7 @@ The **product-lead** agent checks each acceptance criterion against the implemen
 **Plannotator opens** for you to review the findings. You mark any issues.
 
 If all pass: **Next step suggested:** `/tff:ship M01-S01`
-If failures: suggests `/tff:execute M01-S01` to fix ∧ re-run.
+If failures: suggests `/tff:execute M01-S01` to fix and re-run.
 
 ### 8. Ship the slice (two-stage review)
 
@@ -197,7 +197,7 @@ If failures: suggests `/tff:execute M01-S01` to fix ∧ re-run.
 /tff:ship M01-S01
 ```
 
-**Stage 1 -- Spec compliance:** The **spec-reviewer** agent (fresh, never wrote this code) verifies every acceptance criterion is met ∈ the actual code.
+**Stage 1 -- Spec compliance:** The **spec-reviewer** agent (fresh, never wrote this code) verifies every acceptance criterion is met in the actual code.
 
 **Stage 2 -- Code quality:** The **code-reviewer** agent checks quality, patterns, tests, YAGNI. Only runs after spec passes.
 
@@ -207,11 +207,11 @@ If failures: suggests `/tff:execute M01-S01` to fix ∧ re-run.
 
 If approved: slice PR is created (`slice/M01-S01` -> `milestone/M01`), merged, worktree cleaned up.
 
-**Next step suggested:** `/tff:discuss` (for the next slice) ∨ `/tff:progress`
+**Next step suggested:** `/tff:discuss` (for the next slice) or `/tff:progress`
 
 ### 9. Repeat for remaining slices
 
-Run the same cycle for M01-S02 (Team CRUD) ∧ M01-S03 (Permissions).
+Run the same cycle for M01-S02 (Team CRUD) and M01-S03 (Permissions).
 
 ### 10. Complete the milestone
 
@@ -229,7 +229,7 @@ Creates the milestone PR (`milestone/M01` -> `main`), runs a final security audi
 
 **Next step suggested:** `/tff:new-milestone` for the next milestone.
 
-### Quick fixes ∧ debugging
+### Quick fixes and debugging
 
 Found a bug while working on a later slice? Two options:
 
@@ -237,13 +237,13 @@ Found a bug while working on a later slice? Two options:
 ```
 /tff:quick "Fix null pointer in user validation"
 ```
-Skips brainstorming ∧ research, goes straight to plan -> execute -> ship.
+Skips brainstorming and research, goes straight to plan -> execute -> ship.
 
 **If you need to investigate:**
 ```
 /tff:debug "Users getting 500 on login after password reset"
 ```
-Systematically diagnoses the issue first (¬ slice created), then fixes via S-tier slice once root cause is confirmed.
+Systematically diagnoses the issue first (no slice created), then fixes via S-tier slice once root cause is confirmed.
 
 ---
 
@@ -262,21 +262,21 @@ Systematically diagnoses the issue first (¬ slice created), then fixes via S-ti
 
 | Command | Description |
 |---|---|
-| `/tff:discuss` | Brainstorm ∧ scope a slice |
+| `/tff:discuss` | Brainstorm and scope a slice |
 | `/tff:research [slice-id]` | Research phase |
-| `/tff:plan [slice-id]` | Plan ∧ create tasks |
+| `/tff:plan [slice-id]` | Plan and create tasks |
 | `/tff:execute [slice-id]` | Execute with wave parallelism |
 | `/tff:verify [slice-id]` | Verify acceptance criteria |
-| `/tff:ship [slice-id]` | PR review ∧ merge slice |
+| `/tff:ship [slice-id]` | PR review and merge slice |
 | `/tff:quick <description>` | Fast-track S-tier changes |
-| `/tff:debug <error or symptom>` | Diagnose ∧ fix a bug systematically |
+| `/tff:debug <error or symptom>` | Diagnose and fix a bug systematically |
 
 ### Milestone Lifecycle
 
 | Command | Description |
 |---|---|
 | `/tff:audit-milestone` | Audit against original intent |
-| `/tff:complete-milestone` | PR review ∧ merge to main |
+| `/tff:complete-milestone` | PR review and merge to main |
 
 ### Management
 
@@ -290,8 +290,8 @@ Systematically diagnoses the issue first (¬ slice created), then fixes via S-ti
 | `/tff:resume` | Restore from checkpoint |
 | `/tff:sync` | Regenerate STATE.md |
 | `/tff:health` | Diagnose state consistency |
-| `/tff:settings` | View ∧ modify all project settings |
-| `/tff:map-codebase` | Analyze codebase ∧ generate docs |
+| `/tff:settings` | View and modify all project settings |
+| `/tff:map-codebase` | Analyze codebase and generate docs |
 | `/tff:help` | Show command reference |
 
 ### Skill Auto-Learn
@@ -300,9 +300,9 @@ Systematically diagnoses the issue first (¬ slice created), then fixes via S-ti
 |---|---|
 | `/tff:detect-patterns` | Run pattern detection pipeline |
 | `/tff:suggest-skills` | Show ranked skill candidates |
-| `/tff:create-skill` | Draft skill from pattern ∨ description |
-| `/tff:learn` | Detect skill divergences ∧ propose refinements |
-| `/tff:compose` | Detect ∧ bundle skill clusters |
+| `/tff:create-skill` | Draft skill from pattern or description |
+| `/tff:learn` | Detect skill divergences and propose refinements |
+| `/tff:compose` | Detect and bundle skill clusters |
 
 ## Architecture
 
@@ -327,10 +327,10 @@ the-forge-flow/
 ### Hexagonal Rules
 
 - **Domain** imports only Zod + `node:crypto`. No infrastructure.
-- **Zod as single source of truth** -- `z.infer<typeof Schema>` everywhere, ¬ TS `enum`.
+- **Zod as single source of truth** -- `z.infer<typeof Schema>` everywhere, no TS `enum`.
 - **Result\<T, E\>** for all fallible operations. Never throw.
-- **Ports** define interfaces ∈ domain. Adapters implement ∈ infrastructure.
-- **Tests** colocated as `.spec.ts`. Unit tests use ∈-memory adapters.
+- **Ports** define interfaces in domain. Adapters implement in infrastructure.
+- **Tests** colocated as `.spec.ts`. Unit tests use in-memory adapters.
 
 ## Agents
 
@@ -345,21 +345,21 @@ After v0.7.0's skills architecture reform, methodology moved from agents to skil
 
 ## Skills
 
-Skills are reusable knowledge fragments loaded via `@skills/<name>/SKILL.md`. They teach HOW to do something -- agents define WHO does it. After v0.7.0, all methodology lives ∈ skills (decoupled from TFF-specific terminology).
+Skills are reusable knowledge fragments loaded via `@skills/<name>/SKILL.md`. They teach HOW to do something -- agents define WHO does it. After v0.7.0, all methodology lives in skills (decoupled from TFF-specific terminology).
 
 | Skill | Purpose |
 |---|---|
 | hexagonal-architecture | DDD + CQRS + hexagonal boundary patterns |
 | test-driven-development | TDD methodology with HARD-GATE enforcement |
 | code-review-protocol | Two-stage review (spec compliance + code quality) |
-| commit-conventions | Conventional commit format ∧ rules |
+| commit-conventions | Conventional commit format and rules |
 | plannotator-usage | Interactive plan/review UI integration |
-| brainstorming | Structured discovery ∧ design exploration |
+| brainstorming | Structured discovery and design exploration |
 | systematic-debugging | 4-phase investigation (Track A/B diagnosis) |
 | writing-plans | Break specs into bite-sized tasks (2-5 min each) |
 | executing-plans | Wave-based execution with fresh subagent per task |
 | finishing-work | Pre-PR checklist, structured merge/PR decision |
-| stress-testing-specs | Devil's advocate for assumptions ∧ scope |
+| stress-testing-specs | Devil's advocate for assumptions and scope |
 | architecture-review | C4 model, dependency inversion review |
 | acceptance-criteria-validation | Binary verdict per criterion, evidence-based |
 | codebase-documentation | Divio framework documentation generation |
@@ -396,7 +396,7 @@ main
 
 ## Configuration
 
-Project settings live ∈ `.tff/settings.yaml`. Generated automatically by `/tff:new` with inline comments. Manage interactively with `/tff:settings`.
+Project settings live in `.tff/settings.yaml`. Generated automatically by `/tff:new` with inline comments. Manage interactively with `/tff:settings`.
 
 ```yaml
 model-profiles:
@@ -426,7 +426,7 @@ auto-learn:
 
 ```
 
-Settings are resilient: corrupted ∨ partial files fall back to defaults per field. Run `/tff:settings` to detect ∧ add missing fields.
+Settings are resilient: corrupted or partial files fall back to defaults per field. Run `/tff:settings` to detect and add missing fields.
 
 ## License
 
