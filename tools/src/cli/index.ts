@@ -24,6 +24,7 @@ import { sliceCloseCmd } from './commands/slice-close.cmd.js';
 import { sliceCreateCmd } from './commands/slice-create.cmd.js';
 import { sliceListCmd } from './commands/slice-list.cmd.js';
 import { sliceTransitionCmd } from './commands/slice-transition.cmd.js';
+import { stateRepairCmd } from './commands/state-repair.cmd.js';
 import { syncBranchCmd } from './commands/sync-branch.cmd.js';
 import { syncStateCmd } from './commands/sync-state.cmd.js';
 import { taskClaimCmd } from './commands/task-claim.cmd.js';
@@ -55,6 +56,8 @@ const commands: Record<string, CommandFn> = {
   'dep:add': depAddCmd,
   'waves:detect': wavesDetectCmd,
   'sync:state': syncStateCmd,
+  'sync:branch': syncBranchCmd,
+  'state:repair': stateRepairCmd,
   'worktree:create': worktreeCreateCmd,
   'worktree:delete': worktreeDeleteCmd,
   'worktree:list': worktreeListCmd,
@@ -72,7 +75,6 @@ const commands: Record<string, CommandFn> = {
   'workflow:next': workflowNextCmd,
   'workflow:should-auto': workflowShouldAutoCmd,
   'claim:check-stale': claimCheckStaleCmd,
-  'sync:branch': syncBranchCmd,
   'restore:branch': restoreBranchCmd,
   'branch:merge': branchMergeCmd,
   'hook:post-checkout': hookPostCheckoutCmd,

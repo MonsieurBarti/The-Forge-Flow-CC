@@ -294,10 +294,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path10) {
-  if (!path10)
+function getElementAtPath(obj, path11) {
+  if (!path11)
     return obj;
-  return path10.reduce((acc, key) => acc?.[key], obj);
+  return path11.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -609,11 +609,11 @@ function aborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path10, issues) {
+function prefixIssues(path11, issues) {
   return issues.map((iss) => {
     var _a2;
     (_a2 = iss).path ?? (_a2.path = []);
-    iss.path.unshift(path10);
+    iss.path.unshift(path11);
     return iss;
   });
 }
@@ -855,7 +855,7 @@ function formatError(error48, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error48, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error49, path10 = []) => {
+  const processError = (error49, path11 = []) => {
     var _a2, _b;
     for (const issue2 of error49.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
@@ -865,7 +865,7 @@ function treeifyError(error48, mapper = (issue2) => issue2.message) {
       } else if (issue2.code === "invalid_element") {
         processError({ issues: issue2.issues }, issue2.path);
       } else {
-        const fullpath = [...path10, ...issue2.path];
+        const fullpath = [...path11, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -897,8 +897,8 @@ function treeifyError(error48, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path10 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path10) {
+  const path11 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path11) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -13592,13 +13592,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path10 = ref.slice(1).split("/").filter(Boolean);
-  if (path10.length === 0) {
+  const path11 = ref.slice(1).split("/").filter(Boolean);
+  if (path11.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path10[0] === defsKey) {
-    const key = path10[1];
+  if (path11[0] === defsKey) {
+    const key = path11[1];
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -14444,20 +14444,20 @@ var require_file_uri_to_path = __commonJS({
       var rest = decodeURI(uri.substring(7));
       var firstSlash = rest.indexOf("/");
       var host = rest.substring(0, firstSlash);
-      var path10 = rest.substring(firstSlash + 1);
+      var path11 = rest.substring(firstSlash + 1);
       if ("localhost" == host) host = "";
       if (host) {
         host = sep + sep + host;
       }
-      path10 = path10.replace(/^(.+)\|/, "$1:");
+      path11 = path11.replace(/^(.+)\|/, "$1:");
       if (sep == "\\") {
-        path10 = path10.replace(/\//g, "\\");
+        path11 = path11.replace(/\//g, "\\");
       }
-      if (/^.+\:/.test(path10)) {
+      if (/^.+\:/.test(path11)) {
       } else {
-        path10 = sep + path10;
+        path11 = sep + path11;
       }
-      return host + path10;
+      return host + path11;
     }
   }
 });
@@ -14466,18 +14466,18 @@ var require_file_uri_to_path = __commonJS({
 var require_bindings = __commonJS({
   "node_modules/bindings/bindings.js"(exports2, module2) {
     var fs = require("fs");
-    var path10 = require("path");
+    var path11 = require("path");
     var fileURLToPath = require_file_uri_to_path();
-    var join3 = path10.join;
-    var dirname2 = path10.dirname;
-    var exists = fs.accessSync && function(path11) {
+    var join4 = path11.join;
+    var dirname2 = path11.dirname;
+    var exists = fs.accessSync && function(path12) {
       try {
-        fs.accessSync(path11);
+        fs.accessSync(path12);
       } catch (e) {
         return false;
       }
       return true;
-    } || fs.existsSync || path10.existsSync;
+    } || fs.existsSync || path11.existsSync;
     var defaults = {
       arrow: process.env.NODE_BINDINGS_ARROW || " \u2192 ",
       compiled: process.env.NODE_BINDINGS_COMPILED_DIR || "compiled",
@@ -14522,13 +14522,13 @@ var require_bindings = __commonJS({
       if (!opts.module_root) {
         opts.module_root = exports2.getRoot(exports2.getFileName());
       }
-      if (path10.extname(opts.bindings) != ".node") {
+      if (path11.extname(opts.bindings) != ".node") {
         opts.bindings += ".node";
       }
       var requireFunc = typeof __webpack_require__ === "function" ? __non_webpack_require__ : require;
       var tries = [], i = 0, l = opts.try.length, n, b, err;
       for (; i < l; i++) {
-        n = join3.apply(
+        n = join4.apply(
           null,
           opts.try[i].map(function(p) {
             return opts[p] || p;
@@ -14589,7 +14589,7 @@ var require_bindings = __commonJS({
         if (dir === ".") {
           dir = process.cwd();
         }
-        if (exists(join3(dir, "package.json")) || exists(join3(dir, "node_modules"))) {
+        if (exists(join4(dir, "package.json")) || exists(join4(dir, "node_modules"))) {
           return dir;
         }
         if (prev === dir) {
@@ -14598,7 +14598,7 @@ var require_bindings = __commonJS({
           );
         }
         prev = dir;
-        dir = join3(dir, "..");
+        dir = join4(dir, "..");
       }
     };
   }
@@ -14761,7 +14761,7 @@ var require_backup = __commonJS({
   "node_modules/better-sqlite3/lib/methods/backup.js"(exports2, module2) {
     "use strict";
     var fs = require("fs");
-    var path10 = require("path");
+    var path11 = require("path");
     var { promisify: promisify2 } = require("util");
     var { cppdb } = require_util();
     var fsAccess = promisify2(fs.access);
@@ -14777,7 +14777,7 @@ var require_backup = __commonJS({
       if (typeof attachedName !== "string") throw new TypeError('Expected the "attached" option to be a string');
       if (!attachedName) throw new TypeError('The "attached" option cannot be an empty string');
       if (handler != null && typeof handler !== "function") throw new TypeError('Expected the "progress" option to be a function');
-      await fsAccess(path10.dirname(filename)).catch(() => {
+      await fsAccess(path11.dirname(filename)).catch(() => {
         throw new TypeError("Cannot save backup because the directory does not exist");
       });
       const isNewFile = await fsAccess(filename).then(() => false, () => true);
@@ -15083,7 +15083,7 @@ var require_database = __commonJS({
   "node_modules/better-sqlite3/lib/database.js"(exports2, module2) {
     "use strict";
     var fs = require("fs");
-    var path10 = require("path");
+    var path11 = require("path");
     var util = require_util();
     var SqliteError = require_sqlite_error();
     var DEFAULT_ADDON;
@@ -15119,7 +15119,7 @@ var require_database = __commonJS({
         addon = DEFAULT_ADDON || (DEFAULT_ADDON = require_bindings()("better_sqlite3.node"));
       } else if (typeof nativeBinding === "string") {
         const requireFunc = typeof __non_webpack_require__ === "function" ? __non_webpack_require__ : require;
-        addon = requireFunc(path10.resolve(nativeBinding).replace(/(\.node)?$/, ".node"));
+        addon = requireFunc(path11.resolve(nativeBinding).replace(/(\.node)?$/, ".node"));
       } else {
         addon = nativeBinding;
       }
@@ -15127,7 +15127,7 @@ var require_database = __commonJS({
         addon.setErrorConstructor(SqliteError);
         addon.isInitialized = true;
       }
-      if (!anonymous && !filename.startsWith("file:") && !fs.existsSync(path10.dirname(filename))) {
+      if (!anonymous && !filename.startsWith("file:") && !fs.existsSync(path11.dirname(filename))) {
         throw new TypeError("Cannot open database because the directory does not exist");
       }
       Object.defineProperties(this, {
@@ -15175,34 +15175,34 @@ var init_markdown_artifact_adapter = __esm({
       constructor(basePath) {
         this.basePath = basePath;
       }
-      resolve(path10) {
-        const resolved = (0, import_node_path4.resolve)((0, import_node_path4.join)(this.basePath, path10));
+      resolve(path11) {
+        const resolved = (0, import_node_path4.resolve)((0, import_node_path4.join)(this.basePath, path11));
         const base = (0, import_node_path4.resolve)(this.basePath);
         if (!resolved.startsWith(`${base}/`) && resolved !== base) {
-          throw new Error(`Path traversal rejected: ${path10}`);
+          throw new Error(`Path traversal rejected: ${path11}`);
         }
         return resolved;
       }
-      async read(path10) {
+      async read(path11) {
         try {
-          return Ok(await (0, import_promises.readFile)(this.resolve(path10), "utf-8"));
+          return Ok(await (0, import_promises.readFile)(this.resolve(path11), "utf-8"));
         } catch {
-          return Err(createDomainError("NOT_FOUND", `File not found: ${path10}`, { path: path10 }));
+          return Err(createDomainError("NOT_FOUND", `File not found: ${path11}`, { path: path11 }));
         }
       }
-      async write(path10, content) {
+      async write(path11, content) {
         try {
-          const fullPath = this.resolve(path10);
+          const fullPath = this.resolve(path11);
           await (0, import_promises.mkdir)((0, import_node_path4.dirname)(fullPath), { recursive: true });
           await (0, import_promises.writeFile)(fullPath, content, "utf-8");
           return Ok(void 0);
         } catch (err) {
-          return Err(createDomainError("VALIDATION_ERROR", `Failed to write: ${path10}`, { path: path10, error: String(err) }));
+          return Err(createDomainError("VALIDATION_ERROR", `Failed to write: ${path11}`, { path: path11, error: String(err) }));
         }
       }
-      async exists(path10) {
+      async exists(path11) {
         try {
-          await (0, import_promises.access)(this.resolve(path10));
+          await (0, import_promises.access)(this.resolve(path11));
           return true;
         } catch {
           return false;
@@ -15216,12 +15216,12 @@ var init_markdown_artifact_adapter = __esm({
           return Ok([]);
         }
       }
-      async mkdir(path10) {
+      async mkdir(path11) {
         try {
-          await (0, import_promises.mkdir)(this.resolve(path10), { recursive: true });
+          await (0, import_promises.mkdir)(this.resolve(path11), { recursive: true });
           return Ok(void 0);
         } catch (err) {
-          return Err(createDomainError("VALIDATION_ERROR", `Failed to mkdir: ${path10}`, { path: path10, error: String(err) }));
+          return Err(createDomainError("VALIDATION_ERROR", `Failed to mkdir: ${path11}`, { path: path11, error: String(err) }));
         }
       }
     };
@@ -15247,10 +15247,10 @@ var init_save_checkpoint = __esm({
       ];
       const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
       const dir = `.tff/milestones/${milestoneId}/slices/${data.sliceId}`;
-      const path10 = `${dir}/CHECKPOINT.md`;
+      const path11 = `${dir}/CHECKPOINT.md`;
       const mkdirResult = await deps.artifactStore.mkdir(dir);
       if (!isOk(mkdirResult)) return mkdirResult;
-      const writeResult = await deps.artifactStore.write(path10, lines.join("\n"));
+      const writeResult = await deps.artifactStore.write(path11, lines.join("\n"));
       if (!isOk(writeResult)) return writeResult;
       return Ok(void 0);
     };
@@ -15349,14 +15349,14 @@ var require_polyfills = __commonJS({
       fs.fstatSync = statFixSync(fs.fstatSync);
       fs.lstatSync = statFixSync(fs.lstatSync);
       if (fs.chmod && !fs.lchmod) {
-        fs.lchmod = function(path10, mode, cb) {
+        fs.lchmod = function(path11, mode, cb) {
           if (cb) process.nextTick(cb);
         };
         fs.lchmodSync = function() {
         };
       }
       if (fs.chown && !fs.lchown) {
-        fs.lchown = function(path10, uid, gid, cb) {
+        fs.lchown = function(path11, uid, gid, cb) {
           if (cb) process.nextTick(cb);
         };
         fs.lchownSync = function() {
@@ -15423,9 +15423,9 @@ var require_polyfills = __commonJS({
         };
       })(fs.readSync);
       function patchLchmod(fs2) {
-        fs2.lchmod = function(path10, mode, callback) {
+        fs2.lchmod = function(path11, mode, callback) {
           fs2.open(
-            path10,
+            path11,
             constants.O_WRONLY | constants.O_SYMLINK,
             mode,
             function(err, fd) {
@@ -15441,8 +15441,8 @@ var require_polyfills = __commonJS({
             }
           );
         };
-        fs2.lchmodSync = function(path10, mode) {
-          var fd = fs2.openSync(path10, constants.O_WRONLY | constants.O_SYMLINK, mode);
+        fs2.lchmodSync = function(path11, mode) {
+          var fd = fs2.openSync(path11, constants.O_WRONLY | constants.O_SYMLINK, mode);
           var threw = true;
           var ret;
           try {
@@ -15463,8 +15463,8 @@ var require_polyfills = __commonJS({
       }
       function patchLutimes(fs2) {
         if (constants.hasOwnProperty("O_SYMLINK") && fs2.futimes) {
-          fs2.lutimes = function(path10, at, mt, cb) {
-            fs2.open(path10, constants.O_SYMLINK, function(er, fd) {
+          fs2.lutimes = function(path11, at, mt, cb) {
+            fs2.open(path11, constants.O_SYMLINK, function(er, fd) {
               if (er) {
                 if (cb) cb(er);
                 return;
@@ -15476,8 +15476,8 @@ var require_polyfills = __commonJS({
               });
             });
           };
-          fs2.lutimesSync = function(path10, at, mt) {
-            var fd = fs2.openSync(path10, constants.O_SYMLINK);
+          fs2.lutimesSync = function(path11, at, mt) {
+            var fd = fs2.openSync(path11, constants.O_SYMLINK);
             var ret;
             var threw = true;
             try {
@@ -15595,11 +15595,11 @@ var require_legacy_streams = __commonJS({
         ReadStream,
         WriteStream
       };
-      function ReadStream(path10, options) {
-        if (!(this instanceof ReadStream)) return new ReadStream(path10, options);
+      function ReadStream(path11, options) {
+        if (!(this instanceof ReadStream)) return new ReadStream(path11, options);
         Stream.call(this);
         var self = this;
-        this.path = path10;
+        this.path = path11;
         this.fd = null;
         this.readable = true;
         this.paused = false;
@@ -15644,10 +15644,10 @@ var require_legacy_streams = __commonJS({
           self._read();
         });
       }
-      function WriteStream(path10, options) {
-        if (!(this instanceof WriteStream)) return new WriteStream(path10, options);
+      function WriteStream(path11, options) {
+        if (!(this instanceof WriteStream)) return new WriteStream(path11, options);
         Stream.call(this);
-        this.path = path10;
+        this.path = path11;
         this.fd = null;
         this.writable = true;
         this.flags = "w";
@@ -15790,14 +15790,14 @@ var require_graceful_fs = __commonJS({
       fs2.createWriteStream = createWriteStream;
       var fs$readFile = fs2.readFile;
       fs2.readFile = readFile3;
-      function readFile3(path10, options, cb) {
+      function readFile3(path11, options, cb) {
         if (typeof options === "function")
           cb = options, options = null;
-        return go$readFile(path10, options, cb);
-        function go$readFile(path11, options2, cb2, startTime) {
-          return fs$readFile(path11, options2, function(err) {
+        return go$readFile(path11, options, cb);
+        function go$readFile(path12, options2, cb2, startTime) {
+          return fs$readFile(path12, options2, function(err) {
             if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
-              enqueue([go$readFile, [path11, options2, cb2], err, startTime || Date.now(), Date.now()]);
+              enqueue([go$readFile, [path12, options2, cb2], err, startTime || Date.now(), Date.now()]);
             else {
               if (typeof cb2 === "function")
                 cb2.apply(this, arguments);
@@ -15807,14 +15807,14 @@ var require_graceful_fs = __commonJS({
       }
       var fs$writeFile = fs2.writeFile;
       fs2.writeFile = writeFile3;
-      function writeFile3(path10, data, options, cb) {
+      function writeFile3(path11, data, options, cb) {
         if (typeof options === "function")
           cb = options, options = null;
-        return go$writeFile(path10, data, options, cb);
-        function go$writeFile(path11, data2, options2, cb2, startTime) {
-          return fs$writeFile(path11, data2, options2, function(err) {
+        return go$writeFile(path11, data, options, cb);
+        function go$writeFile(path12, data2, options2, cb2, startTime) {
+          return fs$writeFile(path12, data2, options2, function(err) {
             if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
-              enqueue([go$writeFile, [path11, data2, options2, cb2], err, startTime || Date.now(), Date.now()]);
+              enqueue([go$writeFile, [path12, data2, options2, cb2], err, startTime || Date.now(), Date.now()]);
             else {
               if (typeof cb2 === "function")
                 cb2.apply(this, arguments);
@@ -15825,14 +15825,14 @@ var require_graceful_fs = __commonJS({
       var fs$appendFile = fs2.appendFile;
       if (fs$appendFile)
         fs2.appendFile = appendFile2;
-      function appendFile2(path10, data, options, cb) {
+      function appendFile2(path11, data, options, cb) {
         if (typeof options === "function")
           cb = options, options = null;
-        return go$appendFile(path10, data, options, cb);
-        function go$appendFile(path11, data2, options2, cb2, startTime) {
-          return fs$appendFile(path11, data2, options2, function(err) {
+        return go$appendFile(path11, data, options, cb);
+        function go$appendFile(path12, data2, options2, cb2, startTime) {
+          return fs$appendFile(path12, data2, options2, function(err) {
             if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
-              enqueue([go$appendFile, [path11, data2, options2, cb2], err, startTime || Date.now(), Date.now()]);
+              enqueue([go$appendFile, [path12, data2, options2, cb2], err, startTime || Date.now(), Date.now()]);
             else {
               if (typeof cb2 === "function")
                 cb2.apply(this, arguments);
@@ -15863,31 +15863,31 @@ var require_graceful_fs = __commonJS({
       var fs$readdir = fs2.readdir;
       fs2.readdir = readdir2;
       var noReaddirOptionVersions = /^v[0-5]\./;
-      function readdir2(path10, options, cb) {
+      function readdir2(path11, options, cb) {
         if (typeof options === "function")
           cb = options, options = null;
-        var go$readdir = noReaddirOptionVersions.test(process.version) ? function go$readdir2(path11, options2, cb2, startTime) {
-          return fs$readdir(path11, fs$readdirCallback(
-            path11,
+        var go$readdir = noReaddirOptionVersions.test(process.version) ? function go$readdir2(path12, options2, cb2, startTime) {
+          return fs$readdir(path12, fs$readdirCallback(
+            path12,
             options2,
             cb2,
             startTime
           ));
-        } : function go$readdir2(path11, options2, cb2, startTime) {
-          return fs$readdir(path11, options2, fs$readdirCallback(
-            path11,
+        } : function go$readdir2(path12, options2, cb2, startTime) {
+          return fs$readdir(path12, options2, fs$readdirCallback(
+            path12,
             options2,
             cb2,
             startTime
           ));
         };
-        return go$readdir(path10, options, cb);
-        function fs$readdirCallback(path11, options2, cb2, startTime) {
+        return go$readdir(path11, options, cb);
+        function fs$readdirCallback(path12, options2, cb2, startTime) {
           return function(err, files) {
             if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
               enqueue([
                 go$readdir,
-                [path11, options2, cb2],
+                [path12, options2, cb2],
                 err,
                 startTime || Date.now(),
                 Date.now()
@@ -15958,7 +15958,7 @@ var require_graceful_fs = __commonJS({
         enumerable: true,
         configurable: true
       });
-      function ReadStream(path10, options) {
+      function ReadStream(path11, options) {
         if (this instanceof ReadStream)
           return fs$ReadStream.apply(this, arguments), this;
         else
@@ -15978,7 +15978,7 @@ var require_graceful_fs = __commonJS({
           }
         });
       }
-      function WriteStream(path10, options) {
+      function WriteStream(path11, options) {
         if (this instanceof WriteStream)
           return fs$WriteStream.apply(this, arguments), this;
         else
@@ -15996,22 +15996,22 @@ var require_graceful_fs = __commonJS({
           }
         });
       }
-      function createReadStream(path10, options) {
-        return new fs2.ReadStream(path10, options);
+      function createReadStream(path11, options) {
+        return new fs2.ReadStream(path11, options);
       }
-      function createWriteStream(path10, options) {
-        return new fs2.WriteStream(path10, options);
+      function createWriteStream(path11, options) {
+        return new fs2.WriteStream(path11, options);
       }
       var fs$open = fs2.open;
       fs2.open = open;
-      function open(path10, flags, mode, cb) {
+      function open(path11, flags, mode, cb) {
         if (typeof mode === "function")
           cb = mode, mode = null;
-        return go$open(path10, flags, mode, cb);
-        function go$open(path11, flags2, mode2, cb2, startTime) {
-          return fs$open(path11, flags2, mode2, function(err, fd) {
+        return go$open(path11, flags, mode, cb);
+        function go$open(path12, flags2, mode2, cb2, startTime) {
+          return fs$open(path12, flags2, mode2, function(err, fd) {
             if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
-              enqueue([go$open, [path11, flags2, mode2, cb2], err, startTime || Date.now(), Date.now()]);
+              enqueue([go$open, [path12, flags2, mode2, cb2], err, startTime || Date.now(), Date.now()]);
             else {
               if (typeof cb2 === "function")
                 cb2.apply(this, arguments);
@@ -16540,7 +16540,7 @@ var require_mtime_precision = __commonJS({
 var require_lockfile = __commonJS({
   "node_modules/proper-lockfile/lib/lockfile.js"(exports2, module2) {
     "use strict";
-    var path10 = require("path");
+    var path11 = require("path");
     var fs = require_graceful_fs();
     var retry = require_retry2();
     var onExit = require_signal_exit();
@@ -16551,11 +16551,11 @@ var require_lockfile = __commonJS({
     }
     function resolveCanonicalPath(file2, options, callback) {
       if (!options.realpath) {
-        return callback(null, path10.resolve(file2));
+        return callback(null, path11.resolve(file2));
       }
       options.fs.realpath(file2, callback);
     }
-    function acquireLock(file2, options, callback) {
+    function acquireLock2(file2, options, callback) {
       const lockfilePath = getLockFile(file2, options);
       options.fs.mkdir(lockfilePath, (err) => {
         if (!err) {
@@ -16577,7 +16577,7 @@ var require_lockfile = __commonJS({
         options.fs.stat(lockfilePath, (err2, stat) => {
           if (err2) {
             if (err2.code === "ENOENT") {
-              return acquireLock(file2, { ...options, stale: 0 }, callback);
+              return acquireLock2(file2, { ...options, stale: 0 }, callback);
             }
             return callback(err2);
           }
@@ -16588,7 +16588,7 @@ var require_lockfile = __commonJS({
             if (err3) {
               return callback(err3);
             }
-            acquireLock(file2, { ...options, stale: 0 }, callback);
+            acquireLock2(file2, { ...options, stale: 0 }, callback);
           });
         });
       });
@@ -16689,7 +16689,7 @@ var require_lockfile = __commonJS({
         }
         const operation = retry.operation(options.retries);
         operation.attempt(() => {
-          acquireLock(file3, options, (err2, mtime, mtimePrecision2) => {
+          acquireLock2(file3, options, (err2, mtime, mtimePrecision2) => {
             if (operation.retry(err2)) {
               return;
             }
@@ -16936,15 +16936,15 @@ var GitCliAdapter = class {
     this.invalidateCache();
     return Ok(void 0);
   }
-  async createWorktree(path10, branch, startPoint) {
-    const args = ["worktree", "add", path10, "-b", branch];
+  async createWorktree(path11, branch, startPoint) {
+    const args = ["worktree", "add", path11, "-b", branch];
     if (startPoint) args.push(startPoint);
     const r = await runGit(args, this.repoRoot);
     if (!r.ok) return r;
     return Ok(void 0);
   }
-  async deleteWorktree(path10) {
-    const r = await runGit(["worktree", "remove", path10, "--force"], this.repoRoot);
+  async deleteWorktree(path11) {
+    const r = await runGit(["worktree", "remove", path11, "--force"], this.repoRoot);
     if (!r.ok) return r;
     return Ok(void 0);
   }
@@ -16998,19 +16998,19 @@ var GitCliAdapter = class {
     if (r.ok) this.setCache(cacheKey, r.data);
     return r;
   }
-  async createOrphanWorktree(path10, branchName) {
-    const r = await runGit(["worktree", "add", "--detach", path10], this.repoRoot);
+  async createOrphanWorktree(path11, branchName) {
+    const r = await runGit(["worktree", "add", "--detach", path11], this.repoRoot);
     if (!r.ok) return r;
-    const orphanR = await runGit(["checkout", "--orphan", branchName], path10);
+    const orphanR = await runGit(["checkout", "--orphan", branchName], path11);
     if (!orphanR.ok) {
-      await runGit(["worktree", "remove", path10, "--force"], this.repoRoot);
+      await runGit(["worktree", "remove", path11, "--force"], this.repoRoot);
       return orphanR;
     }
-    await runGit(["rm", "-rf", "--cached", "."], path10);
+    await runGit(["rm", "-rf", "--cached", "."], path11);
     return Ok(void 0);
   }
-  async checkoutWorktree(path10, existingBranch) {
-    const r = await runGit(["worktree", "add", path10, existingBranch], this.repoRoot);
+  async checkoutWorktree(path11, existingBranch) {
+    const r = await runGit(["worktree", "add", path11, existingBranch], this.repoRoot);
     if (!r.ok) return r;
     return Ok(void 0);
   }
@@ -17534,8 +17534,8 @@ init_domain_error();
 init_result();
 var loadCheckpoint = async (sliceId, deps) => {
   const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-  const path10 = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
-  const contentResult = await deps.artifactStore.read(path10);
+  const path11 = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
+  const contentResult = await deps.artifactStore.read(path11);
   if (!isOk(contentResult))
     return Err(createDomainError("NOT_FOUND", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
   const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);
@@ -17575,25 +17575,25 @@ var checkStaleClaims = async (input, deps) => {
 // tools/src/cli/commands/claim-check-stale.cmd.ts
 init_result();
 
-// tools/src/cli/with-branch-guard.ts
-var import_node_fs6 = require("fs");
-var import_node_path7 = __toESM(require("path"), 1);
-
-// tools/src/application/state-branch/restore-branch.ts
-var restoreBranchUseCase = async (input, deps) => deps.stateBranch.restore(input.codeBranch, input.targetDir);
+// tools/src/infrastructure/adapters/sqlite/create-state-stores.ts
+var import_node_child_process2 = require("child_process");
+var import_node_fs5 = require("fs");
+var import_node_path6 = __toESM(require("path"), 1);
 
 // tools/src/domain/errors/branch-mismatch.error.ts
 var BranchMismatchError = class extends Error {
-  constructor(expectedBranch, currentBranch) {
-    super(`Branch mismatch: .tff/ state is for "${expectedBranch}" but current branch is "${currentBranch}"`);
+  constructor(expectedBranch, currentBranch, stampPath = ".tff/branch-meta.json") {
+    super(
+      `Branch mismatch: ${stampPath} shows state for "${expectedBranch}" but HEAD is "${currentBranch}". Run /tff:repair to reconcile or switch to the correct branch.`
+    );
     this.expectedBranch = expectedBranch;
     this.currentBranch = currentBranch;
+    this.stampPath = stampPath;
     this.name = "BranchMismatchError";
+    this.repairHint = `/tff:repair (or git checkout ${expectedBranch})`;
   }
+  repairHint;
 };
-
-// tools/src/cli/with-branch-guard.ts
-init_result();
 
 // tools/src/domain/value-objects/branch-meta.ts
 init_zod();
@@ -17605,10 +17605,174 @@ var BranchMetaSchema = external_exports.object({
   restoredAt: external_exports.string().datetime().optional()
 });
 
-// tools/src/infrastructure/adapters/sqlite/create-state-stores.ts
-var import_node_child_process2 = require("child_process");
+// tools/src/infrastructure/adapters/journal/jsonl-journal.adapter.ts
 var import_node_fs4 = require("fs");
-var import_node_path5 = __toESM(require("path"), 1);
+var import_node_path5 = require("path");
+init_domain_error();
+init_result();
+
+// tools/src/domain/value-objects/journal-entry.ts
+init_zod();
+var JournalEntryBaseSchema = external_exports.object({
+  seq: external_exports.number().int().min(0),
+  sliceId: external_exports.string().min(1),
+  timestamp: external_exports.string().datetime(),
+  correlationId: external_exports.string().min(1).optional()
+});
+var TaskStartedEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("task-started"),
+  taskId: external_exports.string().min(1),
+  waveIndex: external_exports.number().int().min(0),
+  agentIdentity: external_exports.string().min(1)
+});
+var TaskCompletedEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("task-completed"),
+  taskId: external_exports.string().min(1),
+  waveIndex: external_exports.number().int().min(0),
+  durationMs: external_exports.number().int().min(0),
+  commitHash: external_exports.string().optional()
+});
+var TaskFailedEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("task-failed"),
+  taskId: external_exports.string().min(1),
+  waveIndex: external_exports.number().int().min(0),
+  errorCode: external_exports.string(),
+  errorMessage: external_exports.string(),
+  retryable: external_exports.boolean()
+});
+var FileWrittenEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("file-written"),
+  taskId: external_exports.string().min(1),
+  filePath: external_exports.string().min(1),
+  operation: external_exports.enum(["created", "modified", "deleted"])
+});
+var CheckpointSavedEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("checkpoint-saved"),
+  waveIndex: external_exports.number().int().min(0),
+  completedTaskCount: external_exports.number().int().min(0)
+});
+var PhaseChangedEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("phase-changed"),
+  from: external_exports.string(),
+  to: external_exports.string()
+});
+var ArtifactWrittenEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("artifact-written"),
+  artifactPath: external_exports.string().min(1),
+  artifactType: external_exports.enum(["spec", "plan", "research", "checkpoint"])
+});
+var GuardrailViolationItemSchema = external_exports.object({
+  ruleId: external_exports.string(),
+  message: external_exports.string(),
+  severity: external_exports.string()
+});
+var GuardrailViolationEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("guardrail-violation"),
+  taskId: external_exports.string().min(1),
+  waveIndex: external_exports.number().int().min(0),
+  violations: external_exports.array(GuardrailViolationItemSchema),
+  action: external_exports.enum(["blocked", "warned"])
+});
+var OverseerInterventionEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("overseer-intervention"),
+  taskId: external_exports.string().min(1),
+  strategy: external_exports.string().min(1),
+  reason: external_exports.string().min(1),
+  action: external_exports.enum(["aborted", "retrying", "escalated"]),
+  retryCount: external_exports.number().int().min(0)
+});
+var ExecutionLifecycleEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("execution-lifecycle"),
+  sessionId: external_exports.string().min(1),
+  action: external_exports.enum(["started", "paused", "resumed", "completed", "failed"]),
+  resumeCount: external_exports.number().int().min(0),
+  failureReason: external_exports.string().optional(),
+  wavesCompleted: external_exports.number().int().min(0).optional(),
+  totalWaves: external_exports.number().int().min(0).optional()
+});
+var JournalEntrySchema = external_exports.discriminatedUnion("type", [
+  TaskStartedEntrySchema,
+  TaskCompletedEntrySchema,
+  TaskFailedEntrySchema,
+  FileWrittenEntrySchema,
+  CheckpointSavedEntrySchema,
+  PhaseChangedEntrySchema,
+  ArtifactWrittenEntrySchema,
+  GuardrailViolationEntrySchema,
+  OverseerInterventionEntrySchema,
+  ExecutionLifecycleEntrySchema
+]);
+
+// tools/src/infrastructure/adapters/journal/jsonl-journal.adapter.ts
+function isNodeError(error48) {
+  if (!(error48 instanceof Error)) return false;
+  if (!("code" in error48)) return false;
+  const descriptor = Object.getOwnPropertyDescriptor(error48, "code");
+  return descriptor !== void 0 && typeof descriptor.value === "string";
+}
+var JsonlJournalAdapter = class {
+  constructor(basePath) {
+    this.basePath = basePath;
+  }
+  filePath(sliceId) {
+    return (0, import_node_path5.join)(this.basePath, `${sliceId}.jsonl`);
+  }
+  append(sliceId, entry) {
+    const countResult = this.count(sliceId);
+    if (!countResult.ok) return countResult;
+    const seq = countResult.data;
+    try {
+      const fullEntry = JournalEntrySchema.parse({ ...entry, seq });
+      (0, import_node_fs4.mkdirSync)(this.basePath, { recursive: true });
+      (0, import_node_fs4.appendFileSync)(this.filePath(sliceId), `${JSON.stringify(fullEntry)}
+`, "utf-8");
+      return Ok(seq);
+    } catch (error48) {
+      if (error48 instanceof Error && error48.name === "ZodError") {
+        return Err(createDomainError("JOURNAL_WRITE_FAILED", `Invalid journal entry: ${error48.message}`));
+      }
+      return Err(createDomainError("JOURNAL_WRITE_FAILED", error48 instanceof Error ? error48.message : String(error48)));
+    }
+  }
+  readAll(sliceId) {
+    let content;
+    try {
+      content = (0, import_node_fs4.readFileSync)(this.filePath(sliceId), "utf-8");
+    } catch (error48) {
+      if (isNodeError(error48) && error48.code === "ENOENT") return Ok([]);
+      return Err(createDomainError("JOURNAL_READ_FAILED", error48 instanceof Error ? error48.message : String(error48)));
+    }
+    const lines = content.split("\n").filter((l) => l.trim());
+    const entries = [];
+    for (let i = 0; i < lines.length; i++) {
+      try {
+        const raw = JSON.parse(lines[i]);
+        entries.push(JournalEntrySchema.parse(raw));
+      } catch {
+      }
+    }
+    return Ok(entries);
+  }
+  readSince(sliceId, afterSeq) {
+    const result = this.readAll(sliceId);
+    if (!result.ok) return result;
+    return Ok(result.data.filter((e) => e.seq > afterSeq));
+  }
+  count(sliceId) {
+    const result = this.readAll(sliceId);
+    if (!result.ok) return result;
+    return Ok(result.data.length);
+  }
+  reset() {
+    try {
+      const files = (0, import_node_fs4.readdirSync)(this.basePath);
+      for (const file2 of files) {
+        if (file2.endsWith(".jsonl")) (0, import_node_fs4.unlinkSync)((0, import_node_path5.join)(this.basePath, file2));
+      }
+    } catch {
+    }
+  }
+};
 
 // tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
 var import_better_sqlite32 = __toESM(require_lib(), 1);
@@ -18245,22 +18409,22 @@ var SQLiteStateAdapter = class _SQLiteStateAdapter {
 // tools/src/infrastructure/adapters/sqlite/create-state-stores.ts
 function checkBranchAlignment(tffDir) {
   try {
-    const stampPath = import_node_path5.default.join(tffDir, "branch-meta.json");
-    const dbFilePath = import_node_path5.default.join(tffDir, "state.db");
-    if ((0, import_node_fs4.existsSync)(stampPath)) {
-      const raw = JSON.parse((0, import_node_fs4.readFileSync)(stampPath, "utf8"));
+    const stampPath = import_node_path6.default.join(tffDir, "branch-meta.json");
+    const dbFilePath = import_node_path6.default.join(tffDir, "state.db");
+    if ((0, import_node_fs5.existsSync)(stampPath)) {
+      const raw = JSON.parse((0, import_node_fs5.readFileSync)(stampPath, "utf8"));
       const meta3 = BranchMetaSchema.parse(raw);
       const currentBranch = (0, import_node_child_process2.execSync)("git branch --show-current", {
-        cwd: import_node_path5.default.dirname(tffDir),
+        cwd: import_node_path6.default.dirname(tffDir),
         // run git from parent of .tff/
         encoding: "utf8"
       }).trim();
       if (meta3.codeBranch !== currentBranch) {
         throw new BranchMismatchError(meta3.codeBranch, currentBranch);
       }
-    } else if ((0, import_node_fs4.existsSync)(dbFilePath)) {
+    } else if ((0, import_node_fs5.existsSync)(dbFilePath)) {
       const currentBranch = (0, import_node_child_process2.execSync)("git branch --show-current", {
-        cwd: import_node_path5.default.dirname(tffDir),
+        cwd: import_node_path6.default.dirname(tffDir),
         encoding: "utf8"
       }).trim();
       throw new BranchMismatchError("unknown", currentBranch);
@@ -18270,31 +18434,13 @@ function checkBranchAlignment(tffDir) {
   }
 }
 function createStateStoresUnchecked(dbPath) {
-  const resolvedPath = dbPath ?? import_node_path5.default.join(process.cwd(), ".tff", "state.db");
+  const resolvedPath = dbPath ?? import_node_path6.default.join(process.cwd(), ".tff", "state.db");
   const adapter = SQLiteStateAdapter.create(resolvedPath);
   const initResult = adapter.init();
   if (!initResult.ok) throw new Error(`DB init failed: ${initResult.error.message}`);
-  return {
-    db: adapter,
-    projectStore: adapter,
-    milestoneStore: adapter,
-    sliceStore: adapter,
-    taskStore: adapter,
-    dependencyStore: adapter,
-    sessionStore: adapter,
-    reviewStore: adapter
-  };
-}
-function createStateStores(dbPath) {
-  const resolvedPath = dbPath ?? import_node_path5.default.join(process.cwd(), ".tff", "state.db");
-  checkBranchAlignment(import_node_path5.default.dirname(resolvedPath));
-  return createStateStoresUnchecked(dbPath);
-}
-function createClosableStateStoresUnchecked(dbPath) {
-  const resolvedPath = dbPath ?? import_node_path5.default.join(process.cwd(), ".tff", "state.db");
-  const adapter = SQLiteStateAdapter.create(resolvedPath);
-  const initResult = adapter.init();
-  if (!initResult.ok) throw new Error(`DB init failed: ${initResult.error.message}`);
+  const tffDir = import_node_path6.default.dirname(resolvedPath);
+  const journalPath = import_node_path6.default.join(tffDir, "journal");
+  const journalRepository = new JsonlJournalAdapter(journalPath);
   return {
     db: adapter,
     projectStore: adapter,
@@ -18304,99 +18450,50 @@ function createClosableStateStoresUnchecked(dbPath) {
     dependencyStore: adapter,
     sessionStore: adapter,
     reviewStore: adapter,
+    journalRepository
+  };
+}
+function createStateStores(dbPath) {
+  const resolvedPath = dbPath ?? import_node_path6.default.join(process.cwd(), ".tff", "state.db");
+  checkBranchAlignment(import_node_path6.default.dirname(resolvedPath));
+  return createStateStoresUnchecked(dbPath);
+}
+function createClosableStateStoresUnchecked(dbPath) {
+  const resolvedPath = dbPath ?? import_node_path6.default.join(process.cwd(), ".tff", "state.db");
+  const adapter = SQLiteStateAdapter.create(resolvedPath);
+  const initResult = adapter.init();
+  if (!initResult.ok) throw new Error(`DB init failed: ${initResult.error.message}`);
+  const tffDir = import_node_path6.default.dirname(resolvedPath);
+  const journalPath = import_node_path6.default.join(tffDir, "journal");
+  const journalRepository = new JsonlJournalAdapter(journalPath);
+  return {
+    db: adapter,
+    projectStore: adapter,
+    milestoneStore: adapter,
+    sliceStore: adapter,
+    taskStore: adapter,
+    dependencyStore: adapter,
+    sessionStore: adapter,
+    reviewStore: adapter,
+    journalRepository,
     close: () => adapter.close(),
     checkpoint: () => adapter.checkpoint()
   };
 }
 function createClosableStateStores(dbPath) {
-  const resolvedPath = dbPath ?? import_node_path5.default.join(process.cwd(), ".tff", "state.db");
-  checkBranchAlignment(import_node_path5.default.dirname(resolvedPath));
+  const resolvedPath = dbPath ?? import_node_path6.default.join(process.cwd(), ".tff", "state.db");
+  checkBranchAlignment(import_node_path6.default.dirname(resolvedPath));
   return createClosableStateStoresUnchecked(dbPath);
 }
 
-// tools/src/infrastructure/hooks/branch-meta-stamp.ts
-var import_node_crypto2 = require("crypto");
-var import_node_fs5 = require("fs");
-var import_node_path6 = __toESM(require("path"), 1);
-var STAMP_FILE = "branch-meta.json";
-function readLocalStamp(tffDir) {
-  const stampPath = import_node_path6.default.join(tffDir, STAMP_FILE);
-  if (!(0, import_node_fs5.existsSync)(stampPath)) return null;
-  try {
-    const raw = JSON.parse((0, import_node_fs5.readFileSync)(stampPath, "utf8"));
-    return BranchMetaSchema.parse(raw);
-  } catch {
-    return null;
-  }
-}
-function writeLocalStamp(tffDir, meta3) {
-  const stampPath = import_node_path6.default.join(tffDir, STAMP_FILE);
-  const stamp = BranchMetaSchema.parse({ ...meta3, restoredAt: (/* @__PURE__ */ new Date()).toISOString() });
-  (0, import_node_fs5.writeFileSync)(stampPath, JSON.stringify(stamp, null, 2));
-}
-function writeSyntheticStamp(tffDir, codeBranch) {
-  const stamp = BranchMetaSchema.parse({
-    stateId: (0, import_node_crypto2.randomUUID)(),
-    codeBranch,
-    parentStateBranch: null,
-    createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-    restoredAt: (/* @__PURE__ */ new Date()).toISOString()
-  });
-  (0, import_node_fs5.writeFileSync)(import_node_path6.default.join(tffDir, STAMP_FILE), JSON.stringify(stamp, null, 2));
-}
-
 // tools/src/cli/with-branch-guard.ts
-async function handleMismatch(error48) {
-  const cwd = process.cwd();
-  const tffDir = import_node_path7.default.join(cwd, ".tff");
-  const gitOps = new GitCliAdapter(cwd);
-  const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
-  const result = await restoreBranchUseCase({ codeBranch: error48.currentBranch, targetDir: cwd }, { stateBranch });
-  if (isOk(result) && result.data !== null) {
-    const rootMetaPath = import_node_path7.default.join(cwd, "branch-meta.json");
-    try {
-      if ((0, import_node_fs6.existsSync)(rootMetaPath)) {
-        const raw = JSON.parse((0, import_node_fs6.readFileSync)(rootMetaPath, "utf8"));
-        const meta3 = BranchMetaSchema.parse(raw);
-        writeLocalStamp(tffDir, {
-          stateId: meta3.stateId,
-          codeBranch: error48.currentBranch,
-          parentStateBranch: meta3.parentStateBranch,
-          createdAt: meta3.createdAt
-        });
-      } else {
-        writeSyntheticStamp(tffDir, error48.currentBranch);
-      }
-    } catch {
-      writeSyntheticStamp(tffDir, error48.currentBranch);
-    }
-    return true;
-  }
-  writeSyntheticStamp(tffDir, error48.currentBranch);
-  console.warn(`[tff] restore failed for branch "${error48.currentBranch}", using existing state`);
-  return false;
-}
 async function withBranchGuard(fn, opts) {
-  try {
-    const stores = createStateStores(opts?.dbPath);
-    return await fn(stores);
-  } catch (e) {
-    if (!(e instanceof BranchMismatchError)) throw e;
-    await handleMismatch(e);
-    const stores = createStateStoresUnchecked(opts?.dbPath);
-    return await fn(stores);
-  }
+  const stores = createStateStores(opts?.dbPath);
+  return await fn(stores);
 }
 async function withClosableBranchGuard(fn, opts) {
-  try {
-    const stores = createClosableStateStores(opts?.dbPath);
-    return await fn(stores);
-  } catch (e) {
-    if (!(e instanceof BranchMismatchError)) throw e;
-    await handleMismatch(e);
-    const stores = createClosableStateStoresUnchecked(opts?.dbPath);
-    return await fn(stores);
-  }
+  const stores = createClosableStateStores(opts?.dbPath);
+  return await fn(stores);
 }
 
 // tools/src/cli/commands/claim-check-stale.cmd.ts
@@ -18536,11 +18633,47 @@ var depAddCmd = async (args) => {
 // tools/src/cli/commands/hook-post-checkout.cmd.ts
 var import_node_fs7 = require("fs");
 var import_node_path8 = __toESM(require("path"), 1);
+
+// tools/src/application/state-branch/restore-branch.ts
+var restoreBranchUseCase = async (input, deps) => deps.stateBranch.restore(input.codeBranch, input.targetDir);
+
+// tools/src/cli/commands/hook-post-checkout.cmd.ts
 init_result();
+
+// tools/src/infrastructure/hooks/branch-meta-stamp.ts
+var import_node_crypto2 = require("crypto");
+var import_node_fs6 = require("fs");
+var import_node_path7 = __toESM(require("path"), 1);
+var STAMP_FILE = "branch-meta.json";
+function readLocalStamp(tffDir) {
+  const stampPath = import_node_path7.default.join(tffDir, STAMP_FILE);
+  if (!(0, import_node_fs6.existsSync)(stampPath)) return null;
+  try {
+    const raw = JSON.parse((0, import_node_fs6.readFileSync)(stampPath, "utf8"));
+    return BranchMetaSchema.parse(raw);
+  } catch {
+    return null;
+  }
+}
+function writeLocalStamp(tffDir, meta3) {
+  const stampPath = import_node_path7.default.join(tffDir, STAMP_FILE);
+  const stamp = BranchMetaSchema.parse({ ...meta3, restoredAt: (/* @__PURE__ */ new Date()).toISOString() });
+  (0, import_node_fs6.writeFileSync)(stampPath, JSON.stringify(stamp, null, 2));
+}
+function writeSyntheticStamp(tffDir, codeBranch) {
+  const stamp = BranchMetaSchema.parse({
+    stateId: (0, import_node_crypto2.randomUUID)(),
+    codeBranch,
+    parentStateBranch: null,
+    createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+    restoredAt: (/* @__PURE__ */ new Date()).toISOString()
+  });
+  (0, import_node_fs6.writeFileSync)(import_node_path7.default.join(tffDir, STAMP_FILE), JSON.stringify(stamp, null, 2));
+}
 
 // tools/src/infrastructure/locking/tff-lock.ts
 var import_proper_lockfile = __toESM(require_proper_lockfile(), 1);
-async function acquireRestoreLock(targetPath, timeoutMs = 5e3) {
+async function acquireLock(targetPath, timeoutMs) {
   try {
     const release = await import_proper_lockfile.default.lock(targetPath, {
       retries: { retries: Math.ceil(timeoutMs / 200), factor: 1, minTimeout: 200 },
@@ -18550,6 +18683,12 @@ async function acquireRestoreLock(targetPath, timeoutMs = 5e3) {
   } catch {
     return null;
   }
+}
+async function acquireRestoreLock(targetPath, timeoutMs = 5e3) {
+  return acquireLock(targetPath, timeoutMs);
+}
+async function acquireSyncLock(targetPath, timeoutMs = 5e3) {
+  return acquireLock(targetPath, timeoutMs);
 }
 
 // tools/src/cli/commands/hook-post-checkout.cmd.ts
@@ -18772,20 +18911,20 @@ var JsonlStoreAdapter = class {
   async readCandidates() {
     return this.readJsonl(this.candidatesPath);
   }
-  async readJsonl(path10) {
+  async readJsonl(path11) {
     try {
-      const content = await (0, import_promises2.readFile)(path10, "utf-8");
+      const content = await (0, import_promises2.readFile)(path11, "utf-8");
       const lines = content.trim().split("\n").filter((l) => l.length > 0);
       return Ok(lines.map((l) => JSON.parse(l)));
     } catch {
       return Ok([]);
     }
   }
-  async writeJsonl(path10, items) {
-    await (0, import_promises2.mkdir)((0, import_node_path9.join)(path10, ".."), { recursive: true });
+  async writeJsonl(path11, items) {
+    await (0, import_promises2.mkdir)((0, import_node_path9.join)(path11, ".."), { recursive: true });
     const content = `${items.map((i) => JSON.stringify(i)).join("\n")}
 `;
-    await (0, import_promises2.writeFile)(path10, content);
+    await (0, import_promises2.writeFile)(path11, content);
     return Ok(void 0);
   }
 };
@@ -19659,8 +19798,144 @@ var sliceTransitionCmd = async (args) => {
   });
 };
 
+// tools/src/cli/commands/state-repair.cmd.ts
+var import_node_fs10 = require("fs");
+var import_node_path11 = __toESM(require("path"), 1);
+init_result();
+var stateRepairCmd = async (args) => {
+  const [codeBranch] = args;
+  if (!codeBranch) {
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: state:repair <branch>" }
+    });
+  }
+  const cwd = process.cwd();
+  const tffDir = import_node_path11.default.join(cwd, ".tff");
+  try {
+    const gitOps = new GitCliAdapter(cwd);
+    const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+    const stamp = readLocalStamp(tffDir);
+    if (stamp && stamp.codeBranch === codeBranch) {
+      return JSON.stringify({
+        ok: true,
+        data: { action: "skipped", reason: "Stamp already matches target branch" }
+      });
+    }
+    const existsResult = await stateBranch.exists(codeBranch);
+    if (!isOk(existsResult) || !existsResult.data) {
+      await gitOps.fetchBranch(`tff-state/${codeBranch}`).catch(() => void 0);
+      const existsAfterFetch = await stateBranch.exists(codeBranch);
+      if (!isOk(existsAfterFetch) || !existsAfterFetch.data) {
+        return JSON.stringify({
+          ok: false,
+          error: {
+            code: "STATE_BRANCH_NOT_FOUND",
+            message: `No state branch found for "${codeBranch}"`
+          }
+        });
+      }
+    }
+    const result = await restoreBranchUseCase({ codeBranch, targetDir: cwd }, { stateBranch });
+    if (!isOk(result)) {
+      writeSyntheticStamp(tffDir, codeBranch);
+      return JSON.stringify({
+        ok: true,
+        data: {
+          action: "synthetic",
+          reason: `Restore failed: ${result.error.code} - ${result.error.message}`
+        }
+      });
+    }
+    if (result.data === null) {
+      writeSyntheticStamp(tffDir, codeBranch);
+      return JSON.stringify({
+        ok: true,
+        data: { action: "synthetic", reason: "Restore returned null (no state to restore)" }
+      });
+    }
+    const rootMetaPath = import_node_path11.default.join(cwd, "branch-meta.json");
+    try {
+      if ((0, import_node_fs10.existsSync)(rootMetaPath)) {
+        const raw = JSON.parse((0, import_node_fs10.readFileSync)(rootMetaPath, "utf8"));
+        const meta3 = BranchMetaSchema.parse(raw);
+        writeLocalStamp(tffDir, {
+          stateId: meta3.stateId,
+          codeBranch,
+          parentStateBranch: meta3.parentStateBranch,
+          createdAt: meta3.createdAt
+        });
+      } else {
+        writeSyntheticStamp(tffDir, codeBranch);
+        return JSON.stringify({
+          ok: true,
+          data: {
+            action: "synthetic",
+            reason: "Restored but no root branch-meta.json found"
+          }
+        });
+      }
+    } catch {
+      writeSyntheticStamp(tffDir, codeBranch);
+      return JSON.stringify({
+        ok: true,
+        data: {
+          action: "synthetic",
+          reason: "Restored but failed to read root branch-meta.json"
+        }
+      });
+    }
+    return JSON.stringify({
+      ok: true,
+      data: {
+        action: "restored",
+        filesRestored: result.data.filesRestored
+      }
+    });
+  } catch (e) {
+    return JSON.stringify({
+      ok: false,
+      error: { code: "REPAIR_FAILED", message: String(e) }
+    });
+  }
+};
+
 // tools/src/cli/commands/sync-branch.cmd.ts
 init_result();
+
+// tools/src/cli/with-sync-lock.ts
+var import_node_path12 = __toESM(require("path"), 1);
+function resolveLockPath(dbPath) {
+  return dbPath ?? import_node_path12.default.join(process.cwd(), ".tff", "state.db");
+}
+async function withSyncLock(fn, opts) {
+  const lockPath = resolveLockPath(opts?.dbPath);
+  const release = await acquireSyncLock(lockPath, 5e3);
+  if (release === null) {
+    return { ok: true, data: { action: "skipped", reason: "Lock held by another process" } };
+  }
+  try {
+    const stores = createStateStores(opts?.dbPath);
+    return await fn(stores);
+  } finally {
+    await release();
+  }
+}
+async function withClosableSyncLock(fn, opts) {
+  const lockPath = resolveLockPath(opts?.dbPath);
+  const release = await acquireSyncLock(lockPath, 5e3);
+  if (release === null) {
+    return { ok: true, data: { action: "skipped", reason: "Lock held by another process" } };
+  }
+  try {
+    const stores = createClosableStateStores(opts?.dbPath);
+    return await fn(stores);
+  } finally {
+    await release();
+  }
+}
+
+// tools/src/cli/commands/sync-branch.cmd.ts
 var syncBranchCmd = async (args) => {
   const [codeBranch, message] = args;
   if (!codeBranch)
@@ -19668,21 +19943,25 @@ var syncBranchCmd = async (args) => {
       ok: false,
       error: { code: "INVALID_ARGS", message: "Usage: sync:branch <code-branch> [message]" }
     });
-  return withClosableBranchGuard(async (stores) => {
-    const gitOps = new GitCliAdapter(process.cwd());
-    const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
-    try {
-      stores.checkpoint();
-      const result = await syncBranchUseCase(
-        { codeBranch, message: message ?? `sync: ${codeBranch}` },
-        { stateBranch }
-      );
-      if (isOk(result)) return JSON.stringify({ ok: true, data: { synced: codeBranch } });
-      return JSON.stringify({ ok: false, error: result.error });
-    } finally {
-      stores.close();
-    }
+  const result = await withClosableSyncLock(async () => {
+    return withClosableBranchGuard(async (stores) => {
+      const gitOps = new GitCliAdapter(process.cwd());
+      const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
+      try {
+        stores.checkpoint();
+        const result2 = await syncBranchUseCase(
+          { codeBranch, message: message ?? `sync: ${codeBranch}` },
+          { stateBranch }
+        );
+        if (isOk(result2)) return JSON.stringify({ ok: true, data: { synced: codeBranch } });
+        return JSON.stringify({ ok: false, error: result2.error });
+      } finally {
+        stores.close();
+      }
+    });
   });
+  if (typeof result === "string") return result;
+  return JSON.stringify(result);
 };
 
 // tools/src/cli/commands/sync-state.cmd.ts
@@ -19696,12 +19975,16 @@ var syncStateCmd = async (args) => {
       error: { code: "INVALID_ARGS", message: "Usage: sync:state <milestone-id>" }
     });
   }
-  return withBranchGuard(async ({ milestoneStore, sliceStore, taskStore }) => {
-    const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-    const result = await generateState({ milestoneId }, { milestoneStore, sliceStore, taskStore, artifactStore });
-    if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-    return JSON.stringify({ ok: false, error: result.error });
+  const result = await withSyncLock(async () => {
+    return withBranchGuard(async ({ milestoneStore, sliceStore, taskStore }) => {
+      const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+      const result2 = await generateState({ milestoneId }, { milestoneStore, sliceStore, taskStore, artifactStore });
+      if (isOk(result2)) return JSON.stringify({ ok: true, data: null });
+      return JSON.stringify({ ok: false, error: result2.error });
+    });
   });
+  if (typeof result === "string") return result;
+  return JSON.stringify(result);
 };
 
 // tools/src/cli/commands/task-claim.cmd.ts
@@ -19713,7 +19996,22 @@ var taskClaimCmd = async (args) => {
       ok: false,
       error: { code: "INVALID_ARGS", message: "Usage: task:claim <task-id> [claimed-by]" }
     });
-  return withBranchGuard(async ({ taskStore }) => {
+  return withBranchGuard(async ({ taskStore, journalRepository }) => {
+    const taskResult = taskStore.getTask(taskId);
+    if (!isOk(taskResult)) return JSON.stringify({ ok: false, error: taskResult.error });
+    if (!taskResult.data) return JSON.stringify({ ok: false, error: { code: "TASK_NOT_FOUND", message: `Task ${taskId} not found` } });
+    const task = taskResult.data;
+    const waveIndex = task.wave ?? 0;
+    const agentIdentity = claimedBy ?? "anonymous";
+    const journalResult = journalRepository.append(task.sliceId, {
+      type: "task-started",
+      sliceId: task.sliceId,
+      taskId,
+      waveIndex,
+      agentIdentity,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+    if (!isOk(journalResult)) return JSON.stringify({ ok: false, error: journalResult.error });
     const result = taskStore.claimTask(taskId, claimedBy);
     if (isOk(result)) return JSON.stringify({ ok: true, data: null });
     return JSON.stringify({ ok: false, error: result.error });
@@ -19734,7 +20032,22 @@ var taskCloseCmd = async (args) => {
   if (reasonIdx !== -1 && rest[reasonIdx + 1]) {
     reason = rest.slice(reasonIdx + 1).join(" ");
   }
-  return withBranchGuard(async ({ taskStore }) => {
+  return withBranchGuard(async ({ taskStore, journalRepository }) => {
+    const taskResult = taskStore.getTask(taskId);
+    if (!isOk(taskResult)) return JSON.stringify({ ok: false, error: taskResult.error });
+    if (!taskResult.data) return JSON.stringify({ ok: false, error: { code: "TASK_NOT_FOUND", message: `Task ${taskId} not found` } });
+    const task = taskResult.data;
+    const waveIndex = task.wave ?? 0;
+    const durationMs = 0;
+    const journalResult = journalRepository.append(task.sliceId, {
+      type: "task-completed",
+      sliceId: task.sliceId,
+      taskId,
+      waveIndex,
+      durationMs,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    });
+    if (!isOk(journalResult)) return JSON.stringify({ ok: false, error: journalResult.error });
     const result = taskStore.closeTask(taskId, reason);
     if (isOk(result)) return JSON.stringify({ ok: true, data: null });
     return JSON.stringify({ ok: false, error: result.error });
@@ -19876,7 +20189,7 @@ var workflowShouldAutoCmd = async (args) => {
 };
 
 // tools/src/cli/commands/worktree-create.cmd.ts
-var import_node_path11 = __toESM(require("path"), 1);
+var import_node_path13 = __toESM(require("path"), 1);
 
 // tools/src/application/worktree/create-worktree.ts
 init_result();
@@ -19900,8 +20213,8 @@ var worktreeCreateCmd = async (args) => {
   const startPoint = milestoneMatch ? `milestone/${milestoneMatch[1]}` : void 0;
   const result = await createWorktreeUseCase({ sliceId, startPoint }, { gitOps });
   if (isOk(result)) {
-    const tffDir = import_node_path11.default.join(cwd, ".tff");
-    const worktreeAbsPath = import_node_path11.default.resolve(cwd, result.data.worktreePath);
+    const tffDir = import_node_path13.default.join(cwd, ".tff");
+    const worktreeAbsPath = import_node_path13.default.resolve(cwd, result.data.worktreePath);
     copyTffToWorktree(tffDir, worktreeAbsPath);
     return JSON.stringify({ ok: true, data: result.data });
   }
@@ -19958,6 +20271,8 @@ var commands = {
   "dep:add": depAddCmd,
   "waves:detect": wavesDetectCmd,
   "sync:state": syncStateCmd,
+  "sync:branch": syncBranchCmd,
+  "state:repair": stateRepairCmd,
   "worktree:create": worktreeCreateCmd,
   "worktree:delete": worktreeDeleteCmd,
   "worktree:list": worktreeListCmd,
@@ -19975,7 +20290,6 @@ var commands = {
   "workflow:next": workflowNextCmd,
   "workflow:should-auto": workflowShouldAutoCmd,
   "claim:check-stale": claimCheckStaleCmd,
-  "sync:branch": syncBranchCmd,
   "restore:branch": restoreBranchCmd,
   "branch:merge": branchMergeCmd,
   "hook:post-checkout": hookPostCheckoutCmd
