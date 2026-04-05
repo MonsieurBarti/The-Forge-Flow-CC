@@ -5,7 +5,7 @@ allowed-tools: Read, Bash, Grep, Glob
 ---
 
 <objective>
-Verify all slices are closed, requirements are covered, and the milestone is ready to ship.
+Verify all slices are closed, requirements are covered, ∧ the milestone is ready to ship.
 </objective>
 
 <execution_context>

@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion, Bash(plann
 ---
 
 <objective>
-Create a new skill file from pattern evidence or a user description. Draft reviewed via plannotator before deployment.
+Create a new skill file from pattern evidence ∨ a user description. Draft reviewed via plannotator before deployment.
 </objective>
 
 <context>

@@ -5,7 +5,7 @@ allowed-tools: Read, Bash, Grep, Glob
 ---
 
 <objective>
-Check plannotator, state consistency, and worktree integrity.
+Check plannotator, state consistency, ∧ worktree integrity.
 </objective>
 
 <execution_context>

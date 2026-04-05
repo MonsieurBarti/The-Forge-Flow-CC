@@ -9,14 +9,14 @@ milestone audit passed
 1. CLOSE SLICES: `tff-tools slice:list` → filter for non-closed slices under this milestone:
    - verify its PR is merged: `gh pr list --state merged --head slice/<slice-id>`
    - if merged → `tff-tools slice:close <id> --reason "Slice PR merged"`
-   - if not merged → warn user, block milestone completion
+   - if ¬ merged → warn user, block milestone completion
 2. PR: `gh pr create` milestone/<milestone> → main — **ALWAYS show PR URL**
 3. SPAWN tff-security-auditor: milestone-level review
 4. HANDLE: approved → inform ready to merge | changes → fix ∧ re-review
 
 **tff NEVER merges — only creates PR.**
 
-5. MERGE GATE: AskUserQuestion → "PR merged" or "PR needs changes"
+5. MERGE GATE: AskUserQuestion → "PR merged" ∨ "PR needs changes"
    - merged → continue to step 6
    - needs changes → fix → push → go back to step 5
 6. CLOSE MILESTONE + CLEANUP:

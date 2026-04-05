@@ -13,10 +13,10 @@ description: "Use when making git commits. Conventional commit format and rules.
 
 | Type | When |
 |---|---|
-| `feat` | New feature or capability |
+| `feat` | New feature ∨ capability |
 | `fix` | Bug fix |
 | `refactor` | Code restructuring without behavior change |
-| `test` | Adding or updating tests |
+| `test` | Adding ∨ updating tests |
 | `docs` | Documentation changes |
 | `chore` | Tooling, config, dependencies |
 
@@ -41,4 +41,4 @@ chore: update dependencies
 
 ## Enforcement
 
-Enforced by lefthook `commit-msg` hook. ¬bypass with --no-verify.
+Enforced by lefthook `commit-msg` hook. ¬bypass with --¬-verify.

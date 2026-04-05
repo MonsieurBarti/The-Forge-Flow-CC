@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent
 ---
 
 <objective>
-Execute all tasks in the slice using wave-based parallel execution with TDD enforcement.
+Execute all tasks ∈ the slice using wave-based parallel execution with TDD enforcement.
 </objective>
 
 <context>

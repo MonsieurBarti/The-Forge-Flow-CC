@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion
 ---
 
 <objective>
-Initialize a new tff project. Guide the user through defining their project vision, requirements, and first milestone.
+Initialize a new tff project. Guide the user through defining their project vision, requirements, ∧ first milestone.
 </objective>
 
 <context>

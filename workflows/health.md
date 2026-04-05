@@ -4,14 +4,14 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Steps
 1. CHECK plannotator installed
-2. CHECK state consistency: `tff-tools slice:list` and `tff-tools milestone:list`
+2. CHECK state consistency: `tff-tools slice:list` ∧ `tff-tools milestone:list`
    - verify markdown ↔ SQLite mismatches, orphans, worktree integrity
 3. CHECK stale-vs-PR status:
-   - for each non-closed slice from `tff-tools slice:list`:
+   - ∀ non-closed slice from `tff-tools slice:list`:
      - extract slice ID (e.g. `M02-S01`)
-     - `gh pr list --state merged --head slice/<slice-id> --json number` → if merged PR exists but slice is open:
+     - `gh pr list --state merged --head slice/<slice-id> --json number` → if merged PR ∃ but slice is open:
        - report as stale: `⚠ <slice-id>: slice is <status> but PR #<N> is merged`
-   - for each non-closed milestone from `tff-tools milestone:list`:
+   - ∀ non-closed milestone from `tff-tools milestone:list`:
      - if all child slices are closed → report: `⚠ <milestone>: all slices closed but milestone is still open`
 4. CHECK stale claims: `tff-tools claim:check-stale`
    - Parse result → if `count > 0`:

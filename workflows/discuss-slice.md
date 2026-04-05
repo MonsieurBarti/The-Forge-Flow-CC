@@ -34,10 +34,10 @@ LOAD @skills/brainstorming/SKILL.md
 ### 3. Write Spec
 WRITE `.tff/milestones/<milestone>/slices/<id>/SPEC.md` w/ validated design
 
-### 4. Challenge Spec (F-full only — determined in step 8)
+### 4. Challenge Spec (F-full only — determined ∈ step 8)
 LOAD @skills/stress-testing-specs/SKILL.md → SPAWN subagent: {spec_content}
 REVISE → critical issues → loop Phase 3 (max 2) ∨ escalate
-APPROVE → note concerns in spec, proceed
+APPROVE → note concerns ∈ spec, proceed
 
 ### 5. Validate AC
 LOAD @skills/acceptance-criteria-validation/SKILL.md → SPAWN subagent: {spec_content, acceptance_criteria}
@@ -59,16 +59,16 @@ Based on what was learned during discuss, build `ComplexitySignals`:
 RUN: `tff-tools slice:classify '<signals-json>'`
 
 PRESENT result to user via AskUserQuestion:
-- "Based on scope: **<tier>** (S / F-lite / F-full). Confirm or override?"
+- "Based on scope: **<tier>** (S / F-lite / F-full). Confirm ∨ override?"
 - Options: S (single-file fix), F-lite (standard), F-full (complex)
 
 User confirms → `tff-tools slice:classify` records tier.
-If F-full confirmed → run step 4 (Challenge Spec) now if not already done.
+If F-full confirmed → run step 4 (Challenge Spec) now if ¬ already done.
 
 ### 9. Transition
 tier = S → `tff-tools slice:transition <id> planning` (skip research)
 tier = F-lite ∨ F-full → `tff-tools slice:transition <id> researching`
-CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
+CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ abort
   IF `ok` = true ∧ `warnings.length > 0`:
     ∀ warning ∈ warnings: display `⚠ <warning>` to user
 
@@ -77,6 +77,6 @@ After completing all steps above:
 1. READ `.tff/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
    - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
-   - Human gates (plan approval, spec approval, completion): pause and ask
+   - Human gates (plan approval, spec approval, completion): pause ∧ ask
 3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
 4. Log: `[tff] <slice-id>: discussing → researching|planning`

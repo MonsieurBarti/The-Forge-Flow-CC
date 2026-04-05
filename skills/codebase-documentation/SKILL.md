@@ -37,9 +37,9 @@ description: "Use when generating or maintaining codebase documentation. Divio f
 
 ## Anti-Patterns
 
-- Speculating about code behavior (¬verified -> say "not found")
+- Speculating about code behavior (¬verified -> say "¬ found")
 - Including implementation details that change frequently
-- Duplicating what's in README.md
+- Duplicating what's ∈ README.md
 - Writing prose when tables suffice
 
 ## Rules

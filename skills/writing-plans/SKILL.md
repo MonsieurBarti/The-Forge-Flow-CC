@@ -11,7 +11,7 @@ description: "Use when creating implementation plans. Break specs into bite-size
 
 ## HARD-GATE
 
-∀ task in plan: must have exact file path, complete code snippet, exact command to run, expected output. "Assumes engineer has zero context and questionable taste."
+∀ task ∈ plan: must have exact file path, complete code snippet, exact command to run, expected output. "Assumes engineer has zero context ∧ questionable taste."
 
 ## Task Granularity
 
@@ -49,7 +49,7 @@ Each task = 1 action (2-5 minutes):
 
 ## Wave Assignment Rules
 
-- Tasks with no dependencies -> Wave 0
+- Tasks with ¬ dependencies -> Wave 0
 - Tasks depending on Wave N -> Wave N+1
 - Tasks within same wave -> parallelizable
 - Detect via topological sort
@@ -65,7 +65,7 @@ Each task = 1 action (2-5 minutes):
 
 - Tasks without exact file paths ("update the relevant files")
 - Tasks without expected output ("tests should pass")
-- Combining test-writing and implementation in same task
+- Combining test-writing ∧ implementation ∈ same task
 - Plans that skip TDD steps (standard/complex tasks require them)
 - Wave assignments that don't match dependency graph
 

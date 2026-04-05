@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent, AskUserQuestion, Bash
 ---
 
 <objective>
-Fast-track a small change through plan, execute, ship with S-tier defaults. Skips brainstorming, research, and TDD.
+Fast-track a small change through plan, execute, ship with S-tier defaults. Skips brainstorming, research, ∧ TDD.
 </objective>
 
 <context>

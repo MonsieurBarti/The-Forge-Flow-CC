@@ -2,10 +2,10 @@
 
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
-Detect skill co-activation clusters → propose bundles or agents.
+Detect skill co-activation clusters → propose bundles ∨ agents.
 
 ## Prerequisites
-observation enabled ∧ multiple skills in `skills/`
+observation enabled ∧ multiple skills ∈ `skills/`
 
 ## Settings
 Read `.tff/settings.yaml` → `auto-learn.clustering`.

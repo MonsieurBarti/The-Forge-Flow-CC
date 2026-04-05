@@ -88,15 +88,15 @@ Special formats:
 
 - State is managed by SQLite via tff-tools
 - STATE.md is always derived, never hand-edited
-- tff-tools is the single source of truth for status and dependencies
+- tff-tools is the single source of truth for status ∧ dependencies
 
 ## Complexity Tiers
 
-Classification happens at end of discuss. User confirms the tier — no auto-routing.
+Classification happens at end of discuss. User confirms the tier — ¬ auto-routing.
 
-**S-tier criteria (ALL must be true):** ≤1 file affected, 0 new files, no investigation needed, no architecture impact, 0 unknowns.
+**S-tier criteria (ALL must be true):** ≤1 file affected, 0 new files, ¬ investigation needed, ¬ architecture impact, 0 unknowns.
 
-All tiers follow the same pipeline. Tiers control **depth**, not which steps run.
+All tiers follow the same pipeline. Tiers control **depth**, ¬ which steps run.
 
 | Tier | Discuss | Research | Plan Review | Execute | Code Review |
 |---|---|---|---|---|---|
@@ -112,7 +112,7 @@ Use `tff-tools task:claim <id>` to atomically claim a task (sets assignee + stat
 
 ### Adding Dependencies
 
-Use `tff-tools dep:add <from-id> <to-id>` to create blocking dependencies between slices or tasks.
+Use `tff-tools dep:add <from-id> <to-id>` to create blocking dependencies between slices ∨ tasks.
 This means `<from-id>` depends on (is blocked by) `<to-id>`.
 
 ### Finding Ready Work
@@ -142,4 +142,4 @@ tff-tools task:close <task-id> --reason "Completed"
 
 All tooling calls: `node <plugin-path>/tools/dist/tff-tools.cjs <command> [args]`
 
-Returns JSON: `{ "ok": true, "data": ... }` or `{ "ok": false, "error": { "code": "...", "message": "..." } }`
+Returns JSON: `{ "ok": true, "data": ... }` ∨ `{ "ok": false, "error": { "code": "...", "message": "..." } }`

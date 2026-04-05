@@ -10,7 +10,7 @@ Remove a slice that hasn't been started yet. Only future slices (discussing stat
 </objective>
 
 <execution_context>
-1. Verify slice is in discussing status (not started)
-2. Remove slice and update dependencies
+1. Verify slice is ∈ discussing status (¬ started)
+2. Remove slice ∧ update dependencies
 3. Renumber subsequent slices
 </execution_context>

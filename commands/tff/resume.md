@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent
 ---
 
 <objective>
-Load the checkpoint and resume execution from where it left off.
+Load the checkpoint ∧ resume execution from where it left off.
 </objective>
 
 <execution_context>

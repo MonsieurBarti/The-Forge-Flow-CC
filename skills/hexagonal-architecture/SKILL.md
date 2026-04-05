@@ -41,7 +41,7 @@ The innermost ring. Pure business logic, zero framework dependencies.
 ### Entities
 
 - Private constructor + public static factory returning `Result<Entity, DomainError>`
-- Identity by unique ID (not by attribute equality)
+- Identity by unique ID (¬ by attribute equality)
 - Encapsulate behavior — ¬anemic (methods mutate internal state, enforce invariants)
 
 ```typescript
@@ -90,7 +90,7 @@ export class User {
 ### Value Objects
 
 - Immutable (all fields `readonly`)
-- Equality by value (not reference)
+- Equality by value (¬ reference)
 - No identity — interchangeable if same value
 - Validated at construction via Zod
 
@@ -122,7 +122,7 @@ export class Email {
 ### Domain Events
 
 - Record what happened (past tense): `UserCreatedEvent`, `OrderPlacedEvent`
-- Immutable data carriers — no behavior
+- Immutable data carriers — ¬ behavior
 - Named `{entity}-{action}.event.ts`
 
 ```typescript
@@ -138,12 +138,12 @@ export class UserCreatedEvent {
 ### Domain Services
 
 - Business logic that doesn't belong to a single entity
-- Stateless — operates on entities/VOs passed in
+- Stateless — operates on entities/VOs passed ∈
 - Still pure domain: ¬I/O, ¬framework imports
 
 ### Repository Ports (Interfaces)
 
-- Defined in domain — implemented in infrastructure
+- Defined ∈ domain — implemented ∈ infrastructure
 - Named `{aggregate}.repository.ts`
 - Return `Result<T, DomainError>` for fallible ops
 
@@ -164,7 +164,7 @@ Orchestrates domain objects. One service per use case. Depends on domain only.
 
 ### Commands (Write Side)
 
-- State-changing operations → return `Result<void, AppError>` or `Result<Id, AppError>`
+- State-changing operations → return `Result<void, AppError>` ∨ `Result<Id, AppError>`
 - Named `{action}-{entity}.command.ts`
 - Each command has exactly one handler
 
@@ -218,7 +218,7 @@ export class GetUserHandler {
 ### Application Services
 
 - Thin orchestration layer: validate input → call domain → persist via port
-- One public method per use case (or one handler class)
+- One public method per use case (∨ one handler class)
 - ¬business logic here — delegate to domain entities/services
 - Inject ports (interfaces), ¬concrete implementations
 
@@ -226,13 +226,13 @@ export class GetUserHandler {
 
 ## 4. Infrastructure Layer
 
-Implements domain ports with real I/O. Depends on Domain and Application.
+Implements domain ports with real I/O. Depends on Domain ∧ Application.
 
 ### Repository Adapters
 
 - Implement domain port interfaces
 - Handle serialization, DB queries, external API calls
-- Named `sql-{aggregate}.repository.ts` or `in-memory-{aggregate}.repository.ts`
+- Named `sql-{aggregate}.repository.ts` ∨ `in-memory-{aggregate}.repository.ts`
 
 ```typescript
 // infrastructure/repositories/sql-user.repository.ts
@@ -266,7 +266,7 @@ export class SqlUserRepository implements UserRepository {
 
 ### Data Mappers
 
-- Convert between DB rows and domain entities
+- Convert between DB rows ∧ domain entities
 - Named `sql-{aggregate}.mapper.ts`
 - Use `Entity.reconstitute()` to rebuild domain objects from persistence
 
@@ -336,7 +336,7 @@ export type CreateUserResponse = z.infer<typeof CreateUserResponseSchema>;
 
 ### Exception Filters / Error Mapping
 
-- Map `Result` errors to HTTP status codes (or CLI exit codes)
+- Map `Result` errors to HTTP status codes (∨ CLI exit codes)
 - Centralized error handling at the presentation boundary
 - ¬leak domain error internals to consumers
 
@@ -361,9 +361,9 @@ container.bind<UserRepository>(USER_REPOSITORY).to(SqlUserRepository);
 - ¬`class-validator`, ¬`class-transformer` — Zod is the single validation library
 - Zod schemas = single source of truth for shape + constraints
 - `z.infer<typeof Schema>` for all derived types
-- Domain validation: in entity factories + value objects
-- Presentation validation: in DTOs at the boundary
-- ∀ schemas export both the schema and the inferred type
+- Domain validation: ∈ entity factories + value objects
+- Presentation validation: ∈ DTOs at the boundary
+- ∀ schemas export both the schema ∧ the inferred type
 
 ---
 
@@ -371,12 +371,12 @@ container.bind<UserRepository>(USER_REPOSITORY).to(SqlUserRepository);
 
 | Rule | Rationale |
 |------|-----------|
-| ¬`as` casting | Breaks type safety; use type guards or Zod `.parse()` |
-| ¬`any` | Use `unknown` + narrowing or generics |
+| ¬`as` casting | Breaks type safety; use type guards ∨ Zod `.parse()` |
+| ¬`any` | Use `unknown` + narrowing ∨ generics |
 | Symbol-based DI tokens | Type-safe injection, ¬magic strings |
 | Generics for collections | `Repository<T>` base when patterns repeat |
 | Type guards for narrowing | `function isUser(x: unknown): x is User` |
-| Discriminated unions | `{ type: 'success'; data: T } \| { type: 'error'; error: E }` |
+| Discriminated ∪s | `{ type: 'success'; data: T } \| { type: 'error'; error: E }` |
 
 ```typescript
 // Type guard example
@@ -399,15 +399,15 @@ interface ReadRepository<T, Id = string> {
 
 | Layer          | Test Type   | Dependencies                    |
 |----------------|-------------|----------------------------------|
-| Domain         | Unit        | None (pure logic)               |
-| Application    | Unit        | In-memory adapters for ports    |
+| Domain         | Unit        | ∅ (pure logic)               |
+| Application    | Unit        | ∈-memory adapters for ports    |
 | Infrastructure | Integration | Real DB / external services     |
-| Presentation   | E2E         | Full stack or supertest         |
+| Presentation   | E2E         | Full stack ∨ supertest         |
 
-### In-Memory Adapters
+### ∈-Memory Adapters
 
 - Implement the **real** port interface — ¬mocks, ¬stubs
-- Deterministic, fast, no I/O
+- Deterministic, fast, ¬ I/O
 - Named `in-memory-{aggregate}.repository.ts`
 
 ```typescript
@@ -443,12 +443,12 @@ export class InMemoryUserRepository implements UserRepository {
 
 | Anti-Pattern | Why It's Wrong | Fix |
 |---|---|---|
-| **Anemic domain model** | Entities are data bags; logic lives in services | Move behavior into entity methods |
-| **Domain imports infra** | Violates dependency rule | Use ports (interfaces in domain) |
+| **Anemic domain model** | Entities are data bags; logic lives ∈ services | Move behavior into entity methods |
+| **Domain imports infra** | Violates dependency rule | Use ports (interfaces ∈ domain) |
 | **App layer imports `node:fs`** | Direct I/O coupling | Define a port, inject adapter |
-| **`throw` in domain** | Untyped, unchecked error flow | Return `Result<T, E>` |
-| **Over-abstraction** | Port for every trivial operation | Abstract only at architectural boundaries |
-| **Framework coupling in domain** | Domain tied to NestJS/Express decorators | Domain must be framework-agnostic |
+| **`throw` ∈ domain** | Untyped, unchecked error flow | Return `Result<T, E>` |
+| **Over-abstraction** | Port ∀ trivial operation | Abstract only at architectural boundaries |
+| **Framework coupling ∈ domain** | Domain tied to NestJS/Express decorators | Domain must be framework-agnostic |
 | **Massive inheritance** | Fragile base class, tight coupling | Prefer composition over inheritance |
 | **String-based DI tokens** | No type safety, collision risk | Use `Symbol('TokenName')` |
 | **Leaking domain types to API** | Coupling consumers to internals | Map to DTOs at presentation boundary |
@@ -465,7 +465,7 @@ export class InMemoryUserRepository implements UserRepository {
 | Domain Event | `{entity}-{action}.event.ts` | `user-created.event.ts` |
 | Repository Port | `{aggregate}.repository.ts` | `user.repository.ts` |
 | Repository Adapter | `sql-{aggregate}.repository.ts` | `sql-user.repository.ts` |
-| In-Memory Adapter | `in-memory-{aggregate}.repository.ts` | `in-memory-user.repository.ts` |
+| ∈-Memory Adapter | `in-memory-{aggregate}.repository.ts` | `in-memory-user.repository.ts` |
 | Data Mapper | `sql-{aggregate}.mapper.ts` | `sql-user.mapper.ts` |
 | Command | `{action}-{entity}.command.ts` | `create-user.command.ts` |
 | Command Handler | `{action}-{entity}.handler.ts` | `create-user.handler.ts` |

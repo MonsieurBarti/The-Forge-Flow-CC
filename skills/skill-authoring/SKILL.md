@@ -7,11 +7,11 @@ description: "Use when creating, refining, or composing skills. Evidence-driven 
 
 ## When to Use
 
-∀ skill creation and refinement tasks.
+∀ skill creation ∧ refinement tasks.
 
 ## HARD-GATE
 
-∀ draft: evidence table required. ¬speculate — no evidence -> no skill.
+∀ draft: evidence table required. ¬speculate — ¬ evidence -> ¬ skill.
 
 ## Skill File Format
 
@@ -33,12 +33,12 @@ description: "Use when <trigger>"
 
 ## Compression Rules (roxabi)
 
-Use formal notation: ∀ (all), ∃ (exists), ∈ (member), ∧ (and), ∨ (or), ¬ (not), -> (then)
+Use formal notation: ∀ (all), ∃ (∃), ∈ (member), ∧ (∧), ∨ (∨), ¬ (¬), -> (then)
 Target: ~62% token reduction vs prose
 
 ## Evidence Requirements
 
-- Pattern must appear in >=3 sessions before becoming a skill
+- Pattern must appear ∈ >=3 sessions before becoming a skill
 - Frequency + breadth + recency + consistency scoring
 - Max 20% drift per refinement, 60% cumulative
 - 7-day cooldown between refinements
@@ -62,7 +62,7 @@ Target: ~62% token reduction vs prose
 3. Save -> `drafts directory`
 
 ### Compose Bundle
-1. Read each skill in cluster
+1. Read each skill ∈ cluster
 2. co_activation >= 70% -> bundle (meta-skill with @skills/ refs)
 3. Save -> `drafts directory`
 
@@ -81,7 +81,7 @@ Run skill validation before deployment.
 
 - ∀ draft: evidence_table required
 - max_drift <= 20% for refinements
-- Name: 1-64 chars, `[a-z0-9-]`, no leading/trailing/consecutive hyphens
+- Name: 1-64 chars, `[a-z0-9-]`, ¬ leading/trailing/consecutive hyphens
 - Description: starts with "Use when"
 - ¬dangerous_cmds (rm -rf, sudo, curl|bash)
 - Drafts saved to drafts directory — user reviews before promotion

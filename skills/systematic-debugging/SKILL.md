@@ -31,25 +31,25 @@ description: "Use when debugging. 4-phase investigation, root cause, minimal fix
 
 ### Phase 4: Implementation
 - ROOT CAUSE: identify the minimal change that resolves it
-- Defense-in-depth: multiple overlapping protections, ¬single-point fixes
+- Defense-∈-depth: multiple overlapping protections, ¬single-point fixes
 - Condition-based waiting: replace sleep/polling with event-driven checks
 
 ## Escalation
 
 - Stall after 3 failed hypotheses -> escalate to user with findings
-- Blocked agents create follow-up task and notify lead — work never silently stalls
+- Blocked agents create follow-up task ∧ notify lead — work never silently stalls
 
 ## Anti-Patterns
 
 - Guessing without verifying hypothesis
-- Fixing symptoms (null check "fixes" crash -> ask WHY value was null)
+- Fixing symptoms (∅ check "fixes" crash -> ask WHY value was ∅)
 - sleep/polling instead of condition-based waiting
-- Single-point fix without defense-in-depth
+- Single-point fix without defense-∈-depth
 
 ## Rules
 
 - Fix root cause, ¬symptom
 - Minimize blast radius — fix touches as little code as possible
-- Document root cause in commit message (¬just "fix bug")
-- ∀ investigation step: show user what you found and why it matters
+- Document root cause ∈ commit message (¬just "fix bug")
+- ∀ investigation step: show user what you found ∧ why it matters
 - 3+ fixes attempted -> architectural problem, question the design

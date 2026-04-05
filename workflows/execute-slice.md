@@ -7,23 +7,23 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 **Autonomy**: check `.tff/settings.yaml` → `autonomy.mode` before pausing.
 
 ## Prerequisites
-status = executing ∧ worktree exists at `.tff/worktrees/<slice-id>/`
+status = executing ∧ worktree ∃ at `.tff/worktrees/<slice-id>/`
 
 ## Pre-Execute Validation
 1. READ slice classification from SPEC.md → tier ∈ {S-tier, F-lite, F-full}
 2. IF tier ∈ {F-lite, F-full}:
-   - CHECK: `tff-tools worktree:list` → verify worktree exists for `<slice-id>`
+   - CHECK: `tff-tools worktree:list` → verify worktree ∃ for `<slice-id>`
    - IF worktree MISSING:
-     ❌ BLOCKED: Worktree required for F-lite/F-full execution but not found.
+     ❌ BLOCKED: Worktree required for F-lite/F-full execution but ¬ found.
      Recovery: `tff-tools worktree:create <slice-id>`
      → STOP execution. Do NOT proceed.
 3. IF tier = S-tier:
-   - Worktree not required. Proceed in main repo.
+   - Worktree ¬ required. Proceed ∈ main repo.
 
 ## Steps
 1. RESUME: `tff-tools checkpoint:load <slice-id>` →
    - Skip fully completed waves (wave ∈ completedWaves)
-   - For current wave: skip tasks already in completedTasks, retry remaining
+   - For current wave: skip tasks already ∈ completedTasks, retry remaining
 2. DETECT: `tff-tools waves:detect '<tasks-json>'`
 3. EXECUTE:
 ```
@@ -43,13 +43,13 @@ status = executing ∧ worktree exists at `.tff/worktrees/<slice-id>/`
 ```
 ## Domain Routing
 Read task file paths from PLAN.md to decide which domain skills to load:
-- File paths in `src/domain/`, `src/application/`, `src/infrastructure/` → LOAD @skills/hexagonal-architecture/SKILL.md
-- File paths in `src/cli/`, `src/presentation/` → no extra domain skill
+- File paths ∈ `src/domain/`, `src/application/`, `src/infrastructure/` → LOAD @skills/hexagonal-architecture/SKILL.md
+- File paths ∈ `src/cli/`, `src/presentation/` → ¬ extra domain skill
 - CI/CD files (`.github/`, `Dockerfile`, etc.) → LOAD @skills/commit-conventions/SKILL.md only
 - All tasks: LOAD @skills/executing-plans/SKILL.md + @skills/commit-conventions/SKILL.md as baseline
 
 4. TRANSITION: `tff-tools slice:transition <id> verifying`
-   CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
+   CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ abort
   IF `ok` = true ∧ `warnings.length > 0`:
     ∀ warning ∈ warnings: display `⚠ <warning>` to user
 5. NEXT: @references/next-steps.md
@@ -59,6 +59,6 @@ After completing all steps above:
 1. READ `.tff/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
    - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
-   - Human gates (plan approval, spec approval, completion): pause and ask
+   - Human gates (plan approval, spec approval, completion): pause ∧ ask
 3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
 4. Log: `[tff] <slice-id>: executing → verifying`

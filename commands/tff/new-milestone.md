@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion
 ---
 
 <objective>
-Create a new milestone with slices and dependencies.
+Create a new milestone with slices ∧ dependencies.
 </objective>
 
 <context>

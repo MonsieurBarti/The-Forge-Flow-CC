@@ -5,7 +5,7 @@ allowed-tools: Read, Bash, Grep, Glob
 ---
 
 <objective>
-Regenerate STATE.md and display the project status dashboard.
+Regenerate STATE.md ∧ display the project status dashboard.
 </objective>
 
 <context>

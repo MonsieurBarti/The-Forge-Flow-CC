@@ -1,6 +1,6 @@
 # Release Checklist
 
-Before every release, complete ALL steps in order.
+Before every release, complete ALL steps ∈ order.
 
 ## Pre-Release
 
@@ -11,16 +11,16 @@ Before every release, complete ALL steps in order.
 
 ## Version Bumps
 
-- [ ] Bump version in `package.json` (`"version": "X.Y.Z"`)
-- [ ] Bump version in `.claude-plugin/plugin.json` (`"version": "X.Y.Z"`)
-- [ ] Bump version in `plugin/.claude-plugin/plugin.json` (`"version": "X.Y.Z"`)
+- [ ] Bump version ∈ `package.json` (`"version": "X.Y.Z"`)
+- [ ] Bump version ∈ `.claude-plugin/plugin.json` (`"version": "X.Y.Z"`)
+- [ ] Bump version ∈ `plugin/.claude-plugin/plugin.json` (`"version": "X.Y.Z"`)
 - [ ] Update `tools/src/cli/index.ts` version string if hardcoded
 
 ## Documentation
 
 - [ ] Update `CHANGELOG.md` with release notes (what was added/changed/fixed)
-- [ ] Update `README.md` if commands, agents, or skills changed
-- [ ] Verify command counts in README match actual files
+- [ ] Update `README.md` if commands, agents, ∨ skills changed
+- [ ] Verify command counts ∈ README match actual files
 
 ## Commit + Tag
 
@@ -39,5 +39,5 @@ Before every release, complete ALL steps in order.
 
 - **tff NEVER merges.** Only create PRs. User merges via GitHub.
 - **PR links are ALWAYS shown** to the user when created.
-- **CHANGELOG is ALWAYS updated** for each release — no exceptions.
-- **docs/ is NOT tracked** in git — internal design docs stay local.
+- **CHANGELOG is ALWAYS updated** ∀ release — ¬ exceptions.
+- **docs/ is NOT tracked** ∈ git — internal design docs stay local.

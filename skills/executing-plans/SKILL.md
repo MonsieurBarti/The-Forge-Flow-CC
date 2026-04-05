@@ -43,15 +43,15 @@ Fresh subagent per task. Controller curates exactly what context is needed.
 ## Domain Routing
 
 Read task file paths from PLAN.md to decide which domain skills to load:
-- File paths in domain/application/infrastructure layers (e.g., `src/domain/`, `src/application/`, `src/infrastructure/`) -> LOAD architecture skills
-- File paths in presentation/CLI layers (e.g., `src/cli/`, `src/presentation/`) -> no extra domain skill
+- File paths ∈ domain/application/infrastructure layers (e.g., `src/domain/`, `src/application/`, `src/infrastructure/`) -> LOAD architecture skills
+- File paths ∈ presentation/CLI layers (e.g., `src/cli/`, `src/presentation/`) -> ¬ extra domain skill
 - CI/CD files (`.github/`, `Dockerfile`, etc.) -> LOAD commit-conventions only
 - All tasks: LOAD executing-plans + commit-conventions as baseline
 
 ## Checkpoint Rules
 
 - Save after EACH task (¬just per-wave)
-- On failure: resume retries only incomplete tasks in current wave
+- On failure: resume retries only incomplete tasks ∈ current wave
 - On crash: resume from checkpoint, skips completed tasks
 
 ## Escalation

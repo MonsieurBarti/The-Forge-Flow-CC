@@ -5,7 +5,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion, Bash(plann
 ---
 
 <objective>
-Analyze skill co-activation patterns and propose skill bundles or specialized agent definitions.
+Analyze skill co-activation patterns ∧ propose skill bundles ∨ specialized agent definitions.
 </objective>
 
 <context>
