@@ -1,12 +1,11 @@
+import type { SliceStatus } from '../../domain/value-objects/slice-status.js';
 import {
-  WorkflowOperation,
-  OperationPrerequisite,
+  generateRecoveryHint,
   getPrerequisite,
   isValidOperation,
-  generateRecoveryHint,
-  getRequiredStatus,
+  type OperationPrerequisite,
+  type WorkflowOperation,
 } from './operation-prerequisites.js';
-import { SliceStatus } from '../../domain/value-objects/slice-status.js';
 
 /**
  * Result of validating whether an operation can be executed
@@ -60,15 +59,10 @@ export class OperationBlockedError extends Error {
  * @returns ValidationResult with allowed flag and recovery information
  * @throws Error if operation is not a valid workflow operation
  */
-export function validateOperation(
-  operation: string,
-  currentStatus: SliceStatus
-): ValidationResult {
+export function validateOperation(operation: string, currentStatus: SliceStatus): ValidationResult {
   // Validate operation name
   if (!isValidOperation(operation)) {
-    throw new Error(
-      `Unknown operation: ${operation}. Supported operations: ${getSupportedOperations().join(', ')}`
-    );
+    throw new Error(`Unknown operation: ${operation}. Supported operations: ${getSupportedOperations().join(', ')}`);
   }
 
   const prerequisite = getPrerequisite(operation);
@@ -83,9 +77,7 @@ export function validateOperation(
     : `Cannot ${operation} from ${currentStatus}.`;
 
   // Generate recovery hint for blocked operations
-  const recoveryHint = allowed
-    ? ''
-    : generateRecoveryHint(operation, currentStatus, requiredStatus);
+  const recoveryHint = allowed ? '' : generateRecoveryHint(operation, currentStatus, requiredStatus);
 
   return {
     allowed,
@@ -104,10 +96,7 @@ export function validateOperation(
  * @param currentStatus - The current status of the slice
  * @throws OperationBlockedError if the operation is not allowed
  */
-export function assertOperationAllowed(
-  operation: string,
-  currentStatus: SliceStatus
-): void {
+export function assertOperationAllowed(operation: string, currentStatus: SliceStatus): void {
   const result = validateOperation(operation, currentStatus);
 
   if (!result.allowed) {
@@ -122,10 +111,7 @@ export function assertOperationAllowed(
  * @param currentStatus - The current status of the slice
  * @returns true if the operation is allowed, false otherwise
  */
-export function isOperationAllowed(
-  operation: string,
-  currentStatus: SliceStatus
-): boolean {
+export function isOperationAllowed(operation: string, currentStatus: SliceStatus): boolean {
   try {
     const result = validateOperation(operation, currentStatus);
     return result.allowed;

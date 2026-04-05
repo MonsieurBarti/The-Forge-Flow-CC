@@ -1,12 +1,12 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import * as fs from 'node:fs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as yaml from 'yaml';
+import type { Task } from '../../domain/entities/task.js';
 import type { SessionStore } from '../../domain/ports/session-store.port.js';
 import type { TaskStore } from '../../domain/ports/task-store.port.js';
+import { Err, Ok } from '../../domain/result.js';
 import type { WorkflowSession } from '../../domain/value-objects/workflow-session.js';
-import type { Task } from '../../domain/entities/task.js';
-import { detectDirectEdit, type DetectDirectEditDeps } from './detect-direct-edit.js';
-import { Ok, Err } from '../../domain/result.js';
-import * as fs from 'node:fs';
-import * as yaml from 'yaml';
+import { type DetectDirectEditDeps, detectDirectEdit } from './detect-direct-edit.js';
 
 // Mock fs module using factory pattern
 vi.mock('node:fs', () => {
@@ -34,7 +34,7 @@ describe('detect-direct-edit', () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    
+
     // Default: project initialized, guards enabled
     mockedExistsSync.mockImplementation((p: string) => {
       if (typeof p === 'string' && p.includes('.tff')) return true;
@@ -220,7 +220,7 @@ describe('detect-direct-edit', () => {
           code: 'BRANCH_MISMATCH',
           message: 'Branch mismatch detected',
           details: {},
-        })
+        }),
       );
 
       const result = detectDirectEdit(deps);
@@ -322,7 +322,7 @@ describe('detect-direct-edit', () => {
           code: 'STORE_ERROR',
           message: 'Database error',
           details: {},
-        })
+        }),
       );
 
       const result = detectDirectEdit(deps);

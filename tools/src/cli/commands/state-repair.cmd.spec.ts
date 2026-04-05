@@ -1,11 +1,11 @@
 import { execSync } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { stateRepairCmd } from './state-repair.cmd.js';
 import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
+import { stateRepairCmd } from './state-repair.cmd.js';
 
 describe('state:repair', () => {
   let tmpDir: string;
@@ -32,7 +32,7 @@ describe('state:repair', () => {
     // Create adapters
     gitOps = new GitCliAdapter(tmpDir);
     stateBranch = new GitStateBranchAdapter(gitOps, tmpDir);
-    
+
     // Create root state branch (required before forking)
     const rootResult = await stateBranch.createRoot();
     expect(rootResult.ok).toBe(true);
@@ -72,11 +72,11 @@ describe('state:repair', () => {
 
     // Create a feature branch with state
     execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
-    
+
     // Fork state branch
     const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
     expect(forkResult.ok).toBe(true);
-    
+
     // Switch back to main
     execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
 
@@ -102,21 +102,21 @@ describe('state:repair', () => {
 
     // Create a feature branch with state
     execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
-    
+
     // Create valid SQLite content in state.db and sync it
     const validDbPath = path.join(tffDir, 'state.db');
     // Write a minimal valid SQLite header
     writeFileSync(validDbPath, 'SQLite format 3\u0000');
     execSync('git add .tff/state.db', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git commit -m "Add valid state.db"', { cwd: tmpDir, stdio: 'ignore', env });
-    
+
     // Fork state branch and sync
     const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
     expect(forkResult.ok).toBe(true);
-    
+
     const syncResult = await stateBranch.sync(codeBranch, 'Sync test state');
     expect(syncResult.ok).toBe(true);
-    
+
     // Switch back to main and re-corrupt the state.db
     execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
     // Ensure .tff directory exists (it may not exist on main)
@@ -138,13 +138,20 @@ describe('state:repair', () => {
 
     // Create stamp that already matches
     const stampPath = path.join(tffDir, 'branch-meta.json');
-    writeFileSync(stampPath, JSON.stringify({
-      stateId: '550e8400-e29b-41d4-a716-446655440000',
-      codeBranch,
-      parentStateBranch: null,
-      createdAt: new Date().toISOString(),
-      restoredAt: new Date().toISOString(),
-    }, null, 2));
+    writeFileSync(
+      stampPath,
+      JSON.stringify(
+        {
+          stateId: '550e8400-e29b-41d4-a716-446655440000',
+          codeBranch,
+          parentStateBranch: null,
+          createdAt: new Date().toISOString(),
+          restoredAt: new Date().toISOString(),
+        },
+        null,
+        2,
+      ),
+    );
 
     // Run repair with explicit T1 tier
     const result = JSON.parse(await stateRepairCmd([codeBranch, '--tier', 'T1']));
@@ -155,17 +162,17 @@ describe('state:repair', () => {
 
   it('accepts explicit T2 tier argument (case insensitive)', async () => {
     const codeBranch = 'feature-branch';
-    
+
     // Create a corrupted state.db to simulate T2 corruption
     writeFileSync(path.join(tffDir, 'state.db'), 'corrupted data');
 
     // Create a feature branch with state
     execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
-    
+
     // Fork state branch
     const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
     expect(forkResult.ok).toBe(true);
-    
+
     // Switch back to main
     execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
 
@@ -181,7 +188,7 @@ describe('state:repair', () => {
 
   it('T2 returns STATE_BRANCH_NOT_FOUND when state branch does not exist', async () => {
     const codeBranch = 'nonexistent-branch';
-    
+
     // Create corrupted state.db to trigger T2 path
     writeFileSync(path.join(tffDir, 'state.db'), 'corrupted data');
 
@@ -193,14 +200,14 @@ describe('state:repair', () => {
 
   it('accepts explicit T3 tier argument', async () => {
     const codeBranch = 'feature-branch';
-    
+
     // Create a feature branch with state
     execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
-    
+
     // Fork state branch
     const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
     expect(forkResult.ok).toBe(true);
-    
+
     // Switch back to main
     execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
 
@@ -219,18 +226,18 @@ describe('state:repair', () => {
 
   it('includes tier in T1 repair results', async () => {
     const codeBranch = 'feature-branch';
-    
+
     // Create a valid state.db to trigger T1 detection
     writeFileSync(path.join(tffDir, 'state.db'), 'SQLite format 3\u0000');
     mkdirSync(path.join(tmpDir, '.gsd', 'milestones'), { recursive: true });
 
     // Create a feature branch with state
     execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
-    
+
     // Fork state branch
     const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
     expect(forkResult.ok).toBe(true);
-    
+
     // Switch back to main
     execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
 
@@ -252,16 +259,23 @@ describe('state:repair', () => {
 
   it('skips when stamp already matches target branch', async () => {
     const codeBranch = 'feature-branch';
-    
+
     // Create stamp that already matches (no need for state branch to exist)
     const stampPath = path.join(tffDir, 'branch-meta.json');
-    writeFileSync(stampPath, JSON.stringify({
-      stateId: '550e8400-e29b-41d4-a716-446655440000',
-      codeBranch,
-      parentStateBranch: null,
-      createdAt: new Date().toISOString(),
-      restoredAt: new Date().toISOString(),
-    }, null, 2));
+    writeFileSync(
+      stampPath,
+      JSON.stringify(
+        {
+          stateId: '550e8400-e29b-41d4-a716-446655440000',
+          codeBranch,
+          parentStateBranch: null,
+          createdAt: new Date().toISOString(),
+          restoredAt: new Date().toISOString(),
+        },
+        null,
+        2,
+      ),
+    );
 
     const result = JSON.parse(await stateRepairCmd([codeBranch]));
     // Skip if lock held by concurrent test
@@ -278,7 +292,7 @@ describe('state:repair', () => {
 
     // Create a feature branch with content using direct git commands
     execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
-    
+
     // Create .tff content to sync
     writeFileSync(path.join(tffDir, 'state.db'), 'test db content');
     execSync('git add .tff/state.db', { cwd: tmpDir, stdio: 'ignore', env });
@@ -287,7 +301,7 @@ describe('state:repair', () => {
     // Fork state branch from root, then sync
     const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
     expect(forkResult.ok).toBe(true);
-    
+
     const syncResult = await stateBranch.sync(codeBranch, 'Sync test state');
     expect(syncResult.ok).toBe(true);
 
@@ -316,7 +330,7 @@ describe('state:repair', () => {
   it('writes synthetic stamp when restore returns null', async () => {
     const codeBranch = 'empty-branch';
 
-    // Create a feature branch 
+    // Create a feature branch
     execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git commit --allow-empty -m "Empty commit"', { cwd: tmpDir, stdio: 'ignore', env });
 
@@ -353,7 +367,7 @@ describe('state:repair', () => {
     writeFileSync(path.join(tffDir, 'test.txt'), 'test content');
     execSync('git add .tff/test.txt', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git commit -m "Add test content"', { cwd: tmpDir, stdio: 'ignore', env });
-    
+
     // Create state branch manually (orphan branch with minimal content but broken structure)
     execSync(`git checkout --orphan tff-state/${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
     // Add a file but not proper .tff/ structure
@@ -381,14 +395,14 @@ describe('state:repair', () => {
     // Create a state branch first
     const codeBranch = 'broken-branch';
     execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
-    
+
     // Fork state branch first
     const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
     expect(forkResult.ok).toBe(true);
-    
+
     // Switch back to main
     execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
-    
+
     // Now corrupt the .tff directory to make operations fail
     rmSync(tffDir, { recursive: true, force: true });
     writeFileSync(tffDir, 'not a directory'); // Make it a file

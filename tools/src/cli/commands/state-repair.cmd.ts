@@ -1,17 +1,17 @@
-import { existsSync, readFileSync, accessSync, constants, readdirSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { resumeSlice } from '../../application/resume/resume-slice.js';
 import { restoreBranchUseCase } from '../../application/state-branch/restore-branch.js';
 import { generateState } from '../../application/sync/generate-state.js';
-import { isOk, Ok, Err } from '../../domain/result.js';
+import { isOk } from '../../domain/result.js';
 import { BranchMetaSchema } from '../../domain/value-objects/branch-meta.js';
+import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
-import { readLocalStamp, writeLocalStamp, writeSyntheticStamp } from '../../infrastructure/hooks/branch-meta-stamp.js';
-import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { JsonlJournalAdapter } from '../../infrastructure/adapters/journal/jsonl-journal.adapter.js';
-import { resumeSlice } from '../../application/resume/resume-slice.js';
-import { acquireSyncLock } from '../../infrastructure/locking/tff-lock.js';
 import { createStateStoresUnchecked } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
+import { readLocalStamp, writeLocalStamp, writeSyntheticStamp } from '../../infrastructure/hooks/branch-meta-stamp.js';
+import { acquireSyncLock } from '../../infrastructure/locking/tff-lock.js';
 
 export type RecoveryTier = 'T1' | 'T2' | 'T3';
 
@@ -39,7 +39,7 @@ function parseArgs(args: string[]): ParsedArgs | { error: { code: string; messag
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    
+
     if (arg === '--tier') {
       const nextArg = args[i + 1];
       if (!nextArg || nextArg.startsWith('--')) {
@@ -117,20 +117,20 @@ function findSlicesWithCheckpoints(cwd: string): string[] {
   }
 
   const sliceIds: string[] = [];
-  
+
   // Walk through milestones/*/slices/* to find CHECKPOINT.md files
   try {
     const milestoneEntries = readdirSync(slicesDir, { withFileTypes: true });
     for (const milestoneEntry of milestoneEntries) {
       if (!milestoneEntry.isDirectory()) continue;
-      
+
       const slicesPath = path.join(slicesDir, milestoneEntry.name, 'slices');
       if (!existsSync(slicesPath)) continue;
-      
+
       const sliceEntries = readdirSync(slicesPath, { withFileTypes: true });
       for (const sliceEntry of sliceEntries) {
         if (!sliceEntry.isDirectory()) continue;
-        
+
         const checkpointPath = path.join(slicesPath, sliceEntry.name, 'CHECKPOINT.md');
         if (existsSync(checkpointPath)) {
           // Slice ID format: MXXX-SXX
@@ -141,7 +141,7 @@ function findSlicesWithCheckpoints(cwd: string): string[] {
   } catch {
     // Ignore errors during directory walking
   }
-  
+
   return sliceIds;
 }
 
@@ -149,9 +149,11 @@ function findSlicesWithCheckpoints(cwd: string): string[] {
  * Validate restored state by checking journal/checkpoint consistency
  * for all slices with checkpoints. Returns true if all are consistent.
  */
-async function validateRestoredState(cwd: string): Promise<{ consistent: boolean; checkedSlices: number; errors: string[] }> {
+async function validateRestoredState(
+  cwd: string,
+): Promise<{ consistent: boolean; checkedSlices: number; errors: string[] }> {
   const sliceIds = findSlicesWithCheckpoints(cwd);
-  
+
   if (sliceIds.length === 0) {
     // No slices with checkpoints - check if state.db is at least valid
     const stateDbPath = path.join(cwd, '.tff', 'state.db');
@@ -160,7 +162,7 @@ async function validateRestoredState(cwd: string): Promise<{ consistent: boolean
 
   const artifactStore = new MarkdownArtifactAdapter(cwd);
   const journal = new JsonlJournalAdapter(path.join(cwd, '.tff', 'journal'));
-  
+
   const errors: string[] = [];
   let consistentCount = 0;
 
@@ -179,10 +181,10 @@ async function validateRestoredState(cwd: string): Promise<{ consistent: boolean
     }
   }
 
-  return { 
-    consistent: errors.length === 0 && consistentCount === sliceIds.length, 
+  return {
+    consistent: errors.length === 0 && consistentCount === sliceIds.length,
     checkedSlices: sliceIds.length,
-    errors 
+    errors,
   };
 }
 
@@ -213,10 +215,10 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
   if (tier === 'T3') {
     // T3: Severe corruption - restore .tff/ from state branch + regenerate GSD files
     const startTime = Date.now();
-    
-    type T3SuccessResult = { 
-      action: 'restored' | 'synthetic'; 
-      filesRestored?: number; 
+
+    type T3SuccessResult = {
+      action: 'restored' | 'synthetic';
+      filesRestored?: number;
       reason?: string;
       tier: 'T3';
       durationMs: number;
@@ -228,21 +230,21 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
 
     // Derive or validate milestoneId for regeneration
     let targetMilestoneId = milestoneIdArg;
-    
+
     // For T3, .tff may not exist yet - create directory temporarily for lock
     const stateDbPath = path.join(cwd, '.tff', 'state.db');
     if (!existsSync(tffDir)) {
       mkdirSync(tffDir, { recursive: true });
     }
-    
+
     // Acquire lock with longer timeout for tests
     const release = await acquireSyncLock(stateDbPath, 10000);
-    
+
     if (release === null) {
       return JSON.stringify({
         ok: true,
-        data: { 
-          action: 'skipped', 
+        data: {
+          action: 'skipped',
           reason: 'Lock held by another process',
           tier: 'T3',
         },
@@ -258,15 +260,15 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       if (!isOk(existsResult) || !existsResult.data) {
         // Try to fetch from remote
         await gitOps.fetchBranch(`tff-state/${codeBranch}`).catch(() => undefined);
-        
+
         // Re-check after fetch
         const existsAfterFetch = await stateBranch.exists(codeBranch);
         if (!isOk(existsAfterFetch) || !existsAfterFetch.data) {
           return JSON.stringify({
             ok: false,
-            error: { 
-              code: 'STATE_BRANCH_NOT_FOUND', 
-              message: `No state branch found for "${codeBranch}"` 
+            error: {
+              code: 'STATE_BRANCH_NOT_FOUND',
+              message: `No state branch found for "${codeBranch}"`,
             },
           });
         }
@@ -278,9 +280,9 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       if (!isOk(restoreResult)) {
         return JSON.stringify({
           ok: false,
-          error: { 
-            code: 'RESTORE_FAILED', 
-            message: `Restore failed: ${restoreResult.error.code} - ${restoreResult.error.message}` 
+          error: {
+            code: 'RESTORE_FAILED',
+            message: `Restore failed: ${restoreResult.error.code} - ${restoreResult.error.message}`,
           },
         });
       }
@@ -298,8 +300,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
         writeSyntheticStamp(tffDir, codeBranch);
         return JSON.stringify({
           ok: true,
-          data: { 
-            action: 'synthetic', 
+          data: {
+            action: 'synthetic',
             reason: 'Restore returned null (no state to restore), cannot regenerate GSD files',
             tier: 'T3',
             durationMs,
@@ -347,9 +349,10 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
         }
         return JSON.stringify({
           ok: false,
-          error: { 
-            code: 'MILESTONE_NOT_FOUND', 
-            message: 'T3 recovery requires a milestone to regenerate STATE.md. Use --milestone M001 or ensure database has milestones.' 
+          error: {
+            code: 'MILESTONE_NOT_FOUND',
+            message:
+              'T3 recovery requires a milestone to regenerate STATE.md. Use --milestone M001 or ensure database has milestones.',
           },
         });
       }
@@ -358,7 +361,7 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       const artifactStore = new MarkdownArtifactAdapter(cwd);
       const generateResult = await generateState(
         { milestoneId: targetMilestoneId },
-        { milestoneStore, sliceStore, taskStore, artifactStore }
+        { milestoneStore, sliceStore, taskStore, artifactStore },
       );
 
       if (!isOk(generateResult)) {
@@ -368,15 +371,15 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
         }
         return JSON.stringify({
           ok: false,
-          error: { 
-            code: 'REGENERATION_FAILED', 
-            message: `Failed to regenerate STATE.md: ${generateResult.error.message}` 
+          error: {
+            code: 'REGENERATION_FAILED',
+            message: `Failed to regenerate STATE.md: ${generateResult.error.message}`,
           },
         });
       }
 
       const durationMs = Date.now() - startTime;
-      
+
       // Warn if timing exceeded 5s per R001
       if (durationMs > 5000) {
         console.warn(`[state:repair] T3 recovery took ${durationMs}ms, exceeding 5s target`);
@@ -384,8 +387,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
 
       return JSON.stringify({
         ok: true,
-        data: { 
-          action: 'restored', 
+        data: {
+          action: 'restored',
           filesRestored: restoreResult.data.filesRestored,
           tier: 'T3',
           durationMs,
@@ -402,26 +405,26 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
   if (tier === 'T2') {
     // T2: Moderate corruption - restore .tff/ from state branch with validation
     const startTime = Date.now();
-    
-    type T2SuccessResult = { 
-      action: 'restored' | 'synthetic'; 
-      filesRestored?: number; 
+
+    type T2SuccessResult = {
+      action: 'restored' | 'synthetic';
+      filesRestored?: number;
       reason?: string;
       tier: 'T2';
       durationMs: number;
       consistent: boolean;
     };
     type T2ErrorResult = { code: string; message: string };
-    
+
     // Acquire lock directly (bypass withSyncLock which creates state stores with branch alignment checks)
     const stateDbPath = path.join(cwd, '.tff', 'state.db');
     const release = await acquireSyncLock(stateDbPath, 10000);
-    
+
     if (release === null) {
       return JSON.stringify({
         ok: true,
-        data: { 
-          action: 'skipped', 
+        data: {
+          action: 'skipped',
           reason: 'Lock held by another process',
           tier: 'T2',
         },
@@ -437,15 +440,15 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       if (!isOk(existsResult) || !existsResult.data) {
         // Try to fetch from remote
         await gitOps.fetchBranch(`tff-state/${codeBranch}`).catch(() => undefined);
-        
+
         // Re-check after fetch
         const existsAfterFetch = await stateBranch.exists(codeBranch);
         if (!isOk(existsAfterFetch) || !existsAfterFetch.data) {
           return JSON.stringify({
             ok: false,
-            error: { 
-              code: 'STATE_BRANCH_NOT_FOUND', 
-              message: `No state branch found for "${codeBranch}"` 
+            error: {
+              code: 'STATE_BRANCH_NOT_FOUND',
+              message: `No state branch found for "${codeBranch}"`,
             },
           });
         }
@@ -457,9 +460,9 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       if (!isOk(restoreResult)) {
         return JSON.stringify({
           ok: false,
-          error: { 
-            code: 'RESTORE_FAILED', 
-            message: `Restore failed: ${restoreResult.error.code} - ${restoreResult.error.message}` 
+          error: {
+            code: 'RESTORE_FAILED',
+            message: `Restore failed: ${restoreResult.error.code} - ${restoreResult.error.message}`,
           },
         });
       }
@@ -468,7 +471,7 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       const validation = await validateRestoredState(cwd);
 
       const durationMs = Date.now() - startTime;
-      
+
       // Warn if timing exceeded 5s per R001
       if (durationMs > 5000) {
         console.warn(`[state:repair] T2 recovery took ${durationMs}ms, exceeding 5s target`);
@@ -479,8 +482,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
         writeSyntheticStamp(tffDir, codeBranch);
         return JSON.stringify({
           ok: true,
-          data: { 
-            action: 'synthetic', 
+          data: {
+            action: 'synthetic',
             reason: 'Restore returned null (no state to restore)',
             tier: 'T2',
             durationMs,
@@ -510,8 +513,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
 
       return JSON.stringify({
         ok: true,
-        data: { 
-          action: 'restored', 
+        data: {
+          action: 'restored',
           filesRestored: restoreResult.data.filesRestored,
           tier: 'T2',
           durationMs,
@@ -542,15 +545,15 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
     if (!isOk(existsResult) || !existsResult.data) {
       // Try to fetch from remote
       await gitOps.fetchBranch(`tff-state/${codeBranch}`).catch(() => undefined);
-      
+
       // Re-check after fetch
       const existsAfterFetch = await stateBranch.exists(codeBranch);
       if (!isOk(existsAfterFetch) || !existsAfterFetch.data) {
         return JSON.stringify({
           ok: false,
-          error: { 
-            code: 'STATE_BRANCH_NOT_FOUND', 
-            message: `No state branch found for "${codeBranch}"` 
+          error: {
+            code: 'STATE_BRANCH_NOT_FOUND',
+            message: `No state branch found for "${codeBranch}"`,
           },
         });
       }
@@ -564,8 +567,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       writeSyntheticStamp(tffDir, codeBranch);
       return JSON.stringify({
         ok: true,
-        data: { 
-          action: 'synthetic', 
+        data: {
+          action: 'synthetic',
           reason: `Restore failed: ${result.error.code} - ${result.error.message}`,
           tier: 'T1',
         },
@@ -597,8 +600,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
         writeSyntheticStamp(tffDir, codeBranch);
         return JSON.stringify({
           ok: true,
-          data: { 
-            action: 'synthetic', 
+          data: {
+            action: 'synthetic',
             reason: 'Restored but no root branch-meta.json found',
             tier: 'T1',
           },
@@ -608,8 +611,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       writeSyntheticStamp(tffDir, codeBranch);
       return JSON.stringify({
         ok: true,
-        data: { 
-          action: 'synthetic', 
+        data: {
+          action: 'synthetic',
           reason: 'Restored but failed to read root branch-meta.json',
           tier: 'T1',
         },
@@ -618,8 +621,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
 
     return JSON.stringify({
       ok: true,
-      data: { 
-        action: 'restored', 
+      data: {
+        action: 'restored',
         filesRestored: result.data.filesRestored,
         tier: 'T1',
       },

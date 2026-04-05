@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { sessionRemindCmd } from './session-remind.cmd.js';
-import { existsSync, readFileSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as generateReminderModule from '../../application/session/generate-reminder.js';
+import { createStateStores } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
+import { sessionRemindCmd } from './session-remind.cmd.js';
 
 vi.mock('node:fs');
 vi.mock('../../infrastructure/adapters/sqlite/create-state-stores.js');
@@ -66,7 +66,9 @@ describe('session-remind integration', () => {
       dependencyStore: { listDependencies: vi.fn().mockReturnValue([]) },
     };
     vi.mocked(createStateStores).mockReturnValue(mockStores as any);
-    vi.mocked(generateReminderModule.generateReminder).mockReturnValue('```\nM001-S01: executing | Wave 2/3 | Next: /tff:execute or /tff:pause\n```');
+    vi.mocked(generateReminderModule.generateReminder).mockReturnValue(
+      '```\nM001-S01: executing | Wave 2/3 | Next: /tff:execute or /tff:pause\n```',
+    );
 
     const result = await sessionRemindCmd([]);
     const parsed = JSON.parse(result);

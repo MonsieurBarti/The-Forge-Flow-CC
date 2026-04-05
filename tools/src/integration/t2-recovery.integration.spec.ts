@@ -1,21 +1,21 @@
+import { execSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { execSync } from 'node:child_process';
-import { projectInitCmd } from '../cli/commands/project-init.cmd.js';
-import { milestoneCreateCmd } from '../cli/commands/milestone-create.cmd.js';
-import { sliceCreateCmd } from '../cli/commands/slice-create.cmd.js';
-import { taskClaimCmd } from '../cli/commands/task-claim.cmd.js';
 import { checkpointSaveCmd } from '../cli/commands/checkpoint-save.cmd.js';
+import { milestoneCreateCmd } from '../cli/commands/milestone-create.cmd.js';
+import { projectInitCmd } from '../cli/commands/project-init.cmd.js';
+import { sliceCreateCmd } from '../cli/commands/slice-create.cmd.js';
 import { stateRepairCmd } from '../cli/commands/state-repair.cmd.js';
-import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.js';
+import { taskClaimCmd } from '../cli/commands/task-claim.cmd.js';
 import { createClosableStateStores } from '../infrastructure/adapters/sqlite/create-state-stores.js';
+import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.js';
 
 describe('T2 recovery integration', () => {
   let tmpDir: string;
   let tffDir: string;
-  let gsdDir: string;
+  let _gsdDir: string;
   let originalCwd: string;
   let env: NodeJS.ProcessEnv;
 
@@ -24,7 +24,7 @@ describe('T2 recovery integration', () => {
     tmpDir = join(os.tmpdir(), `tff-t2-recovery-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(tmpDir, { recursive: true });
     tffDir = join(tmpDir, '.tff');
-    gsdDir = join(tmpDir, '.gsd');
+    _gsdDir = join(tmpDir, '.gsd');
 
     process.chdir(tmpDir);
 
@@ -100,7 +100,7 @@ describe('T2 recovery integration', () => {
     execSync('git checkout main', { cwd: tmpDir, stdio: 'pipe', env });
 
     // Wait for any pending lock releases from setup commands
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }, 30000);
 
   afterEach(() => {
@@ -207,12 +207,8 @@ describe('T2 recovery integration', () => {
     // Check if warning was logged (timing may vary, but we verify the path exists)
     // If operation took >5s, warning should be present
     if (repairResult.data?.durationMs > 5000) {
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('T2 recovery took')
-      );
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('exceeding 5s target')
-      );
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('T2 recovery took'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('exceeding 5s target'));
     }
 
     warnSpy.mockRestore();

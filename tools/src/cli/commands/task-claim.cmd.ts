@@ -13,12 +13,13 @@ export const taskClaimCmd = async (args: string[]): Promise<string> => {
     // Read task to get wave index and sliceId for journal entry
     const taskResult = taskStore.getTask(taskId);
     if (!isOk(taskResult)) return JSON.stringify({ ok: false, error: taskResult.error });
-    if (!taskResult.data) return JSON.stringify({ ok: false, error: { code: 'TASK_NOT_FOUND', message: `Task ${taskId} not found` } });
-    
+    if (!taskResult.data)
+      return JSON.stringify({ ok: false, error: { code: 'TASK_NOT_FOUND', message: `Task ${taskId} not found` } });
+
     const task = taskResult.data;
     const waveIndex = task.wave ?? 0;
     const agentIdentity = claimedBy ?? 'anonymous';
-    
+
     // Write task-started entry to journal BEFORE claiming (fail-fast)
     const journalResult = journalRepository.append(task.sliceId, {
       type: 'task-started',
@@ -29,7 +30,7 @@ export const taskClaimCmd = async (args: string[]): Promise<string> => {
       timestamp: new Date().toISOString(),
     });
     if (!isOk(journalResult)) return JSON.stringify({ ok: false, error: journalResult.error });
-    
+
     // Proceed with existing claimTask logic
     const result = taskStore.claimTask(taskId, claimedBy);
     if (isOk(result)) return JSON.stringify({ ok: true, data: null });

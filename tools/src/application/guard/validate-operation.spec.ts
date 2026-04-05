@@ -1,13 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { SliceStatus } from '../../domain/value-objects/slice-status.js';
 import {
-  validateOperation,
   assertOperationAllowed,
-  isOperationAllowed,
   getOperationPrerequisite,
+  isOperationAllowed,
   OperationBlockedError,
-  type ValidationResult,
+  validateOperation,
 } from './validate-operation.js';
-import { SliceStatus } from '../../domain/value-objects/slice-status.js';
 
 describe('validate-operation', () => {
   describe('validateOperation', () => {
@@ -114,21 +113,15 @@ describe('validate-operation', () => {
 
     describe('error handling', () => {
       it('should throw for unknown operations', () => {
-        expect(() => validateOperation('unknown', 'discussing')).toThrow(
-          'Unknown operation: unknown'
-        );
+        expect(() => validateOperation('unknown', 'discussing')).toThrow('Unknown operation: unknown');
       });
 
       it('should throw for empty operation string', () => {
-        expect(() => validateOperation('', 'discussing')).toThrow(
-          'Unknown operation'
-        );
+        expect(() => validateOperation('', 'discussing')).toThrow('Unknown operation');
       });
 
       it('should include supported operations in error message', () => {
-        expect(() => validateOperation('invalid-op', 'discussing')).toThrow(
-          /Supported operations:/
-        );
+        expect(() => validateOperation('invalid-op', 'discussing')).toThrow(/Supported operations:/);
       });
     });
   });
@@ -139,9 +132,7 @@ describe('validate-operation', () => {
     });
 
     it('should throw OperationBlockedError when operation is blocked', () => {
-      expect(() => assertOperationAllowed('execute', 'discussing')).toThrow(
-        OperationBlockedError
-      );
+      expect(() => assertOperationAllowed('execute', 'discussing')).toThrow(OperationBlockedError);
     });
 
     it('should throw with correct error message', () => {
@@ -162,9 +153,7 @@ describe('validate-operation', () => {
     });
 
     it('should throw for unknown operations', () => {
-      expect(() => assertOperationAllowed('unknown', 'discussing')).toThrow(
-        'Unknown operation'
-      );
+      expect(() => assertOperationAllowed('unknown', 'discussing')).toThrow('Unknown operation');
     });
 
     describe('OperationBlockedError', () => {
@@ -231,9 +220,7 @@ describe('validate-operation', () => {
     });
 
     it('should throw for unknown operations', () => {
-      expect(() => getOperationPrerequisite('unknown')).toThrow(
-        'Unknown operation: unknown'
-      );
+      expect(() => getOperationPrerequisite('unknown')).toThrow('Unknown operation: unknown');
     });
   });
 

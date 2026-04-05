@@ -1,11 +1,11 @@
 import path from 'node:path';
-import { acquireSyncLock } from '../infrastructure/locking/tff-lock.js';
 import {
   type ClosableStateStores,
   createClosableStateStores,
   createStateStores,
   type StateStores,
 } from '../infrastructure/adapters/sqlite/create-state-stores.js';
+import { acquireSyncLock } from '../infrastructure/locking/tff-lock.js';
 
 export interface SyncLockResult {
   ok: true;

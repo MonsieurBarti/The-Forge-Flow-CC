@@ -49,14 +49,14 @@ function isProjectInitialized(): boolean {
 
 /**
  * Detect if the user is making a direct edit (code changes without workflow commands).
- * 
+ *
  * Checks:
  * 1. If guards are disabled → return null (no warning)
  * 2. If project not initialized → return null (no warning)
  * 3. If no active slice claimed → return warning
  * 4. If active slice but no claimed task → return warning
  * 5. If claimed task exists → return null (workflow is active)
- * 
+ *
  * @param deps - Dependencies (sessionStore, taskStore)
  * @returns DirectEditResult with warning and reason code
  */
@@ -79,7 +79,7 @@ export function detectDirectEdit(deps: DetectDirectEditDeps): DirectEditResult {
 
   // Check for active session
   const sessionResult = deps.sessionStore.getSession();
-  
+
   // Handle branch mismatch or other errors gracefully
   if (!sessionResult.ok) {
     return {
@@ -93,7 +93,7 @@ export function detectDirectEdit(deps: DetectDirectEditDeps): DirectEditResult {
   }
 
   const session = sessionResult.data;
-  
+
   // No active slice
   if (!session || !session.activeSliceId) {
     return {
@@ -108,7 +108,7 @@ export function detectDirectEdit(deps: DetectDirectEditDeps): DirectEditResult {
 
   // Check for claimed tasks in the active slice
   const tasksResult = deps.taskStore.listTasks(session.activeSliceId);
-  
+
   // Handle errors gracefully - assume no claimed tasks on error
   if (!tasksResult.ok) {
     return {
@@ -122,7 +122,7 @@ export function detectDirectEdit(deps: DetectDirectEditDeps): DirectEditResult {
   }
 
   const tasks = tasksResult.data;
-  
+
   // A task is claimed if status is 'in_progress' (which implies claimedAt is set)
   const hasClaimedTask = tasks.some((t) => t.status === 'in_progress');
 

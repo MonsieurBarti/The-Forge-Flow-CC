@@ -1,26 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type { SliceStatus } from '../../domain/value-objects/slice-status.js';
 import {
+  generateRecoveryHint,
   getPrerequisite,
+  getRequiredStatus,
   getSupportedOperations,
   isValidOperation,
-  generateRecoveryHint,
-  getRequiredStatus,
   type WorkflowOperation,
 } from './operation-prerequisites.js';
-import { SliceStatus } from '../../domain/value-objects/slice-status.js';
 
 describe('operation-prerequisites', () => {
   describe('getPrerequisite', () => {
     it('should return prerequisite for each valid operation', () => {
-      const operations: WorkflowOperation[] = [
-        'discuss',
-        'research',
-        'plan',
-        'execute',
-        'verify',
-        'ship',
-        'complete',
-      ];
+      const operations: WorkflowOperation[] = ['discuss', 'research', 'plan', 'execute', 'verify', 'ship', 'complete'];
 
       for (const op of operations) {
         const prereq = getPrerequisite(op);

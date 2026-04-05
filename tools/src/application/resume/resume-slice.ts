@@ -3,9 +3,9 @@ import { createDomainError } from '../../domain/errors/domain-error.js';
 import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
 import type { JournalRepository } from '../../domain/ports/journal-repository.port.js';
 import { Err, isOk, type Result } from '../../domain/result.js';
-import type { CheckpointData } from '../checkpoint/save-checkpoint.js';
 import { loadCheckpoint } from '../checkpoint/load-checkpoint.js';
-import { replayJournal, type ReplayResult } from '../journal/replay-journal.js';
+import type { CheckpointData } from '../checkpoint/save-checkpoint.js';
+import { replayJournal } from '../journal/replay-journal.js';
 
 export interface ResumeInput {
   sliceId: string;
@@ -37,10 +37,7 @@ interface ResumeDeps {
  * Resume slice execution after a crash by loading the checkpoint and replaying the journal.
  * This is the core T1 recovery logic - it determines where execution should continue.
  */
-export const resumeSlice = async (
-  input: ResumeInput,
-  deps: ResumeDeps,
-): Promise<Result<ResumeResult, DomainError>> => {
+export const resumeSlice = async (input: ResumeInput, deps: ResumeDeps): Promise<Result<ResumeResult, DomainError>> => {
   // Load the checkpoint for this slice
   const checkpointResult = await loadCheckpoint(input.sliceId, { artifactStore: deps.artifactStore });
   if (!isOk(checkpointResult)) {
@@ -72,8 +69,8 @@ export const resumeSlice = async (
       createDomainError(
         'JOURNAL_REPLAY_INCONSISTENT',
         `Journal replay failed for slice "${input.sliceId}": ${replayResult.error.message}`,
-        { 
-          sliceId: input.sliceId, 
+        {
+          sliceId: input.sliceId,
           reason: 'replay-inconsistent',
           cause: replayResult.error.code,
           ...replayResult.error.context,

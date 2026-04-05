@@ -1,6 +1,6 @@
 import type Database from 'better-sqlite3';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { isErr, isOk } from '../domain/result.js';
+import { isErr } from '../domain/result.js';
 import { SQLiteStateAdapter } from '../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
 
 // Integration tests access the private `db` field for direct SQL operations.

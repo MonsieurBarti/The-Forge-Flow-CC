@@ -1,14 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
-import {
-  validateOperation,
-  OperationBlockedError,
-} from '../../application/guard/validate-operation.js';
+import { OperationBlockedError, validateOperation } from '../../application/guard/validate-operation.js';
 import { isValidOperation } from '../../application/index.js';
-import { withSyncLock } from '../with-sync-lock.js';
-import { withBranchGuard } from '../with-branch-guard.js';
 import { isOk } from '../../domain/result.js';
+import { withBranchGuard } from '../with-branch-guard.js';
+import { withSyncLock } from '../with-sync-lock.js';
 
 /**
  * Check if pre-operation guards are disabled in settings.yaml.
@@ -81,7 +78,7 @@ export const preOpGuardCmd = async (args: string[]): Promise<string> => {
   }
 
   // Compose withSyncLock (outer) + withBranchGuard (inner) per knowledge.md
-  const result = await withSyncLock(async (stores) => {
+  const result = await withSyncLock(async (_stores) => {
     return withBranchGuard(async ({ sliceStore }) => {
       try {
         // Retrieve the slice
@@ -173,5 +170,5 @@ export const preOpGuardCmd = async (args: string[]): Promise<string> => {
 
   // This should not happen - the callback always returns a string
   // but handle defensively
-  return (result as unknown) as string;
+  return result as unknown as string;
 };

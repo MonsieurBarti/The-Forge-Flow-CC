@@ -1,16 +1,9 @@
-import { SliceStatus, validTransitionsFrom } from '../../domain/value-objects/slice-status.js';
+import { type SliceStatus, validTransitionsFrom } from '../../domain/value-objects/slice-status.js';
 
 /**
  * Workflow operation names as they appear in /tff: commands
  */
-export type WorkflowOperation =
-  | 'discuss'
-  | 'research'
-  | 'plan'
-  | 'execute'
-  | 'verify'
-  | 'ship'
-  | 'complete';
+export type WorkflowOperation = 'discuss' | 'research' | 'plan' | 'execute' | 'verify' | 'ship' | 'complete';
 
 /**
  * Defines the prerequisite status and recovery path for a workflow operation
@@ -98,7 +91,7 @@ export function isValidOperation(operation: string): operation is WorkflowOperat
 export function generateRecoveryHint(
   operation: WorkflowOperation,
   currentStatus: SliceStatus,
-  requiredStatus: SliceStatus
+  requiredStatus: SliceStatus,
 ): string {
   // If already at required status (shouldn't happen for blocked ops, but handle gracefully)
   if (currentStatus === requiredStatus) {

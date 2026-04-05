@@ -1,7 +1,7 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { detectSpecEdit, type DetectSpecEditResult } from './detect-spec-edit.js';
 import * as fs from 'node:fs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as yaml from 'yaml';
+import { detectSpecEdit } from './detect-spec-edit.js';
 
 // Mock fs module using factory pattern
 vi.mock('node:fs', () => {
@@ -25,7 +25,7 @@ const mockedParseYaml = vi.mocked(yaml.parse);
 describe('detect-spec-edit', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    
+
     // Default: project initialized, guards enabled
     mockedExistsSync.mockImplementation((p: string) => {
       if (typeof p === 'string' && p.includes('.tff/settings.yaml')) return true;

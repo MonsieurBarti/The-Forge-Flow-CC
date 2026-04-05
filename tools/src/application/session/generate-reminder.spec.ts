@@ -1,17 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { generateReminder, type GenerateReminderDeps } from './generate-reminder.js';
+import type { Task } from '../../domain/entities/task.js';
+import type { DomainError } from '../../domain/errors/domain-error.js';
+import type { DependencyStore } from '../../domain/ports/dependency-store.port.js';
 import type { SessionStore } from '../../domain/ports/session-store.port.js';
 import type { TaskStore } from '../../domain/ports/task-store.port.js';
-import type { DependencyStore } from '../../domain/ports/dependency-store.port.js';
-import type { WorkflowSession } from '../../domain/value-objects/workflow-session.js';
-import type { Task } from '../../domain/entities/task.js';
-import { Ok, Err } from '../../domain/result.js';
-import type { DomainError } from '../../domain/errors/domain-error.js';
+import { Err, Ok } from '../../domain/result.js';
 import type { Dependency } from '../../domain/value-objects/dependency.js';
+import type { WorkflowSession } from '../../domain/value-objects/workflow-session.js';
+import { type GenerateReminderDeps, generateReminder } from './generate-reminder.js';
 
 type MockResult<T> = Result<T, DomainError>;
 
-function createMockDeps(session: WorkflowSession | null, tasks: Task[] = [], allDeps: Dependency[] = []): GenerateReminderDeps {
+function createMockDeps(
+  session: WorkflowSession | null,
+  tasks: Task[] = [],
+  allDeps: Dependency[] = [],
+): GenerateReminderDeps {
   const mockSessionStore: SessionStore = {
     getSession: () => (session ? Ok(session) : Ok(null)) as MockResult<WorkflowSession | null>,
     saveSession: () => Ok(undefined) as MockResult<void>,
@@ -46,11 +50,16 @@ function createMockDeps(session: WorkflowSession | null, tasks: Task[] = [], all
   };
 }
 
-function createTask(id: string, sliceId: string, status: 'open' | 'in_progress' | 'closed' = 'open', wave?: number): Task {
+function createTask(
+  id: string,
+  sliceId: string,
+  status: 'open' | 'in_progress' | 'closed' = 'open',
+  wave?: number,
+): Task {
   return {
     id,
     sliceId,
-    number: parseInt(id.split('-T')[1] || '1'),
+    number: parseInt(id.split('-T')[1] || '1', 10),
     title: `Task ${id}`,
     status,
     wave,
@@ -119,10 +128,7 @@ describe('generateReminder', () => {
       activeSliceId: 'S01',
       activeMilestoneId: 'M001',
     };
-    const tasks: Task[] = [
-      createTask('S01-T01', 'S01', 'closed'),
-      createTask('S01-T02', 'S01', 'open'),
-    ];
+    const tasks: Task[] = [createTask('S01-T01', 'S01', 'closed'), createTask('S01-T02', 'S01', 'open')];
     const deps = createMockDeps(session, tasks);
     const result = generateReminder(deps);
     expect(result).toContain('M001-S01: executing');
@@ -137,9 +143,7 @@ describe('generateReminder', () => {
       activeSliceId: 'S01',
       activeMilestoneId: 'M002',
     };
-    const tasks: Task[] = [
-      createTask('S01-T01', 'S01', 'open'),
-    ];
+    const tasks: Task[] = [createTask('S01-T01', 'S01', 'open')];
     const deps = createMockDeps(session, tasks);
     const result = generateReminder(deps);
     expect(result).toContain('M002-S01: researching');
@@ -257,9 +261,7 @@ describe('generateReminder', () => {
       activeSliceId: 'S01',
       activeMilestoneId: 'M001',
     };
-    const tasks: Task[] = [
-      createTask('S01-T01', 'S01', 'closed'),
-    ];
+    const tasks: Task[] = [createTask('S01-T01', 'S01', 'closed')];
     const deps = createMockDeps(session, tasks);
     const result = generateReminder(deps);
     expect(result).toContain('Wave 1/1');

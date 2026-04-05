@@ -44,7 +44,7 @@ function isSpecFile(filePath: string): boolean {
 
   // Normalize path separators
   const normalized = filePath.replace(/\\/g, '/');
-  
+
   // Get the basename and remove any query/hash fragments
   const basename = normalized.split('/').pop() || '';
   const cleanName = basename.split('?')[0].split('#')[0];
@@ -55,12 +55,12 @@ function isSpecFile(filePath: string): boolean {
 
 /**
  * Detect if a file path is a SPEC.md edit outside the proper /tff:discuss workflow.
- * 
+ *
  * Checks:
  * 1. If guards are disabled → return null (no warning)
  * 2. If path is not a SPEC.md file → return null (no warning)
  * 3. Path is SPEC.md → return warning with suggestion to use /tff:discuss
- * 
+ *
  * @param filePath - The file path to check
  * @returns DetectSpecEditResult with warning and reason code
  */

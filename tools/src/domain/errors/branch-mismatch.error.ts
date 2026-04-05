@@ -8,7 +8,7 @@ export class BranchMismatchError extends Error {
   ) {
     super(
       `Branch mismatch: ${stampPath} shows state for "${expectedBranch}" but HEAD is "${currentBranch}". ` +
-      `Run /tff:repair to reconcile or switch to the correct branch.`
+        `Run /tff:repair to reconcile or switch to the correct branch.`,
     );
     this.name = 'BranchMismatchError';
     this.repairHint = `/tff:repair (or git checkout ${expectedBranch})`;

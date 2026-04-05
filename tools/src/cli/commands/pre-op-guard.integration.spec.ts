@@ -1,9 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { preOpGuardCmd } from './pre-op-guard.cmd.js';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Slice } from '../../domain/entities/slice.js';
-import type { Result } from '../../domain/result.js';
+import { preOpGuardCmd } from './pre-op-guard.cmd.js';
 
 vi.mock('node:fs');
 
@@ -24,7 +23,8 @@ let mockSliceStore: any = {};
 
 // Mock the application validation functions
 vi.mock('../../application/index.js', () => ({
-  isValidOperation: (op: string) => ['discuss', 'research', 'plan', 'execute', 'verify', 'ship', 'complete'].includes(op),
+  isValidOperation: (op: string) =>
+    ['discuss', 'research', 'plan', 'execute', 'verify', 'ship', 'complete'].includes(op),
 }));
 
 vi.mock('../../application/guard/validate-operation.js', () => ({
@@ -48,9 +48,7 @@ vi.mock('../../application/guard/validate-operation.js', () => ({
       message: allowed
         ? `Operation '${operation}' is ready to execute (status: ${currentStatus})`
         : `Cannot ${operation} from ${currentStatus}.`,
-      recoveryHint: allowed
-        ? ''
-        : `Run /tff:${required} first.`,
+      recoveryHint: allowed ? '' : `Run /tff:${required} first.`,
     };
   },
   OperationBlockedError: class OperationBlockedError extends Error {
@@ -289,7 +287,7 @@ describe('pre-op-guard integration', () => {
 
     expect(parsed.ok).toBe(false);
     expect(parsed.error.code).toBe('PREREQUISITE_NOT_MET');
-    expect(parsed.error.message).toBe("Cannot execute from discussing.");
+    expect(parsed.error.message).toBe('Cannot execute from discussing.');
     // Recovery hint should suggest running a /tff: command
     expect(parsed.error.recoveryHint).toContain('/tff:');
   });

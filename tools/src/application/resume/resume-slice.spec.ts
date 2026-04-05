@@ -4,8 +4,8 @@ import { JournalEntryBuilder } from '../../domain/value-objects/journal-entry.bu
 import type { JournalEntry } from '../../domain/value-objects/journal-entry.js';
 import { InMemoryArtifactStore } from '../../infrastructure/testing/in-memory-artifact-store.js';
 import { InMemoryJournalAdapter } from '../../infrastructure/testing/in-memory-journal.adapter.js';
-import { resumeSlice, type ResumeInput } from './resume-slice.js';
-import { saveCheckpoint, type CheckpointData } from '../checkpoint/save-checkpoint.js';
+import { type CheckpointData, saveCheckpoint } from '../checkpoint/save-checkpoint.js';
+import { type ResumeInput, resumeSlice } from './resume-slice.js';
 
 describe('resumeSlice', () => {
   let artifactStore: InMemoryArtifactStore;

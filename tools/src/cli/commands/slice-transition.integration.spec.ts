@@ -1,9 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { sliceTransitionCmd } from './slice-transition.cmd.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Slice } from '../../domain/entities/slice.js';
+import { sliceTransitionCmd } from './slice-transition.cmd.js';
 
 // Mock with-branch-guard - will pass through to inner function
-const mockWithBranchGuard = vi.fn(async <T>(fn: (stores: any) => Promise<T>) => fn({ sliceStore: mockSliceStore, milestoneStore: {}, taskStore: {} }));
+const mockWithBranchGuard = vi.fn(async <T>(fn: (stores: any) => Promise<T>) =>
+  fn({ sliceStore: mockSliceStore, milestoneStore: {}, taskStore: {} }),
+);
 vi.mock('../with-branch-guard.js', () => ({
   withBranchGuard: (...args: any[]) => mockWithBranchGuard(...args),
 }));
@@ -156,7 +158,9 @@ describe('slice-transition integration', () => {
         ok: true,
         data: {
           slice: mockSlice,
-          events: [{ type: 'SLICE_TRANSITIONED', payload: { sliceId: 'M01-S01', from: 'discussing', to: 'researching' } }],
+          events: [
+            { type: 'SLICE_TRANSITIONED', payload: { sliceId: 'M01-S01', from: 'discussing', to: 'researching' } },
+          ],
         },
       });
 
@@ -181,7 +185,9 @@ describe('slice-transition integration', () => {
         ok: true,
         data: {
           slice: mockSlice,
-          events: [{ type: 'SLICE_TRANSITIONED', payload: { sliceId: 'M01-S01', from: 'researching', to: 'planning' } }],
+          events: [
+            { type: 'SLICE_TRANSITIONED', payload: { sliceId: 'M01-S01', from: 'researching', to: 'planning' } },
+          ],
         },
       });
 

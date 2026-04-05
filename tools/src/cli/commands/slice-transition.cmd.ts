@@ -99,9 +99,10 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
     if (result.error.code === 'INVALID_TRANSITION' && result.error.context?.from) {
       const fromStatus = result.error.context.from as SliceStatus;
       const validNext = validTransitionsFrom(fromStatus);
-      const recoveryHint = validNext.length > 0
-        ? `Valid next: ${validNext.join(', ')}`
-        : 'No valid transitions available from this status';
+      const recoveryHint =
+        validNext.length > 0
+          ? `Valid next: ${validNext.join(', ')}`
+          : 'No valid transitions available from this status';
       return JSON.stringify({
         ok: false,
         error: {

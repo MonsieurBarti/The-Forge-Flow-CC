@@ -10,8 +10,8 @@ import { sliceCreateCmd } from '../cli/commands/slice-create.cmd.js';
 import { taskClaimCmd } from '../cli/commands/task-claim.cmd.js';
 import { taskCloseCmd } from '../cli/commands/task-close.cmd.js';
 import { MarkdownArtifactAdapter } from '../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
-import { createClosableStateStores } from '../infrastructure/adapters/sqlite/create-state-stores.js';
 import { JsonlJournalAdapter } from '../infrastructure/adapters/journal/jsonl-journal.adapter.js';
+import { createClosableStateStores } from '../infrastructure/adapters/sqlite/create-state-stores.js';
 
 describe('journal T1 crash recovery integration', () => {
   let tmpDir: string;
@@ -114,7 +114,10 @@ describe('journal T1 crash recovery integration', () => {
     const journalPath = path.join(tmpDir, '.tff', 'journal', 'M01-S01.jsonl');
     expect(existsSync(journalPath)).toBe(true);
     const journalContentBefore = readFileSync(journalPath, 'utf-8');
-    const entriesBefore = journalContentBefore.trim().split('\n').map(line => JSON.parse(line));
+    const entriesBefore = journalContentBefore
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line));
     expect(entriesBefore).toHaveLength(3); // task-started T01, task-completed T01, task-started T02
 
     // Simulate crash: Close all stores AND remove SQLite state file
@@ -164,7 +167,10 @@ describe('journal T1 crash recovery integration', () => {
 
     // Verify journal content is still intact after crash
     const journalContentAfter = readFileSync(journalPath, 'utf-8');
-    const entriesAfter = journalContentAfter.trim().split('\n').map(line => JSON.parse(line));
+    const entriesAfter = journalContentAfter
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line));
     expect(entriesAfter).toHaveLength(3);
 
     // Verify entry types and order

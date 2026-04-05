@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { execSync } from 'node:child_process';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { execSync } from 'node:child_process';
-import { projectInitCmd } from '../cli/commands/project-init.cmd.js';
 import { milestoneCreateCmd } from '../cli/commands/milestone-create.cmd.js';
+import { projectInitCmd } from '../cli/commands/project-init.cmd.js';
 import { sliceListCmd } from '../cli/commands/slice-list.cmd.js';
 import { stateRepairCmd } from '../cli/commands/state-repair.cmd.js';
 import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.js';
