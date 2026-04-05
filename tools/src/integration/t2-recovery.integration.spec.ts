@@ -24,7 +24,7 @@ describe('T2 recovery integration', () => {
     tmpDir = join(os.tmpdir(), `tff-t2-recovery-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(tmpDir, { recursive: true });
     tffDir = join(tmpDir, '.tff');
-    _gsdDir = join(tmpDir, '.gsd');
+    _gsdDir = join(tmpDir, .tff);
 
     process.chdir(tmpDir);
 

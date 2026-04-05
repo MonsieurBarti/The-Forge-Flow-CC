@@ -35,7 +35,7 @@ function areGuardsDisabled(): boolean {
 /**
  * Check if a file path matches SPEC.md (case-insensitive).
  * Matches: SPEC.md, spec.md, Spec.md, sPeC.md, etc.
- * Also matches paths like .gsd/milestones/M001/SPEC.md or slices/S01/SPEC.md
+ * Also matches paths like .tff/milestones/M001/SPEC.md or slices/S01/SPEC.md
  */
 function isSpecFile(filePath: string): boolean {
   if (!filePath || typeof filePath !== 'string') {
