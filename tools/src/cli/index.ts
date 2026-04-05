@@ -4,6 +4,7 @@ import { checkpointSaveCmd } from './commands/checkpoint-save.cmd.js';
 import { claimCheckStaleCmd } from './commands/claim-check-stale.cmd.js';
 import { composeDetectCmd } from './commands/compose-detect.cmd.js';
 import { depAddCmd } from './commands/dep-add.cmd.js';
+import { directEditGuardCmd } from './commands/direct-edit-guard.cmd.js';
 import { hookPostCheckoutCmd } from './commands/hook-post-checkout.cmd.js';
 import { milestoneCloseCmd } from './commands/milestone-close.cmd.js';
 import { milestoneCreateCmd } from './commands/milestone-create.cmd.js';
@@ -55,6 +56,7 @@ const commands: Record<string, CommandFn> = {
   'task:close': taskCloseCmd,
   'task:ready': taskReadyCmd,
   'dep:add': depAddCmd,
+  'direct-edit:guard': directEditGuardCmd,
   'waves:detect': wavesDetectCmd,
   'sync:state': syncStateCmd,
   'sync:branch': syncBranchCmd,
