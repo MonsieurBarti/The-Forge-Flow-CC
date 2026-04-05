@@ -1,6 +1,7 @@
-import { existsSync, readFileSync, accessSync, constants, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, accessSync, constants, readdirSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { restoreBranchUseCase } from '../../application/state-branch/restore-branch.js';
+import { generateState } from '../../application/sync/generate-state.js';
 import { isOk, Ok, Err } from '../../domain/result.js';
 import { BranchMetaSchema } from '../../domain/value-objects/branch-meta.js';
 import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
@@ -10,6 +11,7 @@ import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesyste
 import { JsonlJournalAdapter } from '../../infrastructure/adapters/journal/jsonl-journal.adapter.js';
 import { resumeSlice } from '../../application/resume/resume-slice.js';
 import { acquireSyncLock } from '../../infrastructure/locking/tff-lock.js';
+import { createStateStoresUnchecked } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 
 export type RecoveryTier = 'T1' | 'T2' | 'T3';
 
@@ -20,16 +22,20 @@ export interface StateRepairResult {
   readonly tier?: RecoveryTier;
   readonly durationMs?: number;
   readonly consistent?: boolean;
+  readonly regenerated?: boolean;
+  readonly milestoneId?: string;
 }
 
 interface ParsedArgs {
   codeBranch: string | undefined;
   tier: RecoveryTier | undefined;
+  milestoneId: string | undefined;
 }
 
 function parseArgs(args: string[]): ParsedArgs | { error: { code: string; message: string } } {
   let codeBranch: string | undefined;
   let tier: RecoveryTier | undefined;
+  let milestoneId: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -45,12 +51,19 @@ function parseArgs(args: string[]): ParsedArgs | { error: { code: string; messag
       }
       tier = tierValue as RecoveryTier;
       i++; // Skip the next argument as we've consumed it
+    } else if (arg === '--milestone') {
+      const nextArg = args[i + 1];
+      if (!nextArg || nextArg.startsWith('--')) {
+        return { error: { code: 'INVALID_ARGS', message: 'Usage: --milestone requires a value (e.g., M001)' } };
+      }
+      milestoneId = nextArg;
+      i++; // Skip the next argument as we've consumed it
     } else if (!arg.startsWith('--')) {
       codeBranch = arg;
     }
   }
 
-  return { codeBranch, tier };
+  return { codeBranch, tier, milestoneId };
 }
 
 function detectCorruptionLevel(cwd: string): RecoveryTier {
@@ -63,15 +76,15 @@ function detectCorruptionLevel(cwd: string): RecoveryTier {
     return 'T3';
   }
 
-  // T2: Moderate corruption - state.db exists but is corrupted (invalid SQLite)
-  // Note: Missing state.db is handled by T1 (restore from state branch)
-  if (existsSync(stateDbPath) && !isDbValid(stateDbPath)) {
-    return 'T2';
+  // T3: .tff exists but BOTH state.db is missing AND GSD milestones are missing
+  // This indicates complete loss of both runtime state AND GSD metadata
+  if (!existsSync(stateDbPath) && !existsSync(milestonesDir)) {
+    return 'T3';
   }
 
-  // T2: .tff exists with corrupted state AND milestones directory missing
-  // This suggests more than just a missing state.db - partial corruption
-  if (existsSync(stateDbPath) && !isDbValid(stateDbPath) && !existsSync(milestonesDir)) {
+  // T2: Moderate corruption - state.db exists but is corrupted (invalid SQLite)
+  // This takes precedence over T3 - if state.db exists but is bad, we can restore it
+  if (existsSync(stateDbPath) && !isDbValid(stateDbPath)) {
     return 'T2';
   }
 
@@ -180,12 +193,12 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
     return JSON.stringify({ ok: false, error: parsed.error });
   }
 
-  const { codeBranch, tier: explicitTier } = parsed;
+  const { codeBranch, tier: explicitTier, milestoneId: milestoneIdArg } = parsed;
 
   if (!codeBranch) {
     return JSON.stringify({
       ok: false,
-      error: { code: 'INVALID_ARGS', message: 'Usage: state:repair <branch> [--tier T1|T2|T3]' },
+      error: { code: 'INVALID_ARGS', message: 'Usage: state:repair <branch> [--tier T1|T2|T3] [--milestone MXXX]' },
     });
   }
 
@@ -198,16 +211,192 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
 
   // Handle tiered recovery paths
   if (tier === 'T3') {
-    // T3: Severe corruption - .tff directory missing or severely corrupted
-    // Return a response indicating tiered recovery is needed
-    return JSON.stringify({
-      ok: true,
-      data: { 
-        action: 'needs-tiered-recovery', 
-        reason: `T3 recovery required: .tff/ directory missing or severely corrupted (detected: ${detectedTier})`,
-        tier: 'T3',
-      },
-    });
+    // T3: Severe corruption - restore .tff/ from state branch + regenerate GSD files
+    const startTime = Date.now();
+    
+    type T3SuccessResult = { 
+      action: 'restored' | 'synthetic'; 
+      filesRestored?: number; 
+      reason?: string;
+      tier: 'T3';
+      durationMs: number;
+      consistent: boolean;
+      regenerated: boolean;
+      milestoneId?: string;
+    };
+    type T3ErrorResult = { code: string; message: string };
+
+    // Derive or validate milestoneId for regeneration
+    let targetMilestoneId = milestoneIdArg;
+    
+    // For T3, .tff may not exist yet - create directory temporarily for lock
+    const stateDbPath = path.join(cwd, '.tff', 'state.db');
+    if (!existsSync(tffDir)) {
+      mkdirSync(tffDir, { recursive: true });
+    }
+    
+    // Acquire lock
+    const release = await acquireSyncLock(stateDbPath, 5000);
+    
+    if (release === null) {
+      return JSON.stringify({
+        ok: true,
+        data: { 
+          action: 'skipped', 
+          reason: 'Lock held by another process',
+          tier: 'T3',
+        },
+      });
+    }
+
+    try {
+      const gitOps = new GitCliAdapter(cwd);
+      const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+
+      // Check if state branch exists
+      const existsResult = await stateBranch.exists(codeBranch);
+      if (!isOk(existsResult) || !existsResult.data) {
+        // Try to fetch from remote
+        await gitOps.fetchBranch(`tff-state/${codeBranch}`).catch(() => undefined);
+        
+        // Re-check after fetch
+        const existsAfterFetch = await stateBranch.exists(codeBranch);
+        if (!isOk(existsAfterFetch) || !existsAfterFetch.data) {
+          return JSON.stringify({
+            ok: false,
+            error: { 
+              code: 'STATE_BRANCH_NOT_FOUND', 
+              message: `No state branch found for "${codeBranch}"` 
+            },
+          });
+        }
+      }
+
+      // Restore .tff/ from state branch (T2 steps)
+      const restoreResult = await restoreBranchUseCase({ codeBranch, targetDir: cwd }, { stateBranch });
+
+      if (!isOk(restoreResult)) {
+        return JSON.stringify({
+          ok: false,
+          error: { 
+            code: 'RESTORE_FAILED', 
+            message: `Restore failed: ${restoreResult.error.code} - ${restoreResult.error.message}` 
+          },
+        });
+      }
+
+      // Validate the restored state
+      const validation = await validateRestoredState(cwd);
+
+      // If restore returned null, we can't regenerate
+      if (restoreResult.data === null) {
+        const durationMs = Date.now() - startTime;
+        // Warn if timing exceeded 5s per R001
+        if (durationMs > 5000) {
+          console.warn(`[state:repair] T3 recovery took ${durationMs}ms, exceeding 5s target`);
+        }
+        writeSyntheticStamp(tffDir, codeBranch);
+        return JSON.stringify({
+          ok: true,
+          data: { 
+            action: 'synthetic', 
+            reason: 'Restore returned null (no state to restore), cannot regenerate GSD files',
+            tier: 'T3',
+            durationMs,
+            consistent: validation.consistent,
+            regenerated: false,
+          },
+        });
+      }
+
+      // Write stamp from restored state
+      const rootMetaPath = path.join(cwd, 'branch-meta.json');
+      try {
+        if (existsSync(rootMetaPath)) {
+          const raw = JSON.parse(readFileSync(rootMetaPath, 'utf8'));
+          const meta = BranchMetaSchema.parse(raw);
+          writeLocalStamp(tffDir, {
+            stateId: meta.stateId,
+            codeBranch,
+            parentStateBranch: meta.parentStateBranch,
+            createdAt: meta.createdAt,
+          });
+        } else {
+          writeSyntheticStamp(tffDir, codeBranch);
+        }
+      } catch {
+        writeSyntheticStamp(tffDir, codeBranch);
+      }
+
+      // Now regenerate GSD files using generateState
+      // Create state stores from the restored database (bypass branch alignment check)
+      const { milestoneStore, sliceStore, taskStore } = createStateStoresUnchecked(stateDbPath);
+
+      // If no milestoneId provided, get first milestone from database
+      if (!targetMilestoneId) {
+        const milestonesResult = milestoneStore.listMilestones();
+        if (isOk(milestonesResult) && milestonesResult.data.length > 0) {
+          targetMilestoneId = milestonesResult.data[0].id;
+        }
+      }
+
+      if (!targetMilestoneId) {
+        const durationMs = Date.now() - startTime;
+        if (durationMs > 5000) {
+          console.warn(`[state:repair] T3 recovery took ${durationMs}ms, exceeding 5s target`);
+        }
+        return JSON.stringify({
+          ok: false,
+          error: { 
+            code: 'MILESTONE_NOT_FOUND', 
+            message: 'T3 recovery requires a milestone to regenerate STATE.md. Use --milestone M001 or ensure database has milestones.' 
+          },
+        });
+      }
+
+      // Regenerate STATE.md via generateState use case
+      const artifactStore = new MarkdownArtifactAdapter(cwd);
+      const generateResult = await generateState(
+        { milestoneId: targetMilestoneId },
+        { milestoneStore, sliceStore, taskStore, artifactStore }
+      );
+
+      if (!isOk(generateResult)) {
+        const durationMs = Date.now() - startTime;
+        if (durationMs > 5000) {
+          console.warn(`[state:repair] T3 recovery took ${durationMs}ms, exceeding 5s target`);
+        }
+        return JSON.stringify({
+          ok: false,
+          error: { 
+            code: 'REGENERATION_FAILED', 
+            message: `Failed to regenerate STATE.md: ${generateResult.error.message}` 
+          },
+        });
+      }
+
+      const durationMs = Date.now() - startTime;
+      
+      // Warn if timing exceeded 5s per R001
+      if (durationMs > 5000) {
+        console.warn(`[state:repair] T3 recovery took ${durationMs}ms, exceeding 5s target`);
+      }
+
+      return JSON.stringify({
+        ok: true,
+        data: { 
+          action: 'restored', 
+          filesRestored: restoreResult.data.filesRestored,
+          tier: 'T3',
+          durationMs,
+          consistent: validation.consistent,
+          regenerated: true,
+          milestoneId: targetMilestoneId,
+        },
+      });
+    } finally {
+      await release();
+    }
   }
 
   if (tier === 'T2') {
