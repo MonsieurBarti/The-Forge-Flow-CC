@@ -15,7 +15,7 @@ import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.j
 describe('T2 recovery integration', () => {
   let tmpDir: string;
   let tffDir: string;
-  let _gsdDir: string;
+  let _tffDir: string;
   let originalCwd: string;
   let env: NodeJS.ProcessEnv;
 
@@ -24,7 +24,7 @@ describe('T2 recovery integration', () => {
     tmpDir = join(os.tmpdir(), `tff-t2-recovery-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(tmpDir, { recursive: true });
     tffDir = join(tmpDir, '.tff');
-    _gsdDir = join(tmpDir, .tff);
+    _tffDir = join(tmpDir, '.tff');
 
     process.chdir(tmpDir);
 
