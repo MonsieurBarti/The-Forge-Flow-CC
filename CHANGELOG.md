@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-04-05
+
+### Added
+
+- **M002 — Workflow Adherence & Enforcement:** Graduated enforcement ensuring AI agents follow structured workflows
+  - **S01 — Session State Reminder:** Injects context at session start (milestone, slice, phase, wave position)
+  - **S02 — Workflow Guard Hook:** PreToolUse detection of direct edits without `/tff:quick`, injects advisory warnings
+  - **S03 — Phase Boundary Detection:** SPEC.md edit detection outside `/tff:discuss` workflow with recovery hints
+  - **S04 — Pre-Op Validation Gates:** Hard BLOCK on `/tff:*` commands when status prerequisites not met
+  - **S05 — State Machine Enforcement:** Invalid slice transitions rejected with valid next-step guidance
+- **M001 — State Sync & Recovery Infrastructure:** Tiered crash recovery and synchronization
+  - **S01 — Journal System + T1 Recovery:** Task lifecycle journal with checkpoint replay
+  - **S02 — Lockfile Serialization:** Concurrent sync operations serialize safely
+  - **S03 — State Consistency Gates:** Branch guard with `BRANCH_MISMATCH` errors
+  - **S04 — T2/T3 Recovery + `/tff:repair`:** Tiered recovery for complete state restoration
+- **Plugin Distribution:** Zero-install CLI with native bindings for 5 platforms
+- **Compressed Notation:** Formal logic symbols (∀∃∈∧∨¬) applied to markdown files
+
+### Infrastructure
+
+- 1582 tests passing (Node 20 & 22)
+- `.gsd/` → `.tff/` references updated in source code
+
 ## [0.7.0] - 2026-03-23
 
 ### Added
