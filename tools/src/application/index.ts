@@ -11,6 +11,7 @@ export { rankCandidates } from './patterns/rank-candidates.js';
 export { getProject } from './project/get-project.js';
 export { initProject } from './project/init-project.js';
 export { enforceFreshReviewer } from './review/enforce-fresh-reviewer.js';
+export { resumeSlice, type ResumeInput, type ResumeResult } from './resume/resume-slice.js';
 export { checkDrift } from './skills/check-drift.js';
 export { validateSkill } from './skills/validate-skill.js';
 export { createSliceUseCase } from './slice/create-slice.js';
