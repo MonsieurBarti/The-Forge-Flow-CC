@@ -2,7 +2,7 @@ import { transitionSliceUseCase } from '../../application/lifecycle/transition-s
 import { syncBranchUseCase } from '../../application/state-branch/sync-branch.js';
 import { generateState } from '../../application/sync/generate-state.js';
 import { isOk } from '../../domain/result.js';
-import { type SliceStatus, SliceStatusSchema } from '../../domain/value-objects/slice-status.js';
+import { type SliceStatus, SliceStatusSchema, validTransitionsFrom } from '../../domain/value-objects/slice-status.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
@@ -94,6 +94,24 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 
       return JSON.stringify({ ok: true, data: { status: slice.status }, warnings });
     }
+
+    // Enhance INVALID_TRANSITION errors with valid next steps
+    if (result.error.code === 'INVALID_TRANSITION' && result.error.context?.from) {
+      const fromStatus = result.error.context.from as SliceStatus;
+      const validNext = validTransitionsFrom(fromStatus);
+      const recoveryHint = validNext.length > 0
+        ? `Valid next: ${validNext.join(', ')}`
+        : 'No valid transitions available from this status';
+      return JSON.stringify({
+        ok: false,
+        error: {
+          code: result.error.code,
+          message: result.error.message,
+          recoveryHint,
+        },
+      });
+    }
+
     return JSON.stringify({ ok: false, error: result.error });
   });
 };
