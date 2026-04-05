@@ -25,7 +25,7 @@ describe('T3 recovery integration', () => {
     tmpDir = join(os.tmpdir(), `tff-t3-recovery-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(tmpDir, { recursive: true });
     tffDir = join(tmpDir, '.tff');
-    gsdDir = join(tmpDir, '.gsd');
+    gsdDir = join(tmpDir, .tff);
     _milestonesDir = join(gsdDir, 'milestones');
 
     process.chdir(tmpDir);
@@ -108,10 +108,10 @@ describe('T3 recovery integration', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('restores .tff/ and regenerates GSD files when both are missing', async () => {
-    // Note: .gsd/ may not exist in test setup - T3 should regenerate it
+  it('restores .tff/ and regenerates project files when both are missing', async () => {
+    // Note: .tff/ may not exist in test setup - T3 should regenerate it
 
-    // Simulate severe corruption: Delete both .tff/ and .gsd/ if they exist
+    // Simulate severe corruption: Delete both .tff/ and .tff/ if they exist
     if (existsSync(tffDir)) rmSync(tffDir, { recursive: true, force: true });
     if (existsSync(gsdDir)) rmSync(gsdDir, { recursive: true, force: true });
 
@@ -140,7 +140,7 @@ describe('T3 recovery integration', () => {
     expect(existsSync(tffDir)).toBe(true);
     expect(existsSync(join(tffDir, 'state.db'))).toBe(true);
 
-    // Verify GSD files were regenerated
+    // Verify project files were regenerated
     expect(existsSync(gsdDir)).toBe(true);
     expect(existsSync(join(gsdDir, 'STATE.md'))).toBe(true);
 
@@ -154,7 +154,7 @@ describe('T3 recovery integration', () => {
   }, 30000);
 
   it('returns error when milestone is not provided and database is empty', async () => {
-    // Delete .tff/ and .gsd/
+    // Delete .tff/ and .tff/
     rmSync(tffDir, { recursive: true, force: true });
     rmSync(gsdDir, { recursive: true, force: true });
 
@@ -182,7 +182,7 @@ describe('T3 recovery integration', () => {
     expect(repairResult.error?.code).toBe('MILESTONE_NOT_FOUND');
   }, 30000);
 
-  it('auto-detects T3 when both .tff/ and .gsd/ are missing', async () => {
+  it('auto-detects T3 when both .tff/ and .tff/ are missing', async () => {
     // Delete both directories
     rmSync(tffDir, { recursive: true, force: true });
     rmSync(gsdDir, { recursive: true, force: true });
@@ -207,8 +207,8 @@ describe('T3 recovery integration', () => {
     expect(existsSync(gsdDir)).toBe(true);
   }, 30000);
 
-  it('auto-detects T3 when state.db is missing AND GSD files are missing', async () => {
-    // Simulate corruption: Delete state.db and GSD files (but keep .tff/ structure)
+  it('auto-detects T3 when state.db is missing AND project files are missing', async () => {
+    // Simulate corruption: Delete state.db and project files (but keep .tff/ structure)
     rmSync(join(tffDir, 'state.db'), { force: true });
     rmSync(gsdDir, { recursive: true, force: true });
 
@@ -248,7 +248,7 @@ describe('T3 recovery integration', () => {
   }, 30000);
 
   it('returns STATE_BRANCH_NOT_FOUND when state branch is missing', async () => {
-    // Delete .tff/ and .gsd/
+    // Delete .tff/ and .tff/
     rmSync(tffDir, { recursive: true, force: true });
     rmSync(gsdDir, { recursive: true, force: true });
 
@@ -268,7 +268,7 @@ describe('T3 recovery integration', () => {
   }, 30000);
 
   it('attempts fetch when state branch is missing locally', async () => {
-    // Delete .tff/ and .gsd/
+    // Delete .tff/ and .tff/
     rmSync(tffDir, { recursive: true, force: true });
     rmSync(gsdDir, { recursive: true, force: true });
 

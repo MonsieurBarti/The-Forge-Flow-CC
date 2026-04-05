@@ -69,15 +69,15 @@ function parseArgs(args: string[]): ParsedArgs | { error: { code: string; messag
 function detectCorruptionLevel(cwd: string): RecoveryTier {
   const tffDir = path.join(cwd, '.tff');
   const stateDbPath = path.join(tffDir, 'state.db');
-  const milestonesDir = path.join(cwd, '.gsd', 'milestones');
+  const milestonesDir = path.join(cwd, .tff, 'milestones');
 
   // T3: Severe corruption - .tff directory completely missing
   if (!existsSync(tffDir)) {
     return 'T3';
   }
 
-  // T3: .tff exists but BOTH state.db is missing AND GSD milestones are missing
-  // This indicates complete loss of both runtime state AND GSD metadata
+  // T3: .tff exists but BOTH state.db is missing AND project milestones are missing
+  // This indicates complete loss of both runtime state AND project metadata
   if (!existsSync(stateDbPath) && !existsSync(milestonesDir)) {
     return 'T3';
   }
@@ -213,7 +213,7 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
 
   // Handle tiered recovery paths
   if (tier === 'T3') {
-    // T3: Severe corruption - restore .tff/ from state branch + regenerate GSD files
+    // T3: Severe corruption - restore .tff/ from state branch + regenerate project files
     const startTime = Date.now();
 
     type T3SuccessResult = {
@@ -302,7 +302,7 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
           ok: true,
           data: {
             action: 'synthetic',
-            reason: 'Restore returned null (no state to restore), cannot regenerate GSD files',
+            reason: 'Restore returned null (no state to restore), cannot regenerate project files',
             tier: 'T3',
             durationMs,
             consistent: validation.consistent,
@@ -330,7 +330,7 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
         writeSyntheticStamp(tffDir, codeBranch);
       }
 
-      // Now regenerate GSD files using generateState
+      // Now regenerate project files using generateState
       // Create state stores from the restored database (bypass branch alignment check)
       const { milestoneStore, sliceStore, taskStore } = createStateStoresUnchecked(stateDbPath);
 

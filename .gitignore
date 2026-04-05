@@ -9,8 +9,8 @@ docs/
 /branch-meta.json
 
 # ── GSD baseline (auto-generated) ──
-.gsd
-.gsd-id
+.tff
+.tff-id
 .DS_Store
 Thumbs.db
 *.swp
