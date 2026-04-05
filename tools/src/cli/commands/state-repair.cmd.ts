@@ -69,7 +69,7 @@ function parseArgs(args: string[]): ParsedArgs | { error: { code: string; messag
 function detectCorruptionLevel(cwd: string): RecoveryTier {
   const tffDir = path.join(cwd, '.tff');
   const stateDbPath = path.join(tffDir, 'state.db');
-  const milestonesDir = path.join(cwd, .tff, 'milestones');
+  const milestonesDir = path.join(cwd, '.tff', 'milestones');
 
   // T3: Severe corruption - .tff directory completely missing
   if (!existsSync(tffDir)) {
