@@ -1,11 +1,15 @@
-import { existsSync, readFileSync, accessSync, constants } from 'node:fs';
+import { existsSync, readFileSync, accessSync, constants, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { restoreBranchUseCase } from '../../application/state-branch/restore-branch.js';
-import { isOk } from '../../domain/result.js';
+import { isOk, Ok, Err } from '../../domain/result.js';
 import { BranchMetaSchema } from '../../domain/value-objects/branch-meta.js';
 import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { readLocalStamp, writeLocalStamp, writeSyntheticStamp } from '../../infrastructure/hooks/branch-meta-stamp.js';
+import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
+import { JsonlJournalAdapter } from '../../infrastructure/adapters/journal/jsonl-journal.adapter.js';
+import { resumeSlice } from '../../application/resume/resume-slice.js';
+import { acquireSyncLock } from '../../infrastructure/locking/tff-lock.js';
 
 export type RecoveryTier = 'T1' | 'T2' | 'T3';
 
@@ -14,6 +18,8 @@ export interface StateRepairResult {
   readonly reason?: string;
   readonly filesRestored?: number;
   readonly tier?: RecoveryTier;
+  readonly durationMs?: number;
+  readonly consistent?: boolean;
 }
 
 interface ParsedArgs {
@@ -87,6 +93,86 @@ function isDbValid(dbPath: string): boolean {
   }
 }
 
+/**
+ * Find all slice IDs that have checkpoints in the restored state.
+ * Used for T2 recovery validation.
+ */
+function findSlicesWithCheckpoints(cwd: string): string[] {
+  const slicesDir = path.join(cwd, '.tff', 'milestones');
+  if (!existsSync(slicesDir)) {
+    return [];
+  }
+
+  const sliceIds: string[] = [];
+  
+  // Walk through milestones/*/slices/* to find CHECKPOINT.md files
+  try {
+    const milestoneEntries = readdirSync(slicesDir, { withFileTypes: true });
+    for (const milestoneEntry of milestoneEntries) {
+      if (!milestoneEntry.isDirectory()) continue;
+      
+      const slicesPath = path.join(slicesDir, milestoneEntry.name, 'slices');
+      if (!existsSync(slicesPath)) continue;
+      
+      const sliceEntries = readdirSync(slicesPath, { withFileTypes: true });
+      for (const sliceEntry of sliceEntries) {
+        if (!sliceEntry.isDirectory()) continue;
+        
+        const checkpointPath = path.join(slicesPath, sliceEntry.name, 'CHECKPOINT.md');
+        if (existsSync(checkpointPath)) {
+          // Slice ID format: MXXX-SXX
+          sliceIds.push(`${milestoneEntry.name}-${sliceEntry.name}`);
+        }
+      }
+    }
+  } catch {
+    // Ignore errors during directory walking
+  }
+  
+  return sliceIds;
+}
+
+/**
+ * Validate restored state by checking journal/checkpoint consistency
+ * for all slices with checkpoints. Returns true if all are consistent.
+ */
+async function validateRestoredState(cwd: string): Promise<{ consistent: boolean; checkedSlices: number; errors: string[] }> {
+  const sliceIds = findSlicesWithCheckpoints(cwd);
+  
+  if (sliceIds.length === 0) {
+    // No slices with checkpoints - check if state.db is at least valid
+    const stateDbPath = path.join(cwd, '.tff', 'state.db');
+    return { consistent: existsSync(stateDbPath) && isDbValid(stateDbPath), checkedSlices: 0, errors: [] };
+  }
+
+  const artifactStore = new MarkdownArtifactAdapter(cwd);
+  const journal = new JsonlJournalAdapter(path.join(cwd, '.tff', 'journal'));
+  
+  const errors: string[] = [];
+  let consistentCount = 0;
+
+  for (const sliceId of sliceIds) {
+    try {
+      const result = await resumeSlice({ sliceId }, { artifactStore, journal });
+      if (isOk(result) && result.data.consistent) {
+        consistentCount++;
+      } else if (!isOk(result)) {
+        errors.push(`Slice ${sliceId}: ${result.error.message}`);
+      } else {
+        errors.push(`Slice ${sliceId}: inconsistent state`);
+      }
+    } catch (e) {
+      errors.push(`Slice ${sliceId}: ${String(e)}`);
+    }
+  }
+
+  return { 
+    consistent: errors.length === 0 && consistentCount === sliceIds.length, 
+    checkedSlices: sliceIds.length,
+    errors 
+  };
+}
+
 export const stateRepairCmd = async (args: string[]): Promise<string> => {
   // Parse arguments
   const parsed = parseArgs(args);
@@ -125,16 +211,127 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
   }
 
   if (tier === 'T2') {
-    // T2: Moderate corruption - state.db missing or corrupted
-    // Return a response indicating tiered recovery is needed
-    return JSON.stringify({
-      ok: true,
-      data: { 
-        action: 'needs-tiered-recovery', 
-        reason: `T2 recovery required: state.db missing or corrupted (detected: ${detectedTier})`,
-        tier: 'T2',
-      },
-    });
+    // T2: Moderate corruption - restore .tff/ from state branch with validation
+    const startTime = Date.now();
+    
+    type T2SuccessResult = { 
+      action: 'restored' | 'synthetic'; 
+      filesRestored?: number; 
+      reason?: string;
+      tier: 'T2';
+      durationMs: number;
+      consistent: boolean;
+    };
+    type T2ErrorResult = { code: string; message: string };
+    
+    // Acquire lock directly (bypass withSyncLock which creates state stores with branch alignment checks)
+    const stateDbPath = path.join(cwd, '.tff', 'state.db');
+    const release = await acquireSyncLock(stateDbPath, 5000);
+    
+    if (release === null) {
+      return JSON.stringify({
+        ok: true,
+        data: { 
+          action: 'skipped', 
+          reason: 'Lock held by another process',
+          tier: 'T2',
+        },
+      });
+    }
+
+    try {
+      const gitOps = new GitCliAdapter(cwd);
+      const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+
+      // Check if state branch exists
+      const existsResult = await stateBranch.exists(codeBranch);
+      if (!isOk(existsResult) || !existsResult.data) {
+        // Try to fetch from remote
+        await gitOps.fetchBranch(`tff-state/${codeBranch}`).catch(() => undefined);
+        
+        // Re-check after fetch
+        const existsAfterFetch = await stateBranch.exists(codeBranch);
+        if (!isOk(existsAfterFetch) || !existsAfterFetch.data) {
+          return JSON.stringify({
+            ok: false,
+            error: { 
+              code: 'STATE_BRANCH_NOT_FOUND', 
+              message: `No state branch found for "${codeBranch}"` 
+            },
+          });
+        }
+      }
+
+      // Restore .tff/ from state branch
+      const restoreResult = await restoreBranchUseCase({ codeBranch, targetDir: cwd }, { stateBranch });
+
+      if (!isOk(restoreResult)) {
+        return JSON.stringify({
+          ok: false,
+          error: { 
+            code: 'RESTORE_FAILED', 
+            message: `Restore failed: ${restoreResult.error.code} - ${restoreResult.error.message}` 
+          },
+        });
+      }
+
+      // Validate the restored state
+      const validation = await validateRestoredState(cwd);
+
+      const durationMs = Date.now() - startTime;
+      
+      // Warn if timing exceeded 5s per R001
+      if (durationMs > 5000) {
+        console.warn(`[state:repair] T2 recovery took ${durationMs}ms, exceeding 5s target`);
+      }
+
+      if (restoreResult.data === null) {
+        // Nothing was restored - return synthetic
+        writeSyntheticStamp(tffDir, codeBranch);
+        return JSON.stringify({
+          ok: true,
+          data: { 
+            action: 'synthetic', 
+            reason: 'Restore returned null (no state to restore)',
+            tier: 'T2',
+            durationMs,
+            consistent: validation.consistent,
+          },
+        });
+      }
+
+      // Write stamp from restored state
+      const rootMetaPath = path.join(cwd, 'branch-meta.json');
+      try {
+        if (existsSync(rootMetaPath)) {
+          const raw = JSON.parse(readFileSync(rootMetaPath, 'utf8'));
+          const meta = BranchMetaSchema.parse(raw);
+          writeLocalStamp(tffDir, {
+            stateId: meta.stateId,
+            codeBranch,
+            parentStateBranch: meta.parentStateBranch,
+            createdAt: meta.createdAt,
+          });
+        } else {
+          writeSyntheticStamp(tffDir, codeBranch);
+        }
+      } catch {
+        writeSyntheticStamp(tffDir, codeBranch);
+      }
+
+      return JSON.stringify({
+        ok: true,
+        data: { 
+          action: 'restored', 
+          filesRestored: restoreResult.data.filesRestored,
+          tier: 'T2',
+          durationMs,
+          consistent: validation.consistent,
+        },
+      });
+    } finally {
+      await release();
+    }
   }
 
   // T1: Standard repair flow - minor corruption or stamp mismatch

@@ -107,8 +107,11 @@ describe('state:repair', () => {
     // Run repair without explicit tier - should auto-detect T2 due to corrupted state.db
     const result = JSON.parse(await stateRepairCmd([codeBranch]));
     expect(result.ok).toBe(true);
-    expect(result.data.action).toBe('needs-tiered-recovery');
+    expect(result.data.action).toBe('restored');
     expect(result.data.tier).toBe('T2');
+    expect(result.data.durationMs).toBeDefined();
+    expect(typeof result.data.durationMs).toBe('number');
+    expect(result.data.consistent).toBeDefined();
   });
 
   it('accepts explicit T1 tier argument', async () => {
@@ -150,8 +153,23 @@ describe('state:repair', () => {
     // Run repair with explicit T2 tier (lowercase)
     const result = JSON.parse(await stateRepairCmd([codeBranch, '--tier', 't2']));
     expect(result.ok).toBe(true);
-    expect(result.data.action).toBe('needs-tiered-recovery');
+    expect(result.data.action).toBe('restored');
     expect(result.data.tier).toBe('T2');
+    expect(result.data.durationMs).toBeDefined();
+    expect(typeof result.data.durationMs).toBe('number');
+    expect(result.data.consistent).toBeDefined();
+  });
+
+  it('T2 returns STATE_BRANCH_NOT_FOUND when state branch does not exist', async () => {
+    const codeBranch = 'nonexistent-branch';
+    
+    // Create corrupted state.db to trigger T2 path
+    writeFileSync(path.join(tffDir, 'state.db'), 'corrupted data');
+
+    // Run repair with explicit T2 tier but no state branch exists
+    const result = JSON.parse(await stateRepairCmd([codeBranch, '--tier', 'T2']));
+    expect(result.ok).toBe(false);
+    expect(result.error.code).toBe('STATE_BRANCH_NOT_FOUND');
   });
 
   it('accepts explicit T3 tier argument', async () => {
