@@ -56,4 +56,12 @@ auto-learn:
     min-sessions: 3     # min sessions to establish a pattern
     min-patterns: 2     # min similar patterns to form a cluster
     jaccard-threshold: 0.3  # max Jaccard distance for cluster membership
+
+# ── Workflow ──────────────────────────────────────────────────
+# Session reminders and context injection settings
+
+# Show reminder on new Claude Code sessions with current
+# milestone, slice, phase, and wave position
+workflow:
+  reminders: true
 ```
