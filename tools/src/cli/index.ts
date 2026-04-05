@@ -13,6 +13,7 @@ import { observeRecordCmd } from './commands/observe-record.cmd.js';
 import { patternsAggregateCmd } from './commands/patterns-aggregate.cmd.js';
 import { patternsExtractCmd } from './commands/patterns-extract.cmd.js';
 import { patternsRankCmd } from './commands/patterns-rank.cmd.js';
+import { preOpGuardCmd } from './commands/pre-op-guard.cmd.js';
 import { projectGetCmd } from './commands/project-get.cmd.js';
 import { projectInitCmd } from './commands/project-init.cmd.js';
 import { restoreBranchCmd } from './commands/restore-branch.cmd.js';
@@ -58,6 +59,7 @@ const commands: Record<string, CommandFn> = {
   'task:ready': taskReadyCmd,
   'dep:add': depAddCmd,
   'direct-edit:guard': directEditGuardCmd,
+  'pre-op:guard': preOpGuardCmd,
   'spec-edit:guard': specEditGuardCmd,
   'waves:detect': wavesDetectCmd,
   'sync:state': syncStateCmd,
