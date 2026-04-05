@@ -232,7 +232,7 @@ describe('state:repair', () => {
 
     // Create a valid state.db to trigger T1 detection
     writeFileSync(path.join(tffDir, 'state.db'), 'SQLite format 3\u0000');
-    mkdirSync(path.join(tmpDir, .tff, 'milestones'), { recursive: true });
+    mkdirSync(path.join(tmpDir, '.tff', 'milestones'), { recursive: true });
 
     // Create a feature branch with state
     execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
