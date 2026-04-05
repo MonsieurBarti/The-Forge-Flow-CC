@@ -26,6 +26,7 @@ import { sliceCloseCmd } from './commands/slice-close.cmd.js';
 import { sliceCreateCmd } from './commands/slice-create.cmd.js';
 import { sliceListCmd } from './commands/slice-list.cmd.js';
 import { sliceTransitionCmd } from './commands/slice-transition.cmd.js';
+import { specEditGuardCmd } from './commands/spec-edit-guard.cmd.js';
 import { stateRepairCmd } from './commands/state-repair.cmd.js';
 import { syncBranchCmd } from './commands/sync-branch.cmd.js';
 import { syncStateCmd } from './commands/sync-state.cmd.js';
@@ -57,6 +58,7 @@ const commands: Record<string, CommandFn> = {
   'task:ready': taskReadyCmd,
   'dep:add': depAddCmd,
   'direct-edit:guard': directEditGuardCmd,
+  'spec-edit:guard': specEditGuardCmd,
   'waves:detect': wavesDetectCmd,
   'sync:state': syncStateCmd,
   'sync:branch': syncBranchCmd,
