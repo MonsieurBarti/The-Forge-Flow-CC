@@ -49,6 +49,154 @@ describe('state:repair', () => {
     expect(result.error.code).toBe('INVALID_ARGS');
   });
 
+  it('returns INVALID_ARGS for invalid tier value', async () => {
+    const result = JSON.parse(await stateRepairCmd(['feature-branch', '--tier', 'INVALID']));
+    expect(result.ok).toBe(false);
+    expect(result.error.code).toBe('INVALID_ARGS');
+    expect(result.error.message).toContain('Invalid tier');
+    expect(result.error.message).toContain('T1, T2, T3');
+  });
+
+  it('returns INVALID_ARGS when --tier has no value', async () => {
+    const result = JSON.parse(await stateRepairCmd(['feature-branch', '--tier']));
+    expect(result.ok).toBe(false);
+    expect(result.error.code).toBe('INVALID_ARGS');
+    expect(result.error.message).toContain('--tier requires a value');
+  });
+
+  it('detects T3 tier when .tff directory is missing', async () => {
+    const codeBranch = 'feature-branch';
+
+    // Remove .tff directory to simulate T3 corruption
+    rmSync(tffDir, { recursive: true, force: true });
+
+    // Create a feature branch with state
+    execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
+    
+    // Fork state branch
+    const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
+    expect(forkResult.ok).toBe(true);
+    
+    // Switch back to main
+    execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
+
+    // Run repair without explicit tier - should auto-detect T3
+    const result = JSON.parse(await stateRepairCmd([codeBranch]));
+    expect(result.ok).toBe(true);
+    expect(result.data.action).toBe('needs-tiered-recovery');
+    expect(result.data.tier).toBe('T3');
+    expect(result.data.reason).toContain('.tff/ directory missing');
+  });
+
+  it('detects T2 tier when state.db is corrupted', async () => {
+    const codeBranch = 'feature-branch';
+
+    // Create a corrupted state.db file
+    writeFileSync(path.join(tffDir, 'state.db'), 'this is not valid sqlite data');
+
+    // Create a feature branch with state
+    execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
+    
+    // Fork state branch
+    const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
+    expect(forkResult.ok).toBe(true);
+    
+    // Switch back to main
+    execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
+
+    // Run repair without explicit tier - should auto-detect T2 due to corrupted state.db
+    const result = JSON.parse(await stateRepairCmd([codeBranch]));
+    expect(result.ok).toBe(true);
+    expect(result.data.action).toBe('needs-tiered-recovery');
+    expect(result.data.tier).toBe('T2');
+  });
+
+  it('accepts explicit T1 tier argument', async () => {
+    const codeBranch = 'feature-branch';
+
+    // Create stamp that already matches
+    const stampPath = path.join(tffDir, 'branch-meta.json');
+    writeFileSync(stampPath, JSON.stringify({
+      stateId: '550e8400-e29b-41d4-a716-446655440000',
+      codeBranch,
+      parentStateBranch: null,
+      createdAt: new Date().toISOString(),
+      restoredAt: new Date().toISOString(),
+    }, null, 2));
+
+    // Run repair with explicit T1 tier
+    const result = JSON.parse(await stateRepairCmd([codeBranch, '--tier', 'T1']));
+    expect(result.ok).toBe(true);
+    expect(result.data.action).toBe('skipped');
+    expect(result.data.tier).toBe('T1');
+  });
+
+  it('accepts explicit T2 tier argument (case insensitive)', async () => {
+    const codeBranch = 'feature-branch';
+    
+    // Create a corrupted state.db to simulate T2 corruption
+    writeFileSync(path.join(tffDir, 'state.db'), 'corrupted data');
+
+    // Create a feature branch with state
+    execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
+    
+    // Fork state branch
+    const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
+    expect(forkResult.ok).toBe(true);
+    
+    // Switch back to main
+    execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
+
+    // Run repair with explicit T2 tier (lowercase)
+    const result = JSON.parse(await stateRepairCmd([codeBranch, '--tier', 't2']));
+    expect(result.ok).toBe(true);
+    expect(result.data.action).toBe('needs-tiered-recovery');
+    expect(result.data.tier).toBe('T2');
+  });
+
+  it('accepts explicit T3 tier argument', async () => {
+    const codeBranch = 'feature-branch';
+    
+    // Create a feature branch with state
+    execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
+    
+    // Fork state branch
+    const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
+    expect(forkResult.ok).toBe(true);
+    
+    // Switch back to main
+    execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
+
+    // Run repair with explicit T3 tier
+    const result = JSON.parse(await stateRepairCmd([codeBranch, '--tier', 'T3']));
+    expect(result.ok).toBe(true);
+    expect(result.data.action).toBe('needs-tiered-recovery');
+    expect(result.data.tier).toBe('T3');
+  });
+
+  it('includes tier in T1 repair results', async () => {
+    const codeBranch = 'feature-branch';
+    
+    // Create a valid state.db to trigger T1 detection
+    writeFileSync(path.join(tffDir, 'state.db'), 'SQLite format 3\u0000');
+    mkdirSync(path.join(tmpDir, '.gsd', 'milestones'), { recursive: true });
+
+    // Create a feature branch with state
+    execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
+    
+    // Fork state branch
+    const forkResult = await stateBranch.fork(codeBranch, 'tff-state/main');
+    expect(forkResult.ok).toBe(true);
+    
+    // Switch back to main
+    execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
+
+    // Run repair - should auto-detect T1
+    const result = JSON.parse(await stateRepairCmd([codeBranch]));
+    expect(result.ok).toBe(true);
+    expect(result.data.tier).toBe('T1');
+  });
+
   it('returns STATE_BRANCH_NOT_FOUND when state branch does not exist', async () => {
     const result = JSON.parse(await stateRepairCmd(['nonexistent-branch']));
     expect(result.ok).toBe(false);
@@ -99,8 +247,8 @@ describe('state:repair', () => {
     // Verify state file is gone (it was in feature branch, not main)
     expect(existsSync(path.join(tffDir, 'state.db'))).toBe(false);
 
-    // Run repair
-    const result = JSON.parse(await stateRepairCmd([codeBranch]));
+    // Run repair with explicit T1 tier
+    const result = JSON.parse(await stateRepairCmd([codeBranch, '--tier', 'T1']));
     expect(result.ok).toBe(true);
     expect(result.data.action).toBe('restored');
     expect(result.data.filesRestored).toBeGreaterThan(0);
@@ -162,8 +310,8 @@ describe('state:repair', () => {
     execSync('git checkout main', { cwd: tmpDir, stdio: 'ignore', env });
     execSync(`git branch -D ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
 
-    // Run repair - should fail gracefully with synthetic stamp
-    const result = JSON.parse(await stateRepairCmd([codeBranch]));
+    // Run repair with explicit T1 tier - should fail gracefully with synthetic stamp
+    const result = JSON.parse(await stateRepairCmd([codeBranch, '--tier', 'T1']));
     expect(result.ok).toBe(true);
     expect(result.data.action).toBe('synthetic');
 

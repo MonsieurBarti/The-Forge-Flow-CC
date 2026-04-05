@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, accessSync, constants } from 'node:fs';
 import path from 'node:path';
 import { restoreBranchUseCase } from '../../application/state-branch/restore-branch.js';
 import { isOk } from '../../domain/result.js';
@@ -7,24 +7,137 @@ import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { readLocalStamp, writeLocalStamp, writeSyntheticStamp } from '../../infrastructure/hooks/branch-meta-stamp.js';
 
+export type RecoveryTier = 'T1' | 'T2' | 'T3';
+
 export interface StateRepairResult {
-  readonly action: 'restored' | 'synthetic' | 'failed' | 'skipped';
+  readonly action: 'restored' | 'synthetic' | 'failed' | 'skipped' | 'needs-tiered-recovery';
   readonly reason?: string;
   readonly filesRestored?: number;
+  readonly tier?: RecoveryTier;
+}
+
+interface ParsedArgs {
+  codeBranch: string | undefined;
+  tier: RecoveryTier | undefined;
+}
+
+function parseArgs(args: string[]): ParsedArgs | { error: { code: string; message: string } } {
+  let codeBranch: string | undefined;
+  let tier: RecoveryTier | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    
+    if (arg === '--tier') {
+      const nextArg = args[i + 1];
+      if (!nextArg || nextArg.startsWith('--')) {
+        return { error: { code: 'INVALID_ARGS', message: 'Usage: --tier requires a value (T1, T2, or T3)' } };
+      }
+      const tierValue = nextArg.toUpperCase();
+      if (tierValue !== 'T1' && tierValue !== 'T2' && tierValue !== 'T3') {
+        return { error: { code: 'INVALID_ARGS', message: `Invalid tier "${nextArg}". Valid values: T1, T2, T3` } };
+      }
+      tier = tierValue as RecoveryTier;
+      i++; // Skip the next argument as we've consumed it
+    } else if (!arg.startsWith('--')) {
+      codeBranch = arg;
+    }
+  }
+
+  return { codeBranch, tier };
+}
+
+function detectCorruptionLevel(cwd: string): RecoveryTier {
+  const tffDir = path.join(cwd, '.tff');
+  const stateDbPath = path.join(tffDir, 'state.db');
+  const milestonesDir = path.join(cwd, '.gsd', 'milestones');
+
+  // T3: Severe corruption - .tff directory completely missing
+  if (!existsSync(tffDir)) {
+    return 'T3';
+  }
+
+  // T2: Moderate corruption - state.db exists but is corrupted (invalid SQLite)
+  // Note: Missing state.db is handled by T1 (restore from state branch)
+  if (existsSync(stateDbPath) && !isDbValid(stateDbPath)) {
+    return 'T2';
+  }
+
+  // T2: .tff exists with corrupted state AND milestones directory missing
+  // This suggests more than just a missing state.db - partial corruption
+  if (existsSync(stateDbPath) && !isDbValid(stateDbPath) && !existsSync(milestonesDir)) {
+    return 'T2';
+  }
+
+  // T1: Everything else - minor corruption, stamp mismatch, or missing state.db (restorable)
+  return 'T1';
+}
+
+function isDbValid(dbPath: string): boolean {
+  try {
+    // Try to read the SQLite header - valid SQLite files start with "SQLite format 3\0"
+    const header = readFileSync(dbPath, { encoding: null, flag: 'r' });
+    const sqliteMagic = Buffer.from('SQLite format 3\0');
+    if (header.length < sqliteMagic.length) {
+      return false;
+    }
+    return header.subarray(0, sqliteMagic.length).equals(sqliteMagic);
+  } catch {
+    return false;
+  }
 }
 
 export const stateRepairCmd = async (args: string[]): Promise<string> => {
-  const [codeBranch] = args;
+  // Parse arguments
+  const parsed = parseArgs(args);
+  if ('error' in parsed) {
+    return JSON.stringify({ ok: false, error: parsed.error });
+  }
+
+  const { codeBranch, tier: explicitTier } = parsed;
+
   if (!codeBranch) {
     return JSON.stringify({
       ok: false,
-      error: { code: 'INVALID_ARGS', message: 'Usage: state:repair <branch>' },
+      error: { code: 'INVALID_ARGS', message: 'Usage: state:repair <branch> [--tier T1|T2|T3]' },
     });
   }
 
   const cwd = process.cwd();
   const tffDir = path.join(cwd, '.tff');
 
+  // Auto-detect tier if not explicitly provided
+  const detectedTier = detectCorruptionLevel(cwd);
+  const tier = explicitTier ?? detectedTier;
+
+  // Handle tiered recovery paths
+  if (tier === 'T3') {
+    // T3: Severe corruption - .tff directory missing or severely corrupted
+    // Return a response indicating tiered recovery is needed
+    return JSON.stringify({
+      ok: true,
+      data: { 
+        action: 'needs-tiered-recovery', 
+        reason: `T3 recovery required: .tff/ directory missing or severely corrupted (detected: ${detectedTier})`,
+        tier: 'T3',
+      },
+    });
+  }
+
+  if (tier === 'T2') {
+    // T2: Moderate corruption - state.db missing or corrupted
+    // Return a response indicating tiered recovery is needed
+    return JSON.stringify({
+      ok: true,
+      data: { 
+        action: 'needs-tiered-recovery', 
+        reason: `T2 recovery required: state.db missing or corrupted (detected: ${detectedTier})`,
+        tier: 'T2',
+      },
+    });
+  }
+
+  // T1: Standard repair flow - minor corruption or stamp mismatch
   try {
     const gitOps = new GitCliAdapter(cwd);
     const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
@@ -34,7 +147,7 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
     if (stamp && stamp.codeBranch === codeBranch) {
       return JSON.stringify({
         ok: true,
-        data: { action: 'skipped', reason: 'Stamp already matches target branch' },
+        data: { action: 'skipped', reason: 'Stamp already matches target branch', tier: 'T1' },
       });
     }
 
@@ -67,7 +180,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
         ok: true,
         data: { 
           action: 'synthetic', 
-          reason: `Restore failed: ${result.error.code} - ${result.error.message}` 
+          reason: `Restore failed: ${result.error.code} - ${result.error.message}`,
+          tier: 'T1',
         },
       });
     }
@@ -77,7 +191,7 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       writeSyntheticStamp(tffDir, codeBranch);
       return JSON.stringify({
         ok: true,
-        data: { action: 'synthetic', reason: 'Restore returned null (no state to restore)' },
+        data: { action: 'synthetic', reason: 'Restore returned null (no state to restore)', tier: 'T1' },
       });
     }
 
@@ -99,7 +213,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
           ok: true,
           data: { 
             action: 'synthetic', 
-            reason: 'Restored but no root branch-meta.json found' 
+            reason: 'Restored but no root branch-meta.json found',
+            tier: 'T1',
           },
         });
       }
@@ -109,7 +224,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
         ok: true,
         data: { 
           action: 'synthetic', 
-          reason: 'Restored but failed to read root branch-meta.json' 
+          reason: 'Restored but failed to read root branch-meta.json',
+          tier: 'T1',
         },
       });
     }
@@ -118,7 +234,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       ok: true,
       data: { 
         action: 'restored', 
-        filesRestored: result.data.filesRestored 
+        filesRestored: result.data.filesRestored,
+        tier: 'T1',
       },
     });
   } catch (e) {
