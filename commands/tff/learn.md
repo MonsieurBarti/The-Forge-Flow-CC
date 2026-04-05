@@ -5,7 +5,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion, Bash(plann
 ---
 
 <objective>
-Compare observed behavior against existing skills, detect consistent divergences, and propose bounded refinements.
+Compare observed behavior against existing skills, detect consistent divergences, ∧ propose bounded refinements.
 </objective>
 
 <context>

@@ -7,11 +7,11 @@ description: "Use when starting design or discovery work. MUST use before any cr
 
 ## When to Use
 
-∀ design and discovery phases. Explores intent -> design -> approval.
+∀ design ∧ discovery phases. Explores intent -> design -> approval.
 
 ## HARD-GATE
 
-Do NOT invoke any implementation skill, write any code, or take any implementation action until design presented and approved. Applies to EVERY project regardless of perceived simplicity.
+Do NOT invoke any implementation skill, write any code, ∨ take any implementation action until design presented ∧ approved. Applies to EVERY project regardless of perceived simplicity.
 
 ## Conversation Rules
 

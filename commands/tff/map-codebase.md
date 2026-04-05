@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent
 ---
 
 <objective>
-Spawn parallel doc-writer agents to analyze the codebase and produce STACK.md, ARCHITECTURE.md, CONCERNS.md, and CONVENTIONS.md in .tff/docs/.
+Spawn parallel doc-writer agents to analyze the codebase ∧ produce STACK.md, ARCHITECTURE.md, CONCERNS.md, ∧ CONVENTIONS.md ∈ .tff/docs/.
 </objective>
 
 <context>
@@ -17,5 +17,5 @@ Read the orchestrator pattern: @references/orchestrator-pattern.md
 <execution_context>
 Execute the map-codebase workflow from @workflows/map-codebase.md.
 
-If a specific focus is provided (e.g., `/tff:map-codebase tech`), only run the agent for that focus area. Otherwise, run all 3 in parallel + conventions.
+If a specific focus is provided (e.g., `/tff:map-codebase tech`), only run the agent for that focus area. Otherwise, run all 3 ∈ parallel + conventions.
 </execution_context>

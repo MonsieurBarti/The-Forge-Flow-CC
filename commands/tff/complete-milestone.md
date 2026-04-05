@@ -5,7 +5,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion
 ---
 
 <objective>
-Create the milestone PR, run security audit, review via plannotator, and merge to main.
+Create the milestone PR, run security audit, review via plannotator, ∧ merge to main.
 </objective>
 
 <execution_context>

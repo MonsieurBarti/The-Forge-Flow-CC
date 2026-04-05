@@ -2,12 +2,12 @@
 
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
-Draft new skill from pattern candidate or user description.
+Draft new skill from pattern candidate ∨ user description.
 
 ## Steps
 1. INPUT: candidate number (load from candidates.jsonl) ∨ free-text description
 2. LOAD @skills/skill-authoring/SKILL.md → SPAWN subagent ("Draft New Skill" mode):
-   - provide pattern evidence (or description) + existing skills as format examples
+   - provide pattern evidence (∨ description) + existing skills as format examples
    - draft → `.tff/drafts/<skill-name>.md`
 3. VALIDATE: `tff-tools skills:validate '<json>'`
    - fail → drafter fixes ∧ re-validates

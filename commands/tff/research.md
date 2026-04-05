@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob, WebSearch, Agent
 ---
 
 <objective>
-Conduct research for the slice — investigate technical approach, dependencies, and integration points.
+Conduct research for the slice — investigate technical approach, dependencies, ∧ integration points.
 </objective>
 
 <context>

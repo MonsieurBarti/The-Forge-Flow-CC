@@ -7,3 +7,35 @@ docs/
 .beads/
 .worktrees/
 /branch-meta.json
+
+# ── GSD baseline (auto-generated) ──
+.gsd
+.gsd-id
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.code-workspace
+.env
+.env.*
+!.env.example
+.next/
+dist/
+build/
+
+# But keep the CLI dist for plugin installation (includes bundled JS and native bindings)
+!tools/dist/
+__pycache__/
+*.pyc
+.venv/
+venv/
+target/
+vendor/
+*.log
+coverage/
+.cache/
+tmp/
+.bg-shell/

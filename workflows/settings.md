@@ -2,13 +2,13 @@
 
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
-View and modify all project settings.
+View ∧ modify all project settings.
 
 ## Prerequisites
-tff project exists
+tff project ∃
 
 ## Steps
-1. READ `.tff/settings.yaml` (if exists)
+1. READ `.tff/settings.yaml` (if ∃)
    - If missing → offer to create from @references/settings-template.md
 2. DETECT missing fields: compare against template, list any absent sections
    - If missing fields found → offer to add them with defaults (preserve existing values + comments)
@@ -16,8 +16,8 @@ tff project exists
    - Model Profiles: quality/balanced/budget with current models
    - Autonomy: current mode with explanation of alternatives
    - Auto-Learn: weights, guardrails, clustering thresholds
-     - Note: "these fields are forward-looking — modifying them has no runtime effect yet"
-4. ASK: which section to modify? (or "done" to exit)
+     - Note: "these fields are forward-looking — modifying them has ¬ runtime effect yet"
+4. ASK: which section to modify? (∨ "done" to exit)
 5. ACCEPT changes per section:
    - Model profiles: quality/balanced/budget model selection
    - Autonomy: mode selection with explanation of guided vs plan-to-pr

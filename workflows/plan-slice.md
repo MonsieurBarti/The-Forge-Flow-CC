@@ -6,13 +6,13 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
 status = planning
-SPEC.md exists at `.tff/milestones/<milestone>/slices/<id>/SPEC.md`
+SPEC.md ∃ at `.tff/milestones/<milestone>/slices/<id>/SPEC.md`
 
 ## Steps
 
 ### 1. Load Spec
 READ `.tff/milestones/<milestone>/slices/<id>/SPEC.md`
-READ `.tff/milestones/<milestone>/slices/<id>/RESEARCH.md` (if exists)
+READ `.tff/milestones/<milestone>/slices/<id>/RESEARCH.md` (if ∃)
 LOAD @skills/writing-plans/SKILL.md
 
 ### 2. File Structure
@@ -30,8 +30,8 @@ DECOMPOSE spec → tasks:
   3. Write implementation (exact code)
   4. Run test (exact command + expected PASS)
   5. Commit (exact git command)
-- Exact file paths, not "add to the service"
-- Code snippets, not "implement validation"
+- Exact file paths, ¬ "add to the service"
+- Code snippets, ¬ "implement validation"
 
 ### 4. Write PLAN.md
 WRITE `.tff/milestones/<milestone>/slices/<id>/PLAN.md`:
@@ -81,7 +81,7 @@ feedback → revise ∨ approved → continue
 `tff-tools worktree:create <id>`
 CHECK: `ok` = true → continue | `ok` = false → warn (worktree failure is non-blocking at plan time; execute-slice will block F-lite/F-full if worktree is still missing)
 `tff-tools slice:transition <id> executing`
-CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry or abort
+CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ abort
   IF `ok` = true ∧ `warnings.length > 0`:
     ∀ warning ∈ warnings: display `⚠ <warning>` to user
 
@@ -90,6 +90,6 @@ After completing all steps above:
 1. READ `.tff/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
    - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
-   - Human gates (plan approval, spec approval, completion): pause and ask
+   - Human gates (plan approval, spec approval, completion): pause ∧ ask
 3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
 4. Log: `[tff] <slice-id>: planning → executing`

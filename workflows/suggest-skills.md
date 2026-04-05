@@ -5,11 +5,11 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 Show ranked pattern candidates with human-readable summaries.
 
 ## Prerequisites
-`/tff:detect-patterns` run (candidates.jsonl exists) — if ∄ → suggest detect first
+`/tff:detect-patterns` run (candidates.jsonl ∃) — if ∄ → suggest detect first
 
 ## Steps
 1. LOAD `.tff/observations/candidates.jsonl`
-2. SUMMARIZE: for each candidate, LOAD @skills/skill-authoring/SKILL.md → SPAWN subagent (summarize mode) → one-line summary
+2. SUMMARIZE: ∀ candidate, LOAD @skills/skill-authoring/SKILL.md → SPAWN subagent (summarize mode) → one-line summary
 3. DISPLAY numbered list:
    ```
    1. [0.78] Read -> Grep -> Edit -> Bash(npm test)

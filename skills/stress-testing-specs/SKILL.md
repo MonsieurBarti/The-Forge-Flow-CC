@@ -15,10 +15,10 @@ description: "Use when stress-testing design specs. Devil's advocate for assumpt
 
 ## Methodology
 
-1. PRE-MORTEM: "It's 6 months later and this failed. Why?"
+1. PRE-MORTEM: "It's 6 months later ∧ this failed. Why?"
    - List 3-5 failure modes
    - ∀ mode: probability, impact, mitigation
-2. ASSUMPTION HUNT: ∀ statement in spec:
+2. ASSUMPTION HUNT: ∀ statement ∈ spec:
    - Verified ∨ assumed?
    - What if the opposite is true?
    - What dependency could break this?
@@ -26,7 +26,7 @@ description: "Use when stress-testing design specs. Devil's advocate for assumpt
    - What's the smallest version that delivers value?
    - What could be deferred to next slice?
 4. EDGE CASES:
-   - Empty state, concurrent access, failure recovery
+   - ∅ state, concurrent access, failure recovery
    - What happens when [external dependency] is down?
 
 ## Output Format

@@ -7,7 +7,7 @@ identity: security-auditor — tracked for fresh-reviewer enforcement and audit 
 # tff-security-auditor
 
 ## Purpose
-Security review on every PR — blocks on critical and high findings.
+Security review on every PR — blocks on critical ∧ high findings.
 
 ## Skills Loaded
 - @references/security-baseline.md

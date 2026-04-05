@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion, Bash(plann
 ---
 
 <objective>
-Create the task decomposition, detect waves, review via plannotator, and set up the worktree.
+Create the task decomposition, detect waves, review via plannotator, ∧ set up the worktree.
 </objective>
 
 <context>

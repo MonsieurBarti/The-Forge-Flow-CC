@@ -11,16 +11,16 @@ description: "Use when completing any task. Evidence before claims, always."
 
 ## HARD-GATE
 
-¬claim success without fresh verification evidence in current session.
+¬claim success without fresh verification evidence ∈ current session.
 
 ## The Rule
 
-If you didn't run the command in this message, you cannot claim it passes.
+If you didn't run the command ∈ this message, you cannot claim it passes.
 
 ## Verification Checklist
 
 ∀ task marked DONE:
-1. RUN tests: `npm test` or specific spec file -> show output
+1. RUN tests: `npm test` ∨ specific spec file -> show output
 2. RUN typecheck: `npx tsc --noEmit` -> show output
 3. RUN lint: `npx biome check` -> show output
 4. VERIFY: Output shows pass, ¬assume from prior run
@@ -41,7 +41,7 @@ If you didn't run the command in this message, you cannot claim it passes.
 
 ## Rules
 
-- Evidence = command output in current session
+- Evidence = command output ∈ current session
 - ¬extrapolate from partial evidence
 - If verification fails, FIX before claiming done
 - This skill overrides urgency ("we need to ship" ¬excuses skipping verification)

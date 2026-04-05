@@ -27,10 +27,10 @@ LOAD @skills/finishing-work/SKILL.md
    - **"PR merged"** → continue to step 7
    - **"PR needs changes"** → SPAWN tff-fixer with requested changes → push fixes → go back to step 6
 7. CLOSE + CLEANUP:
-   - `tff-tools worktree:delete <slice-id>` (if worktree exists)
+   - `tff-tools worktree:delete <slice-id>` (if worktree ∃)
    - `tff-tools slice:close <slice-id> --reason "Slice PR merged"`
    - `git push origin --delete slice/<slice-id>` (delete remote slice branch)
-   - `git branch -d slice/<slice-id>` (delete local slice branch, if exists)
+   - `git branch -d slice/<slice-id>` (delete local slice branch, if ∃)
    - `git fetch origin milestone/<milestone> && git rebase origin/milestone/<milestone>` (keep milestone branch up to date)
    - Log: `[tff] <slice-id>: reviewing → closed`
 8. NEXT: @references/next-steps.md
@@ -40,7 +40,7 @@ After completing all steps above:
 1. READ `.tff/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
    - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
-   - Human gates (plan approval, spec approval, merge gate): pause and ask
+   - Human gates (plan approval, spec approval, merge gate): pause ∧ ask
 3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
 
 ## Auto-Fix (plan-to-pr)

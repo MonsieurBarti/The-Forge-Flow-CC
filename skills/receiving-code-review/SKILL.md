@@ -38,5 +38,5 @@ description: "Use when processing review feedback. Technical rigor, not performa
 
 - ∀ accepted change: run tests after implementing
 - ∀ rejected finding: explain with evidence (code reference, test output)
-- Severity Critical/Important -> must address (implement or push back with evidence)
+- Severity Critical/Important -> must address (implement ∨ push back with evidence)
 - Severity Minor -> may defer with justification

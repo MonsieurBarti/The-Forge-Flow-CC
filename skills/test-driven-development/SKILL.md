@@ -11,7 +11,7 @@ description: "Use when implementing features/fixes. Iron law: ¬∃ production c
 
 ## HARD-GATE
 
-¬∃ production_code without failing_test_first. If code exists before test -> DELETE IT and start over. The sunk cost is irrelevant — the time is gone regardless.
+¬∃ production_code without failing_test_first. If code ∃ before test -> DELETE IT ∧ start over. The sunk cost is irrelevant — the time is gone regardless.
 
 ## Cycle
 
@@ -28,7 +28,7 @@ it('should validate email format', () => {
 
 Rules: 1 behavior/test | descriptive name | `describe`/`it`/`expect` (¬`test()`) | MUST run ∧ watch FAIL
 
-∀ test: fails for right reason (missing feature ¬syntax error). GREEN before impl -> feature exists ∨ test wrong — investigate.
+∀ test: fails for right reason (missing feature ¬syntax error). GREEN before impl -> feature ∃ ∨ test wrong — investigate.
 
 ### GREEN
 
@@ -57,15 +57,15 @@ Deleting hours of work to start test-first is correct. The time is gone regardle
 
 ## 3-Fix Red Flag
 
-3+ test fixes attempted -> question the design, not the test. The test is probably right; the implementation approach is wrong.
+3+ test fixes attempted -> question the design, ¬ the test. The test is probably right; the implementation approach is wrong.
 
 ## Anti-Patterns
 
 | Pattern | Problem | Fix |
 |---|---|---|
 | Tests after impl | Never verified test catches failures | Write test first -> watch fail -> implement |
-| Mock behavior testing | `expect(mock).toHaveBeenCalled()` tests mock, ¬code | Use in-memory adapters implementing real interface |
-| Over-mocking | Mock everything, test nothing real | In-memory adapters: real interface, ¬I/O |
+| Mock behavior testing | `expect(mock).toHaveBeenCalled()` tests mock, ¬code | Use ∈-memory adapters implementing real interface |
+| Over-mocking | Mock everything, test nothing real | ∈-memory adapters: real interface, ¬I/O |
 | "Too simple for TDD" | Simple code is where hidden bugs live | Follow the cycle regardless |
 
 ## Gate (∀ must be true before DONE)

@@ -16,7 +16,7 @@ Before creating PR, verify:
 2. ∀ lint/typecheck pass
 3. No debug code (console.log, debugger, TODO)
 4. Commits follow conventions
-5. Changes match plan (no scope creep)
+5. Changes match plan (¬ scope creep)
 6. No generated files committed
 7. No secrets (.env, credentials, API keys)
 
@@ -42,7 +42,7 @@ EOF
 ## Merge Gate
 
 - NEVER merge directly — only create PR
-- User approves and merges via GitHub
+- User approves ∧ merges via GitHub
 - After merge: cleanup worktree, close slice via tff-tools, delete branches
 
 ## Anti-Patterns

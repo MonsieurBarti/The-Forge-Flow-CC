@@ -14,13 +14,13 @@ Report includes:
 - Self-review findings (if any)
 
 ### DONE_WITH_CONCERNS
-Work is complete but the agent has doubts about correctness, scope, or approach.
+Work is complete but the agent has doubts about correctness, scope, ∨ approach.
 
 Report includes everything from DONE plus:
 - Specific concerns with evidence
-- What the agent is uncertain about and why
+- What the agent is uncertain about ∧ why
 
-The orchestrator reads concerns before proceeding to review. Correctness concerns are addressed before review. Observational concerns (e.g., "this file is getting large") are noted and review proceeds.
+The orchestrator reads concerns before proceeding to review. Correctness concerns are addressed before review. Observational concerns (e.g., "this file is getting large") are noted ∧ review proceeds.
 
 ### NEEDS_CONTEXT
 The agent cannot proceed without information that wasn't provided.
@@ -30,7 +30,7 @@ Report includes:
 - Why it's needed
 - What the agent has tried
 
-The orchestrator provides the missing context and re-dispatches the same agent.
+The orchestrator provides the missing context ∧ re-dispatches the same agent.
 
 ### BLOCKED
 The agent cannot complete the task. Something fundamental is wrong.
@@ -57,8 +57,8 @@ Before reporting any status, every agent asks:
 
 **Quality:**
 - Is this my best work?
-- Are names clear and accurate?
-- Is the code clean and maintainable?
+- Are names clear ∧ accurate?
+- Is the code clean ∧ maintainable?
 
 **Discipline:**
 - Did I avoid overbuilding (YAGNI)?
@@ -67,8 +67,8 @@ Before reporting any status, every agent asks:
 
 **Verification:**
 - Did I run the relevant commands to verify my work?
-- Am I reporting evidence, not assumptions?
-- No "should work" or "probably passes" — only verified facts.
+- Am I reporting evidence, ¬ assumptions?
+- No "should work" ∨ "probably passes" — only verified facts.
 
 ## Critical Rule
 

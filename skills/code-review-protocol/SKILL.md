@@ -23,8 +23,8 @@ Stage 1 (spec compliance) MUST pass before Stage 2 (code quality) runs.
 Before requesting review, verify:
 1. ∀ tests pass (fresh run)
 2. No debug code (console.log, debugger, TODO)
-3. Commits clean and follow conventions
-4. Changes match plan (no scope creep)
+3. Commits clean ∧ follow conventions
+4. Changes match plan (¬ scope creep)
 
 ## Severity
 
@@ -36,7 +36,7 @@ Before requesting review, verify:
 
 ## Calibration
 
-Bug in prod? -> Critical | Confuses next dev? -> Important | ¬noticed in 1000-line diff? -> skip
+Bug ∈ prod? -> Critical | Confuses next dev? -> Important | ¬noticed ∈ 1000-line diff? -> skip
 
 ## Fresh-Reviewer Enforcement
 

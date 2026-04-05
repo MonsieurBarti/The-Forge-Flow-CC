@@ -12,7 +12,7 @@ LOAD @skills/verification-before-completion/SKILL.md
 2. FINDINGS → invoke Skill `plannotator-annotate` with arg `.tff/milestones/<milestone>/slices/<slice-id>/VERIFICATION.md`
 3. VERDICT:
    - PASS → `tff-tools slice:transition <id> reviewing`
-     CHECK: `ok` = true → suggest `/tff:ship` | `ok` = false → warn user, offer retry or abort
+     CHECK: `ok` = true → suggest `/tff:ship` | `ok` = false → warn user, offer retry ∨ abort
    - FAIL → ask user: fix (→ back to executing, replan) ∨ accept w/ exceptions (→ reviewing)
 4. NEXT: @references/next-steps.md
 

@@ -11,7 +11,7 @@ description: "Use when creating or modifying agents. Standardized template, iden
 
 ## HARD-GATE
 
-Agent file must follow standardized template. ¬methodology in agent files. Methodology belongs in skills.
+Agent file must follow standardized template. ¬methodology ∈ agent files. Methodology belongs ∈ skills.
 
 ## When to Create an Agent
 
@@ -49,17 +49,17 @@ identity: <role> — tracked for fresh-reviewer enforcement
 ## Checklist
 
 1. Define identity -> why does this need persistent identity?
-2. Assign model -> opus (quality) or sonnet (balanced/budget)
+2. Assign model -> opus (quality) ∨ sonnet (balanced/budget)
 3. List skills -> which skills does this agent load?
 4. Define fresh-reviewer scope -> what can/cannot this agent review?
-5. Validate -> no methodology content in agent file
+5. Validate -> ¬ methodology content ∈ agent file
 
 ## Anti-Patterns
 
-- Baking methodology into agent (methodology belongs in skills)
+- Baking methodology into agent (methodology belongs ∈ skills)
 - Creating agents without identity-tracking need (use skill + fresh subagent instead)
 - Personality-driven agents ("devil's advocate", "pragmatic modeler" — irrelevant to Claude)
-- Agent files > 30 lines (if longer, methodology is leaking in)
+- Agent files > 30 lines (if longer, methodology is leaking ∈)
 
 ## Rules
 

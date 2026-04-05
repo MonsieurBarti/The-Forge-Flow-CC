@@ -5,7 +5,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob, AskUserQuestion
 ---
 
 <objective>
-View and modify all tff project settings. Detects missing fields and offers to add them with defaults.
+View ∧ modify all tff project settings. Detects missing fields ∧ offers to add them with defaults.
 </objective>
 
 <context>

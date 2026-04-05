@@ -3,19 +3,19 @@
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
-∄ `.tff/PROJECT.md` — if exists → "Use `/tff:new-milestone`" ∧ stop
+∄ `.tff/PROJECT.md` — if ∃ → "Use `/tff:new-milestone`" ∧ stop
 
 ## Steps
 1. DETECT existing codebase: scan for files matching common source extensions
    (`.ts`, `.js`, `.py`, `.go`, `.rs`, `.java`, `.rb`, `.swift`, `.kt`, `.c`, `.cpp`, `.h`,
     `.cs`, `.php`, `.ex`, `.hs`, `.ml`, `.scala`, `.clj`, `.vue`, `.svelte`, `.tsx`, `.jsx`)
-   - If no source files found → skip to step 3
+   - If ¬ source files found → skip to step 3
    - If source files found → continue to step 2
 
 2. ONBOARD existing codebase:
    a. ASK: "This repo has existing code. I'd like to analyze it first to understand your project. Proceed?"
-      - If no → skip to step 3 (user provides everything manually)
-   b. INIT minimal: `mkdir -p .tff/docs` (map-codebase needs the output dir, not a full project)
+      - If ¬ → skip to step 3 (user provides everything manually)
+   b. INIT minimal: `mkdir -p .tff/docs` (map-codebase needs the output dir, ¬ a full project)
    c. RUN: execute map-codebase workflow (3 parallel doc-writer agents → .tff/docs/)
       - If map-codebase fails → warn user, fall back to step 3 (manual input)
    d. SYNTHESIZE: read STACK.md, ARCHITECTURE.md, CONCERNS.md, CONVENTIONS.md

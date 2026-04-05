@@ -17,7 +17,7 @@ Presentation   → Application only (invokes commands/queries, wires DI)
 
 ---
 
-## What Belongs in Each Layer
+## What Belongs ∈ Each Layer
 
 ### Domain
 
@@ -28,7 +28,7 @@ Presentation   → Application only (invokes commands/queries, wires DI)
 | Aggregate roots | `Order` containing `OrderLine[]` |
 | Domain Events | `UserCreatedEvent`, `OrderPlacedEvent` |
 | Domain Services | `PricingService.calculateDiscount(order)` |
-| Repository port interfaces | `UserRepository` (interface only, no implementation) |
+| Repository port interfaces | `UserRepository` (interface only, ¬ implementation) |
 | Domain Errors | `DomainError.validation()`, `DomainError.notFound()` |
 | Zod schemas for domain validation | `UserPropsSchema`, `EmailSchema` |
 
@@ -49,7 +49,7 @@ Presentation   → Application only (invokes commands/queries, wires DI)
 | Belongs | Example |
 |---------|---------|
 | Repository adapters | `SqlUserRepository implements UserRepository` |
-| In-memory adapters | `InMemoryUserRepository implements UserRepository` |
+| ∈-memory adapters | `InMemoryUserRepository implements UserRepository` |
 | Data mappers | `SqlUserMapper.toDomain(row)` / `.toPersistence(entity)` |
 | External service adapters | `StripePaymentAdapter implements PaymentGateway` |
 | Database clients / connections | `DatabaseClient`, connection pool setup |
@@ -158,7 +158,7 @@ class UserController {
 
 ## Import Rules — Quick Check
 
-| If you see this import... | In this layer... | Verdict |
+| If you see this import... | ∈ this layer... | Verdict |
 |---|---|---|
 | `from '../infrastructure/'` | Domain | VIOLATION |
 | `from '../application/'` | Domain | VIOLATION |
@@ -172,7 +172,7 @@ class UserController {
 | `from 'node:fs'` | Application | VIOLATION |
 | `from '@nestjs/'` | Domain | VIOLATION |
 
-**Rule of thumb:** If you're importing from an outer layer, you have a dependency inversion problem. Define a port (interface) in the inner layer and implement it in the outer layer.
+**Rule of thumb:** If you're importing from an outer layer, you have a dependency inversion problem. Define a port (interface) ∈ the inner layer ∧ implement it ∈ the outer layer.
 
 ---
 
@@ -182,17 +182,17 @@ Each layer must be testable **independently** without instantiating outer layers
 
 | Layer | Test Setup | Dependencies |
 |---|---|---|
-| Domain | Direct instantiation | None — `User.create()` needs no adapters |
-| Application | Inject in-memory adapters | `new CreateUserHandler(new InMemoryUserRepository())` |
+| Domain | Direct instantiation | ∅ — `User.create()` needs ¬ adapters |
+| Application | Inject ∈-memory adapters | `new CreateUserHandler(new InMemoryUserRepository())` |
 | Infrastructure | Real DB (test container) | Database, but ¬application, ¬presentation |
-| Presentation | Supertest / CLI runner | Full stack or mocked application services |
+| Presentation | Supertest / CLI runner | Full stack ∨ mocked application services |
 
 ### Testing Principle
 
 - Domain tests prove **business rules** work
-- Application tests prove **use cases** orchestrate correctly with in-memory adapters
+- Application tests prove **use cases** orchestrate correctly with ∈-memory adapters
 - Infrastructure tests prove **adapters** translate correctly (DB, APIs)
-- Presentation tests prove **entry points** parse input and return expected output
+- Presentation tests prove **entry points** parse input ∧ return expected output
 
 ```typescript
 // Application test — fully isolated, no I/O

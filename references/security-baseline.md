@@ -9,9 +9,9 @@ Loaded by tff-security-auditor ∀ review.
 | Category | Question | Common Findings |
 |---|---|---|
 | Spoofing | Can attacker impersonate user/component? | Missing auth, weak tokens |
-| Tampering | Can data be modified in transit/at rest? | No input validation, unsigned payloads |
-| Repudiation | Can actions be denied? | Missing audit logs, no timestamps |
-| Information Disclosure | Can sensitive data leak? | Secrets in logs, verbose errors |
+| Tampering | Can data be modified ∈ transit/at rest? | No input validation, unsigned payloads |
+| Repudiation | Can actions be denied? | Missing audit logs, ¬ timestamps |
+| Information Disclosure | Can sensitive data leak? | Secrets ∈ logs, verbose errors |
 | Denial of Service | Can system be overwhelmed? | No rate limiting, unbounded queries |
 | Elevation of Privilege | Can user gain unauthorized access? | Missing authz, insecure defaults |
 
@@ -23,11 +23,11 @@ Loaded by tff-security-auditor ∀ review.
 | A02 | Cryptographic Failures | No hardcoded secrets, proper hashing |
 | A03 | Injection | ∀ user_input: sanitized before queries/commands |
 | A04 | Insecure Design | Threat model reviewed for new features |
-| A05 | Security Misconfiguration | No debug in prod, minimal permissions |
-| A06 | Vulnerable Components | Deps audited, no known CVEs |
+| A05 | Security Misconfiguration | No debug ∈ prod, minimal permissions |
+| A06 | Vulnerable Components | Deps audited, ¬ known CVEs |
 | A07 | Auth Failures | Strong passwords, MFA where applicable |
 | A08 | Data Integrity Failures | Signed updates, verified deps |
-| A09 | Logging Failures | Security events logged, no sensitive data in logs |
+| A09 | Logging Failures | Security events logged, ¬ sensitive data ∈ logs |
 | A10 | SSRF | ∀ URL input: validated against allowlist |
 
 ## Severity
@@ -36,5 +36,5 @@ Loaded by tff-security-auditor ∀ review.
 |---|---|---|
 | critical | Exploitable now, data loss/breach risk | Yes |
 | high | Exploitable with effort, significant impact | Yes |
-| medium | Limited exploitability or impact | No (advisory) |
-| low | Defense-in-depth improvement | No (advisory) |
+| medium | Limited exploitability ∨ impact | No (advisory) |
+| low | Defense-∈-depth improvement | No (advisory) |
