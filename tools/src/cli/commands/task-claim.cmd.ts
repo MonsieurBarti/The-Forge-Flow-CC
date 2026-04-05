@@ -1,4 +1,5 @@
 import { isOk } from '../../domain/result.js';
+import type { TaskStartedEntry } from '../../domain/value-objects/journal-entry.js';
 import { withBranchGuard } from '../with-branch-guard.js';
 
 export const taskClaimCmd = async (args: string[]): Promise<string> => {
@@ -21,14 +22,15 @@ export const taskClaimCmd = async (args: string[]): Promise<string> => {
     const agentIdentity = claimedBy ?? 'anonymous';
 
     // Write task-started entry to journal BEFORE claiming (fail-fast)
-    const journalResult = journalRepository.append(task.sliceId, {
+    const journalEntry: Omit<TaskStartedEntry, 'seq'> = {
       type: 'task-started',
       sliceId: task.sliceId,
       taskId,
       waveIndex,
       agentIdentity,
       timestamp: new Date().toISOString(),
-    });
+    };
+    const journalResult = journalRepository.append(task.sliceId, journalEntry);
     if (!isOk(journalResult)) return JSON.stringify({ ok: false, error: journalResult.error });
 
     // Proceed with existing claimTask logic

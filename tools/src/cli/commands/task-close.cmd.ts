@@ -1,4 +1,5 @@
 import { isOk } from '../../domain/result.js';
+import type { TaskCompletedEntry } from '../../domain/value-objects/journal-entry.js';
 import { withBranchGuard } from '../with-branch-guard.js';
 
 export const taskCloseCmd = async (args: string[]): Promise<string> => {
@@ -29,14 +30,15 @@ export const taskCloseCmd = async (args: string[]): Promise<string> => {
     const durationMs = 0;
 
     // Write task-completed entry to journal BEFORE closing (fail-fast)
-    const journalResult = journalRepository.append(task.sliceId, {
+    const journalEntry: Omit<TaskCompletedEntry, 'seq'> = {
       type: 'task-completed',
       sliceId: task.sliceId,
       taskId,
       waveIndex,
       durationMs,
       timestamp: new Date().toISOString(),
-    });
+    };
+    const journalResult = journalRepository.append(task.sliceId, journalEntry);
     if (!isOk(journalResult)) return JSON.stringify({ ok: false, error: journalResult.error });
 
     // Proceed with existing closeTask logic

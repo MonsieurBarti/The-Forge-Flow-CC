@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { parse as parseYaml } from 'yaml';
 import { generateReminder } from '../../application/session/generate-reminder.js';
+import { loadProjectSettings } from '../../domain/value-objects/project-settings.js';
 import { withBranchGuard } from '../with-branch-guard.js';
 
 /**
@@ -15,9 +15,9 @@ function areRemindersDisabled(): boolean {
   }
   try {
     const content = readFileSync(settingsPath, 'utf8');
-    if (!content.trim()) return false;
-    const parsed = parseYaml(content) as Record<string, unknown>;
-    return parsed?.workflow?.reminders === false;
+    // Use loadProjectSettings for proper Zod validation - no type casts needed
+    const settings = loadProjectSettings(content);
+    return settings.workflow?.reminders === false;
   } catch {
     return false; // On any error, default to enabled
   }

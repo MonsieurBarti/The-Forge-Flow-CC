@@ -63,11 +63,19 @@ const AutoLearnSchema = withDefault(
   }),
 );
 
+const WorkflowSchema = withDefault(
+  z.object({
+    reminders: z.boolean().catch(true),
+    guards: z.boolean().catch(true),
+  }),
+);
+
 export const ProjectSettingsSchema = withDefault(
   z.object({
     'model-profiles': ModelProfilesSchema,
     autonomy: AutonomySchema,
     'auto-learn': AutoLearnSchema,
+    workflow: WorkflowSchema,
   }),
 );
 
