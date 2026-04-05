@@ -1,3 +1,4 @@
+export { detectDirectEdit, type DetectDirectEditDeps, type DirectEditResult, type DirectEditWarning } from './guard/detect-direct-edit.js';
 export { loadCheckpoint } from './checkpoint/load-checkpoint.js';
 export { type CheckpointData, saveCheckpoint } from './checkpoint/save-checkpoint.js';
 export { detectClusters } from './compose/detect-clusters.js';
