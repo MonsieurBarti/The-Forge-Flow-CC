@@ -235,8 +235,8 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       mkdirSync(tffDir, { recursive: true });
     }
     
-    // Acquire lock
-    const release = await acquireSyncLock(stateDbPath, 5000);
+    // Acquire lock with longer timeout for tests
+    const release = await acquireSyncLock(stateDbPath, 10000);
     
     if (release === null) {
       return JSON.stringify({
@@ -415,7 +415,7 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
     
     // Acquire lock directly (bypass withSyncLock which creates state stores with branch alignment checks)
     const stateDbPath = path.join(cwd, '.tff', 'state.db');
-    const release = await acquireSyncLock(stateDbPath, 5000);
+    const release = await acquireSyncLock(stateDbPath, 10000);
     
     if (release === null) {
       return JSON.stringify({
