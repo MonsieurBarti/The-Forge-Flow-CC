@@ -27,6 +27,9 @@ describe('state:repair', () => {
     execSync('git init', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git config user.email "test@example.com"', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git config user.name "Test User"', { cwd: tmpDir, stdio: 'ignore', env });
+    
+    // Create initial commit on 'main' branch explicitly
+    execSync('git checkout -b main', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git commit --allow-empty -m "Initial commit"', { cwd: tmpDir, stdio: 'ignore', env });
 
     // Create adapters
