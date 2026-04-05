@@ -26,10 +26,8 @@ Thumbs.db
 dist/
 build/
 
-# But keep the CLI dist for plugin installation
+# But keep the CLI dist for plugin installation (includes bundled JS and native bindings)
 !tools/dist/
-# But ignore platform-specific native bindings (users will get these via npm install)
-tools/dist/*.node
 __pycache__/
 *.pyc
 .venv/
