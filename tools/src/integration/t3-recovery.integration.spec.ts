@@ -15,7 +15,6 @@ import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.j
 describe('T3 recovery integration', () => {
   let tmpDir: string;
   let tffDir: string;
-  let gsdDir: string;
   let _milestonesDir: string;
   let originalCwd: string;
   let env: NodeJS.ProcessEnv;
@@ -25,8 +24,7 @@ describe('T3 recovery integration', () => {
     tmpDir = join(os.tmpdir(), `tff-t3-recovery-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(tmpDir, { recursive: true });
     tffDir = join(tmpDir, '.tff');
-    gsdDir = join(tmpDir, '.gsd');
-    _milestonesDir = join(gsdDir, 'milestones');
+    _milestonesDir = join(tffDir, 'milestones');
 
     process.chdir(tmpDir);
 
@@ -108,12 +106,12 @@ describe('T3 recovery integration', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('restores .tff/ and regenerates GSD files when both are missing', async () => {
-    // Note: .gsd/ may not exist in test setup - T3 should regenerate it
+  it('restores .tff/ and regenerates project files when both are missing', async () => {
+    // Note: .tff/ may not exist in test setup - T3 should regenerate it
 
-    // Simulate severe corruption: Delete both .tff/ and .gsd/ if they exist
+    // Simulate severe corruption: Delete both .tff/ and .tff/ if they exist
     if (existsSync(tffDir)) rmSync(tffDir, { recursive: true, force: true });
-    if (existsSync(gsdDir)) rmSync(gsdDir, { recursive: true, force: true });
+    if (existsSync(tffDir)) rmSync(tffDir, { recursive: true, force: true });
 
     expect(existsSync(tffDir)).toBe(false);
 
@@ -140,9 +138,9 @@ describe('T3 recovery integration', () => {
     expect(existsSync(tffDir)).toBe(true);
     expect(existsSync(join(tffDir, 'state.db'))).toBe(true);
 
-    // Verify GSD files were regenerated
-    expect(existsSync(gsdDir)).toBe(true);
-    expect(existsSync(join(gsdDir, 'STATE.md'))).toBe(true);
+    // Verify project files were regenerated
+    expect(existsSync(tffDir)).toBe(true);
+    expect(existsSync(join(tffDir, 'STATE.md'))).toBe(true);
 
     // Verify checkpoint restored
     const checkpointPath = join(tffDir, 'milestones', 'M01', 'slices', 'M01-S01', 'CHECKPOINT.md');
@@ -154,9 +152,9 @@ describe('T3 recovery integration', () => {
   }, 30000);
 
   it('returns error when milestone is not provided and database is empty', async () => {
-    // Delete .tff/ and .gsd/
+    // Delete .tff/ and .tff/
     rmSync(tffDir, { recursive: true, force: true });
-    rmSync(gsdDir, { recursive: true, force: true });
+    rmSync(tffDir, { recursive: true, force: true });
 
     // Recreate state branch with empty state.db (no milestones)
     execSync('git checkout tff-state/main', { cwd: tmpDir, stdio: 'pipe', env });
@@ -182,10 +180,10 @@ describe('T3 recovery integration', () => {
     expect(repairResult.error?.code).toBe('MILESTONE_NOT_FOUND');
   }, 30000);
 
-  it('auto-detects T3 when both .tff/ and .gsd/ are missing', async () => {
+  it('auto-detects T3 when both .tff/ and .tff/ are missing', async () => {
     // Delete both directories
     rmSync(tffDir, { recursive: true, force: true });
-    rmSync(gsdDir, { recursive: true, force: true });
+    rmSync(tffDir, { recursive: true, force: true });
 
     // Run repair without explicit tier (auto-detection)
     const repairResult = JSON.parse(await stateRepairCmd(['main', '--milestone', 'M01']));
@@ -204,13 +202,13 @@ describe('T3 recovery integration', () => {
 
     // Verify both restored
     expect(existsSync(tffDir)).toBe(true);
-    expect(existsSync(gsdDir)).toBe(true);
+    expect(existsSync(tffDir)).toBe(true);
   }, 30000);
 
-  it('auto-detects T3 when state.db is missing AND GSD files are missing', async () => {
-    // Simulate corruption: Delete state.db and GSD files (but keep .tff/ structure)
+  it('auto-detects T3 when state.db is missing AND project files are missing', async () => {
+    // Simulate corruption: Delete state.db and project files (but keep .tff/ structure)
     rmSync(join(tffDir, 'state.db'), { force: true });
-    rmSync(gsdDir, { recursive: true, force: true });
+    rmSync(tffDir, { recursive: true, force: true });
 
     // Run repair without explicit tier
     const repairResult = JSON.parse(await stateRepairCmd(['main', '--milestone', 'M01']));
@@ -231,7 +229,7 @@ describe('T3 recovery integration', () => {
 
     // Delete both directories
     rmSync(tffDir, { recursive: true, force: true });
-    rmSync(gsdDir, { recursive: true, force: true });
+    rmSync(tffDir, { recursive: true, force: true });
 
     // Run T3 repair
     const repairResult = JSON.parse(await stateRepairCmd(['main', '--tier', 'T3', '--milestone', 'M01']));
@@ -248,9 +246,9 @@ describe('T3 recovery integration', () => {
   }, 30000);
 
   it('returns STATE_BRANCH_NOT_FOUND when state branch is missing', async () => {
-    // Delete .tff/ and .gsd/
+    // Delete .tff/ and .tff/
     rmSync(tffDir, { recursive: true, force: true });
-    rmSync(gsdDir, { recursive: true, force: true });
+    rmSync(tffDir, { recursive: true, force: true });
 
     // Delete state branch to cause restore failure
     execSync('git branch -D tff-state/main', { cwd: tmpDir, stdio: 'pipe', env });
@@ -268,9 +266,9 @@ describe('T3 recovery integration', () => {
   }, 30000);
 
   it('attempts fetch when state branch is missing locally', async () => {
-    // Delete .tff/ and .gsd/
+    // Delete .tff/ and .tff/
     rmSync(tffDir, { recursive: true, force: true });
-    rmSync(gsdDir, { recursive: true, force: true });
+    rmSync(tffDir, { recursive: true, force: true });
 
     // Rename state branch to simulate remote-only scenario
     execSync('git branch -m tff-state/main tff-state/remote-main', { cwd: tmpDir, stdio: 'pipe', env });
