@@ -25,6 +25,11 @@ Thumbs.db
 .next/
 dist/
 build/
+
+# But keep the CLI dist for plugin installation
+!tools/dist/
+# But ignore platform-specific native bindings (users will get these via npm install)
+tools/dist/*.node
 __pycache__/
 *.pyc
 .venv/
