@@ -58,10 +58,19 @@ auto-learn:
     jaccard-threshold: 0.3  # max Jaccard distance for cluster membership
 
 # ── Workflow ──────────────────────────────────────────────────
-# Session reminders and context injection settings
+# Session reminders and graduated enforcement for workflow adherence
+#
+# Soft enforcement philosophy (D001): Advisory warnings guide users toward
+# tracked workflow commands without blocking legitimate direct edits.
+# This balances guidance for newcomers with flexibility for experts.
 
 # Show reminder on new Claude Code sessions with current
 # milestone, slice, phase, and wave position
 workflow:
   reminders: true
+  # Enable guard hooks that detect direct edits (code changes without /tff commands)
+  # and inject advisory warnings suggesting /tff:quick for tracked fixes.
+  # - true: warnings enabled (default, safe default per D002)
+  # - false: all guard hooks disabled
+  guards: true
 ```
