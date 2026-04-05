@@ -68,9 +68,24 @@ auto-learn:
 # milestone, slice, phase, and wave position
 workflow:
   reminders: true
-  # Enable guard hooks that detect direct edits (code changes without /tff commands)
-  # and inject advisory warnings suggesting /tff:quick for tracked fixes.
-  # - true: warnings enabled (default, safe default per D002)
-  # - false: all guard hooks disabled
+  # Enable guard hooks that detect workflow bypasses and inject advisory warnings.
+  # When guards: true, both detection systems are active:
+  #
+  # 1. Direct-edit detection (S02): Catches code changes made without /tff commands
+  #    - Triggers on Bash PreToolUse events (file writes, command execution)
+  #    - Suggests using /tff:quick for tracked fixes instead of direct edits
+  #
+  # 2. Phase-boundary detection (S03): Catches SPEC.md modifications outside /tff:discuss
+  #    - Triggers on Edit/Write PreToolUse events targeting SPEC.md files
+  #    - Suggests using /tff:discuss for spec changes to ensure STATE.md sync
+  #
+  # Both guards follow the D001 soft enforcement philosophy:
+  # - Advisory only (never blocking) - users can proceed after seeing the warning
+  # - Respects guards: false to disable all detection
+  # - Integrates with PreToolUse hooks for real-time interception
+  #
+  # Settings:
+  # - true:  All guard hooks enabled (default, safe default per D002)
+  # - false: All guard hooks disabled
   guards: true
 ```
