@@ -17,6 +17,7 @@ import { projectInitCmd } from './commands/project-init.cmd.js';
 import { restoreBranchCmd } from './commands/restore-branch.cmd.js';
 import { reviewCheckFreshCmd } from './commands/review-check-fresh.cmd.js';
 import { reviewRecordCmd } from './commands/review-record.cmd.js';
+import { sessionRemindCmd } from './commands/session-remind.cmd.js';
 import { skillsDriftCmd } from './commands/skills-drift.cmd.js';
 import { skillsValidateCmd } from './commands/skills-validate.cmd.js';
 import { sliceClassifyCmd } from './commands/slice-classify.cmd.js';
@@ -78,6 +79,7 @@ const commands: Record<string, CommandFn> = {
   'restore:branch': restoreBranchCmd,
   'branch:merge': branchMergeCmd,
   'hook:post-checkout': hookPostCheckoutCmd,
+  'session:remind': sessionRemindCmd,
 };
 
 const main = async () => {
