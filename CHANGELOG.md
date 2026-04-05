@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-04-05
+
+### Added
+
+- **M002 — Workflow Adherence & Enforcement:** Graduated enforcement system ensuring AI agents follow structured workflows
+  - **S01 — Session State Reminder:** Injects context at session start (milestone, slice, phase, wave position, next commands)
+  - **S02 — Workflow Guard Hook:** PreToolUse detection of direct edits without `/tff:quick`, injects advisory warnings
+  - **S03 — Phase Boundary Detection:** SPEC.md edit detection outside `/tff:discuss` workflow with recovery hints
+  - **S04 — Pre-Op Validation Gates:** Hard BLOCK on `/tff:*` commands when status prerequisites not met (e.g., "Cannot execute from discussing. Run /tff:plan first")
+  - **S05 — State Machine Enforcement:** Invalid slice transitions rejected with valid next-step guidance via `validTransitionsFrom()`
+- **M001 — State Sync & Recovery Infrastructure:** Tiered crash recovery and synchronization
+  - **S01 — Journal System + T1 Recovery:** Task lifecycle journal with checkpoint replay
+  - **S02 — Lockfile Serialization:** Concurrent sync operations serialize safely with advisory locking
+  - **S03 — State Consistency Gates:** Branch guard with `BRANCH_MISMATCH` errors and repair hints
+  - **S04 — T2/T3 Recovery + `/tff:repair`:** Tiered recovery (T1/T2/T3) for complete `.tff/` and `.gsd/` restoration
+- **Plugin Distribution:** Fully bundled CLI with native bindings for all platforms (darwin-x64/arm64, linux-x64/arm64, win32-x64) — zero npm install required
+- **Compressed Notation:** Applied formal logic symbols (∀∃∈∧∨¬->∅) to 195 markdown files across workflows, skills, agents, and GSD docs
+
+### Infrastructure
+
+- Built CLI artifacts committed to `tools/dist/` for out-of-the-box plugin installation
+- Updated `tsup.config.ts` to produce both `cli/index.cjs` (hook scripts) and `tff-tools.cjs` (backward compatibility)
+- Native SQLite bindings downloaded from better-sqlite3 v12.8.0 releases for 5 platforms
+- 1582 tests passing (Node 20 & 22)
+
 ## [0.7.0] - 2026-03-23
 
 ### Added
