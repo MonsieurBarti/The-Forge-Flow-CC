@@ -1,5 +1,22 @@
 export { detectDirectEdit, type DetectDirectEditDeps, type DirectEditResult, type DirectEditWarning } from './guard/detect-direct-edit.js';
 export { detectSpecEdit, type DetectSpecEditResult, type SpecEditWarning } from './guard/detect-spec-edit.js';
+export {
+  getPrerequisite,
+  getSupportedOperations,
+  isValidOperation,
+  generateRecoveryHint,
+  getRequiredStatus,
+  type WorkflowOperation,
+  type OperationPrerequisite,
+} from './guard/operation-prerequisites.js';
+export {
+  validateOperation,
+  assertOperationAllowed,
+  isOperationAllowed,
+  getOperationPrerequisite,
+  OperationBlockedError,
+  type ValidationResult,
+} from './guard/validate-operation.js';
 export { loadCheckpoint } from './checkpoint/load-checkpoint.js';
 export { type CheckpointData, saveCheckpoint } from './checkpoint/save-checkpoint.js';
 export { detectClusters } from './compose/detect-clusters.js';
