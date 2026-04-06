@@ -9,7 +9,7 @@ Scan all milestones and slices, create any missing tff-state/* branches.
 </objective>
 
 <execution_context>
-Run `node tools/dist/tff-tools.cjs state:repair-branches [--dry-run]`
+Run `tff-tools state:repair-branches [--dry-run]`
 </execution_context>
 
 <output>
