@@ -27,20 +27,15 @@ export const hookPostCheckoutCmd = async (args: string[]): Promise<string> => {
     const gitOps = new GitCliAdapter(cwd);
 
     // S02: Create SQLiteStateImporter for JSON-based state restoration
-    // Ensure DB exists (create with schema if missing) so importer has a target
-    let sqliteAdapter: SQLiteStateAdapter;
-    if (existsSync(dbPath)) {
-      sqliteAdapter = SQLiteStateAdapter.create(dbPath);
-    } else {
-      mkdirSync(tffDir, { recursive: true });
-      sqliteAdapter = SQLiteStateAdapter.create(dbPath);
-      const initR = sqliteAdapter.init();
-      if (!isOk(initR)) {
-        return JSON.stringify({
-          ok: true,
-          data: { action: 'error', reason: `Failed to init DB: ${initR.error.message}` },
-        });
-      }
+    // Ensure DB directory exists and schema is initialized
+    mkdirSync(tffDir, { recursive: true });
+    const sqliteAdapter = SQLiteStateAdapter.create(dbPath);
+    const initR = sqliteAdapter.init();
+    if (!isOk(initR)) {
+      return JSON.stringify({
+        ok: true,
+        data: { action: 'error', reason: `Failed to init DB: ${initR.error.message}` },
+      });
     }
     const importer = new SQLiteStateImporter(sqliteAdapter);
 

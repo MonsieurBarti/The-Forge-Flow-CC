@@ -239,7 +239,24 @@ export class GitStateBranchAdapter implements StateBranchPort {
             raw as import('../../../domain/value-objects/state-snapshot.js').StateSnapshot,
           );
           if (isOk(importR)) {
-            return Ok({ filesRestored: 1, schemaVersion: raw.version ?? 1, source: 'json' });
+            // JSON import succeeded - also restore non-snapshot files (markdown artifacts)
+            let filesRestored = 1; // count the JSON snapshot
+            const resolvedTargetDir = path.resolve(targetDir);
+            for (const filePath of filesR.data) {
+              if (!filePath.startsWith('.tff/')) continue;
+              if (filePath === '.tff/state-snapshot.json') continue; // already handled via importer
+              const destPath = path.join(targetDir, filePath);
+              const resolved = path.resolve(destPath);
+              if (!resolved.startsWith(resolvedTargetDir + path.sep) && resolved !== resolvedTargetDir) {
+                continue; // skip path traversal attempt
+              }
+              const bufR = await this.gitOps.extractFile(stateBr, filePath);
+              if (!isOk(bufR)) continue;
+              mkdirSync(path.dirname(destPath), { recursive: true });
+              writeFileSync(destPath, bufR.data);
+              filesRestored++;
+            }
+            return Ok({ filesRestored, schemaVersion: raw.version ?? 1, source: 'json' });
           }
           // Fall through to file-based restore if import fails
         } catch {
