@@ -13,6 +13,7 @@ import type { BranchMeta } from '../../../domain/value-objects/branch-meta.js';
 import type { MergeResult } from '../../../domain/value-objects/merge-result.js';
 import type { RestoreResult } from '../../../domain/value-objects/restore-result.js';
 import { copyTffToWorktree } from './copy-tff-to-worktree.js';
+import type { StateExporter } from '../../../domain/ports/state-exporter.port.js';
 
 const STATE_PREFIX = 'tff-state/';
 
@@ -22,6 +23,7 @@ export class GitStateBranchAdapter implements StateBranchPort {
   constructor(
     private readonly gitOps: GitOps,
     private readonly repoRoot: string,
+    private readonly exporter?: StateExporter,
   ) {}
 
   private async getDefaultBranch(): Promise<string> {
@@ -147,6 +149,19 @@ export class GitStateBranchAdapter implements StateBranchPort {
 
     try {
       const tffDir = path.join(this.repoRoot, '.tff');
+      
+      // S01: Export state to JSON for human-readable state branches (state-snapshot.json).
+      // This is the new S01 pattern: SQLite remains local source-of-truth, but
+      // state branches receive state-snapshot.json + text files instead of binary state.db.
+      // S03 will extend this to merge() when implementing JSON-based state merging.
+      if (this.exporter) {
+        const exportResult = this.exporter.export();
+        if (!isOk(exportResult)) return exportResult;
+        const snapshotPath = path.join(tmpPath, '.tff', 'state-snapshot.json');
+        mkdirSync(path.dirname(snapshotPath), { recursive: true });
+        writeFileSync(snapshotPath, JSON.stringify(exportResult.data, null, 2));
+      }
+      
       copyTffToWorktree(tffDir, tmpPath);
 
       const commitR = await this.gitOps.commit(message, ['-A'], tmpPath);
@@ -203,6 +218,14 @@ export class GitStateBranchAdapter implements StateBranchPort {
     if (!childExistsR.data) {
       return Err(stateBranchNotFoundError(childCodeBranch));
     }
+
+    // S03 TODO: Currently expects binary state.db extraction for SQL merge.
+    // S01 exports JSON (state-snapshot.json) to state branches, but merge() still
+    // extracts binary DB from the state branch. This creates a boundary issue:
+    // S01 puts JSON in state branches, S03 will need JSON-based state extraction
+    // and merge logic (instead of binary DB extraction + SQL-level merge).
+    // The extraction below will fail on S01-generated branches until S03 updates
+    // merge() to work with state-snapshot.json or perform reconstruction.
 
     // Step 1: Extract both DBs to temp directory for SQL merge
     const tmpMergeDir = path.join(tmpdir(), `tff-merge-${randomUUID().slice(0, 8)}`);

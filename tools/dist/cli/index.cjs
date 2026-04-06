@@ -24591,7 +24591,7 @@ function copyTffToWorktree(tffDir, worktreePath) {
   const destTffDir = import_node_path2.default.join(worktreePath, ".tff");
   (0, import_node_fs2.mkdirSync)(destTffDir, { recursive: true });
   for (const entry of (0, import_node_fs2.readdirSync)(tffDir)) {
-    if (entry === "worktrees" || entry === "branch-meta.json") continue;
+    if (entry === "worktrees" || entry === "branch-meta.json" || entry === "state.db") continue;
     const src = import_node_path2.default.join(tffDir, entry);
     const dest = import_node_path2.default.join(destTffDir, entry);
     if ((0, import_node_fs2.statSync)(src).isDirectory()) {
@@ -24605,9 +24605,10 @@ function copyTffToWorktree(tffDir, worktreePath) {
 // tools/src/infrastructure/adapters/git/git-state-branch.adapter.ts
 var STATE_PREFIX = "tff-state/";
 var GitStateBranchAdapter = class {
-  constructor(gitOps, repoRoot) {
+  constructor(gitOps, repoRoot, exporter) {
     this.gitOps = gitOps;
     this.repoRoot = repoRoot;
+    this.exporter = exporter;
   }
   resolvedDefaultBranch;
   async getDefaultBranch() {
@@ -24711,6 +24712,13 @@ var GitStateBranchAdapter = class {
     if (!isOk(wtR)) return wtR;
     try {
       const tffDir = import_node_path3.default.join(this.repoRoot, ".tff");
+      if (this.exporter) {
+        const exportResult = this.exporter.export();
+        if (!isOk(exportResult)) return exportResult;
+        const snapshotPath = import_node_path3.default.join(tmpPath, ".tff", "state-snapshot.json");
+        (0, import_node_fs3.mkdirSync)(import_node_path3.default.dirname(snapshotPath), { recursive: true });
+        (0, import_node_fs3.writeFileSync)(snapshotPath, JSON.stringify(exportResult.data, null, 2));
+      }
       copyTffToWorktree(tffDir, tmpPath);
       const commitR = await this.gitOps.commit(message, ["-A"], tmpPath);
       if (!isOk(commitR)) {
@@ -28093,150 +28101,6 @@ var specEditGuardCmd = async (args) => {
   }
 };
 
-// tools/src/application/state-branch/repair-state-branches.ts
-init_result();
-var repairStateBranchesUseCase = async (input, deps) => {
-  const result = {
-    created: [],
-    failed: [],
-    skipped: []
-  };
-  const rootExists = await deps.stateBranch.exists("main");
-  if (!isOk(rootExists)) {
-    return Err(rootExists.error);
-  }
-  if (!rootExists.data) {
-    if (input.dryRun) {
-      result.skipped.push({ type: "root", id: "main", reason: "Would create (dry-run)" });
-    } else {
-      const createResult = await deps.stateBranch.createRoot();
-      if (isOk(createResult)) {
-        result.created.push({ type: "root", id: "main" });
-      } else {
-        result.failed.push({ type: "root", id: "main", error: createResult.error.message });
-      }
-    }
-  }
-  const milestonesResult = deps.milestoneStore.listMilestones();
-  if (!isOk(milestonesResult)) {
-    return Err(milestonesResult.error);
-  }
-  for (const milestone of milestonesResult.data) {
-    const branchName = `milestone/${milestone.id}`;
-    const stateBranchName = `tff-state/${branchName}`;
-    const exists = await deps.stateBranch.exists(branchName);
-    if (!isOk(exists)) {
-      result.failed.push({ type: "milestone", id: milestone.id, error: exists.error.message });
-      continue;
-    }
-    if (exists.data) {
-      result.skipped.push({ type: "milestone", id: milestone.id, reason: "Already exists" });
-      continue;
-    }
-    if (input.dryRun) {
-      result.skipped.push({ type: "milestone", id: milestone.id, reason: "Would create (dry-run)" });
-      continue;
-    }
-    const forkResult = await deps.stateBranch.fork(branchName, "tff-state/main");
-    if (isOk(forkResult)) {
-      result.created.push({ type: "milestone", id: milestone.id });
-    } else {
-      result.failed.push({ type: "milestone", id: milestone.id, error: forkResult.error.message });
-    }
-  }
-  for (const milestone of milestonesResult.data) {
-    const slicesResult = deps.sliceStore.listSlices(milestone.id);
-    if (!isOk(slicesResult)) {
-      continue;
-    }
-    for (const slice of slicesResult.data) {
-      const branchName = `slice/${slice.id}`;
-      const parentStateBranch = `tff-state/milestone/${milestone.id}`;
-      const exists = await deps.stateBranch.exists(branchName);
-      if (!isOk(exists)) {
-        result.failed.push({ type: "slice", id: slice.id, error: exists.error.message });
-        continue;
-      }
-      if (exists.data) {
-        result.skipped.push({ type: "slice", id: slice.id, reason: "Already exists" });
-        continue;
-      }
-      const parentExists = await deps.stateBranch.exists(`milestone/${milestone.id}`);
-      if (!isOk(parentExists) || !parentExists.data) {
-        result.failed.push({
-          type: "slice",
-          id: slice.id,
-          error: `Parent milestone state branch tff-state/milestone/${milestone.id} not found`
-        });
-        continue;
-      }
-      if (input.dryRun) {
-        result.skipped.push({ type: "slice", id: slice.id, reason: "Would create (dry-run)" });
-        continue;
-      }
-      const forkResult = await deps.stateBranch.fork(branchName, parentStateBranch);
-      if (isOk(forkResult)) {
-        result.created.push({ type: "slice", id: slice.id });
-      } else {
-        result.failed.push({ type: "slice", id: slice.id, error: forkResult.error.message });
-      }
-    }
-  }
-  return Ok(result);
-};
-
-// tools/src/cli/commands/state-repair-branches.cmd.ts
-init_result();
-var stateRepairBranchesCmd = async (args) => {
-  const dryRun = args.includes("--dry-run");
-  return withBranchGuard(async ({ milestoneStore, sliceStore }) => {
-    const cwd = process.cwd();
-    const gitOps = new GitCliAdapter(cwd);
-    const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
-    const result = await repairStateBranchesUseCase(
-      { dryRun },
-      { milestoneStore, sliceStore, stateBranch }
-    );
-    if (!isOk(result)) {
-      return JSON.stringify({ ok: false, error: result.error });
-    }
-    const output = result.data;
-    const lines = [];
-    lines.push(`State Branch Repair ${dryRun ? "(DRY RUN)" : ""}`);
-    lines.push("");
-    if (output.created.length > 0) {
-      lines.push(`Created: ${output.created.length}`);
-      for (const item of output.created) {
-        lines.push(`  \u2713 ${item.type}: ${item.id}`);
-      }
-      lines.push("");
-    }
-    if (output.failed.length > 0) {
-      lines.push(`Failed: ${output.failed.length}`);
-      for (const item of output.failed) {
-        lines.push(`  \u2717 ${item.type}: ${item.id} - ${item.error}`);
-      }
-      lines.push("");
-    }
-    if (output.skipped.length > 0) {
-      lines.push(`Skipped: ${output.skipped.length}`);
-      for (const item of output.skipped) {
-        lines.push(`  \u2192 ${item.type}: ${item.id} (${item.reason})`);
-      }
-      lines.push("");
-    }
-    lines.push("");
-    lines.push(`Summary: ${output.created.length} created, ${output.failed.length} failed, ${output.skipped.length} skipped`);
-    return JSON.stringify({
-      ok: true,
-      data: {
-        ...output,
-        summary: lines.join("\n")
-      }
-    });
-  });
-};
-
 // tools/src/cli/commands/state-repair.cmd.ts
 var import_node_fs16 = require("fs");
 var import_node_path19 = __toESM(require("path"), 1);
@@ -28691,8 +28555,269 @@ var stateRepairCmd = async (args) => {
   }
 };
 
+// tools/src/application/state-branch/repair-state-branches.ts
+init_result();
+var repairStateBranchesUseCase = async (input, deps) => {
+  const result = {
+    created: [],
+    failed: [],
+    skipped: []
+  };
+  const rootExists = await deps.stateBranch.exists("main");
+  if (!isOk(rootExists)) {
+    return Err(rootExists.error);
+  }
+  if (!rootExists.data) {
+    if (input.dryRun) {
+      result.skipped.push({ type: "root", id: "main", reason: "Would create (dry-run)" });
+    } else {
+      const createResult = await deps.stateBranch.createRoot();
+      if (isOk(createResult)) {
+        result.created.push({ type: "root", id: "main" });
+      } else {
+        result.failed.push({ type: "root", id: "main", error: createResult.error.message });
+      }
+    }
+  }
+  const milestonesResult = deps.milestoneStore.listMilestones();
+  if (!isOk(milestonesResult)) {
+    return Err(milestonesResult.error);
+  }
+  for (const milestone of milestonesResult.data) {
+    const branchName = `milestone/${milestone.id}`;
+    const exists = await deps.stateBranch.exists(branchName);
+    if (!isOk(exists)) {
+      result.failed.push({ type: "milestone", id: milestone.id, error: exists.error.message });
+      continue;
+    }
+    if (exists.data) {
+      result.skipped.push({ type: "milestone", id: milestone.id, reason: "Already exists" });
+      continue;
+    }
+    if (input.dryRun) {
+      result.skipped.push({ type: "milestone", id: milestone.id, reason: "Would create (dry-run)" });
+      continue;
+    }
+    const forkResult = await deps.stateBranch.fork(branchName, "tff-state/main");
+    if (isOk(forkResult)) {
+      result.created.push({ type: "milestone", id: milestone.id });
+    } else {
+      result.failed.push({ type: "milestone", id: milestone.id, error: forkResult.error.message });
+    }
+  }
+  for (const milestone of milestonesResult.data) {
+    const slicesResult = deps.sliceStore.listSlices(milestone.id);
+    if (!isOk(slicesResult)) {
+      continue;
+    }
+    for (const slice of slicesResult.data) {
+      const branchName = `slice/${slice.id}`;
+      const parentStateBranch = `tff-state/milestone/${milestone.id}`;
+      const exists = await deps.stateBranch.exists(branchName);
+      if (!isOk(exists)) {
+        result.failed.push({ type: "slice", id: slice.id, error: exists.error.message });
+        continue;
+      }
+      if (exists.data) {
+        result.skipped.push({ type: "slice", id: slice.id, reason: "Already exists" });
+        continue;
+      }
+      const parentExists = await deps.stateBranch.exists(`milestone/${milestone.id}`);
+      if (!isOk(parentExists) || !parentExists.data) {
+        result.failed.push({
+          type: "slice",
+          id: slice.id,
+          error: `Parent milestone state branch tff-state/milestone/${milestone.id} not found`
+        });
+        continue;
+      }
+      if (input.dryRun) {
+        result.skipped.push({ type: "slice", id: slice.id, reason: "Would create (dry-run)" });
+        continue;
+      }
+      const forkResult = await deps.stateBranch.fork(branchName, parentStateBranch);
+      if (isOk(forkResult)) {
+        result.created.push({ type: "slice", id: slice.id });
+      } else {
+        result.failed.push({ type: "slice", id: slice.id, error: forkResult.error.message });
+      }
+    }
+  }
+  return Ok(result);
+};
+
+// tools/src/cli/commands/state-repair-branches.cmd.ts
+init_result();
+var stateRepairBranchesCmd = async (args) => {
+  const dryRun = args.includes("--dry-run");
+  return withBranchGuard(async ({ milestoneStore, sliceStore }) => {
+    const cwd = process.cwd();
+    const gitOps = new GitCliAdapter(cwd);
+    const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+    const result = await repairStateBranchesUseCase({ dryRun }, { milestoneStore, sliceStore, stateBranch });
+    if (!isOk(result)) {
+      return JSON.stringify({ ok: false, error: result.error });
+    }
+    const output = result.data;
+    const lines = [];
+    lines.push(`State Branch Repair ${dryRun ? "(DRY RUN)" : ""}`);
+    lines.push("");
+    if (output.created.length > 0) {
+      lines.push(`Created: ${output.created.length}`);
+      for (const item of output.created) {
+        lines.push(`  \u2713 ${item.type}: ${item.id}`);
+      }
+      lines.push("");
+    }
+    if (output.failed.length > 0) {
+      lines.push(`Failed: ${output.failed.length}`);
+      for (const item of output.failed) {
+        lines.push(`  \u2717 ${item.type}: ${item.id} - ${item.error}`);
+      }
+      lines.push("");
+    }
+    if (output.skipped.length > 0) {
+      lines.push(`Skipped: ${output.skipped.length}`);
+      for (const item of output.skipped) {
+        lines.push(`  \u2192 ${item.type}: ${item.id} (${item.reason})`);
+      }
+      lines.push("");
+    }
+    lines.push("");
+    lines.push(
+      `Summary: ${output.created.length} created, ${output.failed.length} failed, ${output.skipped.length} skipped`
+    );
+    return JSON.stringify({
+      ok: true,
+      data: {
+        ...output,
+        summary: lines.join("\n")
+      }
+    });
+  });
+};
+
 // tools/src/cli/commands/sync-branch.cmd.ts
 init_result();
+
+// tools/src/domain/value-objects/state-snapshot.ts
+init_zod();
+
+// tools/src/domain/entities/task.ts
+init_zod();
+init_domain_error();
+init_result();
+var TaskStatusSchema = external_exports.enum(["open", "in_progress", "closed"]);
+var TaskSchema = external_exports.object({
+  id: external_exports.string().min(1),
+  sliceId: external_exports.string().min(1),
+  number: external_exports.number().int().min(1),
+  title: external_exports.string().min(1),
+  description: external_exports.string().optional(),
+  status: TaskStatusSchema,
+  wave: external_exports.number().int().nonnegative().optional(),
+  claimedAt: external_exports.date().optional(),
+  claimedBy: external_exports.string().optional(),
+  closedReason: external_exports.string().optional(),
+  createdAt: external_exports.date()
+});
+
+// tools/src/domain/value-objects/dependency.ts
+init_zod();
+var DependencyTypeSchema = external_exports.literal("blocks");
+var DependencySchema = external_exports.object({
+  fromId: external_exports.string().min(1),
+  toId: external_exports.string().min(1),
+  type: DependencyTypeSchema
+});
+
+// tools/src/domain/value-objects/workflow-session.ts
+init_zod();
+var WorkflowSessionSchema = external_exports.object({
+  phase: external_exports.string().min(1),
+  activeSliceId: external_exports.string().optional(),
+  activeMilestoneId: external_exports.string().optional(),
+  pausedAt: external_exports.string().optional(),
+  contextJson: external_exports.string().optional()
+});
+
+// tools/src/domain/value-objects/state-snapshot.ts
+var STATE_SNAPSHOT_VERSION = 1;
+var StateSnapshotSchema = external_exports.object({
+  version: external_exports.number().int().positive(),
+  exportedAt: external_exports.string().datetime(),
+  project: ProjectSchema.nullable(),
+  milestones: external_exports.array(MilestoneSchema),
+  slices: external_exports.array(SliceSchema),
+  tasks: external_exports.array(TaskSchema),
+  dependencies: external_exports.array(DependencySchema).default([]),
+  workflowSession: WorkflowSessionSchema.nullable().default(null),
+  reviews: external_exports.array(ReviewRecordSchema).default([])
+});
+
+// tools/src/infrastructure/adapters/export/sqlite-state-exporter.ts
+init_domain_error();
+init_result();
+var SQLiteStateExporter = class {
+  constructor(adapter) {
+    this.adapter = adapter;
+  }
+  export() {
+    try {
+      const projectResult = this.adapter.getProject();
+      if (!projectResult.ok) return projectResult;
+      const project = projectResult.data;
+      const milestonesResult = this.adapter.listMilestones();
+      if (!milestonesResult.ok) return milestonesResult;
+      const milestones = milestonesResult.data;
+      const slicesResult = this.adapter.listSlices();
+      if (!slicesResult.ok) return slicesResult;
+      const slices = slicesResult.data;
+      const tasks = [];
+      for (const slice of slices) {
+        const tasksResult = this.adapter.listTasks(slice.id);
+        if (!tasksResult.ok) return tasksResult;
+        tasks.push(...tasksResult.data);
+      }
+      const dependencyMap = /* @__PURE__ */ new Map();
+      for (const task of tasks) {
+        const depsResult = this.adapter.getDependencies(task.id);
+        if (!depsResult.ok) return depsResult;
+        for (const dep of depsResult.data) {
+          const key = `${dep.fromId}\u2192${dep.toId}`;
+          dependencyMap.set(key, dep);
+        }
+      }
+      const dependencies = Array.from(dependencyMap.values());
+      const sessionResult = this.adapter.getSession();
+      if (!sessionResult.ok) return sessionResult;
+      const session = sessionResult.data;
+      const reviews = [];
+      for (const slice of slices) {
+        const reviewsResult = this.adapter.listReviews(slice.id);
+        if (!reviewsResult.ok) return reviewsResult;
+        reviews.push(...reviewsResult.data);
+      }
+      const snapshot = {
+        version: STATE_SNAPSHOT_VERSION,
+        exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        project,
+        milestones,
+        slices,
+        tasks,
+        dependencies,
+        workflowSession: session,
+        reviews
+      };
+      return Ok(snapshot);
+    } catch (error48) {
+      const message = error48 instanceof Error ? error48.message : String(error48);
+      return Err(createDomainError("WRITE_FAILURE", `Export failed: ${message}`));
+    }
+  }
+};
+
+// tools/src/cli/commands/sync-branch.cmd.ts
 var syncBranchCmd = async (args) => {
   const [codeBranch, message] = args;
   if (!codeBranch)
@@ -28703,7 +28828,8 @@ var syncBranchCmd = async (args) => {
   const result = await withClosableSyncLock(async () => {
     return withClosableBranchGuard(async (stores) => {
       const gitOps = new GitCliAdapter(process.cwd());
-      const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
+      const exporter = new SQLiteStateExporter(stores.db);
+      const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd(), exporter);
       try {
         stores.checkpoint();
         const result2 = await syncBranchUseCase(
@@ -29017,7 +29143,7 @@ var main = async () => {
     console.log(
       JSON.stringify({
         ok: true,
-        data: { name: "tff-tools", version: "0.8.2", commands: Object.keys(commands) }
+        data: { name: "tff-tools", version: "0.8.3", commands: Object.keys(commands) }
       })
     );
     return;

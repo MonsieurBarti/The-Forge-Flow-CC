@@ -2,6 +2,7 @@ import { syncBranchUseCase } from '../../application/state-branch/sync-branch.js
 import { isOk } from '../../domain/result.js';
 import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
+import { SQLiteStateExporter } from '../../infrastructure/adapters/export/sqlite-state-exporter.js';
 import { withClosableBranchGuard } from '../with-branch-guard.js';
 import { withClosableSyncLock } from '../with-sync-lock.js';
 
@@ -16,7 +17,8 @@ export const syncBranchCmd = async (args: string[]): Promise<string> => {
   const result = await withClosableSyncLock(async () => {
     return withClosableBranchGuard(async (stores) => {
       const gitOps = new GitCliAdapter(process.cwd());
-      const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
+      const exporter = new SQLiteStateExporter(stores.db);
+      const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd(), exporter);
       try {
         stores.checkpoint();
         const result = await syncBranchUseCase(
