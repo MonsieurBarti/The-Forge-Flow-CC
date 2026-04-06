@@ -24942,48 +24942,8 @@ var GitStateBranchAdapter = class {
       const snapshotR = await this.gitOps.extractFile(stateBr, ".tff/state-snapshot.json");
       if (isOk(snapshotR)) {
         try {
-          const raw = JSON.parse(snapshotR.data.toString("utf8"));
-          if (raw.project?.createdAt) raw.project.createdAt = new Date(raw.project.createdAt);
-          if (raw.milestones) {
-            raw.milestones = raw.milestones.map((m) => ({
-              ...m,
-              createdAt: new Date(m.createdAt),
-              updatedAt: m.updatedAt ? new Date(m.updatedAt) : void 0
-            }));
-          }
-          if (raw.slices) {
-            raw.slices = raw.slices.map((s) => ({
-              ...s,
-              createdAt: new Date(s.createdAt),
-              updatedAt: s.updatedAt ? new Date(s.updatedAt) : void 0
-            }));
-          }
-          if (raw.tasks) {
-            raw.tasks = raw.tasks.map((t) => ({
-              ...t,
-              createdAt: new Date(t.createdAt),
-              updatedAt: t.updatedAt ? new Date(t.updatedAt) : void 0,
-              claimedAt: t.claimedAt ? new Date(t.claimedAt) : void 0
-            }));
-          }
-          if (raw.dependencies) {
-            raw.dependencies = raw.dependencies.map((d) => ({
-              ...d,
-              createdAt: d.createdAt ? new Date(d.createdAt) : void 0
-            }));
-          }
-          if (raw.workflowSession?.pausedAt) {
-            raw.workflowSession.pausedAt = new Date(raw.workflowSession.pausedAt);
-          }
-          if (raw.reviews) {
-            raw.reviews = raw.reviews.map((r) => ({
-              ...r,
-              createdAt: new Date(r.createdAt)
-            }));
-          }
-          const importR = this.importer.import(
-            raw
-          );
+          const snapshot = this.parseSnapshotWithDates(snapshotR.data.toString("utf8"));
+          const importR = this.importer.import(snapshot);
           if (isOk(importR)) {
             let filesRestored2 = 1;
             const resolvedTargetDir2 = import_node_path2.default.resolve(targetDir);
@@ -25001,7 +24961,7 @@ var GitStateBranchAdapter = class {
               (0, import_node_fs2.writeFileSync)(destPath, bufR.data);
               filesRestored2++;
             }
-            return Ok({ filesRestored: filesRestored2, schemaVersion: raw.version ?? 1, source: "json" });
+            return Ok({ filesRestored: filesRestored2, schemaVersion: snapshot.version ?? 1, source: "json" });
           }
         } catch {
         }
@@ -26629,6 +26589,7 @@ var SQLiteStateImporter = class {
              VALUES (?, ?, ?, ?, ?, ?, ?)`
           ).run(r.sliceId, r.type, r.reviewer, r.verdict, r.commitSha, r.notes ?? null, r.createdAt);
         }
+        db.pragma("wal_checkpoint(TRUNCATE)");
       } finally {
         db.pragma("foreign_keys = ON");
       }
@@ -26718,6 +26679,7 @@ var hookPostCheckoutCmd = async (args) => {
     }
     try {
       const result = await restoreBranchUseCase({ codeBranch, targetDir: cwd }, { stateBranch });
+      sqliteAdapter.close();
       if (!isOk(result) || result.data === null) {
         writeSyntheticStamp(tffDir, codeBranch);
         return JSON.stringify({
@@ -30028,7 +29990,7 @@ var main = async () => {
     console.log(
       JSON.stringify({
         ok: true,
-        data: { name: "tff-tools", version: "0.8.3", commands: Object.keys(commands) }
+        data: { name: "tff-tools", version: "0.9.0", commands: Object.keys(commands) }
       })
     );
     return;
