@@ -35,6 +35,7 @@ describe('sqlite-salvage integration', () => {
 
     // Initialize git repo
     execSync('git init', { cwd: tmpDir, stdio: 'ignore', env });
+    execSync('git config init.defaultBranch main', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git config user.email "test@test.com"', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git config user.name "Test"', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git commit --allow-empty -m "init"', { cwd: tmpDir, stdio: 'ignore', env });
