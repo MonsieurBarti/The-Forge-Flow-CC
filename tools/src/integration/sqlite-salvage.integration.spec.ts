@@ -131,6 +131,9 @@ describe('sqlite-salvage integration', () => {
     it('should salvage partial data from truncated file', async () => {
       // First sync to state branch to preserve the data
       const syncResult = JSON.parse(await syncBranchCmd([currentBranch]));
+      if (!syncResult.ok) {
+        console.error('syncBranchCmd failed:', syncResult.error);
+      }
       expect(syncResult.ok).toBe(true);
 
       // Read the database and truncate it
