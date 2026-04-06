@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { mergeStateDbs } from '../../../application/state-branch/merge-state-dbs.js';
+import { mergeStateSnapshots } from '../../../application/state-branch/merge-state-snapshots.js';
 import type { DomainError } from '../../../domain/errors/domain-error.js';
 import { stateBranchNotFoundError } from '../../../domain/errors/state-branch-not-found.error.js';
 import { syncFailedError } from '../../../domain/errors/sync-failed.error.js';
@@ -13,6 +13,7 @@ import { Err, isOk, Ok, type Result } from '../../../domain/result.js';
 import type { BranchMeta } from '../../../domain/value-objects/branch-meta.js';
 import type { MergeResult } from '../../../domain/value-objects/merge-result.js';
 import type { RestoreResult } from '../../../domain/value-objects/restore-result.js';
+import type { StateSnapshot } from '../../../domain/value-objects/state-snapshot.js';
 import { copyTffToWorktree } from './copy-tff-to-worktree.js';
 
 const STATE_PREFIX = 'tff-state/';
@@ -281,45 +282,61 @@ export class GitStateBranchAdapter implements StateBranchPort {
       return Err(stateBranchNotFoundError(childCodeBranch));
     }
 
-    // S03 TODO: Currently expects binary state.db extraction for SQL merge.
-    // S01 exports JSON (state-snapshot.json) to state branches, but merge() still
-    // extracts binary DB from the state branch. This creates a boundary issue:
-    // S01 puts JSON in state branches, S03 will need JSON-based state extraction
-    // and merge logic (instead of binary DB extraction + SQL-level merge).
-    // The extraction below will fail on S01-generated branches until S03 updates
-    // merge() to work with state-snapshot.json or perform reconstruction.
+    // S03: JSON-based state merging using state-snapshot.json
+    // Extract and parse JSON snapshots from both parent and child state branches
 
-    // Step 1: Extract both DBs to temp directory for SQL merge
-    const tmpMergeDir = path.join(tmpdir(), `tff-merge-${randomUUID().slice(0, 8)}`);
-    mkdirSync(tmpMergeDir, { recursive: true });
-    const parentDbPath = path.join(tmpMergeDir, 'parent.db');
-    const childDbPath = path.join(tmpMergeDir, 'child.db');
+    // Step 1: Extract parent's state-snapshot.json
+    const parentSnapshotR = await this.gitOps.extractFile(parentStateBr, '.tff/state-snapshot.json');
+    if (!isOk(parentSnapshotR)) {
+      return Err(syncFailedError('Failed to extract parent state snapshot', { parentStateBr }));
+    }
 
-    const parentDbR = await this.gitOps.extractFile(parentStateBr, '.tff/state.db');
-    if (!isOk(parentDbR)) return Err(syncFailedError('Failed to extract parent DB'));
-    writeFileSync(parentDbPath, parentDbR.data);
+    let parentSnapshot: StateSnapshot;
+    try {
+      parentSnapshot = this.parseSnapshotWithDates(parentSnapshotR.data.toString('utf8'));
+    } catch (e) {
+      return Err(syncFailedError('Failed to parse parent state snapshot', {
+        error: e instanceof Error ? e.message : String(e),
+      }));
+    }
 
-    const childDbR = await this.gitOps.extractFile(childStateBr, '.tff/state.db');
-    if (!isOk(childDbR)) return Err(syncFailedError('Failed to extract child DB'));
-    writeFileSync(childDbPath, childDbR.data);
+    // Step 2: Extract child's state-snapshot.json
+    const childSnapshotR = await this.gitOps.extractFile(childStateBr, '.tff/state-snapshot.json');
+    if (!isOk(childSnapshotR)) {
+      return Err(syncFailedError('Failed to extract child state snapshot', { childStateBr }));
+    }
 
-    // Step 2: Entity-level SQL merge via ATTACH (AC8)
-    const sqlMergeR = mergeStateDbs(parentDbPath, childDbPath, sliceId);
-    if (!sqlMergeR.ok) return sqlMergeR;
+    let childSnapshot: StateSnapshot;
+    try {
+      childSnapshot = this.parseSnapshotWithDates(childSnapshotR.data.toString('utf8'));
+    } catch (e) {
+      return Err(syncFailedError('Failed to parse child state snapshot', {
+        error: e instanceof Error ? e.message : String(e),
+      }));
+    }
 
-    // Step 3: Checkout parent worktree, copy merged DB + child artifacts
+    // Step 3: Merge the snapshots using the entity-level merge logic
+    const mergeR = mergeStateSnapshots(parentSnapshot, childSnapshot, sliceId);
+    if (!isOk(mergeR)) return mergeR;
+    const mergedSnapshot = mergeR.data;
+
+    // Calculate merged entity counts
+    const childTaskIds = new Set(childSnapshot.tasks.filter((t) => t.sliceId === sliceId).map((t) => t.id));
+    const entitiesMerged = 1 + childTaskIds.size; // 1 slice + tasks for that slice
+
+    // Step 4: Checkout parent worktree and write merged snapshot + child artifacts
     const tmpPath = this.tmpWorktreePath();
     mkdirSync(tmpPath, { recursive: true });
     const wtR = await this.gitOps.checkoutWorktree(tmpPath, parentStateBr);
     if (!isOk(wtR)) return wtR;
 
     try {
-      // Copy merged DB into parent worktree
-      const destDb = path.join(tmpPath, '.tff', 'state.db');
-      mkdirSync(path.dirname(destDb), { recursive: true });
-      cpSync(parentDbPath, destDb);
+      // Write merged JSON snapshot to parent worktree
+      const destSnapshotPath = path.join(tmpPath, '.tff', 'state-snapshot.json');
+      mkdirSync(path.dirname(destSnapshotPath), { recursive: true });
+      writeFileSync(destSnapshotPath, JSON.stringify(mergedSnapshot, null, 2));
 
-      // Step 4: Artifact merge — copy child's slice-scoped files to parent (AC9)
+      // Step 5: Artifact merge — copy child's slice-scoped files to parent (AC9)
       let artifactsCopied = 0;
       const childFilesR = await this.gitOps.lsTree(childStateBr);
       if (isOk(childFilesR)) {
@@ -351,15 +368,60 @@ export class GitStateBranchAdapter implements StateBranchPort {
       if (!isOk(commitR) && !commitR.error.message.includes('nothing to commit')) {
         return Err(syncFailedError(`Merge commit failed: ${commitR.error.message}`));
       }
-      return Ok({ entitiesMerged: sqlMergeR.data.entitiesMerged, artifactsCopied });
+      return Ok({ entitiesMerged, artifactsCopied });
     } finally {
       await this.gitOps.deleteWorktree(tmpPath);
-      try {
-        rmSync(tmpMergeDir, { recursive: true, force: true });
-      } catch {
-        /* best-effort */
-      }
     }
+  }
+
+  /**
+   * Parse a JSON state snapshot and convert ISO date strings back to Date objects.
+   * Mirrors the date conversion logic in restore() for consistency.
+   */
+  private parseSnapshotWithDates(jsonString: string): StateSnapshot {
+    const raw = JSON.parse(jsonString);
+
+    // Convert date strings back to Date objects
+    if (raw.project?.createdAt) raw.project.createdAt = new Date(raw.project.createdAt);
+    if (raw.milestones) {
+      raw.milestones = raw.milestones.map((m: Record<string, unknown>) => ({
+        ...m,
+        createdAt: new Date(m.createdAt as string),
+        updatedAt: m.updatedAt ? new Date(m.updatedAt as string) : undefined,
+      }));
+    }
+    if (raw.slices) {
+      raw.slices = raw.slices.map((s: Record<string, unknown>) => ({
+        ...s,
+        createdAt: new Date(s.createdAt as string),
+        updatedAt: s.updatedAt ? new Date(s.updatedAt as string) : undefined,
+      }));
+    }
+    if (raw.tasks) {
+      raw.tasks = raw.tasks.map((t: Record<string, unknown>) => ({
+        ...t,
+        createdAt: new Date(t.createdAt as string),
+        updatedAt: t.updatedAt ? new Date(t.updatedAt as string) : undefined,
+        claimedAt: t.claimedAt ? new Date(t.claimedAt as string) : undefined,
+      }));
+    }
+    if (raw.dependencies) {
+      raw.dependencies = raw.dependencies.map((d: Record<string, unknown>) => ({
+        ...d,
+        createdAt: d.createdAt ? new Date(d.createdAt as string) : undefined,
+      }));
+    }
+    if (raw.workflowSession?.pausedAt) {
+      raw.workflowSession.pausedAt = new Date(raw.workflowSession.pausedAt as string);
+    }
+    if (raw.reviews) {
+      raw.reviews = raw.reviews.map((r: Record<string, unknown>) => ({
+        ...r,
+        createdAt: new Date(r.createdAt as string),
+      }));
+    }
+
+    return raw as StateSnapshot;
   }
 
   async deleteBranch(codeBranch: string): Promise<Result<void, DomainError>> {
