@@ -33,9 +33,9 @@ describe('sqlite-salvage integration', () => {
     // Set up git environment
     env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_')));
 
-    // Initialize git repo
+    // Initialize git repo with explicit main branch
     execSync('git init', { cwd: tmpDir, stdio: 'ignore', env });
-    execSync('git config init.defaultBranch main', { cwd: tmpDir, stdio: 'ignore', env });
+    execSync('git checkout -b main', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git config user.email "test@test.com"', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git config user.name "Test"', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git commit --allow-empty -m "init"', { cwd: tmpDir, stdio: 'ignore', env });
@@ -131,9 +131,6 @@ describe('sqlite-salvage integration', () => {
     it('should salvage partial data from truncated file', async () => {
       // First sync to state branch to preserve the data
       const syncResult = JSON.parse(await syncBranchCmd([currentBranch]));
-      if (!syncResult.ok) {
-        console.error('syncBranchCmd failed:', syncResult.error);
-      }
       expect(syncResult.ok).toBe(true);
 
       // Read the database and truncate it
