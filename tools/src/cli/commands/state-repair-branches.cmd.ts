@@ -12,10 +12,7 @@ export const stateRepairBranchesCmd = async (args: string[]): Promise<string> =>
     const gitOps = new GitCliAdapter(cwd);
     const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
 
-    const result = await repairStateBranchesUseCase(
-      { dryRun },
-      { milestoneStore, sliceStore, stateBranch },
-    );
+    const result = await repairStateBranchesUseCase({ dryRun }, { milestoneStore, sliceStore, stateBranch });
 
     if (!isOk(result)) {
       return JSON.stringify({ ok: false, error: result.error });
@@ -53,7 +50,9 @@ export const stateRepairBranchesCmd = async (args: string[]): Promise<string> =>
     }
 
     lines.push('');
-    lines.push(`Summary: ${output.created.length} created, ${output.failed.length} failed, ${output.skipped.length} skipped`);
+    lines.push(
+      `Summary: ${output.created.length} created, ${output.failed.length} failed, ${output.skipped.length} skipped`,
+    );
 
     return JSON.stringify({
       ok: true,
