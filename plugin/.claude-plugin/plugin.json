@@ -1,7 +1,7 @@
 {
 	"name": "the-forge-flow",
 	"description": "Autonomous coding agent orchestrator with SQLite-backed state, plannotator integration, and wave-based parallel execution",
-	"version": "0.8.0",
+	"version": "0.8.1",
 	"author": { "name": "MonsieurBarti" },
 	"repository": "https://github.com/MonsieurBarti/The-Forge-Flow-CC",
 	"keywords": ["orchestration", "sqlite", "plannotator", "agents", "tdd"]

@@ -44,10 +44,9 @@ export const initProject = async (
   await deps.artifactStore.write('.tff/PROJECT.md', projectMd);
 
   if (deps.stateBranch) {
-    try {
-      await deps.stateBranch.createRoot();
-    } catch {
-      // State branch creation is best-effort during init
+    const createResult = await deps.stateBranch.createRoot();
+    if (!isOk(createResult)) {
+      console.warn(`[tff] Failed to create root state branch: ${createResult.error.message}`);
     }
   }
 
