@@ -1,4 +1,3 @@
-import { stateBranchNotFoundError } from '../../domain/errors/state-branch-not-found.error.js';
 import type { DomainError } from '../../domain/errors/domain-error.js';
 import type { MilestoneStore } from '../../domain/ports/milestone-store.port.js';
 import type { SliceStore } from '../../domain/ports/slice-store.port.js';
@@ -69,7 +68,6 @@ export const repairStateBranchesUseCase = async (
   // 3. Check/create milestone state branches
   for (const milestone of milestonesResult.data) {
     const branchName = `milestone/${milestone.id}`;
-    const stateBranchName = `tff-state/${branchName}`;
 
     const exists = await deps.stateBranch.exists(branchName);
     if (!isOk(exists)) {
