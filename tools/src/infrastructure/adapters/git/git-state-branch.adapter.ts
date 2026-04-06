@@ -8,12 +8,12 @@ import { stateBranchNotFoundError } from '../../../domain/errors/state-branch-no
 import { syncFailedError } from '../../../domain/errors/sync-failed.error.js';
 import type { GitOps } from '../../../domain/ports/git-ops.port.js';
 import type { StateBranchPort } from '../../../domain/ports/state-branch.port.js';
+import type { StateExporter, StateImporter } from '../../../domain/ports/state-exporter.port.js';
 import { Err, isOk, Ok, type Result } from '../../../domain/result.js';
 import type { BranchMeta } from '../../../domain/value-objects/branch-meta.js';
 import type { MergeResult } from '../../../domain/value-objects/merge-result.js';
 import type { RestoreResult } from '../../../domain/value-objects/restore-result.js';
 import { copyTffToWorktree } from './copy-tff-to-worktree.js';
-import type { StateExporter } from '../../../domain/ports/state-exporter.port.js';
 
 const STATE_PREFIX = 'tff-state/';
 
@@ -24,6 +24,7 @@ export class GitStateBranchAdapter implements StateBranchPort {
     private readonly gitOps: GitOps,
     private readonly repoRoot: string,
     private readonly exporter?: StateExporter,
+    private readonly importer?: StateImporter,
   ) {}
 
   private async getDefaultBranch(): Promise<string> {
@@ -149,7 +150,7 @@ export class GitStateBranchAdapter implements StateBranchPort {
 
     try {
       const tffDir = path.join(this.repoRoot, '.tff');
-      
+
       // S01: Export state to JSON for human-readable state branches (state-snapshot.json).
       // This is the new S01 pattern: SQLite remains local source-of-truth, but
       // state branches receive state-snapshot.json + text files instead of binary state.db.
@@ -161,7 +162,7 @@ export class GitStateBranchAdapter implements StateBranchPort {
         mkdirSync(path.dirname(snapshotPath), { recursive: true });
         writeFileSync(snapshotPath, JSON.stringify(exportResult.data, null, 2));
       }
-      
+
       copyTffToWorktree(tffDir, tmpPath);
 
       const commitR = await this.gitOps.commit(message, ['-A'], tmpPath);
@@ -186,6 +187,67 @@ export class GitStateBranchAdapter implements StateBranchPort {
     const filesR = await this.gitOps.lsTree(stateBr);
     if (!isOk(filesR)) return filesR;
 
+    // S02: Check for JSON-based state (state-snapshot.json) and use importer if available
+    const hasJsonSnapshot = filesR.data.includes('.tff/state-snapshot.json');
+    if (hasJsonSnapshot && this.importer) {
+      const snapshotR = await this.gitOps.extractFile(stateBr, '.tff/state-snapshot.json');
+      if (isOk(snapshotR)) {
+        try {
+          const raw = JSON.parse(snapshotR.data.toString('utf8'));
+          // Convert date strings back to Date objects
+          if (raw.project?.createdAt) raw.project.createdAt = new Date(raw.project.createdAt);
+          if (raw.milestones) {
+            raw.milestones = raw.milestones.map((m: Record<string, unknown>) => ({
+              ...m,
+              createdAt: new Date(m.createdAt as string),
+              updatedAt: m.updatedAt ? new Date(m.updatedAt as string) : undefined,
+            }));
+          }
+          if (raw.slices) {
+            raw.slices = raw.slices.map((s: Record<string, unknown>) => ({
+              ...s,
+              createdAt: new Date(s.createdAt as string),
+              updatedAt: s.updatedAt ? new Date(s.updatedAt as string) : undefined,
+            }));
+          }
+          if (raw.tasks) {
+            raw.tasks = raw.tasks.map((t: Record<string, unknown>) => ({
+              ...t,
+              createdAt: new Date(t.createdAt as string),
+              updatedAt: t.updatedAt ? new Date(t.updatedAt as string) : undefined,
+              claimedAt: t.claimedAt ? new Date(t.claimedAt as string) : undefined,
+            }));
+          }
+          if (raw.dependencies) {
+            raw.dependencies = raw.dependencies.map((d: Record<string, unknown>) => ({
+              ...d,
+              createdAt: d.createdAt ? new Date(d.createdAt as string) : undefined,
+            }));
+          }
+          if (raw.workflowSession?.pausedAt) {
+            raw.workflowSession.pausedAt = new Date(raw.workflowSession.pausedAt as string);
+          }
+          if (raw.reviews) {
+            raw.reviews = raw.reviews.map((r: Record<string, unknown>) => ({
+              ...r,
+              createdAt: new Date(r.createdAt as string),
+            }));
+          }
+
+          const importR = this.importer.import(
+            raw as import('../../../domain/value-objects/state-snapshot.js').StateSnapshot,
+          );
+          if (isOk(importR)) {
+            return Ok({ filesRestored: 1, schemaVersion: raw.version ?? 1, source: 'json' });
+          }
+          // Fall through to file-based restore if import fails
+        } catch {
+          // JSON parse failed, fall through to file-based restore
+        }
+      }
+    }
+
+    // Legacy file-based restore (or fallback)
     let filesRestored = 0;
     const resolvedTargetDir = path.resolve(targetDir);
     for (const filePath of filesR.data) {
@@ -202,7 +264,7 @@ export class GitStateBranchAdapter implements StateBranchPort {
       filesRestored++;
     }
 
-    return Ok({ filesRestored, schemaVersion: 0 });
+    return Ok({ filesRestored, schemaVersion: 0, source: 'files' });
   }
 
   async merge(
