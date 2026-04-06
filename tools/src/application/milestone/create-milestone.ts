@@ -50,10 +50,9 @@ export const createMilestoneUseCase = async (
   );
 
   if (deps.stateBranch) {
-    try {
-      await deps.stateBranch.fork(branchName, 'tff-state/main');
-    } catch {
-      // State branch fork is best-effort
+    const forkResult = await deps.stateBranch.fork(branchName, 'tff-state/main');
+    if (!isOk(forkResult)) {
+      console.warn(`[tff] Failed to create milestone state branch: ${forkResult.error.message}`);
     }
   }
 

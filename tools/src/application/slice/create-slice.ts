@@ -55,10 +55,9 @@ export const createSliceUseCase = async (
   );
 
   if (deps.stateBranch) {
-    try {
-      await deps.stateBranch.fork(`slice/${slice.id}`, `tff-state/milestone/${input.milestoneId}`);
-    } catch {
-      // State branch fork is best-effort
+    const forkResult = await deps.stateBranch.fork(`slice/${slice.id}`, `tff-state/milestone/${input.milestoneId}`);
+    if (!isOk(forkResult)) {
+      console.warn(`[tff] Failed to create slice state branch: ${forkResult.error.message}`);
     }
   }
 

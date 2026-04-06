@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-04-06
+
+### Fixed
+
+- **State branch creation now properly reports errors** — Previously, state branch fork/create operations failed silently because the Result type was not being checked
+  - `create-milestone.ts`: Now checks Result from `stateBranch.fork()` and logs warning on failure
+  - `create-slice.ts`: Now checks Result from `stateBranch.fork()` and logs warning on failure  
+  - `init-project.ts`: Now checks Result from `stateBranch.createRoot()` and logs warning on failure
+
+### Changed
+
+- Bumped version to 0.8.1 across all files:
+  - `package.json`
+  - `plugin/.claude-plugin/plugin.json`
+  - `tools/src/cli/index.ts` (CLI version string)
+
 ## [0.8.0] - 2026-04-05
 
 ### Added
