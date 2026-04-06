@@ -194,50 +194,8 @@ export class GitStateBranchAdapter implements StateBranchPort {
       const snapshotR = await this.gitOps.extractFile(stateBr, '.tff/state-snapshot.json');
       if (isOk(snapshotR)) {
         try {
-          const raw = JSON.parse(snapshotR.data.toString('utf8'));
-          // Convert date strings back to Date objects
-          if (raw.project?.createdAt) raw.project.createdAt = new Date(raw.project.createdAt);
-          if (raw.milestones) {
-            raw.milestones = raw.milestones.map((m: Record<string, unknown>) => ({
-              ...m,
-              createdAt: new Date(m.createdAt as string),
-              updatedAt: m.updatedAt ? new Date(m.updatedAt as string) : undefined,
-            }));
-          }
-          if (raw.slices) {
-            raw.slices = raw.slices.map((s: Record<string, unknown>) => ({
-              ...s,
-              createdAt: new Date(s.createdAt as string),
-              updatedAt: s.updatedAt ? new Date(s.updatedAt as string) : undefined,
-            }));
-          }
-          if (raw.tasks) {
-            raw.tasks = raw.tasks.map((t: Record<string, unknown>) => ({
-              ...t,
-              createdAt: new Date(t.createdAt as string),
-              updatedAt: t.updatedAt ? new Date(t.updatedAt as string) : undefined,
-              claimedAt: t.claimedAt ? new Date(t.claimedAt as string) : undefined,
-            }));
-          }
-          if (raw.dependencies) {
-            raw.dependencies = raw.dependencies.map((d: Record<string, unknown>) => ({
-              ...d,
-              createdAt: d.createdAt ? new Date(d.createdAt as string) : undefined,
-            }));
-          }
-          if (raw.workflowSession?.pausedAt) {
-            raw.workflowSession.pausedAt = new Date(raw.workflowSession.pausedAt as string);
-          }
-          if (raw.reviews) {
-            raw.reviews = raw.reviews.map((r: Record<string, unknown>) => ({
-              ...r,
-              createdAt: new Date(r.createdAt as string),
-            }));
-          }
-
-          const importR = this.importer.import(
-            raw as import('../../../domain/value-objects/state-snapshot.js').StateSnapshot,
-          );
+          const snapshot = this.parseSnapshotWithDates(snapshotR.data.toString('utf8'));
+          const importR = this.importer.import(snapshot);
           if (isOk(importR)) {
             // JSON import succeeded - also restore non-snapshot files (markdown artifacts)
             let filesRestored = 1; // count the JSON snapshot
@@ -256,7 +214,7 @@ export class GitStateBranchAdapter implements StateBranchPort {
               writeFileSync(destPath, bufR.data);
               filesRestored++;
             }
-            return Ok({ filesRestored, schemaVersion: raw.version ?? 1, source: 'json' });
+            return Ok({ filesRestored, schemaVersion: snapshot.version ?? 1, source: 'json' });
           }
           // Fall through to file-based restore if import fails
         } catch {

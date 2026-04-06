@@ -1,23 +1,47 @@
-import { mkdtempSync, readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
-import { SQLiteStateAdapter } from '../../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
 import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
+import { STATE_SNAPSHOT_VERSION } from '../../domain/value-objects/state-snapshot.js';
 import { mergeBranchUseCase } from './merge-branch.js';
 
-const createDbBuffer = (): Buffer => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'merge-uc-'));
-  const dbPath = path.join(dir, 'state.db');
-  const a = SQLiteStateAdapter.create(dbPath);
-  a.init();
-  a.saveProject({ name: 'P', vision: 'V' });
-  a.createMilestone({ number: 1, name: 'M1' });
-  a.createSlice({ milestoneId: 'M01', number: 1, title: 'S1', tier: 'F-lite' });
-  a.close();
-  return readFileSync(dbPath);
+const createStateSnapshot = (): string => {
+  const snapshot = {
+    version: STATE_SNAPSHOT_VERSION,
+    exportedAt: new Date().toISOString(),
+    project: {
+      name: 'P',
+      vision: 'V',
+      createdAt: new Date(),
+    },
+    milestones: [
+      {
+        id: 'M01',
+        number: 1,
+        name: 'M1',
+        status: 'active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ],
+    slices: [
+      {
+        id: 'M01-S01',
+        milestoneId: 'M01',
+        number: 1,
+        title: 'S1',
+        tier: 'F-lite',
+        status: 'open',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ],
+    tasks: [],
+    dependencies: [],
+    workflowSession: null,
+    reviews: [],
+  };
+  return JSON.stringify(snapshot, null, 2);
 };
 
 describe('mergeBranchUseCase', () => {
@@ -30,11 +54,11 @@ describe('mergeBranchUseCase', () => {
     await stateBranch.createRoot();
     await stateBranch.fork('slice/M01-S01', 'tff-state/main');
 
-    // Set up DB content for merge extraction
-    const dbBuf = createDbBuffer();
-    gitOps.setFileContent('tff-state/main', '.tff/state.db', dbBuf);
-    gitOps.setFileContent('tff-state/slice/M01-S01', '.tff/state.db', dbBuf);
-    gitOps.setTreeFiles('tff-state/slice/M01-S01', ['.tff/state.db']);
+    // Set up JSON state-snapshot content for merge extraction
+    const snapshotJson = createStateSnapshot();
+    gitOps.setFileContent('tff-state/main', '.tff/state-snapshot.json', Buffer.from(snapshotJson));
+    gitOps.setFileContent('tff-state/slice/M01-S01', '.tff/state-snapshot.json', Buffer.from(snapshotJson));
+    gitOps.setTreeFiles('tff-state/slice/M01-S01', ['.tff/state-snapshot.json']);
   });
 
   it('should merge child into parent and delete child branch', async () => {

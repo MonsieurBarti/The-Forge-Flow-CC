@@ -296,9 +296,23 @@ describe('state:repair', () => {
     // Create a feature branch with content using direct git commands
     execSync(`git checkout -b ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
 
-    // Create .tff content to sync
-    writeFileSync(path.join(tffDir, 'state.db'), 'test db content');
-    execSync('git add .tff/state.db', { cwd: tmpDir, stdio: 'ignore', env });
+    // Initialize proper SQLite state with project data using commands
+    // First create a valid SQLite database via the init/milestone commands
+    const initCmd = (await import('./project-init.cmd.js')).projectInitCmd;
+    const milestoneCmd = (await import('./milestone-create.cmd.js')).milestoneCreateCmd;
+
+    const initResult = JSON.parse(await initCmd(['test-restore-project', 'Test project for restore']));
+    expect(initResult.ok).toBe(true);
+
+    const milestoneResult = JSON.parse(await milestoneCmd(['Test Milestone']));
+    expect(milestoneResult.ok).toBe(true);
+
+    // Verify state.db was created
+    const stateDbPath = path.join(tffDir, 'state.db');
+    expect(existsSync(stateDbPath)).toBe(true);
+
+    // Commit all .tff content - use force add since .tff is gitignored
+    execSync('git add -f .tff/', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git commit -m "Add state"', { cwd: tmpDir, stdio: 'ignore', env });
 
     // Fork state branch from root, then sync
@@ -313,10 +327,11 @@ describe('state:repair', () => {
     execSync(`git branch -D ${codeBranch}`, { cwd: tmpDir, stdio: 'ignore', env });
 
     // Verify state file is gone (it was in feature branch, not main)
-    expect(existsSync(path.join(tffDir, 'state.db'))).toBe(false);
+    expect(existsSync(stateDbPath)).toBe(false);
 
     // Run repair with explicit T1 tier
     const result = JSON.parse(await stateRepairCmd([codeBranch, '--tier', 'T1']));
+
     expect(result.ok).toBe(true);
     // Accept either 'restored' (files found) or 'synthetic' (no files to restore)
     expect(['restored', 'synthetic']).toContain(result.data.action);

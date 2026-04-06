@@ -78,6 +78,9 @@ export const hookPostCheckoutCmd = async (args: string[]): Promise<string> => {
       // 4. Restore
       const result = await restoreBranchUseCase({ codeBranch, targetDir: cwd }, { stateBranch });
 
+      // Close the database connection after restore to ensure data is flushed
+      sqliteAdapter.close();
+
       if (!isOk(result) || result.data === null) {
         writeSyntheticStamp(tffDir, codeBranch);
         return JSON.stringify({
