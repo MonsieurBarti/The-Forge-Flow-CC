@@ -5,11 +5,15 @@ import { restoreBranchUseCase } from '../../application/state-branch/restore-bra
 import { generateState } from '../../application/sync/generate-state.js';
 import { isOk } from '../../domain/result.js';
 import { BranchMetaSchema } from '../../domain/value-objects/branch-meta.js';
+import type { StateSnapshot } from '../../domain/value-objects/state-snapshot.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { JsonlJournalAdapter } from '../../infrastructure/adapters/journal/jsonl-journal.adapter.js';
+import { SQLiteStateImporter } from '../../infrastructure/adapters/export/sqlite-state-importer.js';
 import { createStateStoresUnchecked } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
+import { SQLiteSalvage } from '../../infrastructure/adapters/sqlite/sqlite-salvage.js';
+import { SQLiteStateAdapter } from '../../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
 import { readLocalStamp, writeLocalStamp, writeSyntheticStamp } from '../../infrastructure/hooks/branch-meta-stamp.js';
 import { acquireSyncLock } from '../../infrastructure/locking/tff-lock.js';
 
@@ -24,6 +28,10 @@ export interface StateRepairResult {
   readonly consistent?: boolean;
   readonly regenerated?: boolean;
   readonly milestoneId?: string;
+  // Salvage metadata for T2 recovery with corrupted DB
+  readonly salvaged?: boolean;
+  readonly tablesSalvaged?: string[];
+  readonly salvageNotes?: string[];
 }
 
 interface ParsedArgs {
@@ -104,6 +112,96 @@ function isDbValid(dbPath: string): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Merge salvaged data with restored state branch data.
+ * Semantics:
+ * - Salvaged data wins for entities that exist in both (local uncommitted work takes priority)
+ * - State branch data fills gaps where salvage returned null/empty
+ * - If salvage returns empty/null snapshot, use restored data entirely
+ */
+function mergeSalvagedWithRestored(
+  salvaged: StateSnapshot | null,
+  restored: StateSnapshot,
+): StateSnapshot {
+  // If no salvaged data, return restored as-is
+  if (!salvaged) {
+    return restored;
+  }
+
+  // Build lookup sets for quick existence checks
+  const salvagedMilestoneIds = new Set(salvaged.milestones.map((m) => m.id));
+  const salvagedSliceIds = new Set(salvaged.slices.map((s) => s.id));
+  const salvagedTaskIds = new Set(salvaged.tasks.map((t) => t.id));
+
+  // Merge: salvaged entities take priority
+  const mergedMilestones = [
+    // Restored milestones that don't exist in salvage
+    ...restored.milestones.filter((m) => !salvagedMilestoneIds.has(m.id)),
+    // All salvaged milestones (they win)
+    ...salvaged.milestones,
+  ];
+
+  const mergedSlices = [
+    // Restored slices that don't exist in salvage
+    ...restored.slices.filter((s) => !salvagedSliceIds.has(s.id)),
+    // All salvaged slices (they win)
+    ...salvaged.slices,
+  ];
+
+  const mergedTasks = [
+    // Restored tasks that don't exist in salvage
+    ...restored.tasks.filter((t) => !salvagedTaskIds.has(t.id)),
+    // All salvaged tasks (they win)
+    ...salvaged.tasks,
+  ];
+
+  // For dependencies: take all from restored, then overlay with salvaged
+  // Build a key for deduplication: "fromId->toId"
+  const dependencyKey = (d: { fromId: string; toId: string }) => `${d.fromId}->${d.toId}`;
+  const mergedDeps = new Map<string, typeof restored.dependencies[0]>();
+
+  // Add restored dependencies first
+  for (const dep of restored.dependencies) {
+    mergedDeps.set(dependencyKey(dep), dep);
+  }
+
+  // Overlay with salvaged dependencies (they win if same key)
+  for (const dep of salvaged.dependencies) {
+    mergedDeps.set(dependencyKey(dep), dep);
+  }
+
+  // Project: salvaged wins if exists
+  const mergedProject = salvaged.project ?? restored.project;
+
+  // Session: salvaged wins if exists
+  const mergedSession = salvaged.workflowSession ?? restored.workflowSession;
+
+  // Reviews: merge by sliceId+reviewer+type+commitSha as unique key
+  const reviewKey = (r: { sliceId: string; reviewer: string; type: string; commitSha: string }) =>
+    `${r.sliceId}:${r.reviewer}:${r.type}:${r.commitSha}`;
+  const mergedReviews = new Map<string, typeof restored.reviews[0]>();
+
+  for (const review of restored.reviews) {
+    mergedReviews.set(reviewKey(review), review);
+  }
+
+  for (const review of salvaged.reviews) {
+    mergedReviews.set(reviewKey(review), review);
+  }
+
+  return {
+    version: restored.version,
+    exportedAt: new Date().toISOString(),
+    project: mergedProject,
+    milestones: mergedMilestones,
+    slices: mergedSlices,
+    tasks: mergedTasks,
+    dependencies: Array.from(mergedDeps.values()),
+    workflowSession: mergedSession,
+    reviews: Array.from(mergedReviews.values()),
+  };
 }
 
 /**
@@ -403,7 +501,7 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
   }
 
   if (tier === 'T2') {
-    // T2: Moderate corruption - restore .tff/ from state branch with validation
+    // T2: Moderate corruption - restore .tff/ from state branch with optional salvage
     const startTime = Date.now();
 
     type T2SuccessResult = {
@@ -413,6 +511,9 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       tier: 'T2';
       durationMs: number;
       consistent: boolean;
+      salvaged?: boolean;
+      tablesSalvaged?: string[];
+      salvageNotes?: string[];
     };
     type T2ErrorResult = { code: string; message: string };
 
@@ -431,7 +532,28 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
       });
     }
 
+    // Track salvage results for metadata
+    let salvageResult: ReturnType<typeof SQLiteSalvage.salvage> | null = null;
+    let tablesSalvaged: string[] = [];
+    let salvageNotes: string[] = [];
+
     try {
+      // Step 1: Attempt to salvage data from corrupted local database (before restore overwrites it)
+      if (existsSync(stateDbPath) && !isDbValid(stateDbPath)) {
+        const salvageStartTime = Date.now();
+        salvageResult = SQLiteSalvage.salvage(stateDbPath);
+
+        if (salvageResult.ok && salvageResult.data.metadata) {
+          tablesSalvaged = salvageResult.data.metadata.tablesSalvaged;
+          salvageNotes = salvageResult.data.metadata.corruptionNotes;
+          const salvageDuration = Date.now() - salvageStartTime;
+          console.log(`[state:repair] Salvaged ${tablesSalvaged.length} tables (${salvageResult.data.metadata.rowsRecovered} rows) in ${salvageDuration}ms`);
+        } else if (!salvageResult.ok) {
+          salvageNotes.push(`Salvage failed: ${salvageResult.error.message}`);
+          console.warn(`[state:repair] Salvage failed: ${salvageResult.error.message}`);
+        }
+      }
+
       const gitOps = new GitCliAdapter(cwd);
       const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
 
@@ -454,7 +576,7 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
         }
       }
 
-      // Restore .tff/ from state branch
+      // Step 2: Restore .tff/ from state branch
       const restoreResult = await restoreBranchUseCase({ codeBranch, targetDir: cwd }, { stateBranch });
 
       if (!isOk(restoreResult)) {
@@ -467,7 +589,43 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
         });
       }
 
-      // Validate the restored state
+      // Step 3: If we have salvaged data AND restored data, merge them
+      if (salvageResult?.ok && salvageResult.data.snapshot && restoreResult.data) {
+        try {
+          // Export the restored state from the database to get a snapshot for merging
+          const adapter = SQLiteStateAdapter.create(stateDbPath);
+          const { SQLiteStateExporter } = await import('../../infrastructure/adapters/export/sqlite-state-exporter.js');
+          const exporter = new SQLiteStateExporter(adapter);
+          const exportResult = exporter.export();
+
+          if (!exportResult.ok) {
+            console.warn(`[state:repair] Failed to export restored state for merge: ${exportResult.error.message}`);
+            adapter.close();
+          } else {
+            // Merge salvaged data with restored state
+            const mergedSnapshot = mergeSalvagedWithRestored(
+              salvageResult.data.snapshot,
+              exportResult.data,
+            );
+
+            // Write merged result to state.db using SQLiteStateImporter
+            const importer = new SQLiteStateImporter(adapter);
+            const importResult = importer.import(mergedSnapshot);
+
+            if (!importResult.ok) {
+              console.warn(`[state:repair] Failed to import merged snapshot: ${importResult.error.message}`);
+            } else {
+              console.log('[state:repair] Successfully merged salvaged data with restored state');
+            }
+            adapter.close();
+          }
+        } catch (mergeError) {
+          console.warn(`[state:repair] Merge/import failed: ${mergeError}`);
+          // Fall back to restored state only
+        }
+      }
+
+      // Validate the restored (or merged) state
       const validation = await validateRestoredState(cwd);
 
       const durationMs = Date.now() - startTime;
@@ -519,6 +677,9 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
           tier: 'T2',
           durationMs,
           consistent: validation.consistent,
+          salvaged: salvageResult?.ok && tablesSalvaged.length > 0,
+          tablesSalvaged: tablesSalvaged.length > 0 ? tablesSalvaged : undefined,
+          salvageNotes: salvageNotes.length > 0 ? salvageNotes : undefined,
         },
       });
     } finally {
