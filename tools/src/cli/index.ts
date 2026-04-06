@@ -28,6 +28,7 @@ import { sliceCreateCmd } from './commands/slice-create.cmd.js';
 import { sliceListCmd } from './commands/slice-list.cmd.js';
 import { sliceTransitionCmd } from './commands/slice-transition.cmd.js';
 import { specEditGuardCmd } from './commands/spec-edit-guard.cmd.js';
+import { stateRepairBranchesCmd } from './commands/state-repair-branches.cmd.js';
 import { stateRepairCmd } from './commands/state-repair.cmd.js';
 import { syncBranchCmd } from './commands/sync-branch.cmd.js';
 import { syncStateCmd } from './commands/sync-state.cmd.js';
@@ -65,6 +66,7 @@ const commands: Record<string, CommandFn> = {
   'sync:state': syncStateCmd,
   'sync:branch': syncBranchCmd,
   'state:repair': stateRepairCmd,
+  'state:repair-branches': stateRepairBranchesCmd,
   'worktree:create': worktreeCreateCmd,
   'worktree:delete': worktreeDeleteCmd,
   'worktree:list': worktreeListCmd,
@@ -95,7 +97,7 @@ const main = async () => {
     console.log(
       JSON.stringify({
         ok: true,
-        data: { name: 'tff-tools', version: '0.8.1', commands: Object.keys(commands) },
+        data: { name: 'tff-tools', version: '0.8.2', commands: Object.keys(commands) },
       }),
     );
     return;

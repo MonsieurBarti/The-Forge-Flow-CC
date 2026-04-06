@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2026-04-06
+
+### Added
+
+- **`state:repair-branches` command** — Scans all milestones and slices, creates any missing state branches
+  - `--dry-run` flag to preview what would be created
+  - Reports created/failed/skipped counts
+  - Idempotent — safe to run multiple times
+
+### Fixed
+
+- **State branch Result checking** — Fixed in 0.8.1, now users can repair any previously broken projects
+
+### Changed
+
+- Bumped version to 0.8.2 across all files
+
 ## [0.8.1] - 2026-04-06
 
 ### Fixed

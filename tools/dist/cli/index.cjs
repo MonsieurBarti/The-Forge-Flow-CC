@@ -26316,9 +26316,9 @@ _Define your requirements here._
 `
   );
   if (deps.stateBranch) {
-    try {
-      await deps.stateBranch.fork(branchName, "tff-state/main");
-    } catch {
+    const forkResult = await deps.stateBranch.fork(branchName, "tff-state/main");
+    if (!isOk(forkResult)) {
+      console.warn(`[tff] Failed to create milestone state branch: ${forkResult.error.message}`);
     }
   }
   return Ok({ milestone, branchName });
@@ -26820,9 +26820,9 @@ ${project.vision}
 `;
   await deps.artifactStore.write(".tff/PROJECT.md", projectMd);
   if (deps.stateBranch) {
-    try {
-      await deps.stateBranch.createRoot();
-    } catch {
+    const createResult = await deps.stateBranch.createRoot();
+    if (!isOk(createResult)) {
+      console.warn(`[tff] Failed to create root state branch: ${createResult.error.message}`);
     }
   }
   return Ok({ project: saveResult.data });
@@ -27083,9 +27083,9 @@ _Plan will be defined during /tff:plan._
 `
   );
   if (deps.stateBranch) {
-    try {
-      await deps.stateBranch.fork(`slice/${slice.id}`, `tff-state/milestone/${input.milestoneId}`);
-    } catch {
+    const forkResult = await deps.stateBranch.fork(`slice/${slice.id}`, `tff-state/milestone/${input.milestoneId}`);
+    if (!isOk(forkResult)) {
+      console.warn(`[tff] Failed to create slice state branch: ${forkResult.error.message}`);
     }
   }
   return Ok({ slice });
@@ -28093,6 +28093,150 @@ var specEditGuardCmd = async (args) => {
   }
 };
 
+// tools/src/application/state-branch/repair-state-branches.ts
+init_result();
+var repairStateBranchesUseCase = async (input, deps) => {
+  const result = {
+    created: [],
+    failed: [],
+    skipped: []
+  };
+  const rootExists = await deps.stateBranch.exists("main");
+  if (!isOk(rootExists)) {
+    return Err(rootExists.error);
+  }
+  if (!rootExists.data) {
+    if (input.dryRun) {
+      result.skipped.push({ type: "root", id: "main", reason: "Would create (dry-run)" });
+    } else {
+      const createResult = await deps.stateBranch.createRoot();
+      if (isOk(createResult)) {
+        result.created.push({ type: "root", id: "main" });
+      } else {
+        result.failed.push({ type: "root", id: "main", error: createResult.error.message });
+      }
+    }
+  }
+  const milestonesResult = deps.milestoneStore.listMilestones();
+  if (!isOk(milestonesResult)) {
+    return Err(milestonesResult.error);
+  }
+  for (const milestone of milestonesResult.data) {
+    const branchName = `milestone/${milestone.id}`;
+    const stateBranchName = `tff-state/${branchName}`;
+    const exists = await deps.stateBranch.exists(branchName);
+    if (!isOk(exists)) {
+      result.failed.push({ type: "milestone", id: milestone.id, error: exists.error.message });
+      continue;
+    }
+    if (exists.data) {
+      result.skipped.push({ type: "milestone", id: milestone.id, reason: "Already exists" });
+      continue;
+    }
+    if (input.dryRun) {
+      result.skipped.push({ type: "milestone", id: milestone.id, reason: "Would create (dry-run)" });
+      continue;
+    }
+    const forkResult = await deps.stateBranch.fork(branchName, "tff-state/main");
+    if (isOk(forkResult)) {
+      result.created.push({ type: "milestone", id: milestone.id });
+    } else {
+      result.failed.push({ type: "milestone", id: milestone.id, error: forkResult.error.message });
+    }
+  }
+  for (const milestone of milestonesResult.data) {
+    const slicesResult = deps.sliceStore.listSlices(milestone.id);
+    if (!isOk(slicesResult)) {
+      continue;
+    }
+    for (const slice of slicesResult.data) {
+      const branchName = `slice/${slice.id}`;
+      const parentStateBranch = `tff-state/milestone/${milestone.id}`;
+      const exists = await deps.stateBranch.exists(branchName);
+      if (!isOk(exists)) {
+        result.failed.push({ type: "slice", id: slice.id, error: exists.error.message });
+        continue;
+      }
+      if (exists.data) {
+        result.skipped.push({ type: "slice", id: slice.id, reason: "Already exists" });
+        continue;
+      }
+      const parentExists = await deps.stateBranch.exists(`milestone/${milestone.id}`);
+      if (!isOk(parentExists) || !parentExists.data) {
+        result.failed.push({
+          type: "slice",
+          id: slice.id,
+          error: `Parent milestone state branch tff-state/milestone/${milestone.id} not found`
+        });
+        continue;
+      }
+      if (input.dryRun) {
+        result.skipped.push({ type: "slice", id: slice.id, reason: "Would create (dry-run)" });
+        continue;
+      }
+      const forkResult = await deps.stateBranch.fork(branchName, parentStateBranch);
+      if (isOk(forkResult)) {
+        result.created.push({ type: "slice", id: slice.id });
+      } else {
+        result.failed.push({ type: "slice", id: slice.id, error: forkResult.error.message });
+      }
+    }
+  }
+  return Ok(result);
+};
+
+// tools/src/cli/commands/state-repair-branches.cmd.ts
+init_result();
+var stateRepairBranchesCmd = async (args) => {
+  const dryRun = args.includes("--dry-run");
+  return withBranchGuard(async ({ milestoneStore, sliceStore }) => {
+    const cwd = process.cwd();
+    const gitOps = new GitCliAdapter(cwd);
+    const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+    const result = await repairStateBranchesUseCase(
+      { dryRun },
+      { milestoneStore, sliceStore, stateBranch }
+    );
+    if (!isOk(result)) {
+      return JSON.stringify({ ok: false, error: result.error });
+    }
+    const output = result.data;
+    const lines = [];
+    lines.push(`State Branch Repair ${dryRun ? "(DRY RUN)" : ""}`);
+    lines.push("");
+    if (output.created.length > 0) {
+      lines.push(`Created: ${output.created.length}`);
+      for (const item of output.created) {
+        lines.push(`  \u2713 ${item.type}: ${item.id}`);
+      }
+      lines.push("");
+    }
+    if (output.failed.length > 0) {
+      lines.push(`Failed: ${output.failed.length}`);
+      for (const item of output.failed) {
+        lines.push(`  \u2717 ${item.type}: ${item.id} - ${item.error}`);
+      }
+      lines.push("");
+    }
+    if (output.skipped.length > 0) {
+      lines.push(`Skipped: ${output.skipped.length}`);
+      for (const item of output.skipped) {
+        lines.push(`  \u2192 ${item.type}: ${item.id} (${item.reason})`);
+      }
+      lines.push("");
+    }
+    lines.push("");
+    lines.push(`Summary: ${output.created.length} created, ${output.failed.length} failed, ${output.skipped.length} skipped`);
+    return JSON.stringify({
+      ok: true,
+      data: {
+        ...output,
+        summary: lines.join("\n")
+      }
+    });
+  });
+};
+
 // tools/src/cli/commands/state-repair.cmd.ts
 var import_node_fs16 = require("fs");
 var import_node_path19 = __toESM(require("path"), 1);
@@ -28131,7 +28275,7 @@ function parseArgs(args) {
 function detectCorruptionLevel(cwd) {
   const tffDir = import_node_path19.default.join(cwd, ".tff");
   const stateDbPath = import_node_path19.default.join(tffDir, "state.db");
-  const milestonesDir = import_node_path19.default.join(cwd, ".gsd", "milestones");
+  const milestonesDir = import_node_path19.default.join(cwd, ".tff", "milestones");
   if (!(0, import_node_fs16.existsSync)(tffDir)) {
     return "T3";
   }
@@ -28282,7 +28426,7 @@ var stateRepairCmd = async (args) => {
           ok: true,
           data: {
             action: "synthetic",
-            reason: "Restore returned null (no state to restore), cannot regenerate GSD files",
+            reason: "Restore returned null (no state to restore), cannot regenerate project files",
             tier: "T3",
             durationMs: durationMs2,
             consistent: validation.consistent,
@@ -28844,6 +28988,7 @@ var commands = {
   "sync:state": syncStateCmd,
   "sync:branch": syncBranchCmd,
   "state:repair": stateRepairCmd,
+  "state:repair-branches": stateRepairBranchesCmd,
   "worktree:create": worktreeCreateCmd,
   "worktree:delete": worktreeDeleteCmd,
   "worktree:list": worktreeListCmd,
@@ -28872,7 +29017,7 @@ var main = async () => {
     console.log(
       JSON.stringify({
         ok: true,
-        data: { name: "tff-tools", version: "0.7.0", commands: Object.keys(commands) }
+        data: { name: "tff-tools", version: "0.8.2", commands: Object.keys(commands) }
       })
     );
     return;
