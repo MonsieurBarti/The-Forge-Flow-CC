@@ -98,31 +98,57 @@ describe('GitStateBranchAdapter', () => {
 
   describe('merge', () => {
     const createTestSnapshot = (): Buffer => {
-      return Buffer.from(JSON.stringify({
-        version: 1,
-        exportedAt: new Date().toISOString(),
-        project: { name: 'P', vision: 'V', createdAt: new Date() },
-        milestones: [{ id: 'M01', number: 1, name: 'M1', status: 'active', createdAt: new Date() }],
-        slices: [{ id: 'M01-S01', milestoneId: 'M01', number: 1, title: 'S1', status: 'active', tier: 'F-lite', createdAt: new Date() }],
-        tasks: [],
-        dependencies: [],
-        workflowSession: null,
-        reviews: [],
-      }));
+      return Buffer.from(
+        JSON.stringify({
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          project: { name: 'P', vision: 'V', createdAt: new Date() },
+          milestones: [{ id: 'M01', number: 1, name: 'M1', status: 'active', createdAt: new Date() }],
+          slices: [
+            {
+              id: 'M01-S01',
+              milestoneId: 'M01',
+              number: 1,
+              title: 'S1',
+              status: 'active',
+              tier: 'F-lite',
+              createdAt: new Date(),
+            },
+          ],
+          tasks: [],
+          dependencies: [],
+          workflowSession: null,
+          reviews: [],
+        }),
+      );
     };
 
     const createChildSnapshot = (): Buffer => {
-      return Buffer.from(JSON.stringify({
-        version: 1,
-        exportedAt: new Date().toISOString(),
-        project: { name: 'P', vision: 'V', createdAt: new Date() },
-        milestones: [{ id: 'M01', number: 1, name: 'M1', status: 'active', createdAt: new Date() }],
-        slices: [{ id: 'M01-S01', milestoneId: 'M01', number: 1, title: 'S1', status: 'active', tier: 'F-lite', createdAt: new Date() }],
-        tasks: [{ id: 'M01-S01-T01', sliceId: 'M01-S01', number: 1, title: 'T1', status: 'open', createdAt: new Date() }],
-        dependencies: [],
-        workflowSession: null,
-        reviews: [],
-      }));
+      return Buffer.from(
+        JSON.stringify({
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          project: { name: 'P', vision: 'V', createdAt: new Date() },
+          milestones: [{ id: 'M01', number: 1, name: 'M1', status: 'active', createdAt: new Date() }],
+          slices: [
+            {
+              id: 'M01-S01',
+              milestoneId: 'M01',
+              number: 1,
+              title: 'S1',
+              status: 'active',
+              tier: 'F-lite',
+              createdAt: new Date(),
+            },
+          ],
+          tasks: [
+            { id: 'M01-S01-T01', sliceId: 'M01-S01', number: 1, title: 'T1', status: 'open', createdAt: new Date() },
+          ],
+          dependencies: [],
+          workflowSession: null,
+          reviews: [],
+        }),
+      );
     };
 
     it('should merge child entities into parent (AC8) and copy artifacts (AC9)', async () => {
@@ -136,7 +162,10 @@ describe('GitStateBranchAdapter', () => {
       gitOps.setFileContent('tff-state/slice/M01-S01', '.tff/state-snapshot.json', childSnapshot);
 
       // Set up child artifacts for artifact merge
-      gitOps.setTreeFiles('tff-state/slice/M01-S01', ['.tff/state-snapshot.json', '.tff/milestones/M01/slices/M01-S01/PLAN.md']);
+      gitOps.setTreeFiles('tff-state/slice/M01-S01', [
+        '.tff/state-snapshot.json',
+        '.tff/milestones/M01/slices/M01-S01/PLAN.md',
+      ]);
       gitOps.setFileContent(
         'tff-state/slice/M01-S01',
         '.tff/milestones/M01/slices/M01-S01/PLAN.md',

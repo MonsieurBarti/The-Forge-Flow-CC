@@ -6,11 +6,11 @@ import { generateState } from '../../application/sync/generate-state.js';
 import { isOk } from '../../domain/result.js';
 import { BranchMetaSchema } from '../../domain/value-objects/branch-meta.js';
 import type { StateSnapshot } from '../../domain/value-objects/state-snapshot.js';
+import { SQLiteStateImporter } from '../../infrastructure/adapters/export/sqlite-state-importer.js';
 import { MarkdownArtifactAdapter } from '../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js';
 import { GitCliAdapter } from '../../infrastructure/adapters/git/git-cli.adapter.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { JsonlJournalAdapter } from '../../infrastructure/adapters/journal/jsonl-journal.adapter.js';
-import { SQLiteStateImporter } from '../../infrastructure/adapters/export/sqlite-state-importer.js';
 import { createStateStoresUnchecked } from '../../infrastructure/adapters/sqlite/create-state-stores.js';
 import { SQLiteSalvage } from '../../infrastructure/adapters/sqlite/sqlite-salvage.js';
 import { SQLiteStateAdapter } from '../../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
@@ -121,10 +121,7 @@ function isDbValid(dbPath: string): boolean {
  * - State branch data fills gaps where salvage returned null/empty
  * - If salvage returns empty/null snapshot, use restored data entirely
  */
-function mergeSalvagedWithRestored(
-  salvaged: StateSnapshot | null,
-  restored: StateSnapshot,
-): StateSnapshot {
+function mergeSalvagedWithRestored(salvaged: StateSnapshot | null, restored: StateSnapshot): StateSnapshot {
   // If no salvaged data, return restored as-is
   if (!salvaged) {
     return restored;
@@ -160,7 +157,7 @@ function mergeSalvagedWithRestored(
   // For dependencies: take all from restored, then overlay with salvaged
   // Build a key for deduplication: "fromId->toId"
   const dependencyKey = (d: { fromId: string; toId: string }) => `${d.fromId}->${d.toId}`;
-  const mergedDeps = new Map<string, typeof restored.dependencies[0]>();
+  const mergedDeps = new Map<string, (typeof restored.dependencies)[0]>();
 
   // Add restored dependencies first
   for (const dep of restored.dependencies) {
@@ -181,7 +178,7 @@ function mergeSalvagedWithRestored(
   // Reviews: merge by sliceId+reviewer+type+commitSha as unique key
   const reviewKey = (r: { sliceId: string; reviewer: string; type: string; commitSha: string }) =>
     `${r.sliceId}:${r.reviewer}:${r.type}:${r.commitSha}`;
-  const mergedReviews = new Map<string, typeof restored.reviews[0]>();
+  const mergedReviews = new Map<string, (typeof restored.reviews)[0]>();
 
   for (const review of restored.reviews) {
     mergedReviews.set(reviewKey(review), review);
@@ -547,7 +544,9 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
           tablesSalvaged = salvageResult.data.metadata.tablesSalvaged;
           salvageNotes = salvageResult.data.metadata.corruptionNotes;
           const salvageDuration = Date.now() - salvageStartTime;
-          console.log(`[state:repair] Salvaged ${tablesSalvaged.length} tables (${salvageResult.data.metadata.rowsRecovered} rows) in ${salvageDuration}ms`);
+          console.log(
+            `[state:repair] Salvaged ${tablesSalvaged.length} tables (${salvageResult.data.metadata.rowsRecovered} rows) in ${salvageDuration}ms`,
+          );
         } else if (!salvageResult.ok) {
           salvageNotes.push(`Salvage failed: ${salvageResult.error.message}`);
           console.warn(`[state:repair] Salvage failed: ${salvageResult.error.message}`);
@@ -603,10 +602,7 @@ export const stateRepairCmd = async (args: string[]): Promise<string> => {
             adapter.close();
           } else {
             // Merge salvaged data with restored state
-            const mergedSnapshot = mergeSalvagedWithRestored(
-              salvageResult.data.snapshot,
-              exportResult.data,
-            );
+            const mergedSnapshot = mergeSalvagedWithRestored(salvageResult.data.snapshot, exportResult.data);
 
             // Write merged result to state.db using SQLiteStateImporter
             const importer = new SQLiteStateImporter(adapter);

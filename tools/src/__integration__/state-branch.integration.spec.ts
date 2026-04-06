@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -74,7 +74,7 @@ describe('State Branch Integration', () => {
     // Create exporter and sync to state branch
     const exporter = new SQLiteStateExporter(sqliteAdapter);
     const adapterWithExporter = new GitStateBranchAdapter(gitOps, repoDir, exporter);
-    
+
     const syncR = await adapterWithExporter.sync('main', 'test sync');
     expect(isOk(syncR)).toBe(true);
     sqliteAdapter.close();
@@ -86,10 +86,10 @@ describe('State Branch Integration', () => {
     const restoreDbPath = path.join(restoreTffDir, 'state.db');
     const restoreAdapter = SQLiteStateAdapter.create(restoreDbPath);
     restoreAdapter.init();
-    
+
     const importer = new SQLiteStateImporter(restoreAdapter);
     const adapterWithImporter = new GitStateBranchAdapter(gitOps, repoDir, undefined, importer);
-    
+
     const restoreR = await adapterWithImporter.restore('main', restoreDir);
     expect(isOk(restoreR)).toBe(true);
     if (isOk(restoreR) && restoreR.data) {
@@ -131,7 +131,7 @@ describe('State Branch Integration', () => {
     // Create exporter and sync with JSON state snapshot
     const exporter = new SQLiteStateExporter(db);
     const adapterWithExporter = new GitStateBranchAdapter(gitOps, repoDir, exporter);
-    
+
     const syncRootR = await adapterWithExporter.sync('main', 'initial sync');
     expect(isOk(syncRootR)).toBe(true);
     db.close();

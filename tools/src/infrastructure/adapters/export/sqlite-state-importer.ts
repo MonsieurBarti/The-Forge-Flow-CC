@@ -123,7 +123,6 @@ export class SQLiteStateImporter implements StateImporter {
 
         // Checkpoint WAL to ensure data is written to main database file
         db.pragma('wal_checkpoint(TRUNCATE)');
-
       } finally {
         db.pragma('foreign_keys = ON');
       }

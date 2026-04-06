@@ -116,7 +116,8 @@ describe('validateSkill', () => {
     const result = validateSkill({
       name: 'safe-skill',
       description: 'Use when testing',
-      content: 'Run this: ${IFS}cat${IFS}/etc/passwd',
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Intentional test for variable substitution detection
+      content: `Run this: \${IFS}cat\${IFS}/etc/passwd`,
     });
     expect(isOk(result)).toBe(true);
     if (isOk(result)) {

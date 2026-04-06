@@ -4,14 +4,14 @@ import os from 'node:os';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { SQLiteSalvage } from '../infrastructure/adapters/sqlite/sqlite-salvage.js';
-import { isOk, isErr } from '../domain/result.js';
-import { projectInitCmd } from '../cli/commands/project-init.cmd.js';
 import { milestoneCreateCmd } from '../cli/commands/milestone-create.cmd.js';
+import { projectInitCmd } from '../cli/commands/project-init.cmd.js';
 import { sliceCreateCmd } from '../cli/commands/slice-create.cmd.js';
 import { syncBranchCmd } from '../cli/commands/sync-branch.cmd.js';
-import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.js';
+import { isErr, isOk } from '../domain/result.js';
 import { createClosableStateStores } from '../infrastructure/adapters/sqlite/create-state-stores.js';
+import { SQLiteSalvage } from '../infrastructure/adapters/sqlite/sqlite-salvage.js';
+import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.js';
 
 describe('sqlite-salvage integration', () => {
   let tmpDir: string;
@@ -146,8 +146,8 @@ describe('sqlite-salvage integration', () => {
         // Either integrity check or quick check should have found issues
         expect(
           result.data.metadata.integrityCheckResult !== 'ok' ||
-          result.data.metadata.quickCheckResult !== 'ok' ||
-          result.data.metadata.corruptionNotes.length > 0
+            result.data.metadata.quickCheckResult !== 'ok' ||
+            result.data.metadata.corruptionNotes.length > 0,
         ).toBe(true);
       } else {
         // Failed to open - should have descriptive error
@@ -180,7 +180,7 @@ describe('sqlite-salvage integration', () => {
 
       // Read the database and corrupt a page in the middle
       const data = Buffer.from(readFileSync(dbPath));
-      
+
       // Corrupt bytes in the middle (avoid header which is first 100 bytes)
       // and avoid the end which might contain important metadata
       const midPoint = Math.floor(data.length / 2);
@@ -197,10 +197,10 @@ describe('sqlite-salvage integration', () => {
       if (isOk(result)) {
         // Verify that some data was recovered or corruption was noted
         expect(result.data.metadata.corruptionNotes.length).toBeGreaterThan(0);
-        
+
         // May have partial data depending on what pages were corrupted
         const { snapshot, metadata } = result.data;
-        
+
         // If we got a snapshot, verify it's structurally valid
         if (snapshot) {
           // Project might be salvageable even with corruption
@@ -211,7 +211,7 @@ describe('sqlite-salvage integration', () => {
 
         // Metadata should reflect the corruption
         if (metadata.integrityCheckResult !== 'ok') {
-          expect(metadata.corruptionNotes.some(n => n.includes('Integrity') || n.includes('Quick'))).toBe(true);
+          expect(metadata.corruptionNotes.some((n) => n.includes('Integrity') || n.includes('Quick'))).toBe(true);
         }
       }
     }, 10000);
@@ -293,12 +293,16 @@ describe('sqlite-salvage integration', () => {
       db.prepare("INSERT INTO project VALUES ('singleton', 'Valid Project', NULL, ?)").run(now);
       db.prepare("INSERT INTO milestone VALUES ('M01', 'singleton', 1, 'Valid Milestone', 'open', NULL, ?)").run(now);
       db.prepare("INSERT INTO slice VALUES ('M01-S01', 'M01', 1, 'Valid Slice', 'discussing', NULL, ?)").run(now);
-      db.prepare("INSERT INTO task VALUES ('M01-S01-T01', 'M01-S01', 1, 'Valid Task', NULL, 'open', NULL, NULL, NULL, NULL, ?)").run(now);
+      db.prepare(
+        "INSERT INTO task VALUES ('M01-S01-T01', 'M01-S01', 1, 'Valid Task', NULL, 'open', NULL, NULL, NULL, NULL, ?)",
+      ).run(now);
 
       // Insert invalid data (NULL values in required fields)
       db.prepare("INSERT INTO milestone VALUES ('M02', 'singleton', NULL, NULL, 'open', NULL, ?)").run(now); // Missing name and number
       db.prepare("INSERT INTO slice VALUES ('M01-S02', NULL, 1, 'Missing Milestone', 'discussing', NULL, ?)").run(now); // Missing milestone_id
-      db.prepare("INSERT INTO task VALUES ('M01-S01-T02', 'M01-S01', 2, NULL, NULL, 'open', NULL, NULL, NULL, NULL, ?)").run(now); // Missing title
+      db.prepare(
+        "INSERT INTO task VALUES ('M01-S01-T02', 'M01-S01', 2, NULL, NULL, 'open', NULL, NULL, NULL, NULL, ?)",
+      ).run(now); // Missing title
 
       db.close();
 
@@ -318,9 +322,11 @@ describe('sqlite-salvage integration', () => {
 
       // Should have corruption notes for invalid records
       expect(metadata.corruptionNotes.length).toBeGreaterThan(0);
-      expect(metadata.corruptionNotes.some(n => n.includes('M02') || n.includes('missing') || n.includes('invalid'))).toBe(true);
-      expect(metadata.corruptionNotes.some(n => n.includes('M01-S02') || n.includes('Missing Milestone'))).toBe(true);
-      expect(metadata.corruptionNotes.some(n => n.includes('M01-S01-T02'))).toBe(true);
+      expect(
+        metadata.corruptionNotes.some((n) => n.includes('M02') || n.includes('missing') || n.includes('invalid')),
+      ).toBe(true);
+      expect(metadata.corruptionNotes.some((n) => n.includes('M01-S02') || n.includes('Missing Milestone'))).toBe(true);
+      expect(metadata.corruptionNotes.some((n) => n.includes('M01-S01-T02'))).toBe(true);
     }, 10000);
   });
 

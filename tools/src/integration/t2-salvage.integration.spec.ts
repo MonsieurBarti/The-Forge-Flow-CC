@@ -10,7 +10,7 @@ import { projectInitCmd } from '../cli/commands/project-init.cmd.js';
 import { sliceCreateCmd } from '../cli/commands/slice-create.cmd.js';
 import { stateRepairCmd } from '../cli/commands/state-repair.cmd.js';
 import { taskClaimCmd } from '../cli/commands/task-claim.cmd.js';
-import { createClosableStateStores, createClosableStateStoresUnchecked } from '../infrastructure/adapters/sqlite/create-state-stores.js';
+import { createClosableStateStoresUnchecked } from '../infrastructure/adapters/sqlite/create-state-stores.js';
 import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.js';
 
 describe('T2 salvage integration', () => {
@@ -159,10 +159,18 @@ describe('T2 salvage integration', () => {
         );
       `);
       const now = new Date().toISOString();
-      db.prepare("INSERT OR REPLACE INTO project VALUES ('singleton', 't2-salvage-test', 'Test T2 salvage recovery', ?)").run(now);
-      db.prepare("INSERT OR REPLACE INTO milestone VALUES ('M01', 'singleton', 1, 'Test Milestone', 'open', NULL, ?)").run(now);
-      db.prepare("INSERT OR REPLACE INTO slice VALUES ('M01-S01', 'M01', 1, 'Test Slice', 'discussing', NULL, ?)").run(now);
-      db.prepare("INSERT OR REPLACE INTO task VALUES ('M01-S01-T01', 'M01-S01', 1, 'Salvage Test Task', NULL, 'open', 0, NULL, NULL, NULL, ?)").run(now);
+      db.prepare(
+        "INSERT OR REPLACE INTO project VALUES ('singleton', 't2-salvage-test', 'Test T2 salvage recovery', ?)",
+      ).run(now);
+      db.prepare(
+        "INSERT OR REPLACE INTO milestone VALUES ('M01', 'singleton', 1, 'Test Milestone', 'open', NULL, ?)",
+      ).run(now);
+      db.prepare("INSERT OR REPLACE INTO slice VALUES ('M01-S01', 'M01', 1, 'Test Slice', 'discussing', NULL, ?)").run(
+        now,
+      );
+      db.prepare(
+        "INSERT OR REPLACE INTO task VALUES ('M01-S01-T01', 'M01-S01', 1, 'Salvage Test Task', NULL, 'open', 0, NULL, NULL, NULL, ?)",
+      ).run(now);
       db.close();
     }
 
@@ -179,11 +187,11 @@ describe('T2 salvage integration', () => {
     execSync('git add -f .tff/journal/', { cwd: tmpDir, stdio: 'pipe', env });
     execSync('git add -f .tff/branch-meta.json', { cwd: tmpDir, stdio: 'pipe', env });
     execSync('git commit -m "Backup state" || true', { cwd: tmpDir, stdio: 'pipe', env });
-    
+
     // Verify commit succeeded
     const branchLog = execSync('git log --oneline -1', { cwd: tmpDir, encoding: 'utf8', env }).trim();
     expect(branchLog).toContain('Backup state');
-    
+
     // Stay on state branch so .tff/ directory remains in working tree
     // The repair command uses currentBranch variable ('main') to determine state branch
 
@@ -200,11 +208,11 @@ describe('T2 salvage integration', () => {
     it('should repair corrupted DB and report salvage metadata', async () => {
       // Verify database exists before corruption
       expect(existsSync(dbPath)).toBe(true);
-      
+
       // Corrupt the local state.db by overwriting middle of file
       const originalData = readFileSync(dbPath);
       const corruptedData = Buffer.from(originalData);
-      
+
       // Overwrite middle section with garbage (avoid header which is needed for SQLite detection)
       const midPoint = Math.floor(corruptedData.length / 2);
       for (let i = midPoint; i < Math.min(midPoint + 200, corruptedData.length - 100); i++) {
@@ -259,7 +267,7 @@ describe('T2 salvage integration', () => {
     it('should merge salvaged data with state branch data', async () => {
       // Verify database exists
       expect(existsSync(dbPath)).toBe(true);
-      
+
       // Add more local data that hasn't been synced
       const stores = createClosableStateStoresUnchecked();
       const extraTaskResult = stores.taskStore.createTask({
@@ -304,11 +312,11 @@ describe('T2 salvage integration', () => {
     it('should handle severely corrupted database', async () => {
       // Verify database exists
       expect(existsSync(dbPath)).toBe(true);
-      
+
       // Overwrite more of the database to make it severely corrupted
       const originalData = readFileSync(dbPath);
       const corruptedData = Buffer.from(originalData);
-      
+
       // Corrupt a larger portion
       const corruptStart = 512; // After header
       const corruptEnd = Math.min(corruptStart + 2048, corruptedData.length - 512);
@@ -373,7 +381,7 @@ describe('T2 salvage integration', () => {
       // Verify checkpoint exists before corruption
       const checkpointPath = join(tffDir, 'milestones', 'M01', 'slices', 'M01-S01', 'CHECKPOINT.md');
       expect(existsSync(checkpointPath)).toBe(true);
-      
+
       // Verify database exists
       expect(existsSync(dbPath)).toBe(true);
 
@@ -408,7 +416,7 @@ describe('T2 salvage integration', () => {
     it('should report correct salvage metadata structure', async () => {
       // Verify database exists
       expect(existsSync(dbPath)).toBe(true);
-      
+
       // Corrupt the database with moderate corruption
       const originalData = readFileSync(dbPath);
       const corruptedData = Buffer.from(originalData);

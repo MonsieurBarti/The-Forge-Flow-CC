@@ -1,16 +1,16 @@
 import Database from 'better-sqlite3';
-import type { DomainError } from '../../../domain/errors/domain-error.js';
-import { createDomainError } from '../../../domain/errors/domain-error.js';
 import type { Milestone } from '../../../domain/entities/milestone.js';
 import type { Project } from '../../../domain/entities/project.js';
 import type { Slice } from '../../../domain/entities/slice.js';
 import type { Task } from '../../../domain/entities/task.js';
+import type { DomainError } from '../../../domain/errors/domain-error.js';
+import { createDomainError } from '../../../domain/errors/domain-error.js';
 import type { Result } from '../../../domain/result.js';
 import { Err, Ok } from '../../../domain/result.js';
 import type { Dependency } from '../../../domain/value-objects/dependency.js';
 import type { ReviewRecord } from '../../../domain/value-objects/review-record.js';
-import type { WorkflowSession } from '../../../domain/value-objects/workflow-session.js';
 import { STATE_SNAPSHOT_VERSION, type StateSnapshot } from '../../../domain/value-objects/state-snapshot.js';
+import type { WorkflowSession } from '../../../domain/value-objects/workflow-session.js';
 import { getNativeBindingPath } from './load-native-binding.js';
 
 /**
@@ -94,13 +94,13 @@ export class SQLiteSalvage {
       }
 
       // Attempt to salvage each table individually
-      const project = this.salvageProject(db, metadata);
-      const milestones = this.salvageMilestones(db, metadata);
-      const slices = this.salvageSlices(db, metadata);
-      const tasks = this.salvageTasks(db, metadata);
-      const dependencies = this.salvageDependencies(db, metadata);
-      const session = this.salvageSession(db, metadata);
-      const reviews = this.salvageReviews(db, metadata);
+      const project = SQLiteSalvage.salvageProject(db, metadata);
+      const milestones = SQLiteSalvage.salvageMilestones(db, metadata);
+      const slices = SQLiteSalvage.salvageSlices(db, metadata);
+      const tasks = SQLiteSalvage.salvageTasks(db, metadata);
+      const dependencies = SQLiteSalvage.salvageDependencies(db, metadata);
+      const session = SQLiteSalvage.salvageSession(db, metadata);
+      const reviews = SQLiteSalvage.salvageReviews(db, metadata);
 
       // Only create snapshot if we salvaged at least some data
       let snapshot: StateSnapshot | null = null;

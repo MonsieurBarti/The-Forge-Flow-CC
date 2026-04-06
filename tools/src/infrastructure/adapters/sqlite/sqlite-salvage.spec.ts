@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, afterEach } from 'vitest';
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 import * as os from 'node:os';
+import * as path from 'node:path';
 import Database from 'better-sqlite3';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { isErr, isOk } from '../../../domain/result.js';
 import { SQLiteSalvage } from './sqlite-salvage.js';
-import { isOk, isErr } from '../../../domain/result.js';
 
 describe('SQLiteSalvage', () => {
   let tempDir: string;
@@ -112,14 +112,20 @@ describe('SQLiteSalvage', () => {
     db.prepare("INSERT INTO slice VALUES ('M01-S01', 'M01', 1, 'Slice 1', 'discussing', 'T1', ?)").run(now);
     db.prepare("INSERT INTO slice VALUES ('M01-S02', 'M01', 2, 'Slice 2', 'discussing', NULL, ?)").run(now);
 
-    db.prepare("INSERT INTO task VALUES ('M01-S01-T01', 'M01-S01', 1, 'Task 1', 'Description', 'open', 1, NULL, NULL, NULL, ?)").run(now);
-    db.prepare("INSERT INTO task VALUES ('M01-S01-T02', 'M01-S01', 2, 'Task 2', NULL, 'open', NULL, NULL, NULL, NULL, ?)").run(now);
+    db.prepare(
+      "INSERT INTO task VALUES ('M01-S01-T01', 'M01-S01', 1, 'Task 1', 'Description', 'open', 1, NULL, NULL, NULL, ?)",
+    ).run(now);
+    db.prepare(
+      "INSERT INTO task VALUES ('M01-S01-T02', 'M01-S01', 2, 'Task 2', NULL, 'open', NULL, NULL, NULL, NULL, ?)",
+    ).run(now);
 
     db.prepare("INSERT INTO dependency VALUES ('M01-S01-T02', 'M01-S01-T01', 'blocks')").run();
 
     db.prepare("INSERT INTO workflow_session VALUES (1, 'executing', 'M01-S01', 'M01', NULL, NULL, ?)").run(now);
 
-    db.prepare("INSERT INTO review VALUES ('M01-S01', 'code', 'agent-a', 'approved', 'abc123', 'Looks good', ?)").run(now);
+    db.prepare("INSERT INTO review VALUES ('M01-S01', 'code', 'agent-a', 'approved', 'abc123', 'Looks good', ?)").run(
+      now,
+    );
 
     db.close();
     return dbPath;
@@ -469,9 +475,9 @@ describe('SQLiteSalvage', () => {
       expect(snapshot!.slices[0].id).toBe('M01-S01');
 
       // Should have corruption notes for invalid rows
-      expect(metadata.corruptionNotes.some(n => n.includes('M02'))).toBe(true);
+      expect(metadata.corruptionNotes.some((n) => n.includes('M02'))).toBe(true);
       // M01-S02 has missing milestone_id - check for slice id in notes
-      expect(metadata.corruptionNotes.some(n => n.includes('M01-S02'))).toBe(true);
+      expect(metadata.corruptionNotes.some((n) => n.includes('M01-S02'))).toBe(true);
     });
   });
 
@@ -564,7 +570,7 @@ describe('SQLiteSalvage', () => {
       expect(snapshot!.project!.createdAt).toBeInstanceOf(Date);
 
       // Should have corruption notes about the dates
-      expect(metadata.corruptionNotes.some(n => n.includes('created_at'))).toBe(true);
+      expect(metadata.corruptionNotes.some((n) => n.includes('created_at'))).toBe(true);
     });
   });
 
@@ -753,10 +759,16 @@ describe('SQLiteSalvage', () => {
       db.prepare("INSERT INTO project VALUES ('singleton', 'Test', NULL, ?)").run(now);
       db.prepare("INSERT INTO milestone VALUES ('M01', 'singleton', 1, 'M1', 'open', NULL, ?)").run(now);
       db.prepare("INSERT INTO slice VALUES ('M01-S01', 'M01', 1, 'S1', 'discussing', NULL, ?)").run(now);
-      db.prepare("INSERT INTO task VALUES ('M01-S01-T01', 'M01-S01', 1, 'Valid Task', NULL, 'open', NULL, NULL, NULL, NULL, ?)").run(now);
-      db.prepare("INSERT INTO task VALUES ('M01-S01-T02', 'M01-S01', 2, 'Another Valid Task', NULL, 'open', NULL, NULL, NULL, NULL, ?)").run(now);
+      db.prepare(
+        "INSERT INTO task VALUES ('M01-S01-T01', 'M01-S01', 1, 'Valid Task', NULL, 'open', NULL, NULL, NULL, NULL, ?)",
+      ).run(now);
+      db.prepare(
+        "INSERT INTO task VALUES ('M01-S01-T02', 'M01-S01', 2, 'Another Valid Task', NULL, 'open', NULL, NULL, NULL, NULL, ?)",
+      ).run(now);
       // Add a task with NULL title (should be skipped during salvage)
-      db.prepare("INSERT INTO task VALUES ('M01-S01-T03', 'M01-S01', 3, NULL, NULL, 'open', NULL, NULL, NULL, NULL, ?)").run(now);
+      db.prepare(
+        "INSERT INTO task VALUES ('M01-S01-T03', 'M01-S01', 3, NULL, NULL, 'open', NULL, NULL, NULL, NULL, ?)",
+      ).run(now);
 
       db.close();
 
@@ -769,7 +781,7 @@ describe('SQLiteSalvage', () => {
       expect(result.data.snapshot!.tasks).toHaveLength(2);
 
       // Should have corruption note about the skipped row
-      expect(result.data.metadata.corruptionNotes.some(n => n.includes('M01-S01-T03'))).toBe(true);
+      expect(result.data.metadata.corruptionNotes.some((n) => n.includes('M01-S01-T03'))).toBe(true);
     });
   });
 });

@@ -270,9 +270,11 @@ export class GitStateBranchAdapter implements StateBranchPort {
     try {
       parentSnapshot = this.parseSnapshotWithDates(parentSnapshotR.data.toString('utf8'));
     } catch (e) {
-      return Err(syncFailedError('Failed to parse parent state snapshot', {
-        error: e instanceof Error ? e.message : String(e),
-      }));
+      return Err(
+        syncFailedError('Failed to parse parent state snapshot', {
+          error: e instanceof Error ? e.message : String(e),
+        }),
+      );
     }
 
     // Step 2: Extract child's state-snapshot.json
@@ -285,9 +287,11 @@ export class GitStateBranchAdapter implements StateBranchPort {
     try {
       childSnapshot = this.parseSnapshotWithDates(childSnapshotR.data.toString('utf8'));
     } catch (e) {
-      return Err(syncFailedError('Failed to parse child state snapshot', {
-        error: e instanceof Error ? e.message : String(e),
-      }));
+      return Err(
+        syncFailedError('Failed to parse child state snapshot', {
+          error: e instanceof Error ? e.message : String(e),
+        }),
+      );
     }
 
     // Step 3: Merge the snapshots using the entity-level merge logic

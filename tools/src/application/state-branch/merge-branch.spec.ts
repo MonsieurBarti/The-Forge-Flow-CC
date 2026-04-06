@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../../domain/result.js';
+import { STATE_SNAPSHOT_VERSION } from '../../domain/value-objects/state-snapshot.js';
 import { GitStateBranchAdapter } from '../../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { InMemoryGitOps } from '../../infrastructure/testing/in-memory-git-ops.js';
-import { STATE_SNAPSHOT_VERSION } from '../../domain/value-objects/state-snapshot.js';
 import { mergeBranchUseCase } from './merge-branch.js';
 
 const createStateSnapshot = (): string => {
