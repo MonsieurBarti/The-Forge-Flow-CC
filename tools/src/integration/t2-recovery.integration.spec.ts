@@ -33,6 +33,7 @@ describe('T2 recovery integration', () => {
 
     // Initialize git repo with main branch
     execSync('git init', { cwd: tmpDir, stdio: 'pipe', env });
+    execSync('git checkout -b main', { cwd: tmpDir, stdio: 'pipe', env });
     execSync('git config user.email "test@test.com"', { cwd: tmpDir, stdio: 'pipe', env });
     execSync('git config user.name "Test"', { cwd: tmpDir, stdio: 'pipe', env });
     execSync('git checkout -b main', { cwd: tmpDir, stdio: 'pipe', env });

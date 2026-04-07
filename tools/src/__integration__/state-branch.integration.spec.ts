@@ -1,9 +1,11 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { isOk } from '../domain/result.js';
+import { SQLiteStateExporter } from '../infrastructure/adapters/export/sqlite-state-exporter.js';
+import { SQLiteStateImporter } from '../infrastructure/adapters/export/sqlite-state-importer.js';
 import { GitCliAdapter } from '../infrastructure/adapters/git/git-cli.adapter.js';
 import { GitStateBranchAdapter } from '../infrastructure/adapters/git/git-state-branch.adapter.js';
 import { SQLiteStateAdapter } from '../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
@@ -68,24 +70,36 @@ describe('State Branch Integration', () => {
     sqliteAdapter.init();
     sqliteAdapter.saveProject({ name: 'Test', vision: 'Test vision' });
     sqliteAdapter.checkpoint();
+
+    // Create exporter and sync to state branch
+    const exporter = new SQLiteStateExporter(sqliteAdapter);
+    const adapterWithExporter = new GitStateBranchAdapter(gitOps, repoDir, exporter);
+
+    const syncR = await adapterWithExporter.sync('main', 'test sync');
+    expect(isOk(syncR)).toBe(true);
     sqliteAdapter.close();
 
-    // Sync to state branch
-    const syncR = await adapter.sync('main', 'test sync');
-    expect(isOk(syncR)).toBe(true);
-
-    // Restore to a different directory
+    // Restore to a different directory using importer
     const restoreDir = mkdtempSync(path.join(tmpdir(), 'tff-restore-'));
-    const restoreR = await adapter.restore('main', restoreDir);
+    const restoreTffDir = path.join(restoreDir, '.tff');
+    mkdirSync(restoreTffDir, { recursive: true });
+    const restoreDbPath = path.join(restoreTffDir, 'state.db');
+    const restoreAdapter = SQLiteStateAdapter.create(restoreDbPath);
+    restoreAdapter.init();
+
+    const importer = new SQLiteStateImporter(restoreAdapter);
+    const adapterWithImporter = new GitStateBranchAdapter(gitOps, repoDir, undefined, importer);
+
+    const restoreR = await adapterWithImporter.restore('main', restoreDir);
     expect(isOk(restoreR)).toBe(true);
     if (isOk(restoreR) && restoreR.data) {
       expect(restoreR.data.filesRestored).toBeGreaterThan(0);
+      expect(restoreR.data.source).toBe('json');
       // Verify the restored PROJECT.md
       const restoredProject = readFileSync(path.join(restoreDir, '.tff', 'PROJECT.md'), 'utf-8');
       expect(restoredProject).toBe('# Test Project');
-      // Verify the restored DB is valid
-      expect(existsSync(path.join(restoreDir, '.tff', 'state.db'))).toBe(true);
     }
+    restoreAdapter.close();
   });
 
   it('should fork child state branch from parent', async () => {
@@ -113,10 +127,14 @@ describe('State Branch Integration', () => {
     db.createSlice({ milestoneId: 'M01', number: 1, title: 'S1', tier: 'F-lite' });
     db.createSlice({ milestoneId: 'M01', number: 2, title: 'S2', tier: 'F-lite' });
     db.checkpoint();
-    db.close();
 
-    const syncRootR = await adapter.sync('main', 'initial sync');
+    // Create exporter and sync with JSON state snapshot
+    const exporter = new SQLiteStateExporter(db);
+    const adapterWithExporter = new GitStateBranchAdapter(gitOps, repoDir, exporter);
+
+    const syncRootR = await adapterWithExporter.sync('main', 'initial sync');
     expect(isOk(syncRootR)).toBe(true);
+    db.close();
 
     const forkMR = await adapter.fork('milestone/M01', 'tff-state/main');
     expect(isOk(forkMR)).toBe(true);

@@ -22,21 +22,25 @@ describe('copyTffToWorktree', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('copies state.db but excludes branch-meta.json', () => {
+  it('copies other files but excludes state.db and branch-meta.json', () => {
     writeFileSync(path.join(tffDir, 'state.db'), 'data');
     writeFileSync(path.join(tffDir, 'branch-meta.json'), '{}');
+    writeFileSync(path.join(tffDir, 'journal.jsonl'), '{}');
     copyTffToWorktree(tffDir, worktreePath);
-    expect(existsSync(path.join(worktreePath, '.tff', 'state.db'))).toBe(true);
+    expect(existsSync(path.join(worktreePath, '.tff', 'state.db'))).toBe(false);
     expect(existsSync(path.join(worktreePath, '.tff', 'branch-meta.json'))).toBe(false);
+    expect(existsSync(path.join(worktreePath, '.tff', 'journal.jsonl'))).toBe(true);
   });
 
-  it('still excludes worktrees directory', () => {
+  it('still excludes worktrees directory and state.db', () => {
     mkdirSync(path.join(tffDir, 'worktrees'), { recursive: true });
     writeFileSync(path.join(tffDir, 'worktrees', 'dummy'), 'data');
     writeFileSync(path.join(tffDir, 'state.db'), 'data');
+    writeFileSync(path.join(tffDir, 'checkpoint.json'), '{}');
     copyTffToWorktree(tffDir, worktreePath);
-    expect(existsSync(path.join(worktreePath, '.tff', 'state.db'))).toBe(true);
+    expect(existsSync(path.join(worktreePath, '.tff', 'state.db'))).toBe(false);
     expect(existsSync(path.join(worktreePath, '.tff', 'worktrees'))).toBe(false);
+    expect(existsSync(path.join(worktreePath, '.tff', 'checkpoint.json'))).toBe(true);
   });
 
   it('copies subdirectories recursively', () => {

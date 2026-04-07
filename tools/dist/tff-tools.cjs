@@ -294,10 +294,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path18) {
-  if (!path18)
+function getElementAtPath(obj, path19) {
+  if (!path19)
     return obj;
-  return path18.reduce((acc, key) => acc?.[key], obj);
+  return path19.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -609,11 +609,11 @@ function aborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path18, issues) {
+function prefixIssues(path19, issues) {
   return issues.map((iss) => {
     var _a2;
     (_a2 = iss).path ?? (_a2.path = []);
-    iss.path.unshift(path18);
+    iss.path.unshift(path19);
     return iss;
   });
 }
@@ -855,7 +855,7 @@ function formatError(error48, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error48, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error49, path18 = []) => {
+  const processError = (error49, path19 = []) => {
     var _a2, _b;
     for (const issue2 of error49.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
@@ -865,7 +865,7 @@ function treeifyError(error48, mapper = (issue2) => issue2.message) {
       } else if (issue2.code === "invalid_element") {
         processError({ issues: issue2.issues }, issue2.path);
       } else {
-        const fullpath = [...path18, ...issue2.path];
+        const fullpath = [...path19, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -897,8 +897,8 @@ function treeifyError(error48, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path18 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path18) {
+  const path19 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path19) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -13592,13 +13592,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path18 = ref.slice(1).split("/").filter(Boolean);
-  if (path18.length === 0) {
+  const path19 = ref.slice(1).split("/").filter(Boolean);
+  if (path19.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path18[0] === defsKey) {
-    const key = path18[1];
+  if (path19[0] === defsKey) {
+    const key = path19[1];
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -14391,6 +14391,140 @@ var init_domain_error = __esm({
   }
 });
 
+// tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts
+var import_promises, import_node_path3, MarkdownArtifactAdapter;
+var init_markdown_artifact_adapter = __esm({
+  "tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts"() {
+    import_promises = require("fs/promises");
+    import_node_path3 = require("path");
+    init_domain_error();
+    init_result();
+    MarkdownArtifactAdapter = class {
+      constructor(basePath) {
+        this.basePath = basePath;
+      }
+      resolve(path19) {
+        const resolved = (0, import_node_path3.resolve)((0, import_node_path3.join)(this.basePath, path19));
+        const base = (0, import_node_path3.resolve)(this.basePath);
+        if (!resolved.startsWith(`${base}/`) && resolved !== base) {
+          throw new Error(`Path traversal rejected: ${path19}`);
+        }
+        return resolved;
+      }
+      async read(path19) {
+        try {
+          return Ok(await (0, import_promises.readFile)(this.resolve(path19), "utf-8"));
+        } catch {
+          return Err(createDomainError("NOT_FOUND", `File not found: ${path19}`, { path: path19 }));
+        }
+      }
+      async write(path19, content) {
+        try {
+          const fullPath = this.resolve(path19);
+          await (0, import_promises.mkdir)((0, import_node_path3.dirname)(fullPath), { recursive: true });
+          await (0, import_promises.writeFile)(fullPath, content, "utf-8");
+          return Ok(void 0);
+        } catch (err) {
+          return Err(createDomainError("VALIDATION_ERROR", `Failed to write: ${path19}`, { path: path19, error: String(err) }));
+        }
+      }
+      async exists(path19) {
+        try {
+          await (0, import_promises.access)(this.resolve(path19));
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      async list(directory) {
+        try {
+          const entries = await (0, import_promises.readdir)(this.resolve(directory));
+          return Ok(entries.map((e) => (0, import_node_path3.join)(directory, e)));
+        } catch {
+          return Ok([]);
+        }
+      }
+      async mkdir(path19) {
+        try {
+          await (0, import_promises.mkdir)(this.resolve(path19), { recursive: true });
+          return Ok(void 0);
+        } catch (err) {
+          return Err(createDomainError("VALIDATION_ERROR", `Failed to mkdir: ${path19}`, { path: path19, error: String(err) }));
+        }
+      }
+    };
+  }
+});
+
+// tools/src/application/checkpoint/save-checkpoint.ts
+var saveCheckpoint;
+var init_save_checkpoint = __esm({
+  "tools/src/application/checkpoint/save-checkpoint.ts"() {
+    init_result();
+    saveCheckpoint = async (data, deps) => {
+      const lines = [
+        `# Checkpoint \u2014 ${data.sliceId}`,
+        `- Base commit: ${data.baseCommit}`,
+        `- Current wave: ${data.currentWave}`,
+        `- Completed waves: [${data.completedWaves.join(", ")}]`,
+        `- Completed tasks: [${data.completedTasks.join(", ")}]`,
+        `- Executor log: ${data.executorLog.map((e) => `${e.agent}\u2192${e.taskRef}`).join(", ")}`,
+        "",
+        `<!-- checkpoint-json: ${JSON.stringify(data)} -->`,
+        ""
+      ];
+      const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
+      const dir = `.tff/milestones/${milestoneId}/slices/${data.sliceId}`;
+      const path19 = `${dir}/CHECKPOINT.md`;
+      const mkdirResult = await deps.artifactStore.mkdir(dir);
+      if (!isOk(mkdirResult)) return mkdirResult;
+      const writeResult = await deps.artifactStore.write(path19, lines.join("\n"));
+      if (!isOk(writeResult)) return writeResult;
+      return Ok(void 0);
+    };
+  }
+});
+
+// tools/src/cli/commands/checkpoint-save.cmd.ts
+var checkpoint_save_cmd_exports = {};
+__export(checkpoint_save_cmd_exports, {
+  checkpointSaveCmd: () => checkpointSaveCmd
+});
+var USAGE, checkpointSaveCmd;
+var init_checkpoint_save_cmd = __esm({
+  "tools/src/cli/commands/checkpoint-save.cmd.ts"() {
+    init_save_checkpoint();
+    init_result();
+    init_markdown_artifact_adapter();
+    USAGE = `Usage: checkpoint:save '{"sliceId":"M01-S01","baseCommit":"abc123","currentWave":0,"completedWaves":[],"completedTasks":[],"executorLog":[]}'`;
+    checkpointSaveCmd = async (args) => {
+      const [dataJson] = args;
+      if (!dataJson) {
+        return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: USAGE } });
+      }
+      let data;
+      try {
+        data = JSON.parse(dataJson);
+      } catch {
+        return JSON.stringify({
+          ok: false,
+          error: { code: "INVALID_ARGS", message: `Invalid JSON. ${USAGE}` }
+        });
+      }
+      if (typeof data?.sliceId !== "string") {
+        return JSON.stringify({
+          ok: false,
+          error: { code: "INVALID_ARGS", message: `Missing required field "sliceId". ${USAGE}` }
+        });
+      }
+      const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+      const result = await saveCheckpoint(data, { artifactStore });
+      if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+      return JSON.stringify({ ok: false, error: result.error });
+    };
+  }
+});
+
 // node_modules/better-sqlite3/lib/util.js
 var require_util = __commonJS({
   "node_modules/better-sqlite3/lib/util.js"(exports2) {
@@ -14444,20 +14578,20 @@ var require_file_uri_to_path = __commonJS({
       var rest = decodeURI(uri.substring(7));
       var firstSlash = rest.indexOf("/");
       var host = rest.substring(0, firstSlash);
-      var path18 = rest.substring(firstSlash + 1);
+      var path19 = rest.substring(firstSlash + 1);
       if ("localhost" == host) host = "";
       if (host) {
         host = sep + sep + host;
       }
-      path18 = path18.replace(/^(.+)\|/, "$1:");
+      path19 = path19.replace(/^(.+)\|/, "$1:");
       if (sep == "\\") {
-        path18 = path18.replace(/\//g, "\\");
+        path19 = path19.replace(/\//g, "\\");
       }
-      if (/^.+\:/.test(path18)) {
+      if (/^.+\:/.test(path19)) {
       } else {
-        path18 = sep + path18;
+        path19 = sep + path19;
       }
-      return host + path18;
+      return host + path19;
     }
   }
 });
@@ -14466,18 +14600,18 @@ var require_file_uri_to_path = __commonJS({
 var require_bindings = __commonJS({
   "node_modules/bindings/bindings.js"(exports2, module2) {
     var fs = require("fs");
-    var path18 = require("path");
+    var path19 = require("path");
     var fileURLToPath = require_file_uri_to_path();
-    var join4 = path18.join;
-    var dirname2 = path18.dirname;
-    var exists = fs.accessSync && function(path19) {
+    var join4 = path19.join;
+    var dirname2 = path19.dirname;
+    var exists = fs.accessSync && function(path20) {
       try {
-        fs.accessSync(path19);
+        fs.accessSync(path20);
       } catch (e) {
         return false;
       }
       return true;
-    } || fs.existsSync || path18.existsSync;
+    } || fs.existsSync || path19.existsSync;
     var defaults = {
       arrow: process.env.NODE_BINDINGS_ARROW || " \u2192 ",
       compiled: process.env.NODE_BINDINGS_COMPILED_DIR || "compiled",
@@ -14522,7 +14656,7 @@ var require_bindings = __commonJS({
       if (!opts.module_root) {
         opts.module_root = exports2.getRoot(exports2.getFileName());
       }
-      if (path18.extname(opts.bindings) != ".node") {
+      if (path19.extname(opts.bindings) != ".node") {
         opts.bindings += ".node";
       }
       var requireFunc = typeof __webpack_require__ === "function" ? __non_webpack_require__ : require;
@@ -14761,7 +14895,7 @@ var require_backup = __commonJS({
   "node_modules/better-sqlite3/lib/methods/backup.js"(exports2, module2) {
     "use strict";
     var fs = require("fs");
-    var path18 = require("path");
+    var path19 = require("path");
     var { promisify: promisify2 } = require("util");
     var { cppdb } = require_util();
     var fsAccess = promisify2(fs.access);
@@ -14777,7 +14911,7 @@ var require_backup = __commonJS({
       if (typeof attachedName !== "string") throw new TypeError('Expected the "attached" option to be a string');
       if (!attachedName) throw new TypeError('The "attached" option cannot be an empty string');
       if (handler != null && typeof handler !== "function") throw new TypeError('Expected the "progress" option to be a function');
-      await fsAccess(path18.dirname(filename)).catch(() => {
+      await fsAccess(path19.dirname(filename)).catch(() => {
         throw new TypeError("Cannot save backup because the directory does not exist");
       });
       const isNewFile = await fsAccess(filename).then(() => false, () => true);
@@ -15083,7 +15217,7 @@ var require_database = __commonJS({
   "node_modules/better-sqlite3/lib/database.js"(exports2, module2) {
     "use strict";
     var fs = require("fs");
-    var path18 = require("path");
+    var path19 = require("path");
     var util = require_util();
     var SqliteError = require_sqlite_error();
     var DEFAULT_ADDON;
@@ -15119,7 +15253,7 @@ var require_database = __commonJS({
         addon = DEFAULT_ADDON || (DEFAULT_ADDON = require_bindings()("better_sqlite3.node"));
       } else if (typeof nativeBinding === "string") {
         const requireFunc = typeof __non_webpack_require__ === "function" ? __non_webpack_require__ : require;
-        addon = requireFunc(path18.resolve(nativeBinding).replace(/(\.node)?$/, ".node"));
+        addon = requireFunc(path19.resolve(nativeBinding).replace(/(\.node)?$/, ".node"));
       } else {
         addon = nativeBinding;
       }
@@ -15127,7 +15261,7 @@ var require_database = __commonJS({
         addon.setErrorConstructor(SqliteError);
         addon.isInitialized = true;
       }
-      if (!anonymous && !filename.startsWith("file:") && !fs.existsSync(path18.dirname(filename))) {
+      if (!anonymous && !filename.startsWith("file:") && !fs.existsSync(path19.dirname(filename))) {
         throw new TypeError("Cannot open database because the directory does not exist");
       }
       Object.defineProperties(this, {
@@ -15163,136 +15297,149 @@ var require_lib = __commonJS({
   }
 });
 
-// tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts
-var import_promises, import_node_path4, MarkdownArtifactAdapter;
-var init_markdown_artifact_adapter = __esm({
-  "tools/src/infrastructure/adapters/filesystem/markdown-artifact.adapter.ts"() {
-    import_promises = require("fs/promises");
-    import_node_path4 = require("path");
+// tools/src/domain/value-objects/milestone-status.ts
+var MilestoneStatusSchema;
+var init_milestone_status = __esm({
+  "tools/src/domain/value-objects/milestone-status.ts"() {
+    init_zod();
+    MilestoneStatusSchema = external_exports.enum(["open", "in_progress", "closed"]);
+  }
+});
+
+// tools/src/domain/entities/milestone.ts
+var MilestoneSchema, formatMilestoneNumber;
+var init_milestone = __esm({
+  "tools/src/domain/entities/milestone.ts"() {
+    init_zod();
+    init_milestone_status();
+    MilestoneSchema = external_exports.object({
+      id: external_exports.string().min(1),
+      projectId: external_exports.string().min(1),
+      name: external_exports.string().min(1),
+      number: external_exports.number().int().min(1),
+      status: MilestoneStatusSchema,
+      closeReason: external_exports.string().optional(),
+      createdAt: external_exports.date()
+    });
+    formatMilestoneNumber = (n) => `M${n.toString().padStart(2, "0")}`;
+  }
+});
+
+// tools/src/domain/errors/invalid-transition.error.ts
+var invalidTransitionError;
+var init_invalid_transition_error = __esm({
+  "tools/src/domain/errors/invalid-transition.error.ts"() {
     init_domain_error();
-    init_result();
-    MarkdownArtifactAdapter = class {
-      constructor(basePath) {
-        this.basePath = basePath;
-      }
-      resolve(path18) {
-        const resolved = (0, import_node_path4.resolve)((0, import_node_path4.join)(this.basePath, path18));
-        const base = (0, import_node_path4.resolve)(this.basePath);
-        if (!resolved.startsWith(`${base}/`) && resolved !== base) {
-          throw new Error(`Path traversal rejected: ${path18}`);
-        }
-        return resolved;
-      }
-      async read(path18) {
-        try {
-          return Ok(await (0, import_promises.readFile)(this.resolve(path18), "utf-8"));
-        } catch {
-          return Err(createDomainError("NOT_FOUND", `File not found: ${path18}`, { path: path18 }));
-        }
-      }
-      async write(path18, content) {
-        try {
-          const fullPath = this.resolve(path18);
-          await (0, import_promises.mkdir)((0, import_node_path4.dirname)(fullPath), { recursive: true });
-          await (0, import_promises.writeFile)(fullPath, content, "utf-8");
-          return Ok(void 0);
-        } catch (err) {
-          return Err(createDomainError("VALIDATION_ERROR", `Failed to write: ${path18}`, { path: path18, error: String(err) }));
-        }
-      }
-      async exists(path18) {
-        try {
-          await (0, import_promises.access)(this.resolve(path18));
-          return true;
-        } catch {
-          return false;
-        }
-      }
-      async list(directory) {
-        try {
-          const entries = await (0, import_promises.readdir)(this.resolve(directory));
-          return Ok(entries.map((e) => (0, import_node_path4.join)(directory, e)));
-        } catch {
-          return Ok([]);
-        }
-      }
-      async mkdir(path18) {
-        try {
-          await (0, import_promises.mkdir)(this.resolve(path18), { recursive: true });
-          return Ok(void 0);
-        } catch (err) {
-          return Err(createDomainError("VALIDATION_ERROR", `Failed to mkdir: ${path18}`, { path: path18, error: String(err) }));
-        }
-      }
-    };
+    invalidTransitionError = (sliceId, from, to) => createDomainError("INVALID_TRANSITION", `Cannot transition slice "${sliceId}" from "${from}" to "${to}"`, {
+      sliceId,
+      from,
+      to
+    });
   }
 });
 
-// tools/src/application/checkpoint/save-checkpoint.ts
-var saveCheckpoint;
-var init_save_checkpoint = __esm({
-  "tools/src/application/checkpoint/save-checkpoint.ts"() {
-    init_result();
-    saveCheckpoint = async (data, deps) => {
-      const lines = [
-        `# Checkpoint \u2014 ${data.sliceId}`,
-        `- Base commit: ${data.baseCommit}`,
-        `- Current wave: ${data.currentWave}`,
-        `- Completed waves: [${data.completedWaves.join(", ")}]`,
-        `- Completed tasks: [${data.completedTasks.join(", ")}]`,
-        `- Executor log: ${data.executorLog.map((e) => `${e.agent}\u2192${e.taskRef}`).join(", ")}`,
-        "",
-        `<!-- checkpoint-json: ${JSON.stringify(data)} -->`,
-        ""
-      ];
-      const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-      const dir = `.tff/milestones/${milestoneId}/slices/${data.sliceId}`;
-      const path18 = `${dir}/CHECKPOINT.md`;
-      const mkdirResult = await deps.artifactStore.mkdir(dir);
-      if (!isOk(mkdirResult)) return mkdirResult;
-      const writeResult = await deps.artifactStore.write(path18, lines.join("\n"));
-      if (!isOk(writeResult)) return writeResult;
-      return Ok(void 0);
-    };
+// tools/src/domain/events/domain-event.ts
+var DomainEventTypeSchema, DomainEventSchema, createDomainEvent;
+var init_domain_event = __esm({
+  "tools/src/domain/events/domain-event.ts"() {
+    init_zod();
+    DomainEventTypeSchema = external_exports.enum(["SLICE_PLANNED", "SLICE_STATUS_CHANGED", "TASK_COMPLETED"]);
+    DomainEventSchema = external_exports.object({
+      id: external_exports.string(),
+      type: DomainEventTypeSchema,
+      occurredAt: external_exports.date(),
+      payload: external_exports.record(external_exports.string(), external_exports.unknown())
+    });
+    createDomainEvent = (type, payload) => ({
+      id: crypto.randomUUID(),
+      type,
+      occurredAt: /* @__PURE__ */ new Date(),
+      payload
+    });
   }
 });
 
-// tools/src/cli/commands/checkpoint-save.cmd.ts
-var checkpoint_save_cmd_exports = {};
-__export(checkpoint_save_cmd_exports, {
-  checkpointSaveCmd: () => checkpointSaveCmd
+// tools/src/domain/events/slice-status-changed.event.ts
+var sliceStatusChangedEvent;
+var init_slice_status_changed_event = __esm({
+  "tools/src/domain/events/slice-status-changed.event.ts"() {
+    init_domain_event();
+    sliceStatusChangedEvent = (sliceId, from, to) => createDomainEvent("SLICE_STATUS_CHANGED", { sliceId, from, to });
+  }
 });
-var USAGE, checkpointSaveCmd;
-var init_checkpoint_save_cmd = __esm({
-  "tools/src/cli/commands/checkpoint-save.cmd.ts"() {
-    init_save_checkpoint();
+
+// tools/src/domain/value-objects/complexity-tier.ts
+var ComplexityTierSchema, TierConfigSchema;
+var init_complexity_tier = __esm({
+  "tools/src/domain/value-objects/complexity-tier.ts"() {
+    init_zod();
+    ComplexityTierSchema = external_exports.enum(["S", "F-lite", "F-full"]);
+    TierConfigSchema = external_exports.object({
+      brainstormer: external_exports.boolean(),
+      research: external_exports.enum(["skip", "optional", "required"]),
+      freshReviewer: external_exports.literal(true),
+      tdd: external_exports.boolean()
+    });
+  }
+});
+
+// tools/src/domain/value-objects/slice-status.ts
+var SliceStatusSchema, transitions, canTransition, validTransitionsFrom;
+var init_slice_status = __esm({
+  "tools/src/domain/value-objects/slice-status.ts"() {
+    init_zod();
+    SliceStatusSchema = external_exports.enum([
+      "discussing",
+      "researching",
+      "planning",
+      "executing",
+      "verifying",
+      "reviewing",
+      "completing",
+      "closed"
+    ]);
+    transitions = {
+      discussing: ["researching"],
+      researching: ["planning"],
+      planning: ["planning", "executing"],
+      executing: ["verifying"],
+      verifying: ["reviewing", "executing"],
+      reviewing: ["completing", "executing"],
+      completing: ["closed"],
+      closed: []
+    };
+    canTransition = (from, to) => transitions[from].includes(to);
+    validTransitionsFrom = (status) => transitions[status];
+  }
+});
+
+// tools/src/domain/entities/slice.ts
+var SliceSchema, formatSliceId, transitionSlice;
+var init_slice = __esm({
+  "tools/src/domain/entities/slice.ts"() {
+    init_zod();
+    init_invalid_transition_error();
+    init_slice_status_changed_event();
     init_result();
-    init_markdown_artifact_adapter();
-    USAGE = `Usage: checkpoint:save '{"sliceId":"M01-S01","baseCommit":"abc123","currentWave":0,"completedWaves":[],"completedTasks":[],"executorLog":[]}'`;
-    checkpointSaveCmd = async (args) => {
-      const [dataJson] = args;
-      if (!dataJson) {
-        return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: USAGE } });
+    init_complexity_tier();
+    init_slice_status();
+    SliceSchema = external_exports.object({
+      id: external_exports.string().min(1),
+      milestoneId: external_exports.string().min(1),
+      number: external_exports.number().int().min(1),
+      title: external_exports.string().min(1),
+      status: SliceStatusSchema,
+      tier: ComplexityTierSchema.optional(),
+      createdAt: external_exports.date()
+    });
+    formatSliceId = (milestoneNumber, sliceNumber) => `M${milestoneNumber.toString().padStart(2, "0")}-S${sliceNumber.toString().padStart(2, "0")}`;
+    transitionSlice = (slice, to) => {
+      if (!canTransition(slice.status, to)) {
+        return Err(invalidTransitionError(slice.id, slice.status, to));
       }
-      let data;
-      try {
-        data = JSON.parse(dataJson);
-      } catch {
-        return JSON.stringify({
-          ok: false,
-          error: { code: "INVALID_ARGS", message: `Invalid JSON. ${USAGE}` }
-        });
-      }
-      if (typeof data?.sliceId !== "string") {
-        return JSON.stringify({
-          ok: false,
-          error: { code: "INVALID_ARGS", message: `Missing required field "sliceId". ${USAGE}` }
-        });
-      }
-      const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-      const result = await saveCheckpoint(data, { artifactStore });
-      if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-      return JSON.stringify({ ok: false, error: result.error });
+      const updated = { ...slice, status: to };
+      const event = sliceStatusChangedEvent(slice.id, slice.status, to);
+      return Ok({ slice: updated, events: [event] });
     };
   }
 });
@@ -15374,17 +15521,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path18) {
-      const ctrl = callVisitor(key, node, visitor, path18);
+    function visit_(key, node, visitor, path19) {
+      const ctrl = callVisitor(key, node, visitor, path19);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path18, ctrl);
-        return visit_(key, ctrl, visitor, path18);
+        replaceNode(key, path19, ctrl);
+        return visit_(key, ctrl, visitor, path19);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path18 = Object.freeze(path18.concat(node));
+          path19 = Object.freeze(path19.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = visit_(i, node.items[i], visitor, path18);
+            const ci = visit_(i, node.items[i], visitor, path19);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -15395,13 +15542,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path18 = Object.freeze(path18.concat(node));
-          const ck = visit_("key", node.key, visitor, path18);
+          path19 = Object.freeze(path19.concat(node));
+          const ck = visit_("key", node.key, visitor, path19);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path18);
+          const cv = visit_("value", node.value, visitor, path19);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -15422,17 +15569,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path18) {
-      const ctrl = await callVisitor(key, node, visitor, path18);
+    async function visitAsync_(key, node, visitor, path19) {
+      const ctrl = await callVisitor(key, node, visitor, path19);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path18, ctrl);
-        return visitAsync_(key, ctrl, visitor, path18);
+        replaceNode(key, path19, ctrl);
+        return visitAsync_(key, ctrl, visitor, path19);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path18 = Object.freeze(path18.concat(node));
+          path19 = Object.freeze(path19.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = await visitAsync_(i, node.items[i], visitor, path18);
+            const ci = await visitAsync_(i, node.items[i], visitor, path19);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -15443,13 +15590,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path18 = Object.freeze(path18.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path18);
+          path19 = Object.freeze(path19.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path19);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path18);
+          const cv = await visitAsync_("value", node.value, visitor, path19);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -15476,23 +15623,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path18) {
+    function callVisitor(key, node, visitor, path19) {
       if (typeof visitor === "function")
-        return visitor(key, node, path18);
+        return visitor(key, node, path19);
       if (identity.isMap(node))
-        return visitor.Map?.(key, node, path18);
+        return visitor.Map?.(key, node, path19);
       if (identity.isSeq(node))
-        return visitor.Seq?.(key, node, path18);
+        return visitor.Seq?.(key, node, path19);
       if (identity.isPair(node))
-        return visitor.Pair?.(key, node, path18);
+        return visitor.Pair?.(key, node, path19);
       if (identity.isScalar(node))
-        return visitor.Scalar?.(key, node, path18);
+        return visitor.Scalar?.(key, node, path19);
       if (identity.isAlias(node))
-        return visitor.Alias?.(key, node, path18);
+        return visitor.Alias?.(key, node, path19);
       return void 0;
     }
-    function replaceNode(key, path18, node) {
-      const parent = path18[path18.length - 1];
+    function replaceNode(key, path19, node) {
+      const parent = path19[path19.length - 1];
       if (identity.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity.isPair(parent)) {
@@ -16100,10 +16247,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path18, value) {
+    function collectionFromPath(schema, path19, value) {
       let v = value;
-      for (let i = path18.length - 1; i >= 0; --i) {
-        const k = path18[i];
+      for (let i = path19.length - 1; i >= 0; --i) {
+        const k = path19[i];
         if (typeof k === "number" && Number.isInteger(k) && k >= 0) {
           const a = [];
           a[k] = v;
@@ -16122,7 +16269,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path18) => path18 == null || typeof path18 === "object" && !!path18[Symbol.iterator]().next().done;
+    var isEmptyPath = (path19) => path19 == null || typeof path19 === "object" && !!path19[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -16152,11 +16299,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path18, value) {
-        if (isEmptyPath(path18))
+      addIn(path19, value) {
+        if (isEmptyPath(path19))
           this.add(value);
         else {
-          const [key, ...rest] = path18;
+          const [key, ...rest] = path19;
           const node = this.get(key, true);
           if (identity.isCollection(node))
             node.addIn(rest, value);
@@ -16170,8 +16317,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path18) {
-        const [key, ...rest] = path18;
+      deleteIn(path19) {
+        const [key, ...rest] = path19;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -16185,8 +16332,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path18, keepScalar) {
-        const [key, ...rest] = path18;
+      getIn(path19, keepScalar) {
+        const [key, ...rest] = path19;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity.isScalar(node) ? node.value : node;
@@ -16204,8 +16351,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path18) {
-        const [key, ...rest] = path18;
+      hasIn(path19) {
+        const [key, ...rest] = path19;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -16215,8 +16362,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path18, value) {
-        const [key, ...rest] = path18;
+      setIn(path19, value) {
+        const [key, ...rest] = path19;
         if (rest.length === 0) {
           this.set(key, value);
         } else {
@@ -18728,9 +18875,9 @@ var require_Document = __commonJS({
           this.contents.add(value);
       }
       /** Adds a value to the document. */
-      addIn(path18, value) {
+      addIn(path19, value) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path18, value);
+          this.contents.addIn(path19, value);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -18805,14 +18952,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path18) {
-        if (Collection.isEmptyPath(path18)) {
+      deleteIn(path19) {
+        if (Collection.isEmptyPath(path19)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path18) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path19) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -18827,10 +18974,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path18, keepScalar) {
-        if (Collection.isEmptyPath(path18))
+      getIn(path19, keepScalar) {
+        if (Collection.isEmptyPath(path19))
           return !keepScalar && identity.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity.isCollection(this.contents) ? this.contents.getIn(path18, keepScalar) : void 0;
+        return identity.isCollection(this.contents) ? this.contents.getIn(path19, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -18841,10 +18988,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path18) {
-        if (Collection.isEmptyPath(path18))
+      hasIn(path19) {
+        if (Collection.isEmptyPath(path19))
           return this.contents !== void 0;
-        return identity.isCollection(this.contents) ? this.contents.hasIn(path18) : false;
+        return identity.isCollection(this.contents) ? this.contents.hasIn(path19) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -18861,13 +19008,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path18, value) {
-        if (Collection.isEmptyPath(path18)) {
+      setIn(path19, value) {
+        if (Collection.isEmptyPath(path19)) {
           this.contents = value;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path18), value);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path19), value);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path18, value);
+          this.contents.setIn(path19, value);
         }
       }
       /**
@@ -20824,9 +20971,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path18) => {
+    visit.itemAtPath = (cst, path19) => {
       let item = cst;
-      for (const [field, index] of path18) {
+      for (const [field, index] of path19) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index];
@@ -20835,23 +20982,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path18) => {
-      const parent = visit.itemAtPath(cst, path18.slice(0, -1));
-      const field = path18[path18.length - 1][0];
+    visit.parentCollection = (cst, path19) => {
+      const parent = visit.itemAtPath(cst, path19.slice(0, -1));
+      const field = path19[path19.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path18, item, visitor) {
-      let ctrl = visitor(item, path18);
+    function _visit(path19, item, visitor) {
+      let ctrl = visitor(item, path19);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i = 0; i < token.items.length; ++i) {
-            const ci = _visit(Object.freeze(path18.concat([[field, i]])), token.items[i], visitor);
+            const ci = _visit(Object.freeze(path19.concat([[field, i]])), token.items[i], visitor);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -20862,10 +21009,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path18);
+            ctrl = ctrl(item, path19);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path18) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path19) : ctrl;
     }
     exports2.visit = visit;
   }
@@ -22651,14 +22798,14 @@ var require_polyfills = __commonJS({
       fs.fstatSync = statFixSync(fs.fstatSync);
       fs.lstatSync = statFixSync(fs.lstatSync);
       if (fs.chmod && !fs.lchmod) {
-        fs.lchmod = function(path18, mode, cb) {
+        fs.lchmod = function(path19, mode, cb) {
           if (cb) process.nextTick(cb);
         };
         fs.lchmodSync = function() {
         };
       }
       if (fs.chown && !fs.lchown) {
-        fs.lchown = function(path18, uid, gid, cb) {
+        fs.lchown = function(path19, uid, gid, cb) {
           if (cb) process.nextTick(cb);
         };
         fs.lchownSync = function() {
@@ -22725,9 +22872,9 @@ var require_polyfills = __commonJS({
         };
       })(fs.readSync);
       function patchLchmod(fs2) {
-        fs2.lchmod = function(path18, mode, callback) {
+        fs2.lchmod = function(path19, mode, callback) {
           fs2.open(
-            path18,
+            path19,
             constants.O_WRONLY | constants.O_SYMLINK,
             mode,
             function(err, fd) {
@@ -22743,8 +22890,8 @@ var require_polyfills = __commonJS({
             }
           );
         };
-        fs2.lchmodSync = function(path18, mode) {
-          var fd = fs2.openSync(path18, constants.O_WRONLY | constants.O_SYMLINK, mode);
+        fs2.lchmodSync = function(path19, mode) {
+          var fd = fs2.openSync(path19, constants.O_WRONLY | constants.O_SYMLINK, mode);
           var threw = true;
           var ret;
           try {
@@ -22765,8 +22912,8 @@ var require_polyfills = __commonJS({
       }
       function patchLutimes(fs2) {
         if (constants.hasOwnProperty("O_SYMLINK") && fs2.futimes) {
-          fs2.lutimes = function(path18, at, mt, cb) {
-            fs2.open(path18, constants.O_SYMLINK, function(er, fd) {
+          fs2.lutimes = function(path19, at, mt, cb) {
+            fs2.open(path19, constants.O_SYMLINK, function(er, fd) {
               if (er) {
                 if (cb) cb(er);
                 return;
@@ -22778,8 +22925,8 @@ var require_polyfills = __commonJS({
               });
             });
           };
-          fs2.lutimesSync = function(path18, at, mt) {
-            var fd = fs2.openSync(path18, constants.O_SYMLINK);
+          fs2.lutimesSync = function(path19, at, mt) {
+            var fd = fs2.openSync(path19, constants.O_SYMLINK);
             var ret;
             var threw = true;
             try {
@@ -22897,11 +23044,11 @@ var require_legacy_streams = __commonJS({
         ReadStream,
         WriteStream
       };
-      function ReadStream(path18, options) {
-        if (!(this instanceof ReadStream)) return new ReadStream(path18, options);
+      function ReadStream(path19, options) {
+        if (!(this instanceof ReadStream)) return new ReadStream(path19, options);
         Stream.call(this);
         var self = this;
-        this.path = path18;
+        this.path = path19;
         this.fd = null;
         this.readable = true;
         this.paused = false;
@@ -22946,10 +23093,10 @@ var require_legacy_streams = __commonJS({
           self._read();
         });
       }
-      function WriteStream(path18, options) {
-        if (!(this instanceof WriteStream)) return new WriteStream(path18, options);
+      function WriteStream(path19, options) {
+        if (!(this instanceof WriteStream)) return new WriteStream(path19, options);
         Stream.call(this);
-        this.path = path18;
+        this.path = path19;
         this.fd = null;
         this.writable = true;
         this.flags = "w";
@@ -23092,14 +23239,14 @@ var require_graceful_fs = __commonJS({
       fs2.createWriteStream = createWriteStream;
       var fs$readFile = fs2.readFile;
       fs2.readFile = readFile3;
-      function readFile3(path18, options, cb) {
+      function readFile3(path19, options, cb) {
         if (typeof options === "function")
           cb = options, options = null;
-        return go$readFile(path18, options, cb);
-        function go$readFile(path19, options2, cb2, startTime) {
-          return fs$readFile(path19, options2, function(err) {
+        return go$readFile(path19, options, cb);
+        function go$readFile(path20, options2, cb2, startTime) {
+          return fs$readFile(path20, options2, function(err) {
             if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
-              enqueue([go$readFile, [path19, options2, cb2], err, startTime || Date.now(), Date.now()]);
+              enqueue([go$readFile, [path20, options2, cb2], err, startTime || Date.now(), Date.now()]);
             else {
               if (typeof cb2 === "function")
                 cb2.apply(this, arguments);
@@ -23109,14 +23256,14 @@ var require_graceful_fs = __commonJS({
       }
       var fs$writeFile = fs2.writeFile;
       fs2.writeFile = writeFile3;
-      function writeFile3(path18, data, options, cb) {
+      function writeFile3(path19, data, options, cb) {
         if (typeof options === "function")
           cb = options, options = null;
-        return go$writeFile(path18, data, options, cb);
-        function go$writeFile(path19, data2, options2, cb2, startTime) {
-          return fs$writeFile(path19, data2, options2, function(err) {
+        return go$writeFile(path19, data, options, cb);
+        function go$writeFile(path20, data2, options2, cb2, startTime) {
+          return fs$writeFile(path20, data2, options2, function(err) {
             if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
-              enqueue([go$writeFile, [path19, data2, options2, cb2], err, startTime || Date.now(), Date.now()]);
+              enqueue([go$writeFile, [path20, data2, options2, cb2], err, startTime || Date.now(), Date.now()]);
             else {
               if (typeof cb2 === "function")
                 cb2.apply(this, arguments);
@@ -23127,14 +23274,14 @@ var require_graceful_fs = __commonJS({
       var fs$appendFile = fs2.appendFile;
       if (fs$appendFile)
         fs2.appendFile = appendFile2;
-      function appendFile2(path18, data, options, cb) {
+      function appendFile2(path19, data, options, cb) {
         if (typeof options === "function")
           cb = options, options = null;
-        return go$appendFile(path18, data, options, cb);
-        function go$appendFile(path19, data2, options2, cb2, startTime) {
-          return fs$appendFile(path19, data2, options2, function(err) {
+        return go$appendFile(path19, data, options, cb);
+        function go$appendFile(path20, data2, options2, cb2, startTime) {
+          return fs$appendFile(path20, data2, options2, function(err) {
             if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
-              enqueue([go$appendFile, [path19, data2, options2, cb2], err, startTime || Date.now(), Date.now()]);
+              enqueue([go$appendFile, [path20, data2, options2, cb2], err, startTime || Date.now(), Date.now()]);
             else {
               if (typeof cb2 === "function")
                 cb2.apply(this, arguments);
@@ -23165,31 +23312,31 @@ var require_graceful_fs = __commonJS({
       var fs$readdir = fs2.readdir;
       fs2.readdir = readdir2;
       var noReaddirOptionVersions = /^v[0-5]\./;
-      function readdir2(path18, options, cb) {
+      function readdir2(path19, options, cb) {
         if (typeof options === "function")
           cb = options, options = null;
-        var go$readdir = noReaddirOptionVersions.test(process.version) ? function go$readdir2(path19, options2, cb2, startTime) {
-          return fs$readdir(path19, fs$readdirCallback(
-            path19,
+        var go$readdir = noReaddirOptionVersions.test(process.version) ? function go$readdir2(path20, options2, cb2, startTime) {
+          return fs$readdir(path20, fs$readdirCallback(
+            path20,
             options2,
             cb2,
             startTime
           ));
-        } : function go$readdir2(path19, options2, cb2, startTime) {
-          return fs$readdir(path19, options2, fs$readdirCallback(
-            path19,
+        } : function go$readdir2(path20, options2, cb2, startTime) {
+          return fs$readdir(path20, options2, fs$readdirCallback(
+            path20,
             options2,
             cb2,
             startTime
           ));
         };
-        return go$readdir(path18, options, cb);
-        function fs$readdirCallback(path19, options2, cb2, startTime) {
+        return go$readdir(path19, options, cb);
+        function fs$readdirCallback(path20, options2, cb2, startTime) {
           return function(err, files) {
             if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
               enqueue([
                 go$readdir,
-                [path19, options2, cb2],
+                [path20, options2, cb2],
                 err,
                 startTime || Date.now(),
                 Date.now()
@@ -23260,7 +23407,7 @@ var require_graceful_fs = __commonJS({
         enumerable: true,
         configurable: true
       });
-      function ReadStream(path18, options) {
+      function ReadStream(path19, options) {
         if (this instanceof ReadStream)
           return fs$ReadStream.apply(this, arguments), this;
         else
@@ -23280,7 +23427,7 @@ var require_graceful_fs = __commonJS({
           }
         });
       }
-      function WriteStream(path18, options) {
+      function WriteStream(path19, options) {
         if (this instanceof WriteStream)
           return fs$WriteStream.apply(this, arguments), this;
         else
@@ -23298,22 +23445,22 @@ var require_graceful_fs = __commonJS({
           }
         });
       }
-      function createReadStream(path18, options) {
-        return new fs2.ReadStream(path18, options);
+      function createReadStream(path19, options) {
+        return new fs2.ReadStream(path19, options);
       }
-      function createWriteStream(path18, options) {
-        return new fs2.WriteStream(path18, options);
+      function createWriteStream(path19, options) {
+        return new fs2.WriteStream(path19, options);
       }
       var fs$open = fs2.open;
       fs2.open = open;
-      function open(path18, flags, mode, cb) {
+      function open(path19, flags, mode, cb) {
         if (typeof mode === "function")
           cb = mode, mode = null;
-        return go$open(path18, flags, mode, cb);
-        function go$open(path19, flags2, mode2, cb2, startTime) {
-          return fs$open(path19, flags2, mode2, function(err, fd) {
+        return go$open(path19, flags, mode, cb);
+        function go$open(path20, flags2, mode2, cb2, startTime) {
+          return fs$open(path20, flags2, mode2, function(err, fd) {
             if (err && (err.code === "EMFILE" || err.code === "ENFILE"))
-              enqueue([go$open, [path19, flags2, mode2, cb2], err, startTime || Date.now(), Date.now()]);
+              enqueue([go$open, [path20, flags2, mode2, cb2], err, startTime || Date.now(), Date.now()]);
             else {
               if (typeof cb2 === "function")
                 cb2.apply(this, arguments);
@@ -23842,7 +23989,7 @@ var require_mtime_precision = __commonJS({
 var require_lockfile = __commonJS({
   "node_modules/proper-lockfile/lib/lockfile.js"(exports2, module2) {
     "use strict";
-    var path18 = require("path");
+    var path19 = require("path");
     var fs = require_graceful_fs();
     var retry = require_retry2();
     var onExit = require_signal_exit();
@@ -23853,7 +24000,7 @@ var require_lockfile = __commonJS({
     }
     function resolveCanonicalPath(file2, options, callback) {
       if (!options.realpath) {
-        return callback(null, path18.resolve(file2));
+        return callback(null, path19.resolve(file2));
       }
       options.fs.realpath(file2, callback);
     }
@@ -24176,6 +24323,207 @@ var require_proper_lockfile = __commonJS({
   }
 });
 
+// tools/src/domain/entities/project.ts
+var ProjectSchema, createProject;
+var init_project = __esm({
+  "tools/src/domain/entities/project.ts"() {
+    init_zod();
+    ProjectSchema = external_exports.object({
+      id: external_exports.string().min(1),
+      name: external_exports.string().min(1),
+      vision: external_exports.string().min(1).optional(),
+      createdAt: external_exports.date()
+    });
+    createProject = (input) => {
+      const project = {
+        id: crypto.randomUUID(),
+        name: input.name,
+        vision: input.vision,
+        createdAt: /* @__PURE__ */ new Date()
+      };
+      return ProjectSchema.parse(project);
+    };
+  }
+});
+
+// tools/src/domain/value-objects/review-record.ts
+var ReviewTypeSchema, ReviewRecordSchema;
+var init_review_record = __esm({
+  "tools/src/domain/value-objects/review-record.ts"() {
+    init_zod();
+    ReviewTypeSchema = external_exports.enum(["code", "security", "spec"]);
+    ReviewRecordSchema = external_exports.object({
+      sliceId: external_exports.string().min(1),
+      type: ReviewTypeSchema,
+      reviewer: external_exports.string().min(1),
+      verdict: external_exports.enum(["approved", "changes_requested"]),
+      commitSha: external_exports.string().min(1),
+      notes: external_exports.string().optional(),
+      createdAt: external_exports.string().min(1)
+    });
+  }
+});
+
+// tools/src/domain/events/task-completed.event.ts
+var init_task_completed_event = __esm({
+  "tools/src/domain/events/task-completed.event.ts"() {
+    init_domain_event();
+  }
+});
+
+// tools/src/domain/entities/task.ts
+var TaskStatusSchema, TaskSchema;
+var init_task = __esm({
+  "tools/src/domain/entities/task.ts"() {
+    init_zod();
+    init_domain_error();
+    init_task_completed_event();
+    init_result();
+    TaskStatusSchema = external_exports.enum(["open", "in_progress", "closed"]);
+    TaskSchema = external_exports.object({
+      id: external_exports.string().min(1),
+      sliceId: external_exports.string().min(1),
+      number: external_exports.number().int().min(1),
+      title: external_exports.string().min(1),
+      description: external_exports.string().optional(),
+      status: TaskStatusSchema,
+      wave: external_exports.number().int().nonnegative().optional(),
+      claimedAt: external_exports.date().optional(),
+      claimedBy: external_exports.string().optional(),
+      closedReason: external_exports.string().optional(),
+      createdAt: external_exports.date()
+    });
+  }
+});
+
+// tools/src/domain/value-objects/dependency.ts
+var DependencyTypeSchema, DependencySchema;
+var init_dependency = __esm({
+  "tools/src/domain/value-objects/dependency.ts"() {
+    init_zod();
+    DependencyTypeSchema = external_exports.literal("blocks");
+    DependencySchema = external_exports.object({
+      fromId: external_exports.string().min(1),
+      toId: external_exports.string().min(1),
+      type: DependencyTypeSchema
+    });
+  }
+});
+
+// tools/src/domain/value-objects/workflow-session.ts
+var WorkflowSessionSchema;
+var init_workflow_session = __esm({
+  "tools/src/domain/value-objects/workflow-session.ts"() {
+    init_zod();
+    WorkflowSessionSchema = external_exports.object({
+      phase: external_exports.string().min(1),
+      activeSliceId: external_exports.string().optional(),
+      activeMilestoneId: external_exports.string().optional(),
+      pausedAt: external_exports.string().optional(),
+      contextJson: external_exports.string().optional()
+    });
+  }
+});
+
+// tools/src/domain/value-objects/state-snapshot.ts
+var STATE_SNAPSHOT_VERSION, StateSnapshotSchema;
+var init_state_snapshot = __esm({
+  "tools/src/domain/value-objects/state-snapshot.ts"() {
+    init_zod();
+    init_milestone();
+    init_project();
+    init_slice();
+    init_task();
+    init_dependency();
+    init_review_record();
+    init_workflow_session();
+    STATE_SNAPSHOT_VERSION = 1;
+    StateSnapshotSchema = external_exports.object({
+      version: external_exports.number().int().positive(),
+      exportedAt: external_exports.string().datetime(),
+      project: ProjectSchema.nullable(),
+      milestones: external_exports.array(MilestoneSchema),
+      slices: external_exports.array(SliceSchema),
+      tasks: external_exports.array(TaskSchema),
+      dependencies: external_exports.array(DependencySchema).default([]),
+      workflowSession: WorkflowSessionSchema.nullable().default(null),
+      reviews: external_exports.array(ReviewRecordSchema).default([])
+    });
+  }
+});
+
+// tools/src/infrastructure/adapters/export/sqlite-state-exporter.ts
+var sqlite_state_exporter_exports = {};
+__export(sqlite_state_exporter_exports, {
+  SQLiteStateExporter: () => SQLiteStateExporter
+});
+var SQLiteStateExporter;
+var init_sqlite_state_exporter = __esm({
+  "tools/src/infrastructure/adapters/export/sqlite-state-exporter.ts"() {
+    init_domain_error();
+    init_result();
+    init_state_snapshot();
+    SQLiteStateExporter = class {
+      constructor(adapter) {
+        this.adapter = adapter;
+      }
+      export() {
+        try {
+          const projectResult = this.adapter.getProject();
+          if (!projectResult.ok) return projectResult;
+          const project = projectResult.data;
+          const milestonesResult = this.adapter.listMilestones();
+          if (!milestonesResult.ok) return milestonesResult;
+          const milestones = milestonesResult.data;
+          const slicesResult = this.adapter.listSlices();
+          if (!slicesResult.ok) return slicesResult;
+          const slices = slicesResult.data;
+          const tasks = [];
+          for (const slice of slices) {
+            const tasksResult = this.adapter.listTasks(slice.id);
+            if (!tasksResult.ok) return tasksResult;
+            tasks.push(...tasksResult.data);
+          }
+          const dependencyMap = /* @__PURE__ */ new Map();
+          for (const task of tasks) {
+            const depsResult = this.adapter.getDependencies(task.id);
+            if (!depsResult.ok) return depsResult;
+            for (const dep of depsResult.data) {
+              const key = `${dep.fromId}\u2192${dep.toId}`;
+              dependencyMap.set(key, dep);
+            }
+          }
+          const dependencies = Array.from(dependencyMap.values());
+          const sessionResult = this.adapter.getSession();
+          if (!sessionResult.ok) return sessionResult;
+          const session = sessionResult.data;
+          const reviews = [];
+          for (const slice of slices) {
+            const reviewsResult = this.adapter.listReviews(slice.id);
+            if (!reviewsResult.ok) return reviewsResult;
+            reviews.push(...reviewsResult.data);
+          }
+          const snapshot = {
+            version: STATE_SNAPSHOT_VERSION,
+            exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
+            project,
+            milestones,
+            slices,
+            tasks,
+            dependencies,
+            workflowSession: session,
+            reviews
+          };
+          return Ok(snapshot);
+        } catch (error48) {
+          const message = error48 instanceof Error ? error48.message : String(error48);
+          return Err(createDomainError("WRITE_FAILURE", `Export failed: ${message}`));
+        }
+      }
+    };
+  }
+});
+
 // tools/src/application/state-branch/merge-branch.ts
 init_result();
 var mergeBranchUseCase = async (input, deps) => {
@@ -24238,15 +24586,15 @@ var GitCliAdapter = class {
     this.invalidateCache();
     return Ok(void 0);
   }
-  async createWorktree(path18, branch, startPoint) {
-    const args = ["worktree", "add", path18, "-b", branch];
+  async createWorktree(path19, branch, startPoint) {
+    const args = ["worktree", "add", path19, "-b", branch];
     if (startPoint) args.push(startPoint);
     const r = await runGit(args, this.repoRoot);
     if (!r.ok) return r;
     return Ok(void 0);
   }
-  async deleteWorktree(path18) {
-    const r = await runGit(["worktree", "remove", path18, "--force"], this.repoRoot);
+  async deleteWorktree(path19) {
+    const r = await runGit(["worktree", "remove", path19, "--force"], this.repoRoot);
     if (!r.ok) return r;
     return Ok(void 0);
   }
@@ -24300,19 +24648,19 @@ var GitCliAdapter = class {
     if (r.ok) this.setCache(cacheKey, r.data);
     return r;
   }
-  async createOrphanWorktree(path18, branchName) {
-    const r = await runGit(["worktree", "add", "--detach", path18], this.repoRoot);
+  async createOrphanWorktree(path19, branchName) {
+    const r = await runGit(["worktree", "add", "--detach", path19], this.repoRoot);
     if (!r.ok) return r;
-    const orphanR = await runGit(["checkout", "--orphan", branchName], path18);
+    const orphanR = await runGit(["checkout", "--orphan", branchName], path19);
     if (!orphanR.ok) {
-      await runGit(["worktree", "remove", path18, "--force"], this.repoRoot);
+      await runGit(["worktree", "remove", path19, "--force"], this.repoRoot);
       return orphanR;
     }
-    await runGit(["rm", "-rf", "--cached", "."], path18);
+    await runGit(["rm", "-rf", "--cached", "."], path19);
     return Ok(void 0);
   }
-  async checkoutWorktree(path18, existingBranch) {
-    const r = await runGit(["worktree", "add", path18, existingBranch], this.repoRoot);
+  async checkoutWorktree(path19, existingBranch) {
+    const r = await runGit(["worktree", "add", path19, existingBranch], this.repoRoot);
     if (!r.ok) return r;
     return Ok(void 0);
   }
@@ -24383,28 +24731,695 @@ var GitCliAdapter = class {
 
 // tools/src/infrastructure/adapters/git/git-state-branch.adapter.ts
 var import_node_crypto = require("crypto");
-var import_node_fs3 = require("fs");
+var import_node_fs2 = require("fs");
 var import_node_os = require("os");
-var import_node_path3 = __toESM(require("path"), 1);
-
-// tools/src/application/state-branch/merge-state-dbs.ts
-var import_better_sqlite3 = __toESM(require_lib(), 1);
+var import_node_path2 = __toESM(require("path"), 1);
 
 // tools/src/domain/errors/sync-failed.error.ts
 init_domain_error();
 var syncFailedError = (reason, context) => createDomainError("SYNC_FAILED", `State branch sync failed: ${reason}`, context);
 
-// tools/src/application/state-branch/merge-state-dbs.ts
+// tools/src/application/state-branch/merge-state-snapshots.ts
+init_result();
+function mergeStateSnapshots(parent, child, sliceId) {
+  try {
+    const childSlice = child.slices.find((s) => s.id === sliceId);
+    if (!childSlice) {
+      return Err(
+        syncFailedError(`Child snapshot does not contain slice "${sliceId}"`, {
+          sliceId,
+          availableSlices: child.slices.map((s) => s.id)
+        })
+      );
+    }
+    const childTaskIds = new Set(child.tasks.filter((t) => t.sliceId === sliceId).map((t) => t.id));
+    const mergedSlices = parent.slices.filter((s) => s.id !== sliceId);
+    mergedSlices.push(childSlice);
+    const mergedTasks = parent.tasks.filter((t) => t.sliceId !== sliceId);
+    const childTasksForSlice = child.tasks.filter((t) => t.sliceId === sliceId);
+    mergedTasks.push(...childTasksForSlice);
+    const mergedDependencies = parent.dependencies.filter((d) => !childTaskIds.has(d.fromId));
+    const childDepsForTasks = child.dependencies.filter((d) => childTaskIds.has(d.fromId));
+    mergedDependencies.push(...childDepsForTasks);
+    const mergedSnapshot = {
+      ...parent,
+      exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      slices: mergedSlices,
+      tasks: mergedTasks,
+      dependencies: mergedDependencies
+    };
+    return Ok(mergedSnapshot);
+  } catch (e) {
+    return Err(syncFailedError(`Snapshot merge failed: ${e instanceof Error ? e.message : String(e)}`, { sliceId }));
+  }
+}
+
+// tools/src/domain/errors/state-branch-not-found.error.ts
+init_domain_error();
+var stateBranchNotFoundError = (codeBranch) => createDomainError("STATE_BRANCH_NOT_FOUND", `No state branch found for code branch "${codeBranch}"`, { codeBranch });
+
+// tools/src/infrastructure/adapters/git/git-state-branch.adapter.ts
+init_result();
+
+// tools/src/infrastructure/adapters/git/copy-tff-to-worktree.ts
+var import_node_fs = require("fs");
+var import_node_path = __toESM(require("path"), 1);
+function copyTffToWorktree(tffDir, worktreePath) {
+  if (!(0, import_node_fs.existsSync)(tffDir)) return;
+  const destTffDir = import_node_path.default.join(worktreePath, ".tff");
+  (0, import_node_fs.mkdirSync)(destTffDir, { recursive: true });
+  for (const entry of (0, import_node_fs.readdirSync)(tffDir)) {
+    if (entry === "worktrees" || entry === "branch-meta.json" || entry === "state.db") continue;
+    const src = import_node_path.default.join(tffDir, entry);
+    const dest = import_node_path.default.join(destTffDir, entry);
+    if ((0, import_node_fs.statSync)(src).isDirectory()) {
+      (0, import_node_fs.cpSync)(src, dest, { recursive: true });
+    } else {
+      (0, import_node_fs.cpSync)(src, dest);
+    }
+  }
+}
+
+// tools/src/infrastructure/adapters/git/git-state-branch.adapter.ts
+var STATE_PREFIX = "tff-state/";
+var GitStateBranchAdapter = class {
+  constructor(gitOps, repoRoot, exporter, importer) {
+    this.gitOps = gitOps;
+    this.repoRoot = repoRoot;
+    this.exporter = exporter;
+    this.importer = importer;
+  }
+  resolvedDefaultBranch;
+  async getDefaultBranch() {
+    if (this.resolvedDefaultBranch) return this.resolvedDefaultBranch;
+    const r = await this.gitOps.detectDefaultBranch();
+    this.resolvedDefaultBranch = isOk(r) ? r.data : "main";
+    return this.resolvedDefaultBranch;
+  }
+  stateBranch(codeBranch) {
+    return `${STATE_PREFIX}${codeBranch}`;
+  }
+  tmpWorktreePath() {
+    return import_node_path2.default.join((0, import_node_os.tmpdir)(), `tff-state-wt-${(0, import_node_crypto.randomUUID)().slice(0, 8)}`);
+  }
+  writeBranchMeta(worktreePath, meta3) {
+    (0, import_node_fs2.writeFileSync)(import_node_path2.default.join(worktreePath, "branch-meta.json"), JSON.stringify(meta3, null, 2));
+  }
+  writeGitignore(worktreePath) {
+    (0, import_node_fs2.writeFileSync)(import_node_path2.default.join(worktreePath, ".gitignore"), ".DS_Store\nThumbs.db\n*.swp\n");
+  }
+  async createRoot() {
+    const defaultBranch = await this.getDefaultBranch();
+    const rootBranch = this.stateBranch(defaultBranch);
+    const existsR = await this.gitOps.branchExists(rootBranch);
+    if (!isOk(existsR)) return existsR;
+    if (existsR.data) {
+      return Err(syncFailedError(`Root state branch "${rootBranch}" already exists`));
+    }
+    const tmpPath = this.tmpWorktreePath();
+    (0, import_node_fs2.mkdirSync)(tmpPath, { recursive: true });
+    const createR = await this.gitOps.createOrphanWorktree(tmpPath, rootBranch);
+    if (!isOk(createR)) return createR;
+    try {
+      const meta3 = {
+        stateId: (0, import_node_crypto.randomUUID)(),
+        codeBranch: defaultBranch,
+        parentStateBranch: null,
+        createdAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      this.writeBranchMeta(tmpPath, meta3);
+      this.writeGitignore(tmpPath);
+      const commitR = await this.gitOps.commit(
+        `chore: init state branch ${rootBranch}`,
+        ["branch-meta.json", ".gitignore"],
+        tmpPath
+      );
+      if (!isOk(commitR)) return Err(syncFailedError(`Initial commit failed: ${commitR.error.message}`));
+      await this.gitOps.pushBranch(rootBranch).catch(() => void 0);
+      return Ok(void 0);
+    } finally {
+      await this.gitOps.deleteWorktree(tmpPath);
+    }
+  }
+  async exists(codeBranch) {
+    return this.gitOps.branchExists(this.stateBranch(codeBranch));
+  }
+  async fork(codeBranch, parentStateBranch) {
+    const parentExistsR = await this.gitOps.branchExists(parentStateBranch);
+    if (!isOk(parentExistsR)) return parentExistsR;
+    if (!parentExistsR.data) {
+      return Err(stateBranchNotFoundError(parentStateBranch));
+    }
+    const childBranch = this.stateBranch(codeBranch);
+    const createR = await this.gitOps.createBranch(childBranch, parentStateBranch);
+    if (!isOk(createR)) return createR;
+    const tmpPath = this.tmpWorktreePath();
+    (0, import_node_fs2.mkdirSync)(tmpPath, { recursive: true });
+    const wtR = await this.gitOps.checkoutWorktree(tmpPath, childBranch);
+    if (!isOk(wtR)) return wtR;
+    try {
+      const meta3 = {
+        stateId: (0, import_node_crypto.randomUUID)(),
+        codeBranch,
+        parentStateBranch,
+        createdAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      this.writeBranchMeta(tmpPath, meta3);
+      const commitR = await this.gitOps.commit(
+        `chore: fork state branch for ${codeBranch}`,
+        ["branch-meta.json"],
+        tmpPath
+      );
+      if (!isOk(commitR)) return Err(syncFailedError(`Fork commit failed: ${commitR.error.message}`));
+      await this.gitOps.pushBranch(childBranch).catch(() => void 0);
+      return Ok(void 0);
+    } finally {
+      await this.gitOps.deleteWorktree(tmpPath);
+    }
+  }
+  async sync(codeBranch, message) {
+    const stateBr = this.stateBranch(codeBranch);
+    const existsR = await this.gitOps.branchExists(stateBr);
+    if (!isOk(existsR)) return existsR;
+    if (!existsR.data) {
+      return Err(stateBranchNotFoundError(codeBranch));
+    }
+    await this.gitOps.pruneWorktrees();
+    const tmpPath = this.tmpWorktreePath();
+    (0, import_node_fs2.mkdirSync)(tmpPath, { recursive: true });
+    const wtR = await this.gitOps.checkoutWorktree(tmpPath, stateBr);
+    if (!isOk(wtR)) return wtR;
+    try {
+      const tffDir = import_node_path2.default.join(this.repoRoot, ".tff");
+      if (this.exporter) {
+        const exportResult = this.exporter.export();
+        if (!isOk(exportResult)) return exportResult;
+        const snapshotPath = import_node_path2.default.join(tmpPath, ".tff", "state-snapshot.json");
+        (0, import_node_fs2.mkdirSync)(import_node_path2.default.dirname(snapshotPath), { recursive: true });
+        (0, import_node_fs2.writeFileSync)(snapshotPath, JSON.stringify(exportResult.data, null, 2));
+      }
+      copyTffToWorktree(tffDir, tmpPath);
+      const commitR = await this.gitOps.commit(message, ["-A"], tmpPath);
+      if (!isOk(commitR)) {
+        if (commitR.error.message.includes("nothing to commit")) return Ok(void 0);
+        return Err(syncFailedError(`Sync commit failed: ${commitR.error.message}`));
+      }
+      await this.gitOps.pushBranch(stateBr).catch(() => void 0);
+      return Ok(void 0);
+    } finally {
+      await this.gitOps.deleteWorktree(tmpPath);
+    }
+  }
+  async restore(codeBranch, targetDir) {
+    const stateBr = this.stateBranch(codeBranch);
+    const existsR = await this.gitOps.branchExists(stateBr);
+    if (!isOk(existsR)) return existsR;
+    if (!existsR.data) return Ok(null);
+    const filesR = await this.gitOps.lsTree(stateBr);
+    if (!isOk(filesR)) return filesR;
+    const hasJsonSnapshot = filesR.data.includes(".tff/state-snapshot.json");
+    if (hasJsonSnapshot && this.importer) {
+      const snapshotR = await this.gitOps.extractFile(stateBr, ".tff/state-snapshot.json");
+      if (isOk(snapshotR)) {
+        try {
+          const snapshot = this.parseSnapshotWithDates(snapshotR.data.toString("utf8"));
+          const importR = this.importer.import(snapshot);
+          if (isOk(importR)) {
+            let filesRestored2 = 1;
+            const resolvedTargetDir2 = import_node_path2.default.resolve(targetDir);
+            for (const filePath of filesR.data) {
+              if (!filePath.startsWith(".tff/")) continue;
+              if (filePath === ".tff/state-snapshot.json") continue;
+              const destPath = import_node_path2.default.join(targetDir, filePath);
+              const resolved = import_node_path2.default.resolve(destPath);
+              if (!resolved.startsWith(resolvedTargetDir2 + import_node_path2.default.sep) && resolved !== resolvedTargetDir2) {
+                continue;
+              }
+              const bufR = await this.gitOps.extractFile(stateBr, filePath);
+              if (!isOk(bufR)) continue;
+              (0, import_node_fs2.mkdirSync)(import_node_path2.default.dirname(destPath), { recursive: true });
+              (0, import_node_fs2.writeFileSync)(destPath, bufR.data);
+              filesRestored2++;
+            }
+            return Ok({ filesRestored: filesRestored2, schemaVersion: snapshot.version ?? 1, source: "json" });
+          }
+        } catch {
+        }
+      }
+    }
+    let filesRestored = 0;
+    const resolvedTargetDir = import_node_path2.default.resolve(targetDir);
+    for (const filePath of filesR.data) {
+      if (!filePath.startsWith(".tff/")) continue;
+      const destPath = import_node_path2.default.join(targetDir, filePath);
+      const resolved = import_node_path2.default.resolve(destPath);
+      if (!resolved.startsWith(resolvedTargetDir + import_node_path2.default.sep) && resolved !== resolvedTargetDir) {
+        continue;
+      }
+      const bufR = await this.gitOps.extractFile(stateBr, filePath);
+      if (!isOk(bufR)) continue;
+      (0, import_node_fs2.mkdirSync)(import_node_path2.default.dirname(destPath), { recursive: true });
+      (0, import_node_fs2.writeFileSync)(destPath, bufR.data);
+      filesRestored++;
+    }
+    return Ok({ filesRestored, schemaVersion: 0, source: "files" });
+  }
+  async merge(childCodeBranch, parentCodeBranch, sliceId) {
+    const childStateBr = this.stateBranch(childCodeBranch);
+    const parentStateBr = this.stateBranch(parentCodeBranch);
+    const childExistsR = await this.gitOps.branchExists(childStateBr);
+    if (!isOk(childExistsR)) return childExistsR;
+    if (!childExistsR.data) {
+      return Err(stateBranchNotFoundError(childCodeBranch));
+    }
+    const parentSnapshotR = await this.gitOps.extractFile(parentStateBr, ".tff/state-snapshot.json");
+    if (!isOk(parentSnapshotR)) {
+      return Err(syncFailedError("Failed to extract parent state snapshot", { parentStateBr }));
+    }
+    let parentSnapshot;
+    try {
+      parentSnapshot = this.parseSnapshotWithDates(parentSnapshotR.data.toString("utf8"));
+    } catch (e) {
+      return Err(syncFailedError("Failed to parse parent state snapshot", {
+        error: e instanceof Error ? e.message : String(e)
+      }));
+    }
+    const childSnapshotR = await this.gitOps.extractFile(childStateBr, ".tff/state-snapshot.json");
+    if (!isOk(childSnapshotR)) {
+      return Err(syncFailedError("Failed to extract child state snapshot", { childStateBr }));
+    }
+    let childSnapshot;
+    try {
+      childSnapshot = this.parseSnapshotWithDates(childSnapshotR.data.toString("utf8"));
+    } catch (e) {
+      return Err(syncFailedError("Failed to parse child state snapshot", {
+        error: e instanceof Error ? e.message : String(e)
+      }));
+    }
+    const mergeR = mergeStateSnapshots(parentSnapshot, childSnapshot, sliceId);
+    if (!isOk(mergeR)) return mergeR;
+    const mergedSnapshot = mergeR.data;
+    const childTaskIds = new Set(childSnapshot.tasks.filter((t) => t.sliceId === sliceId).map((t) => t.id));
+    const entitiesMerged = 1 + childTaskIds.size;
+    const tmpPath = this.tmpWorktreePath();
+    (0, import_node_fs2.mkdirSync)(tmpPath, { recursive: true });
+    const wtR = await this.gitOps.checkoutWorktree(tmpPath, parentStateBr);
+    if (!isOk(wtR)) return wtR;
+    try {
+      const destSnapshotPath = import_node_path2.default.join(tmpPath, ".tff", "state-snapshot.json");
+      (0, import_node_fs2.mkdirSync)(import_node_path2.default.dirname(destSnapshotPath), { recursive: true });
+      (0, import_node_fs2.writeFileSync)(destSnapshotPath, JSON.stringify(mergedSnapshot, null, 2));
+      let artifactsCopied = 0;
+      const childFilesR = await this.gitOps.lsTree(childStateBr);
+      if (isOk(childFilesR)) {
+        const milestoneId = sliceId.split("-")[0];
+        const sliceArtifactPrefix = `.tff/milestones/${milestoneId}/slices/${sliceId}/`;
+        const resolvedTmpPath = import_node_path2.default.resolve(tmpPath);
+        for (const filePath of childFilesR.data) {
+          if (!filePath.startsWith(sliceArtifactPrefix)) continue;
+          const destPath = import_node_path2.default.join(tmpPath, filePath);
+          const resolved = import_node_path2.default.resolve(destPath);
+          if (!resolved.startsWith(resolvedTmpPath + import_node_path2.default.sep) && resolved !== resolvedTmpPath) {
+            continue;
+          }
+          const bufR = await this.gitOps.extractFile(childStateBr, filePath);
+          if (!isOk(bufR)) continue;
+          (0, import_node_fs2.mkdirSync)(import_node_path2.default.dirname(destPath), { recursive: true });
+          (0, import_node_fs2.writeFileSync)(destPath, bufR.data);
+          artifactsCopied++;
+        }
+      }
+      const commitR = await this.gitOps.commit(
+        `chore: merge state from ${childCodeBranch} (slice: ${sliceId})`,
+        ["-A"],
+        tmpPath
+      );
+      if (!isOk(commitR) && !commitR.error.message.includes("nothing to commit")) {
+        return Err(syncFailedError(`Merge commit failed: ${commitR.error.message}`));
+      }
+      return Ok({ entitiesMerged, artifactsCopied });
+    } finally {
+      await this.gitOps.deleteWorktree(tmpPath);
+    }
+  }
+  /**
+   * Parse a JSON state snapshot and convert ISO date strings back to Date objects.
+   * Mirrors the date conversion logic in restore() for consistency.
+   */
+  parseSnapshotWithDates(jsonString) {
+    const raw = JSON.parse(jsonString);
+    if (raw.project?.createdAt) raw.project.createdAt = new Date(raw.project.createdAt);
+    if (raw.milestones) {
+      raw.milestones = raw.milestones.map((m) => ({
+        ...m,
+        createdAt: new Date(m.createdAt),
+        updatedAt: m.updatedAt ? new Date(m.updatedAt) : void 0
+      }));
+    }
+    if (raw.slices) {
+      raw.slices = raw.slices.map((s) => ({
+        ...s,
+        createdAt: new Date(s.createdAt),
+        updatedAt: s.updatedAt ? new Date(s.updatedAt) : void 0
+      }));
+    }
+    if (raw.tasks) {
+      raw.tasks = raw.tasks.map((t) => ({
+        ...t,
+        createdAt: new Date(t.createdAt),
+        updatedAt: t.updatedAt ? new Date(t.updatedAt) : void 0,
+        claimedAt: t.claimedAt ? new Date(t.claimedAt) : void 0
+      }));
+    }
+    if (raw.dependencies) {
+      raw.dependencies = raw.dependencies.map((d) => ({
+        ...d,
+        createdAt: d.createdAt ? new Date(d.createdAt) : void 0
+      }));
+    }
+    if (raw.workflowSession?.pausedAt) {
+      raw.workflowSession.pausedAt = new Date(raw.workflowSession.pausedAt);
+    }
+    if (raw.reviews) {
+      raw.reviews = raw.reviews.map((r) => ({
+        ...r,
+        createdAt: new Date(r.createdAt)
+      }));
+    }
+    return raw;
+  }
+  async deleteBranch(codeBranch) {
+    return this.gitOps.deleteBranch(this.stateBranch(codeBranch));
+  }
+};
+
+// tools/src/cli/commands/branch-merge.cmd.ts
+var branchMergeCmd = async (args) => {
+  const [childCodeBranch, parentCodeBranch, sliceId] = args;
+  if (!childCodeBranch || !parentCodeBranch || !sliceId)
+    return JSON.stringify({
+      ok: false,
+      error: { code: "INVALID_ARGS", message: "Usage: branch:merge <child> <parent> <slice-id>" }
+    });
+  const gitOps = new GitCliAdapter(process.cwd());
+  const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
+  const result = await mergeBranchUseCase({ childCodeBranch, parentCodeBranch, sliceId }, { stateBranch });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/application/checkpoint/load-checkpoint.ts
+init_domain_error();
+init_result();
+var loadCheckpoint = async (sliceId, deps) => {
+  const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
+  const path19 = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
+  const contentResult = await deps.artifactStore.read(path19);
+  if (!isOk(contentResult))
+    return Err(createDomainError("NOT_FOUND", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
+  const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);
+  if (!match)
+    return Err(createDomainError("VALIDATION_ERROR", `Checkpoint file for "${sliceId}" is corrupted`, { sliceId }));
+  const data = JSON.parse(match[1]);
+  return Ok(data);
+};
+
+// tools/src/cli/commands/checkpoint-load.cmd.ts
+init_result();
+init_markdown_artifact_adapter();
+var checkpointLoadCmd = async (args) => {
+  const [sliceId] = args;
+  if (!sliceId) {
+    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: checkpoint:load <slice-id>" } });
+  }
+  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+  const result = await loadCheckpoint(sliceId, { artifactStore });
+  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+  return JSON.stringify({ ok: false, error: result.error });
+};
+
+// tools/src/cli/index.ts
+init_checkpoint_save_cmd();
+
+// tools/src/application/claims/check-stale-claims.ts
+init_result();
+var DEFAULT_TTL_MINUTES = 30;
+var checkStaleClaims = async (input, deps) => {
+  const ttl = input.ttlMinutes ?? DEFAULT_TTL_MINUTES;
+  const result = deps.taskStore.listStaleClaims(ttl);
+  if (!result.ok) return result;
+  return Ok({ staleClaims: result.data });
+};
+
+// tools/src/cli/commands/claim-check-stale.cmd.ts
+init_result();
+
+// tools/src/cli/with-branch-guard.ts
+var import_node_path8 = __toESM(require("path"), 1);
+
+// tools/src/application/state-branch/restore-branch.ts
+var restoreBranchUseCase = async (input, deps) => deps.stateBranch.restore(input.codeBranch, input.targetDir);
+
+// tools/src/domain/errors/branch-mismatch.error.ts
+var BranchMismatchError = class extends Error {
+  constructor(expectedBranch, currentBranch, stampPath = ".tff/branch-meta.json") {
+    super(
+      `Branch mismatch: ${stampPath} shows state for "${expectedBranch}" but HEAD is "${currentBranch}". Run /tff:repair to reconcile or switch to the correct branch.`
+    );
+    this.expectedBranch = expectedBranch;
+    this.currentBranch = currentBranch;
+    this.stampPath = stampPath;
+    this.name = "BranchMismatchError";
+    this.repairHint = `/tff:repair (or git checkout ${expectedBranch})`;
+  }
+  repairHint;
+};
+
+// tools/src/cli/with-branch-guard.ts
+init_result();
+
+// tools/src/domain/value-objects/branch-meta.ts
+init_zod();
+var BranchMetaSchema = external_exports.object({
+  stateId: external_exports.string().uuid(),
+  codeBranch: external_exports.string().min(1),
+  parentStateBranch: external_exports.string().min(1).nullable(),
+  createdAt: external_exports.string().datetime(),
+  restoredAt: external_exports.string().datetime().optional()
+});
+
+// tools/src/infrastructure/adapters/sqlite/create-state-stores.ts
+var import_node_child_process2 = require("child_process");
+var import_node_fs5 = require("fs");
+var import_node_path6 = __toESM(require("path"), 1);
+
+// tools/src/infrastructure/adapters/journal/jsonl-journal.adapter.ts
+var import_node_fs3 = require("fs");
+var import_node_path4 = require("path");
+init_domain_error();
+init_result();
+
+// tools/src/domain/value-objects/journal-entry.ts
+init_zod();
+var JournalEntryBaseSchema = external_exports.object({
+  seq: external_exports.number().int().min(0),
+  sliceId: external_exports.string().min(1),
+  timestamp: external_exports.string().datetime(),
+  correlationId: external_exports.string().min(1).optional()
+});
+var TaskStartedEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("task-started"),
+  taskId: external_exports.string().min(1),
+  waveIndex: external_exports.number().int().min(0),
+  agentIdentity: external_exports.string().min(1)
+});
+var TaskCompletedEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("task-completed"),
+  taskId: external_exports.string().min(1),
+  waveIndex: external_exports.number().int().min(0),
+  durationMs: external_exports.number().int().min(0),
+  commitHash: external_exports.string().optional()
+});
+var TaskFailedEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("task-failed"),
+  taskId: external_exports.string().min(1),
+  waveIndex: external_exports.number().int().min(0),
+  errorCode: external_exports.string(),
+  errorMessage: external_exports.string(),
+  retryable: external_exports.boolean()
+});
+var FileWrittenEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("file-written"),
+  taskId: external_exports.string().min(1),
+  filePath: external_exports.string().min(1),
+  operation: external_exports.enum(["created", "modified", "deleted"])
+});
+var CheckpointSavedEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("checkpoint-saved"),
+  waveIndex: external_exports.number().int().min(0),
+  completedTaskCount: external_exports.number().int().min(0)
+});
+var PhaseChangedEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("phase-changed"),
+  from: external_exports.string(),
+  to: external_exports.string()
+});
+var ArtifactWrittenEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("artifact-written"),
+  artifactPath: external_exports.string().min(1),
+  artifactType: external_exports.enum(["spec", "plan", "research", "checkpoint"])
+});
+var GuardrailViolationItemSchema = external_exports.object({
+  ruleId: external_exports.string(),
+  message: external_exports.string(),
+  severity: external_exports.string()
+});
+var GuardrailViolationEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("guardrail-violation"),
+  taskId: external_exports.string().min(1),
+  waveIndex: external_exports.number().int().min(0),
+  violations: external_exports.array(GuardrailViolationItemSchema),
+  action: external_exports.enum(["blocked", "warned"])
+});
+var OverseerInterventionEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("overseer-intervention"),
+  taskId: external_exports.string().min(1),
+  strategy: external_exports.string().min(1),
+  reason: external_exports.string().min(1),
+  action: external_exports.enum(["aborted", "retrying", "escalated"]),
+  retryCount: external_exports.number().int().min(0)
+});
+var ExecutionLifecycleEntrySchema = JournalEntryBaseSchema.extend({
+  type: external_exports.literal("execution-lifecycle"),
+  sessionId: external_exports.string().min(1),
+  action: external_exports.enum(["started", "paused", "resumed", "completed", "failed"]),
+  resumeCount: external_exports.number().int().min(0),
+  failureReason: external_exports.string().optional(),
+  wavesCompleted: external_exports.number().int().min(0).optional(),
+  totalWaves: external_exports.number().int().min(0).optional()
+});
+var JournalEntrySchema = external_exports.discriminatedUnion("type", [
+  TaskStartedEntrySchema,
+  TaskCompletedEntrySchema,
+  TaskFailedEntrySchema,
+  FileWrittenEntrySchema,
+  CheckpointSavedEntrySchema,
+  PhaseChangedEntrySchema,
+  ArtifactWrittenEntrySchema,
+  GuardrailViolationEntrySchema,
+  OverseerInterventionEntrySchema,
+  ExecutionLifecycleEntrySchema
+]);
+
+// tools/src/infrastructure/adapters/journal/jsonl-journal.adapter.ts
+function isNodeError(error48) {
+  if (!(error48 instanceof Error)) return false;
+  if (!("code" in error48)) return false;
+  const descriptor = Object.getOwnPropertyDescriptor(error48, "code");
+  return descriptor !== void 0 && typeof descriptor.value === "string";
+}
+var JsonlJournalAdapter = class {
+  constructor(basePath) {
+    this.basePath = basePath;
+  }
+  filePath(sliceId) {
+    return (0, import_node_path4.join)(this.basePath, `${sliceId}.jsonl`);
+  }
+  append(sliceId, entry) {
+    const countResult = this.count(sliceId);
+    if (!countResult.ok) return countResult;
+    const seq = countResult.data;
+    try {
+      const fullEntry = JournalEntrySchema.parse({ ...entry, seq });
+      (0, import_node_fs3.mkdirSync)(this.basePath, { recursive: true });
+      (0, import_node_fs3.appendFileSync)(this.filePath(sliceId), `${JSON.stringify(fullEntry)}
+`, "utf-8");
+      return Ok(seq);
+    } catch (error48) {
+      if (error48 instanceof Error && error48.name === "ZodError") {
+        return Err(createDomainError("JOURNAL_WRITE_FAILED", `Invalid journal entry: ${error48.message}`));
+      }
+      return Err(createDomainError("JOURNAL_WRITE_FAILED", error48 instanceof Error ? error48.message : String(error48)));
+    }
+  }
+  readAll(sliceId) {
+    let content;
+    try {
+      content = (0, import_node_fs3.readFileSync)(this.filePath(sliceId), "utf-8");
+    } catch (error48) {
+      if (isNodeError(error48) && error48.code === "ENOENT") return Ok([]);
+      return Err(createDomainError("JOURNAL_READ_FAILED", error48 instanceof Error ? error48.message : String(error48)));
+    }
+    const lines = content.split("\n").filter((l) => l.trim());
+    const entries = [];
+    for (let i = 0; i < lines.length; i++) {
+      try {
+        const raw = JSON.parse(lines[i]);
+        entries.push(JournalEntrySchema.parse(raw));
+      } catch {
+      }
+    }
+    return Ok(entries);
+  }
+  readSince(sliceId, afterSeq) {
+    const result = this.readAll(sliceId);
+    if (!result.ok) return result;
+    return Ok(result.data.filter((e) => e.seq > afterSeq));
+  }
+  count(sliceId) {
+    const result = this.readAll(sliceId);
+    if (!result.ok) return result;
+    return Ok(result.data.length);
+  }
+  reset() {
+    try {
+      const files = (0, import_node_fs3.readdirSync)(this.basePath);
+      for (const file2 of files) {
+        if (file2.endsWith(".jsonl")) (0, import_node_fs3.unlinkSync)((0, import_node_path4.join)(this.basePath, file2));
+      }
+    } catch {
+    }
+  }
+};
+
+// tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
+var import_better_sqlite3 = __toESM(require_lib(), 1);
+init_milestone();
+init_slice();
+
+// tools/src/domain/errors/already-claimed.error.ts
+init_domain_error();
+var alreadyClaimedError = (taskId) => createDomainError("ALREADY_CLAIMED", `Task "${taskId}" is already claimed`, { taskId });
+
+// tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
+init_domain_error();
+
+// tools/src/domain/errors/has-open-children.error.ts
+init_domain_error();
+var hasOpenChildrenError = (parentId, openCount) => createDomainError("HAS_OPEN_CHILDREN", `Cannot close "${parentId}" \u2014 ${openCount} children are still open`, {
+  parentId,
+  openCount
+});
+
+// tools/src/domain/errors/version-mismatch.error.ts
+init_domain_error();
+var versionMismatchError = (dbVersion, codeVersion) => createDomainError(
+  "VERSION_MISMATCH",
+  `Database schema version ${dbVersion} is newer than code version ${codeVersion}. Upgrade tff-tools.`,
+  { dbVersion, codeVersion }
+);
+
+// tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
 init_result();
 
 // tools/src/infrastructure/adapters/sqlite/load-native-binding.ts
-var import_node_fs = require("fs");
-var import_node_path = __toESM(require("path"), 1);
+var import_node_fs4 = require("fs");
+var import_node_path5 = __toESM(require("path"), 1);
 function getNativeBindingPath(dirname2) {
   const dir = dirname2 ?? __dirname;
   const bindingFile = `better_sqlite3.${process.platform}-${process.arch}.node`;
-  const bindingPath = import_node_path.default.join(dir, bindingFile);
-  if ((0, import_node_fs.existsSync)(bindingPath)) return bindingPath;
+  const bindingPath = import_node_path5.default.join(dir, bindingFile);
+  if ((0, import_node_fs4.existsSync)(bindingPath)) return bindingPath;
   return void 0;
 }
 
@@ -24536,702 +25551,19 @@ var runMigrations = (db) => {
   }
 };
 
-// tools/src/application/state-branch/merge-state-dbs.ts
-function mergeStateDbs(parentDbPath, childDbPath, sliceId) {
-  try {
-    const nativeBinding = getNativeBindingPath();
-    const dbOpts = nativeBinding ? { nativeBinding } : void 0;
-    const parentDb = new import_better_sqlite3.default(parentDbPath, dbOpts);
-    runMigrations(parentDb);
-    const childDb = new import_better_sqlite3.default(childDbPath, dbOpts);
-    runMigrations(childDb);
-    childDb.close();
-    const safePath = childDbPath.replace(/'/g, "''");
-    parentDb.exec(`ATTACH DATABASE '${safePath}' AS child`);
-    let entitiesMerged = 0;
-    const sliceR = parentDb.prepare(
-      `INSERT OR REPLACE INTO slice (id, milestone_id, number, title, status, tier, created_at, updated_at)
-         SELECT id, milestone_id, number, title, status, tier, created_at, updated_at
-         FROM child.slice WHERE id = ?`
-    ).run(sliceId);
-    entitiesMerged += sliceR.changes;
-    const taskR = parentDb.prepare(
-      `INSERT OR REPLACE INTO task (id, slice_id, number, title, description, status, wave, claimed_at, claimed_by, closed_reason, created_at, updated_at)
-         SELECT id, slice_id, number, title, description, status, wave, claimed_at, claimed_by, closed_reason, created_at, updated_at
-         FROM child.task WHERE slice_id = ?`
-    ).run(sliceId);
-    entitiesMerged += taskR.changes;
-    parentDb.prepare(`DELETE FROM dependency WHERE from_id IN (SELECT id FROM child.task WHERE slice_id = ?)`).run(sliceId);
-    const depR = parentDb.prepare(
-      `INSERT INTO dependency (from_id, to_id, type)
-         SELECT from_id, to_id, type FROM child.dependency
-         WHERE from_id IN (SELECT id FROM child.task WHERE slice_id = ?)`
-    ).run(sliceId);
-    entitiesMerged += depR.changes;
-    parentDb.exec("DETACH DATABASE child");
-    parentDb.close();
-    return Ok({ entitiesMerged, artifactsCopied: 0 });
-  } catch (e) {
-    return Err(syncFailedError(`SQL merge failed: ${e instanceof Error ? e.message : String(e)}`));
-  }
-}
-
-// tools/src/domain/errors/state-branch-not-found.error.ts
-init_domain_error();
-var stateBranchNotFoundError = (codeBranch) => createDomainError("STATE_BRANCH_NOT_FOUND", `No state branch found for code branch "${codeBranch}"`, { codeBranch });
-
-// tools/src/infrastructure/adapters/git/git-state-branch.adapter.ts
-init_result();
-
-// tools/src/infrastructure/adapters/git/copy-tff-to-worktree.ts
-var import_node_fs2 = require("fs");
-var import_node_path2 = __toESM(require("path"), 1);
-function copyTffToWorktree(tffDir, worktreePath) {
-  if (!(0, import_node_fs2.existsSync)(tffDir)) return;
-  const destTffDir = import_node_path2.default.join(worktreePath, ".tff");
-  (0, import_node_fs2.mkdirSync)(destTffDir, { recursive: true });
-  for (const entry of (0, import_node_fs2.readdirSync)(tffDir)) {
-    if (entry === "worktrees" || entry === "branch-meta.json") continue;
-    const src = import_node_path2.default.join(tffDir, entry);
-    const dest = import_node_path2.default.join(destTffDir, entry);
-    if ((0, import_node_fs2.statSync)(src).isDirectory()) {
-      (0, import_node_fs2.cpSync)(src, dest, { recursive: true });
-    } else {
-      (0, import_node_fs2.cpSync)(src, dest);
-    }
-  }
-}
-
-// tools/src/infrastructure/adapters/git/git-state-branch.adapter.ts
-var STATE_PREFIX = "tff-state/";
-var GitStateBranchAdapter = class {
-  constructor(gitOps, repoRoot) {
-    this.gitOps = gitOps;
-    this.repoRoot = repoRoot;
-  }
-  resolvedDefaultBranch;
-  async getDefaultBranch() {
-    if (this.resolvedDefaultBranch) return this.resolvedDefaultBranch;
-    const r = await this.gitOps.detectDefaultBranch();
-    this.resolvedDefaultBranch = isOk(r) ? r.data : "main";
-    return this.resolvedDefaultBranch;
-  }
-  stateBranch(codeBranch) {
-    return `${STATE_PREFIX}${codeBranch}`;
-  }
-  tmpWorktreePath() {
-    return import_node_path3.default.join((0, import_node_os.tmpdir)(), `tff-state-wt-${(0, import_node_crypto.randomUUID)().slice(0, 8)}`);
-  }
-  writeBranchMeta(worktreePath, meta3) {
-    (0, import_node_fs3.writeFileSync)(import_node_path3.default.join(worktreePath, "branch-meta.json"), JSON.stringify(meta3, null, 2));
-  }
-  writeGitignore(worktreePath) {
-    (0, import_node_fs3.writeFileSync)(import_node_path3.default.join(worktreePath, ".gitignore"), ".DS_Store\nThumbs.db\n*.swp\n");
-  }
-  async createRoot() {
-    const defaultBranch = await this.getDefaultBranch();
-    const rootBranch = this.stateBranch(defaultBranch);
-    const existsR = await this.gitOps.branchExists(rootBranch);
-    if (!isOk(existsR)) return existsR;
-    if (existsR.data) {
-      return Err(syncFailedError(`Root state branch "${rootBranch}" already exists`));
-    }
-    const tmpPath = this.tmpWorktreePath();
-    (0, import_node_fs3.mkdirSync)(tmpPath, { recursive: true });
-    const createR = await this.gitOps.createOrphanWorktree(tmpPath, rootBranch);
-    if (!isOk(createR)) return createR;
-    try {
-      const meta3 = {
-        stateId: (0, import_node_crypto.randomUUID)(),
-        codeBranch: defaultBranch,
-        parentStateBranch: null,
-        createdAt: (/* @__PURE__ */ new Date()).toISOString()
-      };
-      this.writeBranchMeta(tmpPath, meta3);
-      this.writeGitignore(tmpPath);
-      const commitR = await this.gitOps.commit(
-        `chore: init state branch ${rootBranch}`,
-        ["branch-meta.json", ".gitignore"],
-        tmpPath
-      );
-      if (!isOk(commitR)) return Err(syncFailedError(`Initial commit failed: ${commitR.error.message}`));
-      await this.gitOps.pushBranch(rootBranch).catch(() => void 0);
-      return Ok(void 0);
-    } finally {
-      await this.gitOps.deleteWorktree(tmpPath);
-    }
-  }
-  async exists(codeBranch) {
-    return this.gitOps.branchExists(this.stateBranch(codeBranch));
-  }
-  async fork(codeBranch, parentStateBranch) {
-    const parentExistsR = await this.gitOps.branchExists(parentStateBranch);
-    if (!isOk(parentExistsR)) return parentExistsR;
-    if (!parentExistsR.data) {
-      return Err(stateBranchNotFoundError(parentStateBranch));
-    }
-    const childBranch = this.stateBranch(codeBranch);
-    const createR = await this.gitOps.createBranch(childBranch, parentStateBranch);
-    if (!isOk(createR)) return createR;
-    const tmpPath = this.tmpWorktreePath();
-    (0, import_node_fs3.mkdirSync)(tmpPath, { recursive: true });
-    const wtR = await this.gitOps.checkoutWorktree(tmpPath, childBranch);
-    if (!isOk(wtR)) return wtR;
-    try {
-      const meta3 = {
-        stateId: (0, import_node_crypto.randomUUID)(),
-        codeBranch,
-        parentStateBranch,
-        createdAt: (/* @__PURE__ */ new Date()).toISOString()
-      };
-      this.writeBranchMeta(tmpPath, meta3);
-      const commitR = await this.gitOps.commit(
-        `chore: fork state branch for ${codeBranch}`,
-        ["branch-meta.json"],
-        tmpPath
-      );
-      if (!isOk(commitR)) return Err(syncFailedError(`Fork commit failed: ${commitR.error.message}`));
-      await this.gitOps.pushBranch(childBranch).catch(() => void 0);
-      return Ok(void 0);
-    } finally {
-      await this.gitOps.deleteWorktree(tmpPath);
-    }
-  }
-  async sync(codeBranch, message) {
-    const stateBr = this.stateBranch(codeBranch);
-    const existsR = await this.gitOps.branchExists(stateBr);
-    if (!isOk(existsR)) return existsR;
-    if (!existsR.data) {
-      return Err(stateBranchNotFoundError(codeBranch));
-    }
-    await this.gitOps.pruneWorktrees();
-    const tmpPath = this.tmpWorktreePath();
-    (0, import_node_fs3.mkdirSync)(tmpPath, { recursive: true });
-    const wtR = await this.gitOps.checkoutWorktree(tmpPath, stateBr);
-    if (!isOk(wtR)) return wtR;
-    try {
-      const tffDir = import_node_path3.default.join(this.repoRoot, ".tff");
-      copyTffToWorktree(tffDir, tmpPath);
-      const commitR = await this.gitOps.commit(message, ["-A"], tmpPath);
-      if (!isOk(commitR)) {
-        if (commitR.error.message.includes("nothing to commit")) return Ok(void 0);
-        return Err(syncFailedError(`Sync commit failed: ${commitR.error.message}`));
-      }
-      await this.gitOps.pushBranch(stateBr).catch(() => void 0);
-      return Ok(void 0);
-    } finally {
-      await this.gitOps.deleteWorktree(tmpPath);
-    }
-  }
-  async restore(codeBranch, targetDir) {
-    const stateBr = this.stateBranch(codeBranch);
-    const existsR = await this.gitOps.branchExists(stateBr);
-    if (!isOk(existsR)) return existsR;
-    if (!existsR.data) return Ok(null);
-    const filesR = await this.gitOps.lsTree(stateBr);
-    if (!isOk(filesR)) return filesR;
-    let filesRestored = 0;
-    const resolvedTargetDir = import_node_path3.default.resolve(targetDir);
-    for (const filePath of filesR.data) {
-      if (!filePath.startsWith(".tff/")) continue;
-      const destPath = import_node_path3.default.join(targetDir, filePath);
-      const resolved = import_node_path3.default.resolve(destPath);
-      if (!resolved.startsWith(resolvedTargetDir + import_node_path3.default.sep) && resolved !== resolvedTargetDir) {
-        continue;
-      }
-      const bufR = await this.gitOps.extractFile(stateBr, filePath);
-      if (!isOk(bufR)) continue;
-      (0, import_node_fs3.mkdirSync)(import_node_path3.default.dirname(destPath), { recursive: true });
-      (0, import_node_fs3.writeFileSync)(destPath, bufR.data);
-      filesRestored++;
-    }
-    return Ok({ filesRestored, schemaVersion: 0 });
-  }
-  async merge(childCodeBranch, parentCodeBranch, sliceId) {
-    const childStateBr = this.stateBranch(childCodeBranch);
-    const parentStateBr = this.stateBranch(parentCodeBranch);
-    const childExistsR = await this.gitOps.branchExists(childStateBr);
-    if (!isOk(childExistsR)) return childExistsR;
-    if (!childExistsR.data) {
-      return Err(stateBranchNotFoundError(childCodeBranch));
-    }
-    const tmpMergeDir = import_node_path3.default.join((0, import_node_os.tmpdir)(), `tff-merge-${(0, import_node_crypto.randomUUID)().slice(0, 8)}`);
-    (0, import_node_fs3.mkdirSync)(tmpMergeDir, { recursive: true });
-    const parentDbPath = import_node_path3.default.join(tmpMergeDir, "parent.db");
-    const childDbPath = import_node_path3.default.join(tmpMergeDir, "child.db");
-    const parentDbR = await this.gitOps.extractFile(parentStateBr, ".tff/state.db");
-    if (!isOk(parentDbR)) return Err(syncFailedError("Failed to extract parent DB"));
-    (0, import_node_fs3.writeFileSync)(parentDbPath, parentDbR.data);
-    const childDbR = await this.gitOps.extractFile(childStateBr, ".tff/state.db");
-    if (!isOk(childDbR)) return Err(syncFailedError("Failed to extract child DB"));
-    (0, import_node_fs3.writeFileSync)(childDbPath, childDbR.data);
-    const sqlMergeR = mergeStateDbs(parentDbPath, childDbPath, sliceId);
-    if (!sqlMergeR.ok) return sqlMergeR;
-    const tmpPath = this.tmpWorktreePath();
-    (0, import_node_fs3.mkdirSync)(tmpPath, { recursive: true });
-    const wtR = await this.gitOps.checkoutWorktree(tmpPath, parentStateBr);
-    if (!isOk(wtR)) return wtR;
-    try {
-      const destDb = import_node_path3.default.join(tmpPath, ".tff", "state.db");
-      (0, import_node_fs3.mkdirSync)(import_node_path3.default.dirname(destDb), { recursive: true });
-      (0, import_node_fs3.cpSync)(parentDbPath, destDb);
-      let artifactsCopied = 0;
-      const childFilesR = await this.gitOps.lsTree(childStateBr);
-      if (isOk(childFilesR)) {
-        const milestoneId = sliceId.split("-")[0];
-        const sliceArtifactPrefix = `.tff/milestones/${milestoneId}/slices/${sliceId}/`;
-        const resolvedTmpPath = import_node_path3.default.resolve(tmpPath);
-        for (const filePath of childFilesR.data) {
-          if (!filePath.startsWith(sliceArtifactPrefix)) continue;
-          const destPath = import_node_path3.default.join(tmpPath, filePath);
-          const resolved = import_node_path3.default.resolve(destPath);
-          if (!resolved.startsWith(resolvedTmpPath + import_node_path3.default.sep) && resolved !== resolvedTmpPath) {
-            continue;
-          }
-          const bufR = await this.gitOps.extractFile(childStateBr, filePath);
-          if (!isOk(bufR)) continue;
-          (0, import_node_fs3.mkdirSync)(import_node_path3.default.dirname(destPath), { recursive: true });
-          (0, import_node_fs3.writeFileSync)(destPath, bufR.data);
-          artifactsCopied++;
-        }
-      }
-      const commitR = await this.gitOps.commit(
-        `chore: merge state from ${childCodeBranch} (slice: ${sliceId})`,
-        ["-A"],
-        tmpPath
-      );
-      if (!isOk(commitR) && !commitR.error.message.includes("nothing to commit")) {
-        return Err(syncFailedError(`Merge commit failed: ${commitR.error.message}`));
-      }
-      return Ok({ entitiesMerged: sqlMergeR.data.entitiesMerged, artifactsCopied });
-    } finally {
-      await this.gitOps.deleteWorktree(tmpPath);
-      try {
-        (0, import_node_fs3.rmSync)(tmpMergeDir, { recursive: true, force: true });
-      } catch {
-      }
-    }
-  }
-  async deleteBranch(codeBranch) {
-    return this.gitOps.deleteBranch(this.stateBranch(codeBranch));
-  }
-};
-
-// tools/src/cli/commands/branch-merge.cmd.ts
-var branchMergeCmd = async (args) => {
-  const [childCodeBranch, parentCodeBranch, sliceId] = args;
-  if (!childCodeBranch || !parentCodeBranch || !sliceId)
-    return JSON.stringify({
-      ok: false,
-      error: { code: "INVALID_ARGS", message: "Usage: branch:merge <child> <parent> <slice-id>" }
-    });
-  const gitOps = new GitCliAdapter(process.cwd());
-  const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
-  const result = await mergeBranchUseCase({ childCodeBranch, parentCodeBranch, sliceId }, { stateBranch });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
-};
-
-// tools/src/application/checkpoint/load-checkpoint.ts
-init_domain_error();
-init_result();
-var loadCheckpoint = async (sliceId, deps) => {
-  const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-  const path18 = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
-  const contentResult = await deps.artifactStore.read(path18);
-  if (!isOk(contentResult))
-    return Err(createDomainError("NOT_FOUND", `No checkpoint found for slice "${sliceId}"`, { sliceId }));
-  const match = contentResult.data.match(/<!-- checkpoint-json: (.+) -->/);
-  if (!match)
-    return Err(createDomainError("VALIDATION_ERROR", `Checkpoint file for "${sliceId}" is corrupted`, { sliceId }));
-  const data = JSON.parse(match[1]);
-  return Ok(data);
-};
-
-// tools/src/cli/commands/checkpoint-load.cmd.ts
-init_result();
-init_markdown_artifact_adapter();
-var checkpointLoadCmd = async (args) => {
-  const [sliceId] = args;
-  if (!sliceId) {
-    return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Usage: checkpoint:load <slice-id>" } });
-  }
-  const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-  const result = await loadCheckpoint(sliceId, { artifactStore });
-  if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-  return JSON.stringify({ ok: false, error: result.error });
-};
-
-// tools/src/cli/index.ts
-init_checkpoint_save_cmd();
-
-// tools/src/application/claims/check-stale-claims.ts
-init_result();
-var DEFAULT_TTL_MINUTES = 30;
-var checkStaleClaims = async (input, deps) => {
-  const ttl = input.ttlMinutes ?? DEFAULT_TTL_MINUTES;
-  const result = deps.taskStore.listStaleClaims(ttl);
-  if (!result.ok) return result;
-  return Ok({ staleClaims: result.data });
-};
-
-// tools/src/cli/commands/claim-check-stale.cmd.ts
-init_result();
-
-// tools/src/cli/with-branch-guard.ts
-var import_node_path8 = __toESM(require("path"), 1);
-
-// tools/src/application/state-branch/restore-branch.ts
-var restoreBranchUseCase = async (input, deps) => deps.stateBranch.restore(input.codeBranch, input.targetDir);
-
-// tools/src/domain/errors/branch-mismatch.error.ts
-var BranchMismatchError = class extends Error {
-  constructor(expectedBranch, currentBranch, stampPath = ".tff/branch-meta.json") {
-    super(
-      `Branch mismatch: ${stampPath} shows state for "${expectedBranch}" but HEAD is "${currentBranch}". Run /tff:repair to reconcile or switch to the correct branch.`
-    );
-    this.expectedBranch = expectedBranch;
-    this.currentBranch = currentBranch;
-    this.stampPath = stampPath;
-    this.name = "BranchMismatchError";
-    this.repairHint = `/tff:repair (or git checkout ${expectedBranch})`;
-  }
-  repairHint;
-};
-
-// tools/src/cli/with-branch-guard.ts
-init_result();
-
-// tools/src/domain/value-objects/branch-meta.ts
-init_zod();
-var BranchMetaSchema = external_exports.object({
-  stateId: external_exports.string().uuid(),
-  codeBranch: external_exports.string().min(1),
-  parentStateBranch: external_exports.string().min(1).nullable(),
-  createdAt: external_exports.string().datetime(),
-  restoredAt: external_exports.string().datetime().optional()
-});
-
-// tools/src/infrastructure/adapters/sqlite/create-state-stores.ts
-var import_node_child_process2 = require("child_process");
-var import_node_fs5 = require("fs");
-var import_node_path6 = __toESM(require("path"), 1);
-
-// tools/src/infrastructure/adapters/journal/jsonl-journal.adapter.ts
-var import_node_fs4 = require("fs");
-var import_node_path5 = require("path");
-init_domain_error();
-init_result();
-
-// tools/src/domain/value-objects/journal-entry.ts
-init_zod();
-var JournalEntryBaseSchema = external_exports.object({
-  seq: external_exports.number().int().min(0),
-  sliceId: external_exports.string().min(1),
-  timestamp: external_exports.string().datetime(),
-  correlationId: external_exports.string().min(1).optional()
-});
-var TaskStartedEntrySchema = JournalEntryBaseSchema.extend({
-  type: external_exports.literal("task-started"),
-  taskId: external_exports.string().min(1),
-  waveIndex: external_exports.number().int().min(0),
-  agentIdentity: external_exports.string().min(1)
-});
-var TaskCompletedEntrySchema = JournalEntryBaseSchema.extend({
-  type: external_exports.literal("task-completed"),
-  taskId: external_exports.string().min(1),
-  waveIndex: external_exports.number().int().min(0),
-  durationMs: external_exports.number().int().min(0),
-  commitHash: external_exports.string().optional()
-});
-var TaskFailedEntrySchema = JournalEntryBaseSchema.extend({
-  type: external_exports.literal("task-failed"),
-  taskId: external_exports.string().min(1),
-  waveIndex: external_exports.number().int().min(0),
-  errorCode: external_exports.string(),
-  errorMessage: external_exports.string(),
-  retryable: external_exports.boolean()
-});
-var FileWrittenEntrySchema = JournalEntryBaseSchema.extend({
-  type: external_exports.literal("file-written"),
-  taskId: external_exports.string().min(1),
-  filePath: external_exports.string().min(1),
-  operation: external_exports.enum(["created", "modified", "deleted"])
-});
-var CheckpointSavedEntrySchema = JournalEntryBaseSchema.extend({
-  type: external_exports.literal("checkpoint-saved"),
-  waveIndex: external_exports.number().int().min(0),
-  completedTaskCount: external_exports.number().int().min(0)
-});
-var PhaseChangedEntrySchema = JournalEntryBaseSchema.extend({
-  type: external_exports.literal("phase-changed"),
-  from: external_exports.string(),
-  to: external_exports.string()
-});
-var ArtifactWrittenEntrySchema = JournalEntryBaseSchema.extend({
-  type: external_exports.literal("artifact-written"),
-  artifactPath: external_exports.string().min(1),
-  artifactType: external_exports.enum(["spec", "plan", "research", "checkpoint"])
-});
-var GuardrailViolationItemSchema = external_exports.object({
-  ruleId: external_exports.string(),
-  message: external_exports.string(),
-  severity: external_exports.string()
-});
-var GuardrailViolationEntrySchema = JournalEntryBaseSchema.extend({
-  type: external_exports.literal("guardrail-violation"),
-  taskId: external_exports.string().min(1),
-  waveIndex: external_exports.number().int().min(0),
-  violations: external_exports.array(GuardrailViolationItemSchema),
-  action: external_exports.enum(["blocked", "warned"])
-});
-var OverseerInterventionEntrySchema = JournalEntryBaseSchema.extend({
-  type: external_exports.literal("overseer-intervention"),
-  taskId: external_exports.string().min(1),
-  strategy: external_exports.string().min(1),
-  reason: external_exports.string().min(1),
-  action: external_exports.enum(["aborted", "retrying", "escalated"]),
-  retryCount: external_exports.number().int().min(0)
-});
-var ExecutionLifecycleEntrySchema = JournalEntryBaseSchema.extend({
-  type: external_exports.literal("execution-lifecycle"),
-  sessionId: external_exports.string().min(1),
-  action: external_exports.enum(["started", "paused", "resumed", "completed", "failed"]),
-  resumeCount: external_exports.number().int().min(0),
-  failureReason: external_exports.string().optional(),
-  wavesCompleted: external_exports.number().int().min(0).optional(),
-  totalWaves: external_exports.number().int().min(0).optional()
-});
-var JournalEntrySchema = external_exports.discriminatedUnion("type", [
-  TaskStartedEntrySchema,
-  TaskCompletedEntrySchema,
-  TaskFailedEntrySchema,
-  FileWrittenEntrySchema,
-  CheckpointSavedEntrySchema,
-  PhaseChangedEntrySchema,
-  ArtifactWrittenEntrySchema,
-  GuardrailViolationEntrySchema,
-  OverseerInterventionEntrySchema,
-  ExecutionLifecycleEntrySchema
-]);
-
-// tools/src/infrastructure/adapters/journal/jsonl-journal.adapter.ts
-function isNodeError(error48) {
-  if (!(error48 instanceof Error)) return false;
-  if (!("code" in error48)) return false;
-  const descriptor = Object.getOwnPropertyDescriptor(error48, "code");
-  return descriptor !== void 0 && typeof descriptor.value === "string";
-}
-var JsonlJournalAdapter = class {
-  constructor(basePath) {
-    this.basePath = basePath;
-  }
-  filePath(sliceId) {
-    return (0, import_node_path5.join)(this.basePath, `${sliceId}.jsonl`);
-  }
-  append(sliceId, entry) {
-    const countResult = this.count(sliceId);
-    if (!countResult.ok) return countResult;
-    const seq = countResult.data;
-    try {
-      const fullEntry = JournalEntrySchema.parse({ ...entry, seq });
-      (0, import_node_fs4.mkdirSync)(this.basePath, { recursive: true });
-      (0, import_node_fs4.appendFileSync)(this.filePath(sliceId), `${JSON.stringify(fullEntry)}
-`, "utf-8");
-      return Ok(seq);
-    } catch (error48) {
-      if (error48 instanceof Error && error48.name === "ZodError") {
-        return Err(createDomainError("JOURNAL_WRITE_FAILED", `Invalid journal entry: ${error48.message}`));
-      }
-      return Err(createDomainError("JOURNAL_WRITE_FAILED", error48 instanceof Error ? error48.message : String(error48)));
-    }
-  }
-  readAll(sliceId) {
-    let content;
-    try {
-      content = (0, import_node_fs4.readFileSync)(this.filePath(sliceId), "utf-8");
-    } catch (error48) {
-      if (isNodeError(error48) && error48.code === "ENOENT") return Ok([]);
-      return Err(createDomainError("JOURNAL_READ_FAILED", error48 instanceof Error ? error48.message : String(error48)));
-    }
-    const lines = content.split("\n").filter((l) => l.trim());
-    const entries = [];
-    for (let i = 0; i < lines.length; i++) {
-      try {
-        const raw = JSON.parse(lines[i]);
-        entries.push(JournalEntrySchema.parse(raw));
-      } catch {
-      }
-    }
-    return Ok(entries);
-  }
-  readSince(sliceId, afterSeq) {
-    const result = this.readAll(sliceId);
-    if (!result.ok) return result;
-    return Ok(result.data.filter((e) => e.seq > afterSeq));
-  }
-  count(sliceId) {
-    const result = this.readAll(sliceId);
-    if (!result.ok) return result;
-    return Ok(result.data.length);
-  }
-  reset() {
-    try {
-      const files = (0, import_node_fs4.readdirSync)(this.basePath);
-      for (const file2 of files) {
-        if (file2.endsWith(".jsonl")) (0, import_node_fs4.unlinkSync)((0, import_node_path5.join)(this.basePath, file2));
-      }
-    } catch {
-    }
-  }
-};
-
 // tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
-var import_better_sqlite32 = __toESM(require_lib(), 1);
-
-// tools/src/domain/entities/milestone.ts
-init_zod();
-
-// tools/src/domain/value-objects/milestone-status.ts
-init_zod();
-var MilestoneStatusSchema = external_exports.enum(["open", "in_progress", "closed"]);
-
-// tools/src/domain/entities/milestone.ts
-var MilestoneSchema = external_exports.object({
-  id: external_exports.string().min(1),
-  projectId: external_exports.string().min(1),
-  name: external_exports.string().min(1),
-  number: external_exports.number().int().min(1),
-  status: MilestoneStatusSchema,
-  closeReason: external_exports.string().optional(),
-  createdAt: external_exports.date()
-});
-var formatMilestoneNumber = (n) => `M${n.toString().padStart(2, "0")}`;
-
-// tools/src/domain/entities/slice.ts
-init_zod();
-
-// tools/src/domain/errors/invalid-transition.error.ts
-init_domain_error();
-var invalidTransitionError = (sliceId, from, to) => createDomainError("INVALID_TRANSITION", `Cannot transition slice "${sliceId}" from "${from}" to "${to}"`, {
-  sliceId,
-  from,
-  to
-});
-
-// tools/src/domain/events/domain-event.ts
-init_zod();
-var DomainEventTypeSchema = external_exports.enum(["SLICE_PLANNED", "SLICE_STATUS_CHANGED", "TASK_COMPLETED"]);
-var DomainEventSchema = external_exports.object({
-  id: external_exports.string(),
-  type: DomainEventTypeSchema,
-  occurredAt: external_exports.date(),
-  payload: external_exports.record(external_exports.string(), external_exports.unknown())
-});
-var createDomainEvent = (type, payload) => ({
-  id: crypto.randomUUID(),
-  type,
-  occurredAt: /* @__PURE__ */ new Date(),
-  payload
-});
-
-// tools/src/domain/events/slice-status-changed.event.ts
-var sliceStatusChangedEvent = (sliceId, from, to) => createDomainEvent("SLICE_STATUS_CHANGED", { sliceId, from, to });
-
-// tools/src/domain/entities/slice.ts
-init_result();
-
-// tools/src/domain/value-objects/complexity-tier.ts
-init_zod();
-var ComplexityTierSchema = external_exports.enum(["S", "F-lite", "F-full"]);
-var TierConfigSchema = external_exports.object({
-  brainstormer: external_exports.boolean(),
-  research: external_exports.enum(["skip", "optional", "required"]),
-  freshReviewer: external_exports.literal(true),
-  tdd: external_exports.boolean()
-});
-
-// tools/src/domain/value-objects/slice-status.ts
-init_zod();
-var SliceStatusSchema = external_exports.enum([
-  "discussing",
-  "researching",
-  "planning",
-  "executing",
-  "verifying",
-  "reviewing",
-  "completing",
-  "closed"
-]);
-var transitions = {
-  discussing: ["researching"],
-  researching: ["planning"],
-  planning: ["planning", "executing"],
-  executing: ["verifying"],
-  verifying: ["reviewing", "executing"],
-  reviewing: ["completing", "executing"],
-  completing: ["closed"],
-  closed: []
-};
-var canTransition = (from, to) => transitions[from].includes(to);
-var validTransitionsFrom = (status) => transitions[status];
-
-// tools/src/domain/entities/slice.ts
-var SliceSchema = external_exports.object({
-  id: external_exports.string().min(1),
-  milestoneId: external_exports.string().min(1),
-  number: external_exports.number().int().min(1),
-  title: external_exports.string().min(1),
-  status: SliceStatusSchema,
-  tier: ComplexityTierSchema.optional(),
-  createdAt: external_exports.date()
-});
-var formatSliceId = (milestoneNumber, sliceNumber) => `M${milestoneNumber.toString().padStart(2, "0")}-S${sliceNumber.toString().padStart(2, "0")}`;
-var transitionSlice = (slice, to) => {
-  if (!canTransition(slice.status, to)) {
-    return Err(invalidTransitionError(slice.id, slice.status, to));
-  }
-  const updated = { ...slice, status: to };
-  const event = sliceStatusChangedEvent(slice.id, slice.status, to);
-  return Ok({ slice: updated, events: [event] });
-};
-
-// tools/src/domain/errors/already-claimed.error.ts
-init_domain_error();
-var alreadyClaimedError = (taskId) => createDomainError("ALREADY_CLAIMED", `Task "${taskId}" is already claimed`, { taskId });
-
-// tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
-init_domain_error();
-
-// tools/src/domain/errors/has-open-children.error.ts
-init_domain_error();
-var hasOpenChildrenError = (parentId, openCount) => createDomainError("HAS_OPEN_CHILDREN", `Cannot close "${parentId}" \u2014 ${openCount} children are still open`, {
-  parentId,
-  openCount
-});
-
-// tools/src/domain/errors/version-mismatch.error.ts
-init_domain_error();
-var versionMismatchError = (dbVersion, codeVersion) => createDomainError(
-  "VERSION_MISMATCH",
-  `Database schema version ${dbVersion} is newer than code version ${codeVersion}. Upgrade tff-tools.`,
-  { dbVersion, codeVersion }
-);
-
-// tools/src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts
-init_result();
 var SQLiteStateAdapter = class _SQLiteStateAdapter {
   constructor(db) {
     this.db = db;
   }
   static create(dbPath) {
     const nativeBinding = getNativeBindingPath();
-    const db = new import_better_sqlite32.default(dbPath, nativeBinding ? { nativeBinding } : void 0);
+    const db = new import_better_sqlite3.default(dbPath, nativeBinding ? { nativeBinding } : void 0);
     return new _SQLiteStateAdapter(db);
   }
   static createInMemory() {
     const nativeBinding = getNativeBindingPath();
-    const db = new import_better_sqlite32.default(":memory:", nativeBinding ? { nativeBinding } : void 0);
+    const db = new import_better_sqlite3.default(":memory:", nativeBinding ? { nativeBinding } : void 0);
     return new _SQLiteStateAdapter(db);
   }
   // DatabaseInit
@@ -26173,6 +26505,108 @@ var import_node_fs9 = require("fs");
 var import_node_path11 = __toESM(require("path"), 1);
 init_result();
 
+// tools/src/infrastructure/adapters/export/sqlite-state-importer.ts
+init_domain_error();
+init_result();
+var SQLiteStateImporter = class {
+  constructor(adapter) {
+    this.adapter = adapter;
+  }
+  import(snapshot) {
+    try {
+      this.adapter.init();
+      const db = this.adapter.db;
+      db.pragma("foreign_keys = OFF");
+      try {
+        this.clearTable(db, "review");
+        this.clearTable(db, "dependency");
+        this.clearTable(db, "workflow_session");
+        this.clearTable(db, "task");
+        this.clearTable(db, "slice");
+        this.clearTable(db, "milestone");
+        this.clearTable(db, "project");
+        if (snapshot.project) {
+          const p = snapshot.project;
+          db.prepare(
+            `INSERT INTO project (id, name, vision, created_at, updated_at)
+             VALUES ('singleton', ?, ?, ?, datetime('now'))`
+          ).run(p.name, p.vision ?? null, p.createdAt.toISOString());
+        }
+        for (const m of snapshot.milestones) {
+          db.prepare(
+            `INSERT INTO milestone (id, project_id, number, name, status, close_reason, created_at, updated_at)
+             VALUES (?, 'singleton', ?, ?, ?, ?, ?, datetime('now'))`
+          ).run(m.id, m.number, m.name, m.status, m.closeReason ?? null, m.createdAt.toISOString());
+        }
+        for (const s of snapshot.slices) {
+          db.prepare(
+            `INSERT INTO slice (id, milestone_id, number, title, status, tier, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+          ).run(s.id, s.milestoneId, s.number, s.title, s.status, s.tier ?? null, s.createdAt.toISOString());
+        }
+        for (const t of snapshot.tasks) {
+          db.prepare(
+            `INSERT INTO task (id, slice_id, number, title, description, status, wave,
+                              claimed_at, claimed_by, closed_reason, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+          ).run(
+            t.id,
+            t.sliceId,
+            t.number,
+            t.title,
+            t.description ?? null,
+            t.status,
+            t.wave ?? null,
+            t.claimedAt?.toISOString() ?? null,
+            t.claimedBy ?? null,
+            t.closedReason ?? null,
+            t.createdAt.toISOString()
+          );
+        }
+        for (const d of snapshot.dependencies) {
+          db.prepare(`INSERT OR REPLACE INTO dependency (from_id, to_id, type) VALUES (?, ?, ?)`).run(
+            d.fromId,
+            d.toId,
+            d.type
+          );
+        }
+        if (snapshot.workflowSession) {
+          const s = snapshot.workflowSession;
+          db.prepare(
+            `INSERT INTO workflow_session (id, phase, active_slice_id, active_milestone_id, paused_at, context_json, updated_at)
+             VALUES (1, ?, ?, ?, ?, ?, datetime('now'))`
+          ).run(
+            s.phase,
+            s.activeSliceId ?? null,
+            s.activeMilestoneId ?? null,
+            s.pausedAt ?? null,
+            s.contextJson ?? null
+          );
+        }
+        for (const r of snapshot.reviews) {
+          db.prepare(
+            `INSERT INTO review (slice_id, type, reviewer, verdict, commit_sha, notes, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`
+          ).run(r.sliceId, r.type, r.reviewer, r.verdict, r.commitSha, r.notes ?? null, r.createdAt);
+        }
+        db.pragma("wal_checkpoint(TRUNCATE)");
+      } finally {
+        db.pragma("foreign_keys = ON");
+      }
+      return Ok(void 0);
+    } catch (error48) {
+      const message = error48 instanceof Error ? error48.message : String(error48);
+      return Err(createDomainError("WRITE_FAILURE", `Import failed: ${message}`));
+    }
+  }
+  clearTable(db, table) {
+    try {
+      db.prepare(`DELETE FROM ${table}`).run();
+    } catch {
+    }
+  }
+};
+
 // tools/src/infrastructure/locking/tff-lock.ts
 var import_proper_lockfile = __toESM(require_proper_lockfile(), 1);
 async function acquireLock(targetPath, timeoutMs) {
@@ -26204,9 +26638,20 @@ var hookPostCheckoutCmd = async (args) => {
   }
   const cwd = process.cwd();
   const tffDir = import_node_path11.default.join(cwd, ".tff");
+  const dbPath = import_node_path11.default.join(tffDir, "state.db");
   try {
     const gitOps = new GitCliAdapter(cwd);
-    const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+    (0, import_node_fs9.mkdirSync)(tffDir, { recursive: true });
+    const sqliteAdapter = SQLiteStateAdapter.create(dbPath);
+    const initR = sqliteAdapter.init();
+    if (!isOk(initR)) {
+      return JSON.stringify({
+        ok: true,
+        data: { action: "error", reason: `Failed to init DB: ${initR.error.message}` }
+      });
+    }
+    const importer = new SQLiteStateImporter(sqliteAdapter);
+    const stateBranch = new GitStateBranchAdapter(gitOps, cwd, void 0, importer);
     await gitOps.fetchBranch(`tff-state/${codeBranch}`).catch(() => void 0);
     const existsResult = await stateBranch.exists(codeBranch);
     if (!isOk(existsResult) || !existsResult.data) {
@@ -26222,7 +26667,6 @@ var hookPostCheckoutCmd = async (args) => {
         data: { action: "skipped", reason: "Stamp already matches current branch" }
       });
     }
-    const dbPath = import_node_path11.default.join(tffDir, "state.db");
     let release = null;
     if ((0, import_node_fs9.existsSync)(dbPath)) {
       release = await acquireRestoreLock(dbPath, 5e3);
@@ -26235,6 +26679,7 @@ var hookPostCheckoutCmd = async (args) => {
     }
     try {
       const result = await restoreBranchUseCase({ codeBranch, targetDir: cwd }, { stateBranch });
+      sqliteAdapter.close();
       if (!isOk(result) || result.data === null) {
         writeSyntheticStamp(tffDir, codeBranch);
         return JSON.stringify({
@@ -26296,6 +26741,7 @@ var milestoneCloseCmd = async (args) => {
 };
 
 // tools/src/application/milestone/create-milestone.ts
+init_milestone();
 init_result();
 var createMilestoneUseCase = async (input, deps) => {
   const branchName = `milestone/${formatMilestoneNumber(input.number)}`;
@@ -26413,20 +26859,20 @@ var JsonlStoreAdapter = class {
   async readCandidates() {
     return this.readJsonl(this.candidatesPath);
   }
-  async readJsonl(path18) {
+  async readJsonl(path19) {
     try {
-      const content = await (0, import_promises2.readFile)(path18, "utf-8");
+      const content = await (0, import_promises2.readFile)(path19, "utf-8");
       const lines = content.trim().split("\n").filter((l) => l.length > 0);
       return Ok(lines.map((l) => JSON.parse(l)));
     } catch {
       return Ok([]);
     }
   }
-  async writeJsonl(path18, items) {
-    await (0, import_promises2.mkdir)((0, import_node_path12.join)(path18, ".."), { recursive: true });
+  async writeJsonl(path19, items) {
+    await (0, import_promises2.mkdir)((0, import_node_path12.join)(path19, ".."), { recursive: true });
     const content = `${items.map((i) => JSON.stringify(i)).join("\n")}
 `;
-    await (0, import_promises2.writeFile)(path18, content);
+    await (0, import_promises2.writeFile)(path19, content);
     return Ok(void 0);
   }
 };
@@ -26575,6 +27021,7 @@ var import_node_path15 = __toESM(require("path"), 1);
 var import_yaml4 = __toESM(require_dist(), 1);
 
 // tools/src/application/guard/operation-prerequisites.ts
+init_slice_status();
 var OPERATION_PREREQUISITES = {
   discuss: {
     operation: "discuss",
@@ -26777,23 +27224,8 @@ var getProject = async (deps) => {
   return deps.projectStore.getProject();
 };
 
-// tools/src/domain/entities/project.ts
-init_zod();
-var ProjectSchema = external_exports.object({
-  id: external_exports.string().min(1),
-  name: external_exports.string().min(1),
-  vision: external_exports.string().min(1).optional(),
-  createdAt: external_exports.date()
-});
-var createProject = (input) => {
-  const project = {
-    id: crypto.randomUUID(),
-    name: input.name,
-    vision: input.vision,
-    createdAt: /* @__PURE__ */ new Date()
-  };
-  return ProjectSchema.parse(project);
-};
+// tools/src/application/project/init-project.ts
+init_project();
 
 // tools/src/domain/errors/project-exists.error.ts
 init_domain_error();
@@ -27489,6 +27921,8 @@ var projectInitCmd = async (args) => {
 };
 
 // tools/src/cli/commands/restore-branch.cmd.ts
+var import_node_fs14 = require("fs");
+var import_node_path17 = __toESM(require("path"), 1);
 init_result();
 var restoreBranchCmd = async (args) => {
   const [codeBranch] = args;
@@ -27497,9 +27931,27 @@ var restoreBranchCmd = async (args) => {
       ok: false,
       error: { code: "INVALID_ARGS", message: "Usage: restore:branch <code-branch>" }
     });
-  const gitOps = new GitCliAdapter(process.cwd());
-  const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
-  const result = await restoreBranchUseCase({ codeBranch, targetDir: process.cwd() }, { stateBranch });
+  const cwd = process.cwd();
+  const tffDir = import_node_path17.default.join(cwd, ".tff");
+  const dbPath = import_node_path17.default.join(tffDir, "state.db");
+  let sqliteAdapter;
+  if ((0, import_node_fs14.existsSync)(dbPath)) {
+    sqliteAdapter = SQLiteStateAdapter.create(dbPath);
+  } else {
+    (0, import_node_fs14.mkdirSync)(tffDir, { recursive: true });
+    sqliteAdapter = SQLiteStateAdapter.create(dbPath);
+    const initR = sqliteAdapter.init();
+    if (!isOk(initR)) {
+      return JSON.stringify({
+        ok: false,
+        error: { code: "DB_INIT_FAILED", message: `Failed to init DB: ${initR.error.message}` }
+      });
+    }
+  }
+  const importer = new SQLiteStateImporter(sqliteAdapter);
+  const gitOps = new GitCliAdapter(cwd);
+  const stateBranch = new GitStateBranchAdapter(gitOps, cwd, void 0, importer);
+  const result = await restoreBranchUseCase({ codeBranch, targetDir: cwd }, { stateBranch });
   if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
   return JSON.stringify({ ok: false, error: result.error });
 };
@@ -27535,21 +27987,7 @@ var recordReviewUseCase = async (input, deps) => {
 
 // tools/src/cli/commands/review-record.cmd.ts
 init_result();
-
-// tools/src/domain/value-objects/review-record.ts
-init_zod();
-var ReviewTypeSchema = external_exports.enum(["code", "security", "spec"]);
-var ReviewRecordSchema = external_exports.object({
-  sliceId: external_exports.string().min(1),
-  type: ReviewTypeSchema,
-  reviewer: external_exports.string().min(1),
-  verdict: external_exports.enum(["approved", "changes_requested"]),
-  commitSha: external_exports.string().min(1),
-  notes: external_exports.string().optional(),
-  createdAt: external_exports.string().min(1)
-});
-
-// tools/src/cli/commands/review-record.cmd.ts
+init_review_record();
 var reviewRecordCmd = async (args) => {
   const [sliceId, agent, verdict, type, commitSha] = args;
   if (!sliceId || !agent || !verdict || !type || !commitSha) {
@@ -27592,8 +28030,8 @@ var reviewRecordCmd = async (args) => {
 };
 
 // tools/src/cli/commands/session-remind.cmd.ts
-var import_node_fs14 = require("fs");
-var import_node_path17 = __toESM(require("path"), 1);
+var import_node_fs15 = require("fs");
+var import_node_path18 = __toESM(require("path"), 1);
 
 // tools/src/application/session/generate-reminder.ts
 function determineCurrentWave(tasks, waves) {
@@ -27752,12 +28190,12 @@ function loadProjectSettings(yamlContent) {
 
 // tools/src/cli/commands/session-remind.cmd.ts
 function areRemindersDisabled() {
-  const settingsPath = import_node_path17.default.join(process.cwd(), ".tff", "settings.yaml");
-  if (!(0, import_node_fs14.existsSync)(settingsPath)) {
+  const settingsPath = import_node_path18.default.join(process.cwd(), ".tff", "settings.yaml");
+  if (!(0, import_node_fs15.existsSync)(settingsPath)) {
     return false;
   }
   try {
-    const content = (0, import_node_fs14.readFileSync)(settingsPath, "utf8");
+    const content = (0, import_node_fs15.readFileSync)(settingsPath, "utf8");
     const settings = loadProjectSettings(content);
     return settings.workflow?.reminders === false;
   } catch {
@@ -27765,8 +28203,8 @@ function areRemindersDisabled() {
   }
 }
 function isProjectInitialized4() {
-  const tffDir = import_node_path17.default.join(process.cwd(), ".tff");
-  return (0, import_node_fs14.existsSync)(tffDir);
+  const tffDir = import_node_path18.default.join(process.cwd(), ".tff");
+  return (0, import_node_fs15.existsSync)(tffDir);
 }
 var sessionRemindCmd = async (_args) => {
   if (areRemindersDisabled()) {
@@ -27931,6 +28369,7 @@ var sliceListCmd = async (args) => {
 
 // tools/src/cli/commands/slice-transition.cmd.ts
 init_result();
+init_slice_status();
 init_markdown_artifact_adapter();
 
 // tools/src/infrastructure/adapters/logging/warn.ts
@@ -28034,16 +28473,16 @@ var sliceTransitionCmd = async (args) => {
 };
 
 // tools/src/cli/commands/spec-edit-guard.cmd.ts
-var import_node_fs15 = require("fs");
-var import_node_path18 = __toESM(require("path"), 1);
+var import_node_fs16 = require("fs");
+var import_node_path19 = __toESM(require("path"), 1);
 var import_yaml6 = __toESM(require_dist(), 1);
 function areGuardsDisabled5() {
-  const settingsPath = import_node_path18.default.join(process.cwd(), ".tff", "settings.yaml");
-  if (!(0, import_node_fs15.existsSync)(settingsPath)) {
+  const settingsPath = import_node_path19.default.join(process.cwd(), ".tff", "settings.yaml");
+  if (!(0, import_node_fs16.existsSync)(settingsPath)) {
     return false;
   }
   try {
-    const content = (0, import_node_fs15.readFileSync)(settingsPath, "utf8");
+    const content = (0, import_node_fs16.readFileSync)(settingsPath, "utf8");
     if (!content.trim()) return false;
     const parsed = (0, import_yaml6.parse)(content);
     return parsed?.workflow?.guards === false;
@@ -28052,8 +28491,8 @@ function areGuardsDisabled5() {
   }
 }
 function isProjectInitialized5() {
-  const tffDir = import_node_path18.default.join(process.cwd(), ".tff");
-  return (0, import_node_fs15.existsSync)(tffDir);
+  const tffDir = import_node_path19.default.join(process.cwd(), ".tff");
+  return (0, import_node_fs16.existsSync)(tffDir);
 }
 var specEditGuardCmd = async (args) => {
   const filePath = args[0] ?? null;
@@ -28093,155 +28532,442 @@ var specEditGuardCmd = async (args) => {
   }
 };
 
-// tools/src/application/state-branch/repair-state-branches.ts
+// tools/src/cli/commands/state-repair.cmd.ts
+var import_node_fs17 = require("fs");
+var import_node_path20 = __toESM(require("path"), 1);
 init_result();
-var repairStateBranchesUseCase = async (input, deps) => {
-  const result = {
-    created: [],
-    failed: [],
-    skipped: []
-  };
-  const rootExists = await deps.stateBranch.exists("main");
-  if (!isOk(rootExists)) {
-    return Err(rootExists.error);
-  }
-  if (!rootExists.data) {
-    if (input.dryRun) {
-      result.skipped.push({ type: "root", id: "main", reason: "Would create (dry-run)" });
-    } else {
-      const createResult = await deps.stateBranch.createRoot();
-      if (isOk(createResult)) {
-        result.created.push({ type: "root", id: "main" });
-      } else {
-        result.failed.push({ type: "root", id: "main", error: createResult.error.message });
-      }
-    }
-  }
-  const milestonesResult = deps.milestoneStore.listMilestones();
-  if (!isOk(milestonesResult)) {
-    return Err(milestonesResult.error);
-  }
-  for (const milestone of milestonesResult.data) {
-    const branchName = `milestone/${milestone.id}`;
-    const stateBranchName = `tff-state/${branchName}`;
-    const exists = await deps.stateBranch.exists(branchName);
-    if (!isOk(exists)) {
-      result.failed.push({ type: "milestone", id: milestone.id, error: exists.error.message });
-      continue;
-    }
-    if (exists.data) {
-      result.skipped.push({ type: "milestone", id: milestone.id, reason: "Already exists" });
-      continue;
-    }
-    if (input.dryRun) {
-      result.skipped.push({ type: "milestone", id: milestone.id, reason: "Would create (dry-run)" });
-      continue;
-    }
-    const forkResult = await deps.stateBranch.fork(branchName, "tff-state/main");
-    if (isOk(forkResult)) {
-      result.created.push({ type: "milestone", id: milestone.id });
-    } else {
-      result.failed.push({ type: "milestone", id: milestone.id, error: forkResult.error.message });
-    }
-  }
-  for (const milestone of milestonesResult.data) {
-    const slicesResult = deps.sliceStore.listSlices(milestone.id);
-    if (!isOk(slicesResult)) {
-      continue;
-    }
-    for (const slice of slicesResult.data) {
-      const branchName = `slice/${slice.id}`;
-      const parentStateBranch = `tff-state/milestone/${milestone.id}`;
-      const exists = await deps.stateBranch.exists(branchName);
-      if (!isOk(exists)) {
-        result.failed.push({ type: "slice", id: slice.id, error: exists.error.message });
-        continue;
-      }
-      if (exists.data) {
-        result.skipped.push({ type: "slice", id: slice.id, reason: "Already exists" });
-        continue;
-      }
-      const parentExists = await deps.stateBranch.exists(`milestone/${milestone.id}`);
-      if (!isOk(parentExists) || !parentExists.data) {
-        result.failed.push({
-          type: "slice",
-          id: slice.id,
-          error: `Parent milestone state branch tff-state/milestone/${milestone.id} not found`
-        });
-        continue;
-      }
-      if (input.dryRun) {
-        result.skipped.push({ type: "slice", id: slice.id, reason: "Would create (dry-run)" });
-        continue;
-      }
-      const forkResult = await deps.stateBranch.fork(branchName, parentStateBranch);
-      if (isOk(forkResult)) {
-        result.created.push({ type: "slice", id: slice.id });
-      } else {
-        result.failed.push({ type: "slice", id: slice.id, error: forkResult.error.message });
-      }
-    }
-  }
-  return Ok(result);
-};
+init_markdown_artifact_adapter();
 
-// tools/src/cli/commands/state-repair-branches.cmd.ts
+// tools/src/infrastructure/adapters/sqlite/sqlite-salvage.ts
+var import_better_sqlite32 = __toESM(require_lib(), 1);
+init_domain_error();
 init_result();
-var stateRepairBranchesCmd = async (args) => {
-  const dryRun = args.includes("--dry-run");
-  return withBranchGuard(async ({ milestoneStore, sliceStore }) => {
-    const cwd = process.cwd();
-    const gitOps = new GitCliAdapter(cwd);
-    const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
-    const result = await repairStateBranchesUseCase(
-      { dryRun },
-      { milestoneStore, sliceStore, stateBranch }
-    );
-    if (!isOk(result)) {
-      return JSON.stringify({ ok: false, error: result.error });
+init_state_snapshot();
+var SQLiteSalvage = class {
+  /**
+   * Attempts to salvage data from a corrupted SQLite database.
+   * Opens the database in read-only mode and tries to extract all readable data.
+   *
+   * @param dbPath - Path to the potentially corrupted SQLite file
+   * @returns Result containing salvaged snapshot and metadata, or DomainError on catastrophic failure
+   */
+  static salvage(dbPath) {
+    let db;
+    try {
+      const nativeBinding = getNativeBindingPath();
+      db = new import_better_sqlite32.default(dbPath, {
+        readonly: true,
+        timeout: 5e3,
+        // 5 second timeout for queries
+        ...nativeBinding ? { nativeBinding } : {}
+      });
+    } catch (error48) {
+      const message = error48 instanceof Error ? error48.message : String(error48);
+      return Err(createDomainError("CORRUPTED_STATE", `Failed to open database for salvage: ${message}`));
     }
-    const output = result.data;
-    const lines = [];
-    lines.push(`State Branch Repair ${dryRun ? "(DRY RUN)" : ""}`);
-    lines.push("");
-    if (output.created.length > 0) {
-      lines.push(`Created: ${output.created.length}`);
-      for (const item of output.created) {
-        lines.push(`  \u2713 ${item.type}: ${item.id}`);
+    try {
+      const metadata = {
+        tablesSalvaged: [],
+        rowsRecovered: 0,
+        corruptionNotes: []
+      };
+      try {
+        const integrityResult = db.pragma("integrity_check", { simple: true });
+        metadata.integrityCheckResult = integrityResult;
+        if (integrityResult !== "ok") {
+          metadata.corruptionNotes.push(`Integrity check: ${integrityResult}`);
+        }
+      } catch (e) {
+        metadata.corruptionNotes.push(`Integrity check failed: ${e}`);
       }
-      lines.push("");
+      try {
+        const quickCheckResult = db.pragma("quick_check", { simple: true });
+        metadata.quickCheckResult = quickCheckResult;
+        if (quickCheckResult !== "ok") {
+          metadata.corruptionNotes.push(`Quick check: ${quickCheckResult}`);
+        }
+      } catch (e) {
+        metadata.corruptionNotes.push(`Quick check failed: ${e}`);
+      }
+      const project = this.salvageProject(db, metadata);
+      const milestones = this.salvageMilestones(db, metadata);
+      const slices = this.salvageSlices(db, metadata);
+      const tasks = this.salvageTasks(db, metadata);
+      const dependencies = this.salvageDependencies(db, metadata);
+      const session = this.salvageSession(db, metadata);
+      const reviews = this.salvageReviews(db, metadata);
+      let snapshot = null;
+      if (metadata.tablesSalvaged.length > 0) {
+        snapshot = {
+          version: STATE_SNAPSHOT_VERSION,
+          exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
+          project,
+          milestones,
+          slices,
+          tasks,
+          dependencies,
+          workflowSession: session,
+          reviews
+        };
+      }
+      return Ok({ snapshot, metadata });
+    } catch (error48) {
+      const message = error48 instanceof Error ? error48.message : String(error48);
+      return Err(createDomainError("CORRUPTED_STATE", `Salvage operation failed: ${message}`));
+    } finally {
+      try {
+        db.close();
+      } catch {
+      }
     }
-    if (output.failed.length > 0) {
-      lines.push(`Failed: ${output.failed.length}`);
-      for (const item of output.failed) {
-        lines.push(`  \u2717 ${item.type}: ${item.id} - ${item.error}`);
+  }
+  /**
+   * Attempt to salvage project data (singleton table).
+   */
+  static salvageProject(db, metadata) {
+    try {
+      const row = db.prepare("SELECT id, name, vision, created_at FROM project WHERE id = 'singleton'").get();
+      if (!row) {
+        metadata.corruptionNotes.push("Project: No project row found");
+        return null;
       }
-      lines.push("");
+      if (!row.name || typeof row.name !== "string") {
+        metadata.corruptionNotes.push("Project: Missing or invalid name field");
+        return null;
+      }
+      if (!row.created_at) {
+        metadata.corruptionNotes.push("Project: Missing created_at field");
+        return null;
+      }
+      let createdAt;
+      try {
+        createdAt = new Date(row.created_at);
+        if (isNaN(createdAt.getTime())) {
+          createdAt = /* @__PURE__ */ new Date();
+          metadata.corruptionNotes.push(`Project: Invalid created_at date "${row.created_at}", using current time`);
+        }
+      } catch {
+        createdAt = /* @__PURE__ */ new Date();
+        metadata.corruptionNotes.push(`Project: Failed to parse created_at "${row.created_at}", using current time`);
+      }
+      metadata.tablesSalvaged.push("project");
+      metadata.rowsRecovered += 1;
+      return {
+        id: row.id,
+        name: row.name,
+        vision: row.vision ?? void 0,
+        createdAt
+      };
+    } catch (error48) {
+      const message = error48 instanceof Error ? error48.message : String(error48);
+      metadata.corruptionNotes.push(`Project: Query failed - ${message}`);
+      return null;
     }
-    if (output.skipped.length > 0) {
-      lines.push(`Skipped: ${output.skipped.length}`);
-      for (const item of output.skipped) {
-        lines.push(`  \u2192 ${item.type}: ${item.id} (${item.reason})`);
+  }
+  /**
+   * Attempt to salvage milestones data.
+   */
+  static salvageMilestones(db, metadata) {
+    const milestones = [];
+    try {
+      const rows = db.prepare("SELECT * FROM milestone ORDER BY number").all();
+      for (const row of rows) {
+        try {
+          if (!row.id || typeof row.id !== "string") {
+            metadata.corruptionNotes.push(`Milestone: Skipping row with invalid id`);
+            continue;
+          }
+          if (!row.name || typeof row.name !== "string") {
+            metadata.corruptionNotes.push(`Milestone ${row.id}: Missing or invalid name`);
+            continue;
+          }
+          if (typeof row.number !== "number" || isNaN(row.number)) {
+            metadata.corruptionNotes.push(`Milestone ${row.id}: Invalid number`);
+            continue;
+          }
+          let createdAt;
+          try {
+            createdAt = new Date(row.created_at);
+            if (isNaN(createdAt.getTime())) {
+              createdAt = /* @__PURE__ */ new Date();
+            }
+          } catch {
+            createdAt = /* @__PURE__ */ new Date();
+          }
+          milestones.push({
+            id: row.id,
+            projectId: row.project_id ?? "singleton",
+            number: row.number,
+            name: row.name,
+            status: row.status ?? "open",
+            closeReason: row.close_reason ?? void 0,
+            createdAt
+          });
+        } catch (rowError) {
+          const message = rowError instanceof Error ? rowError.message : String(rowError);
+          metadata.corruptionNotes.push(`Milestone row: ${message}`);
+        }
       }
-      lines.push("");
+      metadata.tablesSalvaged.push("milestone");
+      metadata.rowsRecovered += milestones.length;
+    } catch (error48) {
+      const message = error48 instanceof Error ? error48.message : String(error48);
+      metadata.corruptionNotes.push(`Milestones: Query failed - ${message}`);
     }
-    lines.push("");
-    lines.push(`Summary: ${output.created.length} created, ${output.failed.length} failed, ${output.skipped.length} skipped`);
-    return JSON.stringify({
-      ok: true,
-      data: {
-        ...output,
-        summary: lines.join("\n")
+    return milestones;
+  }
+  /**
+   * Attempt to salvage slices data.
+   */
+  static salvageSlices(db, metadata) {
+    const slices = [];
+    try {
+      const rows = db.prepare("SELECT * FROM slice ORDER BY milestone_id, number").all();
+      for (const row of rows) {
+        try {
+          if (!row.id || typeof row.id !== "string") {
+            metadata.corruptionNotes.push(`Slice: Skipping row with invalid id`);
+            continue;
+          }
+          if (!row.title || typeof row.title !== "string") {
+            metadata.corruptionNotes.push(`Slice ${row.id}: Missing or invalid title`);
+            continue;
+          }
+          if (!row.milestone_id || typeof row.milestone_id !== "string") {
+            metadata.corruptionNotes.push(`Slice ${row.id}: Missing or invalid milestone_id`);
+            continue;
+          }
+          if (typeof row.number !== "number" || isNaN(row.number)) {
+            metadata.corruptionNotes.push(`Slice ${row.id}: Invalid number`);
+            continue;
+          }
+          let createdAt;
+          try {
+            createdAt = new Date(row.created_at);
+            if (isNaN(createdAt.getTime())) {
+              createdAt = /* @__PURE__ */ new Date();
+            }
+          } catch {
+            createdAt = /* @__PURE__ */ new Date();
+          }
+          slices.push({
+            id: row.id,
+            milestoneId: row.milestone_id,
+            number: row.number,
+            title: row.title,
+            status: row.status ?? "discussing",
+            tier: row.tier ?? void 0,
+            createdAt
+          });
+        } catch (rowError) {
+          const message = rowError instanceof Error ? rowError.message : String(rowError);
+          metadata.corruptionNotes.push(`Slice row: ${message}`);
+        }
       }
-    });
-  });
+      metadata.tablesSalvaged.push("slice");
+      metadata.rowsRecovered += slices.length;
+    } catch (error48) {
+      const message = error48 instanceof Error ? error48.message : String(error48);
+      metadata.corruptionNotes.push(`Slices: Query failed - ${message}`);
+    }
+    return slices;
+  }
+  /**
+   * Attempt to salvage tasks data.
+   */
+  static salvageTasks(db, metadata) {
+    const tasks = [];
+    try {
+      const rows = db.prepare("SELECT * FROM task ORDER BY slice_id, number").all();
+      for (const row of rows) {
+        try {
+          if (!row.id || typeof row.id !== "string") {
+            metadata.corruptionNotes.push(`Task: Skipping row with invalid id`);
+            continue;
+          }
+          if (!row.title || typeof row.title !== "string") {
+            metadata.corruptionNotes.push(`Task ${row.id}: Missing or invalid title`);
+            continue;
+          }
+          if (!row.slice_id || typeof row.slice_id !== "string") {
+            metadata.corruptionNotes.push(`Task ${row.id}: Missing or invalid slice_id`);
+            continue;
+          }
+          if (typeof row.number !== "number" || isNaN(row.number)) {
+            metadata.corruptionNotes.push(`Task ${row.id}: Invalid number`);
+            continue;
+          }
+          let createdAt;
+          try {
+            createdAt = new Date(row.created_at);
+            if (isNaN(createdAt.getTime())) {
+              createdAt = /* @__PURE__ */ new Date();
+            }
+          } catch {
+            createdAt = /* @__PURE__ */ new Date();
+          }
+          let claimedAt;
+          if (row.claimed_at) {
+            try {
+              claimedAt = new Date(row.claimed_at);
+              if (isNaN(claimedAt.getTime())) {
+                claimedAt = void 0;
+              }
+            } catch {
+              claimedAt = void 0;
+            }
+          }
+          tasks.push({
+            id: row.id,
+            sliceId: row.slice_id,
+            number: row.number,
+            title: row.title,
+            description: row.description ?? void 0,
+            status: row.status ?? "open",
+            wave: row.wave ?? void 0,
+            claimedAt,
+            claimedBy: row.claimed_by ?? void 0,
+            closedReason: row.closed_reason ?? void 0,
+            createdAt
+          });
+        } catch (rowError) {
+          const message = rowError instanceof Error ? rowError.message : String(rowError);
+          metadata.corruptionNotes.push(`Task row: ${message}`);
+        }
+      }
+      metadata.tablesSalvaged.push("task");
+      metadata.rowsRecovered += tasks.length;
+    } catch (error48) {
+      const message = error48 instanceof Error ? error48.message : String(error48);
+      metadata.corruptionNotes.push(`Tasks: Query failed - ${message}`);
+    }
+    return tasks;
+  }
+  /**
+   * Attempt to salvage dependencies data.
+   */
+  static salvageDependencies(db, metadata) {
+    const dependencies = [];
+    try {
+      const rows = db.prepare("SELECT from_id, to_id, type FROM dependency").all();
+      for (const row of rows) {
+        try {
+          if (!row.from_id || typeof row.from_id !== "string") {
+            metadata.corruptionNotes.push(`Dependency: Skipping row with invalid from_id`);
+            continue;
+          }
+          if (!row.to_id || typeof row.to_id !== "string") {
+            metadata.corruptionNotes.push(`Dependency ${row.from_id}: Missing or invalid to_id`);
+            continue;
+          }
+          if (!row.type || typeof row.type !== "string") {
+            metadata.corruptionNotes.push(`Dependency ${row.from_id}\u2192${row.to_id}: Missing or invalid type`);
+            continue;
+          }
+          dependencies.push({
+            fromId: row.from_id,
+            toId: row.to_id,
+            type: row.type
+          });
+        } catch (rowError) {
+          const message = rowError instanceof Error ? rowError.message : String(rowError);
+          metadata.corruptionNotes.push(`Dependency row: ${message}`);
+        }
+      }
+      metadata.tablesSalvaged.push("dependency");
+      metadata.rowsRecovered += dependencies.length;
+    } catch (error48) {
+      const message = error48 instanceof Error ? error48.message : String(error48);
+      metadata.corruptionNotes.push(`Dependencies: Query failed - ${message}`);
+    }
+    return dependencies;
+  }
+  /**
+   * Attempt to salvage workflow session data.
+   */
+  static salvageSession(db, metadata) {
+    try {
+      const row = db.prepare("SELECT * FROM workflow_session WHERE id = 1").get();
+      if (!row) {
+        return null;
+      }
+      if (!row.phase || typeof row.phase !== "string") {
+        metadata.corruptionNotes.push("Workflow session: Missing or invalid phase");
+        return null;
+      }
+      metadata.tablesSalvaged.push("workflow_session");
+      metadata.rowsRecovered += 1;
+      return {
+        phase: row.phase,
+        activeSliceId: row.active_slice_id ?? void 0,
+        activeMilestoneId: row.active_milestone_id ?? void 0,
+        pausedAt: row.paused_at ?? void 0,
+        contextJson: row.context_json ?? void 0
+      };
+    } catch (error48) {
+      const message = error48 instanceof Error ? error48.message : String(error48);
+      metadata.corruptionNotes.push(`Workflow session: Query failed - ${message}`);
+      return null;
+    }
+  }
+  /**
+   * Attempt to salvage reviews data.
+   */
+  static salvageReviews(db, metadata) {
+    const reviews = [];
+    try {
+      const rows = db.prepare("SELECT * FROM review ORDER BY created_at").all();
+      for (const row of rows) {
+        try {
+          if (!row.slice_id || typeof row.slice_id !== "string") {
+            metadata.corruptionNotes.push(`Review: Skipping row with invalid slice_id`);
+            continue;
+          }
+          if (!row.type || typeof row.type !== "string") {
+            metadata.corruptionNotes.push(`Review ${row.slice_id}: Missing or invalid type`);
+            continue;
+          }
+          if (!row.reviewer || typeof row.reviewer !== "string") {
+            metadata.corruptionNotes.push(`Review ${row.slice_id}: Missing or invalid reviewer`);
+            continue;
+          }
+          if (!row.verdict || typeof row.verdict !== "string") {
+            metadata.corruptionNotes.push(`Review ${row.slice_id}: Missing or invalid verdict`);
+            continue;
+          }
+          if (!row.commit_sha || typeof row.commit_sha !== "string") {
+            metadata.corruptionNotes.push(`Review ${row.slice_id}: Missing or invalid commit_sha`);
+            continue;
+          }
+          if (!row.created_at || typeof row.created_at !== "string") {
+            metadata.corruptionNotes.push(`Review ${row.slice_id}: Missing or invalid created_at`);
+            continue;
+          }
+          reviews.push({
+            sliceId: row.slice_id,
+            type: row.type,
+            reviewer: row.reviewer,
+            verdict: row.verdict,
+            commitSha: row.commit_sha,
+            notes: row.notes ?? void 0,
+            createdAt: row.created_at
+          });
+        } catch (rowError) {
+          const message = rowError instanceof Error ? rowError.message : String(rowError);
+          metadata.corruptionNotes.push(`Review row: ${message}`);
+        }
+      }
+      metadata.tablesSalvaged.push("review");
+      metadata.rowsRecovered += reviews.length;
+    } catch (error48) {
+      const message = error48 instanceof Error ? error48.message : String(error48);
+      metadata.corruptionNotes.push(`Reviews: Query failed - ${message}`);
+    }
+    return reviews;
+  }
 };
 
 // tools/src/cli/commands/state-repair.cmd.ts
-var import_node_fs16 = require("fs");
-var import_node_path19 = __toESM(require("path"), 1);
-init_result();
-init_markdown_artifact_adapter();
 function parseArgs(args) {
   let codeBranch;
   let tier;
@@ -28273,23 +28999,23 @@ function parseArgs(args) {
   return { codeBranch, tier, milestoneId };
 }
 function detectCorruptionLevel(cwd) {
-  const tffDir = import_node_path19.default.join(cwd, ".tff");
-  const stateDbPath = import_node_path19.default.join(tffDir, "state.db");
-  const milestonesDir = import_node_path19.default.join(cwd, ".tff", "milestones");
-  if (!(0, import_node_fs16.existsSync)(tffDir)) {
+  const tffDir = import_node_path20.default.join(cwd, ".tff");
+  const stateDbPath = import_node_path20.default.join(tffDir, "state.db");
+  const milestonesDir = import_node_path20.default.join(cwd, ".tff", "milestones");
+  if (!(0, import_node_fs17.existsSync)(tffDir)) {
     return "T3";
   }
-  if (!(0, import_node_fs16.existsSync)(stateDbPath) && !(0, import_node_fs16.existsSync)(milestonesDir)) {
+  if (!(0, import_node_fs17.existsSync)(stateDbPath) && !(0, import_node_fs17.existsSync)(milestonesDir)) {
     return "T3";
   }
-  if ((0, import_node_fs16.existsSync)(stateDbPath) && !isDbValid(stateDbPath)) {
+  if ((0, import_node_fs17.existsSync)(stateDbPath) && !isDbValid(stateDbPath)) {
     return "T2";
   }
   return "T1";
 }
 function isDbValid(dbPath) {
   try {
-    const header = (0, import_node_fs16.readFileSync)(dbPath, { encoding: null, flag: "r" });
+    const header = (0, import_node_fs17.readFileSync)(dbPath, { encoding: null, flag: "r" });
     const sqliteMagic = Buffer.from("SQLite format 3\0");
     if (header.length < sqliteMagic.length) {
       return false;
@@ -28299,23 +29025,78 @@ function isDbValid(dbPath) {
     return false;
   }
 }
+function mergeSalvagedWithRestored(salvaged, restored) {
+  if (!salvaged) {
+    return restored;
+  }
+  const salvagedMilestoneIds = new Set(salvaged.milestones.map((m) => m.id));
+  const salvagedSliceIds = new Set(salvaged.slices.map((s) => s.id));
+  const salvagedTaskIds = new Set(salvaged.tasks.map((t) => t.id));
+  const mergedMilestones = [
+    // Restored milestones that don't exist in salvage
+    ...restored.milestones.filter((m) => !salvagedMilestoneIds.has(m.id)),
+    // All salvaged milestones (they win)
+    ...salvaged.milestones
+  ];
+  const mergedSlices = [
+    // Restored slices that don't exist in salvage
+    ...restored.slices.filter((s) => !salvagedSliceIds.has(s.id)),
+    // All salvaged slices (they win)
+    ...salvaged.slices
+  ];
+  const mergedTasks = [
+    // Restored tasks that don't exist in salvage
+    ...restored.tasks.filter((t) => !salvagedTaskIds.has(t.id)),
+    // All salvaged tasks (they win)
+    ...salvaged.tasks
+  ];
+  const dependencyKey = (d) => `${d.fromId}->${d.toId}`;
+  const mergedDeps = /* @__PURE__ */ new Map();
+  for (const dep of restored.dependencies) {
+    mergedDeps.set(dependencyKey(dep), dep);
+  }
+  for (const dep of salvaged.dependencies) {
+    mergedDeps.set(dependencyKey(dep), dep);
+  }
+  const mergedProject = salvaged.project ?? restored.project;
+  const mergedSession = salvaged.workflowSession ?? restored.workflowSession;
+  const reviewKey = (r) => `${r.sliceId}:${r.reviewer}:${r.type}:${r.commitSha}`;
+  const mergedReviews = /* @__PURE__ */ new Map();
+  for (const review of restored.reviews) {
+    mergedReviews.set(reviewKey(review), review);
+  }
+  for (const review of salvaged.reviews) {
+    mergedReviews.set(reviewKey(review), review);
+  }
+  return {
+    version: restored.version,
+    exportedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    project: mergedProject,
+    milestones: mergedMilestones,
+    slices: mergedSlices,
+    tasks: mergedTasks,
+    dependencies: Array.from(mergedDeps.values()),
+    workflowSession: mergedSession,
+    reviews: Array.from(mergedReviews.values())
+  };
+}
 function findSlicesWithCheckpoints(cwd) {
-  const slicesDir = import_node_path19.default.join(cwd, ".tff", "milestones");
-  if (!(0, import_node_fs16.existsSync)(slicesDir)) {
+  const slicesDir = import_node_path20.default.join(cwd, ".tff", "milestones");
+  if (!(0, import_node_fs17.existsSync)(slicesDir)) {
     return [];
   }
   const sliceIds = [];
   try {
-    const milestoneEntries = (0, import_node_fs16.readdirSync)(slicesDir, { withFileTypes: true });
+    const milestoneEntries = (0, import_node_fs17.readdirSync)(slicesDir, { withFileTypes: true });
     for (const milestoneEntry of milestoneEntries) {
       if (!milestoneEntry.isDirectory()) continue;
-      const slicesPath = import_node_path19.default.join(slicesDir, milestoneEntry.name, "slices");
-      if (!(0, import_node_fs16.existsSync)(slicesPath)) continue;
-      const sliceEntries = (0, import_node_fs16.readdirSync)(slicesPath, { withFileTypes: true });
+      const slicesPath = import_node_path20.default.join(slicesDir, milestoneEntry.name, "slices");
+      if (!(0, import_node_fs17.existsSync)(slicesPath)) continue;
+      const sliceEntries = (0, import_node_fs17.readdirSync)(slicesPath, { withFileTypes: true });
       for (const sliceEntry of sliceEntries) {
         if (!sliceEntry.isDirectory()) continue;
-        const checkpointPath = import_node_path19.default.join(slicesPath, sliceEntry.name, "CHECKPOINT.md");
-        if ((0, import_node_fs16.existsSync)(checkpointPath)) {
+        const checkpointPath = import_node_path20.default.join(slicesPath, sliceEntry.name, "CHECKPOINT.md");
+        if ((0, import_node_fs17.existsSync)(checkpointPath)) {
           sliceIds.push(`${milestoneEntry.name}-${sliceEntry.name}`);
         }
       }
@@ -28327,11 +29108,11 @@ function findSlicesWithCheckpoints(cwd) {
 async function validateRestoredState(cwd) {
   const sliceIds = findSlicesWithCheckpoints(cwd);
   if (sliceIds.length === 0) {
-    const stateDbPath = import_node_path19.default.join(cwd, ".tff", "state.db");
-    return { consistent: (0, import_node_fs16.existsSync)(stateDbPath) && isDbValid(stateDbPath), checkedSlices: 0, errors: [] };
+    const stateDbPath = import_node_path20.default.join(cwd, ".tff", "state.db");
+    return { consistent: (0, import_node_fs17.existsSync)(stateDbPath) && isDbValid(stateDbPath), checkedSlices: 0, errors: [] };
   }
   const artifactStore = new MarkdownArtifactAdapter(cwd);
-  const journal = new JsonlJournalAdapter(import_node_path19.default.join(cwd, ".tff", "journal"));
+  const journal = new JsonlJournalAdapter(import_node_path20.default.join(cwd, ".tff", "journal"));
   const errors = [];
   let consistentCount = 0;
   for (const sliceId of sliceIds) {
@@ -28367,15 +29148,15 @@ var stateRepairCmd = async (args) => {
     });
   }
   const cwd = process.cwd();
-  const tffDir = import_node_path19.default.join(cwd, ".tff");
+  const tffDir = import_node_path20.default.join(cwd, ".tff");
   const detectedTier = detectCorruptionLevel(cwd);
   const tier = explicitTier ?? detectedTier;
   if (tier === "T3") {
     const startTime = Date.now();
     let targetMilestoneId = milestoneIdArg;
-    const stateDbPath = import_node_path19.default.join(cwd, ".tff", "state.db");
-    if (!(0, import_node_fs16.existsSync)(tffDir)) {
-      (0, import_node_fs16.mkdirSync)(tffDir, { recursive: true });
+    const stateDbPath = import_node_path20.default.join(cwd, ".tff", "state.db");
+    if (!(0, import_node_fs17.existsSync)(tffDir)) {
+      (0, import_node_fs17.mkdirSync)(tffDir, { recursive: true });
     }
     const release = await acquireSyncLock(stateDbPath, 1e4);
     if (release === null) {
@@ -28434,10 +29215,10 @@ var stateRepairCmd = async (args) => {
           }
         });
       }
-      const rootMetaPath = import_node_path19.default.join(cwd, "branch-meta.json");
+      const rootMetaPath = import_node_path20.default.join(cwd, "branch-meta.json");
       try {
-        if ((0, import_node_fs16.existsSync)(rootMetaPath)) {
-          const raw = JSON.parse((0, import_node_fs16.readFileSync)(rootMetaPath, "utf8"));
+        if ((0, import_node_fs17.existsSync)(rootMetaPath)) {
+          const raw = JSON.parse((0, import_node_fs17.readFileSync)(rootMetaPath, "utf8"));
           const meta3 = BranchMetaSchema.parse(raw);
           writeLocalStamp(tffDir, {
             stateId: meta3.stateId,
@@ -28511,7 +29292,7 @@ var stateRepairCmd = async (args) => {
   }
   if (tier === "T2") {
     const startTime = Date.now();
-    const stateDbPath = import_node_path19.default.join(cwd, ".tff", "state.db");
+    const stateDbPath = import_node_path20.default.join(cwd, ".tff", "state.db");
     const release = await acquireSyncLock(stateDbPath, 1e4);
     if (release === null) {
       return JSON.stringify({
@@ -28523,7 +29304,23 @@ var stateRepairCmd = async (args) => {
         }
       });
     }
+    let salvageResult = null;
+    let tablesSalvaged = [];
+    let salvageNotes = [];
     try {
+      if ((0, import_node_fs17.existsSync)(stateDbPath) && !isDbValid(stateDbPath)) {
+        const salvageStartTime = Date.now();
+        salvageResult = SQLiteSalvage.salvage(stateDbPath);
+        if (salvageResult.ok && salvageResult.data.metadata) {
+          tablesSalvaged = salvageResult.data.metadata.tablesSalvaged;
+          salvageNotes = salvageResult.data.metadata.corruptionNotes;
+          const salvageDuration = Date.now() - salvageStartTime;
+          console.log(`[state:repair] Salvaged ${tablesSalvaged.length} tables (${salvageResult.data.metadata.rowsRecovered} rows) in ${salvageDuration}ms`);
+        } else if (!salvageResult.ok) {
+          salvageNotes.push(`Salvage failed: ${salvageResult.error.message}`);
+          console.warn(`[state:repair] Salvage failed: ${salvageResult.error.message}`);
+        }
+      }
       const gitOps = new GitCliAdapter(cwd);
       const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
       const existsResult = await stateBranch.exists(codeBranch);
@@ -28550,6 +29347,33 @@ var stateRepairCmd = async (args) => {
           }
         });
       }
+      if (salvageResult?.ok && salvageResult.data.snapshot && restoreResult.data) {
+        try {
+          const adapter = SQLiteStateAdapter.create(stateDbPath);
+          const { SQLiteStateExporter: SQLiteStateExporter2 } = await Promise.resolve().then(() => (init_sqlite_state_exporter(), sqlite_state_exporter_exports));
+          const exporter = new SQLiteStateExporter2(adapter);
+          const exportResult = exporter.export();
+          if (!exportResult.ok) {
+            console.warn(`[state:repair] Failed to export restored state for merge: ${exportResult.error.message}`);
+            adapter.close();
+          } else {
+            const mergedSnapshot = mergeSalvagedWithRestored(
+              salvageResult.data.snapshot,
+              exportResult.data
+            );
+            const importer = new SQLiteStateImporter(adapter);
+            const importResult = importer.import(mergedSnapshot);
+            if (!importResult.ok) {
+              console.warn(`[state:repair] Failed to import merged snapshot: ${importResult.error.message}`);
+            } else {
+              console.log("[state:repair] Successfully merged salvaged data with restored state");
+            }
+            adapter.close();
+          }
+        } catch (mergeError) {
+          console.warn(`[state:repair] Merge/import failed: ${mergeError}`);
+        }
+      }
       const validation = await validateRestoredState(cwd);
       const durationMs = Date.now() - startTime;
       if (durationMs > 5e3) {
@@ -28568,10 +29392,10 @@ var stateRepairCmd = async (args) => {
           }
         });
       }
-      const rootMetaPath = import_node_path19.default.join(cwd, "branch-meta.json");
+      const rootMetaPath = import_node_path20.default.join(cwd, "branch-meta.json");
       try {
-        if ((0, import_node_fs16.existsSync)(rootMetaPath)) {
-          const raw = JSON.parse((0, import_node_fs16.readFileSync)(rootMetaPath, "utf8"));
+        if ((0, import_node_fs17.existsSync)(rootMetaPath)) {
+          const raw = JSON.parse((0, import_node_fs17.readFileSync)(rootMetaPath, "utf8"));
           const meta3 = BranchMetaSchema.parse(raw);
           writeLocalStamp(tffDir, {
             stateId: meta3.stateId,
@@ -28592,7 +29416,10 @@ var stateRepairCmd = async (args) => {
           filesRestored: restoreResult.data.filesRestored,
           tier: "T2",
           durationMs,
-          consistent: validation.consistent
+          consistent: validation.consistent,
+          salvaged: salvageResult?.ok && tablesSalvaged.length > 0,
+          tablesSalvaged: tablesSalvaged.length > 0 ? tablesSalvaged : void 0,
+          salvageNotes: salvageNotes.length > 0 ? salvageNotes : void 0
         }
       });
     } finally {
@@ -28642,10 +29469,10 @@ var stateRepairCmd = async (args) => {
         data: { action: "synthetic", reason: "Restore returned null (no state to restore)", tier: "T1" }
       });
     }
-    const rootMetaPath = import_node_path19.default.join(cwd, "branch-meta.json");
+    const rootMetaPath = import_node_path20.default.join(cwd, "branch-meta.json");
     try {
-      if ((0, import_node_fs16.existsSync)(rootMetaPath)) {
-        const raw = JSON.parse((0, import_node_fs16.readFileSync)(rootMetaPath, "utf8"));
+      if ((0, import_node_fs17.existsSync)(rootMetaPath)) {
+        const raw = JSON.parse((0, import_node_fs17.readFileSync)(rootMetaPath, "utf8"));
         const meta3 = BranchMetaSchema.parse(raw);
         writeLocalStamp(tffDir, {
           stateId: meta3.stateId,
@@ -28691,8 +29518,151 @@ var stateRepairCmd = async (args) => {
   }
 };
 
+// tools/src/application/state-branch/repair-state-branches.ts
+init_result();
+var repairStateBranchesUseCase = async (input, deps) => {
+  const result = {
+    created: [],
+    failed: [],
+    skipped: []
+  };
+  const rootExists = await deps.stateBranch.exists("main");
+  if (!isOk(rootExists)) {
+    return Err(rootExists.error);
+  }
+  if (!rootExists.data) {
+    if (input.dryRun) {
+      result.skipped.push({ type: "root", id: "main", reason: "Would create (dry-run)" });
+    } else {
+      const createResult = await deps.stateBranch.createRoot();
+      if (isOk(createResult)) {
+        result.created.push({ type: "root", id: "main" });
+      } else {
+        result.failed.push({ type: "root", id: "main", error: createResult.error.message });
+      }
+    }
+  }
+  const milestonesResult = deps.milestoneStore.listMilestones();
+  if (!isOk(milestonesResult)) {
+    return Err(milestonesResult.error);
+  }
+  for (const milestone of milestonesResult.data) {
+    const branchName = `milestone/${milestone.id}`;
+    const exists = await deps.stateBranch.exists(branchName);
+    if (!isOk(exists)) {
+      result.failed.push({ type: "milestone", id: milestone.id, error: exists.error.message });
+      continue;
+    }
+    if (exists.data) {
+      result.skipped.push({ type: "milestone", id: milestone.id, reason: "Already exists" });
+      continue;
+    }
+    if (input.dryRun) {
+      result.skipped.push({ type: "milestone", id: milestone.id, reason: "Would create (dry-run)" });
+      continue;
+    }
+    const forkResult = await deps.stateBranch.fork(branchName, "tff-state/main");
+    if (isOk(forkResult)) {
+      result.created.push({ type: "milestone", id: milestone.id });
+    } else {
+      result.failed.push({ type: "milestone", id: milestone.id, error: forkResult.error.message });
+    }
+  }
+  for (const milestone of milestonesResult.data) {
+    const slicesResult = deps.sliceStore.listSlices(milestone.id);
+    if (!isOk(slicesResult)) {
+      continue;
+    }
+    for (const slice of slicesResult.data) {
+      const branchName = `slice/${slice.id}`;
+      const parentStateBranch = `tff-state/milestone/${milestone.id}`;
+      const exists = await deps.stateBranch.exists(branchName);
+      if (!isOk(exists)) {
+        result.failed.push({ type: "slice", id: slice.id, error: exists.error.message });
+        continue;
+      }
+      if (exists.data) {
+        result.skipped.push({ type: "slice", id: slice.id, reason: "Already exists" });
+        continue;
+      }
+      const parentExists = await deps.stateBranch.exists(`milestone/${milestone.id}`);
+      if (!isOk(parentExists) || !parentExists.data) {
+        result.failed.push({
+          type: "slice",
+          id: slice.id,
+          error: `Parent milestone state branch tff-state/milestone/${milestone.id} not found`
+        });
+        continue;
+      }
+      if (input.dryRun) {
+        result.skipped.push({ type: "slice", id: slice.id, reason: "Would create (dry-run)" });
+        continue;
+      }
+      const forkResult = await deps.stateBranch.fork(branchName, parentStateBranch);
+      if (isOk(forkResult)) {
+        result.created.push({ type: "slice", id: slice.id });
+      } else {
+        result.failed.push({ type: "slice", id: slice.id, error: forkResult.error.message });
+      }
+    }
+  }
+  return Ok(result);
+};
+
+// tools/src/cli/commands/state-repair-branches.cmd.ts
+init_result();
+var stateRepairBranchesCmd = async (args) => {
+  const dryRun = args.includes("--dry-run");
+  return withBranchGuard(async ({ milestoneStore, sliceStore }) => {
+    const cwd = process.cwd();
+    const gitOps = new GitCliAdapter(cwd);
+    const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+    const result = await repairStateBranchesUseCase({ dryRun }, { milestoneStore, sliceStore, stateBranch });
+    if (!isOk(result)) {
+      return JSON.stringify({ ok: false, error: result.error });
+    }
+    const output = result.data;
+    const lines = [];
+    lines.push(`State Branch Repair ${dryRun ? "(DRY RUN)" : ""}`);
+    lines.push("");
+    if (output.created.length > 0) {
+      lines.push(`Created: ${output.created.length}`);
+      for (const item of output.created) {
+        lines.push(`  \u2713 ${item.type}: ${item.id}`);
+      }
+      lines.push("");
+    }
+    if (output.failed.length > 0) {
+      lines.push(`Failed: ${output.failed.length}`);
+      for (const item of output.failed) {
+        lines.push(`  \u2717 ${item.type}: ${item.id} - ${item.error}`);
+      }
+      lines.push("");
+    }
+    if (output.skipped.length > 0) {
+      lines.push(`Skipped: ${output.skipped.length}`);
+      for (const item of output.skipped) {
+        lines.push(`  \u2192 ${item.type}: ${item.id} (${item.reason})`);
+      }
+      lines.push("");
+    }
+    lines.push("");
+    lines.push(
+      `Summary: ${output.created.length} created, ${output.failed.length} failed, ${output.skipped.length} skipped`
+    );
+    return JSON.stringify({
+      ok: true,
+      data: {
+        ...output,
+        summary: lines.join("\n")
+      }
+    });
+  });
+};
+
 // tools/src/cli/commands/sync-branch.cmd.ts
 init_result();
+init_sqlite_state_exporter();
 var syncBranchCmd = async (args) => {
   const [codeBranch, message] = args;
   if (!codeBranch)
@@ -28703,7 +29673,10 @@ var syncBranchCmd = async (args) => {
   const result = await withClosableSyncLock(async () => {
     return withClosableBranchGuard(async (stores) => {
       const gitOps = new GitCliAdapter(process.cwd());
-      const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd());
+      const exporter = new SQLiteStateExporter(
+        stores.db
+      );
+      const stateBranch = new GitStateBranchAdapter(gitOps, process.cwd(), exporter);
       try {
         stores.checkpoint();
         const result2 = await syncBranchUseCase(
@@ -28901,7 +29874,7 @@ var workflowShouldAutoCmd = async (args) => {
 };
 
 // tools/src/cli/commands/worktree-create.cmd.ts
-var import_node_path20 = __toESM(require("path"), 1);
+var import_node_path21 = __toESM(require("path"), 1);
 
 // tools/src/application/worktree/create-worktree.ts
 init_result();
@@ -28925,8 +29898,8 @@ var worktreeCreateCmd = async (args) => {
   const startPoint = milestoneMatch ? `milestone/${milestoneMatch[1]}` : void 0;
   const result = await createWorktreeUseCase({ sliceId, startPoint }, { gitOps });
   if (isOk(result)) {
-    const tffDir = import_node_path20.default.join(cwd, ".tff");
-    const worktreeAbsPath = import_node_path20.default.resolve(cwd, result.data.worktreePath);
+    const tffDir = import_node_path21.default.join(cwd, ".tff");
+    const worktreeAbsPath = import_node_path21.default.resolve(cwd, result.data.worktreePath);
     copyTffToWorktree(tffDir, worktreeAbsPath);
     return JSON.stringify({ ok: true, data: result.data });
   }
@@ -29017,7 +29990,7 @@ var main = async () => {
     console.log(
       JSON.stringify({
         ok: true,
-        data: { name: "tff-tools", version: "0.8.2", commands: Object.keys(commands) }
+        data: { name: "tff-tools", version: "0.9.0", commands: Object.keys(commands) }
       })
     );
     return;

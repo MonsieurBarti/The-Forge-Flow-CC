@@ -33,6 +33,7 @@ describe('sync-lock integration', () => {
     // Initialize git repo
     const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('GIT_')));
     execSync('git init', { cwd: tmpDir, stdio: 'ignore', env });
+    execSync('git checkout -b main', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git config user.email "test@test.com"', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git config user.name "Test"', { cwd: tmpDir, stdio: 'ignore', env });
     execSync('git commit --allow-empty -m "init"', { cwd: tmpDir, stdio: 'ignore', env });

@@ -11,7 +11,7 @@ export function copyTffToWorktree(tffDir: string, worktreePath: string): void {
   mkdirSync(destTffDir, { recursive: true });
 
   for (const entry of readdirSync(tffDir)) {
-    if (entry === 'worktrees' || entry === 'branch-meta.json') continue;
+    if (entry === 'worktrees' || entry === 'branch-meta.json' || entry === 'state.db') continue;
     const src = path.join(tffDir, entry);
     const dest = path.join(destTffDir, entry);
     if (statSync(src).isDirectory()) {
