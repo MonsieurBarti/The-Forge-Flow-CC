@@ -6,7 +6,7 @@
 
 // Scrub GIT_* environment variables to prevent ghost staging
 for (const key of Object.keys(process.env)) {
-  if (key.startsWith('GIT_')) {
-    delete process.env[key];
-  }
+	if (key.startsWith("GIT_")) {
+		delete process.env[key];
+	}
 }

@@ -1,4 +1,4 @@
-export const TFF_HOOK_MARKER = '# tff post-checkout hook';
+export const TFF_HOOK_MARKER = "# tff post-checkout hook";
 
 export const postCheckoutHookScript = `#!/bin/sh
 # tff post-checkout hook — restores .tff/ state on branch switch

@@ -1,16 +1,16 @@
-import { existsSync, readFileSync } from 'node:fs';
-import path from 'node:path';
-import { parse as parseYaml } from 'yaml';
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { parse as parseYaml } from "yaml";
 
 export interface SpecEditWarning {
-  code: 'SPEC_EDIT_DETECTED';
-  message: string;
-  suggestion: string;
+	code: "SPEC_EDIT_DETECTED";
+	message: string;
+	suggestion: string;
 }
 
 export interface DetectSpecEditResult {
-  warning: SpecEditWarning | null;
-  reason: 'GUARD_DISABLED' | 'NOT_SPEC_FILE' | 'SPEC_EDIT_DETECTED' | null;
+	warning: SpecEditWarning | null;
+	reason: "GUARD_DISABLED" | "NOT_SPEC_FILE" | "SPEC_EDIT_DETECTED" | null;
 }
 
 /**
@@ -18,18 +18,18 @@ export interface DetectSpecEditResult {
  * Returns true if workflow.guards is explicitly false.
  */
 function areGuardsDisabled(): boolean {
-  const settingsPath = path.join(process.cwd(), '.tff', 'settings.yaml');
-  if (!existsSync(settingsPath)) {
-    return false; // Default to enabled if no settings file
-  }
-  try {
-    const content = readFileSync(settingsPath, 'utf8');
-    if (!content.trim()) return false;
-    const parsed = parseYaml(content) as Record<string, unknown>;
-    return (parsed?.workflow as Record<string, unknown> | undefined)?.guards === false;
-  } catch {
-    return false; // On any error, default to enabled
-  }
+	const settingsPath = path.join(process.cwd(), ".tff", "settings.yaml");
+	if (!existsSync(settingsPath)) {
+		return false; // Default to enabled if no settings file
+	}
+	try {
+		const content = readFileSync(settingsPath, "utf8");
+		if (!content.trim()) return false;
+		const parsed = parseYaml(content) as Record<string, unknown>;
+		return (parsed?.workflow as Record<string, unknown> | undefined)?.guards === false;
+	} catch {
+		return false; // On any error, default to enabled
+	}
 }
 
 /**
@@ -38,19 +38,19 @@ function areGuardsDisabled(): boolean {
  * Also matches paths like .tff/milestones/M001/SPEC.md or slices/S01/SPEC.md
  */
 function isSpecFile(filePath: string): boolean {
-  if (!filePath || typeof filePath !== 'string') {
-    return false;
-  }
+	if (!filePath || typeof filePath !== "string") {
+		return false;
+	}
 
-  // Normalize path separators
-  const normalized = filePath.replace(/\\/g, '/');
+	// Normalize path separators
+	const normalized = filePath.replace(/\\/g, "/");
 
-  // Get the basename and remove any query/hash fragments
-  const basename = normalized.split('/').pop() || '';
-  const cleanName = basename.split('?')[0].split('#')[0];
+	// Get the basename and remove any query/hash fragments
+	const basename = normalized.split("/").pop() || "";
+	const cleanName = basename.split("?")[0].split("#")[0];
 
-  // Case-insensitive match for spec.md (exact match only, no extensions like .backup)
-  return cleanName.toLowerCase() === 'spec.md';
+	// Case-insensitive match for spec.md (exact match only, no extensions like .backup)
+	return cleanName.toLowerCase() === "spec.md";
 }
 
 /**
@@ -65,29 +65,29 @@ function isSpecFile(filePath: string): boolean {
  * @returns DetectSpecEditResult with warning and reason code
  */
 export function detectSpecEdit(filePath: string): DetectSpecEditResult {
-  // Fast path: check if guards are disabled
-  if (areGuardsDisabled()) {
-    return {
-      warning: null,
-      reason: 'GUARD_DISABLED',
-    };
-  }
+	// Fast path: check if guards are disabled
+	if (areGuardsDisabled()) {
+		return {
+			warning: null,
+			reason: "GUARD_DISABLED",
+		};
+	}
 
-  // Check if path is a SPEC.md file
-  if (!isSpecFile(filePath)) {
-    return {
-      warning: null,
-      reason: 'NOT_SPEC_FILE',
-    };
-  }
+	// Check if path is a SPEC.md file
+	if (!isSpecFile(filePath)) {
+		return {
+			warning: null,
+			reason: "NOT_SPEC_FILE",
+		};
+	}
 
-  // SPEC.md edit detected outside /tff:discuss workflow
-  return {
-    warning: {
-      code: 'SPEC_EDIT_DETECTED',
-      message: 'SPEC.md modified outside workflow — update STATE.md?',
-      suggestion: 'Use /tff:discuss for phase boundary changes, or add manual state-update entry.',
-    },
-    reason: 'SPEC_EDIT_DETECTED',
-  };
+	// SPEC.md edit detected outside /tff:discuss workflow
+	return {
+		warning: {
+			code: "SPEC_EDIT_DETECTED",
+			message: "SPEC.md modified outside workflow — update STATE.md?",
+			suggestion: "Use /tff:discuss for phase boundary changes, or add manual state-update entry.",
+		},
+		reason: "SPEC_EDIT_DETECTED",
+	};
 }

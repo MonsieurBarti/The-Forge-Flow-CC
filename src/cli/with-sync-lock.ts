@@ -1,58 +1,58 @@
-import path from 'node:path';
+import path from "node:path";
 import {
-  type ClosableStateStores,
-  createClosableStateStores,
-  createStateStores,
-  type StateStores,
-} from '../infrastructure/adapters/sqlite/create-state-stores.js';
-import { acquireSyncLock } from '../infrastructure/locking/tff-lock.js';
+	type ClosableStateStores,
+	createClosableStateStores,
+	createStateStores,
+	type StateStores,
+} from "../infrastructure/adapters/sqlite/create-state-stores.js";
+import { acquireSyncLock } from "../infrastructure/locking/tff-lock.js";
 
 export interface SyncLockResult {
-  ok: true;
-  data: {
-    action: 'skipped';
-    reason: string;
-  };
+	ok: true;
+	data: {
+		action: "skipped";
+		reason: string;
+	};
 }
 
 function resolveLockPath(dbPath?: string): string {
-  return dbPath ?? path.join(process.cwd(), '.tff', 'state.db');
+	return dbPath ?? path.join(process.cwd(), ".tff", "state.db");
 }
 
 export async function withSyncLock<T>(
-  fn: (stores: StateStores) => Promise<T>,
-  opts?: { dbPath?: string },
+	fn: (stores: StateStores) => Promise<T>,
+	opts?: { dbPath?: string },
 ): Promise<T | SyncLockResult> {
-  const lockPath = resolveLockPath(opts?.dbPath);
-  const release = await acquireSyncLock(lockPath, 5000);
+	const lockPath = resolveLockPath(opts?.dbPath);
+	const release = await acquireSyncLock(lockPath, 5000);
 
-  if (release === null) {
-    return { ok: true, data: { action: 'skipped', reason: 'Lock held by another process' } };
-  }
+	if (release === null) {
+		return { ok: true, data: { action: "skipped", reason: "Lock held by another process" } };
+	}
 
-  try {
-    const stores = createStateStores(opts?.dbPath);
-    return await fn(stores);
-  } finally {
-    await release();
-  }
+	try {
+		const stores = createStateStores(opts?.dbPath);
+		return await fn(stores);
+	} finally {
+		await release();
+	}
 }
 
 export async function withClosableSyncLock<T>(
-  fn: (stores: ClosableStateStores) => Promise<T>,
-  opts?: { dbPath?: string },
+	fn: (stores: ClosableStateStores) => Promise<T>,
+	opts?: { dbPath?: string },
 ): Promise<T | SyncLockResult> {
-  const lockPath = resolveLockPath(opts?.dbPath);
-  const release = await acquireSyncLock(lockPath, 5000);
+	const lockPath = resolveLockPath(opts?.dbPath);
+	const release = await acquireSyncLock(lockPath, 5000);
 
-  if (release === null) {
-    return { ok: true, data: { action: 'skipped', reason: 'Lock held by another process' } };
-  }
+	if (release === null) {
+		return { ok: true, data: { action: "skipped", reason: "Lock held by another process" } };
+	}
 
-  try {
-    const stores = createClosableStateStores(opts?.dbPath);
-    return await fn(stores);
-  } finally {
-    await release();
-  }
+	try {
+		const stores = createClosableStateStores(opts?.dbPath);
+		return await fn(stores);
+	} finally {
+		await release();
+	}
 }

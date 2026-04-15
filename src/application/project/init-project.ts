@@ -1,82 +1,84 @@
-import { createProject, type Project } from '../../domain/entities/project.js';
-import type { DomainError } from '../../domain/errors/domain-error.js';
-import { projectExistsError } from '../../domain/errors/project-exists.error.js';
-import type { ArtifactStore } from '../../domain/ports/artifact-store.port.js';
-import type { ProjectStore } from '../../domain/ports/project-store.port.js';
-import type { StateBranchPort } from '../../domain/ports/state-branch.port.js';
-import { Err, isOk, Ok, type Result } from '../../domain/result.js';
+import { createProject, type Project } from "../../domain/entities/project.js";
+import type { DomainError } from "../../domain/errors/domain-error.js";
+import { projectExistsError } from "../../domain/errors/project-exists.error.js";
+import type { ArtifactStore } from "../../domain/ports/artifact-store.port.js";
+import type { ProjectStore } from "../../domain/ports/project-store.port.js";
+import type { StateBranchPort } from "../../domain/ports/state-branch.port.js";
+import { Err, isOk, Ok, type Result } from "../../domain/result.js";
 
 interface InitProjectInput {
-  name: string;
-  vision: string;
+	name: string;
+	vision: string;
 }
 interface InitProjectDeps {
-  projectStore: ProjectStore;
-  artifactStore: ArtifactStore;
-  stateBranch?: StateBranchPort;
+	projectStore: ProjectStore;
+	artifactStore: ArtifactStore;
+	stateBranch?: StateBranchPort;
 }
 interface InitProjectOutput {
-  project: Project;
+	project: Project;
 }
 
 export const initProject = async (
-  input: InitProjectInput,
-  deps: InitProjectDeps,
+	input: InitProjectInput,
+	deps: InitProjectDeps,
 ): Promise<Result<InitProjectOutput, DomainError>> => {
-  if (await deps.artifactStore.exists('.tff/PROJECT.md')) return Err(projectExistsError(input.name));
+	if (await deps.artifactStore.exists(".tff/PROJECT.md"))
+		return Err(projectExistsError(input.name));
 
-  const existing = deps.projectStore.getProject();
-  if (!isOk(existing)) return existing;
-  if (existing.data !== null) return Err(projectExistsError(input.name));
+	const existing = deps.projectStore.getProject();
+	if (!isOk(existing)) return existing;
+	if (existing.data !== null) return Err(projectExistsError(input.name));
 
-  const project = createProject(input);
+	const project = createProject(input);
 
-  const saveResult = deps.projectStore.saveProject({ name: project.name, vision: project.vision });
-  if (!isOk(saveResult)) return saveResult;
+	const saveResult = deps.projectStore.saveProject({ name: project.name, vision: project.vision });
+	if (!isOk(saveResult)) return saveResult;
 
-  await deps.artifactStore.mkdir('.tff');
-  await deps.artifactStore.mkdir('.tff/milestones');
+	await deps.artifactStore.mkdir(".tff");
+	await deps.artifactStore.mkdir(".tff/milestones");
 
-  // Ensure .tff/ and build/ are in .gitignore so artifacts never land on code branches
-  await ensureGitignored(deps.artifactStore);
+	// Ensure .tff/ and build/ are in .gitignore so artifacts never land on code branches
+	await ensureGitignored(deps.artifactStore);
 
-  const projectMd = `# ${project.name}\n\n## Vision\n\n${project.vision}\n`;
-  await deps.artifactStore.write('.tff/PROJECT.md', projectMd);
+	const projectMd = `# ${project.name}\n\n## Vision\n\n${project.vision}\n`;
+	await deps.artifactStore.write(".tff/PROJECT.md", projectMd);
 
-  if (deps.stateBranch) {
-    const createResult = await deps.stateBranch.createRoot();
-    if (!isOk(createResult)) {
-      console.warn(`[tff] Failed to create root state branch: ${createResult.error.message}`);
-    }
-  }
+	if (deps.stateBranch) {
+		const createResult = await deps.stateBranch.createRoot();
+		if (!isOk(createResult)) {
+			console.warn(`[tff] Failed to create root state branch: ${createResult.error.message}`);
+		}
+	}
 
-  return Ok({ project: saveResult.data });
+	return Ok({ project: saveResult.data });
 };
 
-const REQUIRED_GITIGNORE_ENTRIES = ['.tff/', 'build/'];
+const REQUIRED_GITIGNORE_ENTRIES = [".tff/", "build/"];
 
 async function ensureGitignored(artifactStore: ArtifactStore): Promise<void> {
-  const gitignorePath = '.gitignore';
+	const gitignorePath = ".gitignore";
 
-  let existing = '';
-  if (await artifactStore.exists(gitignorePath)) {
-    const readResult = await artifactStore.read(gitignorePath);
-    if (isOk(readResult)) existing = readResult.data;
-  }
+	let existing = "";
+	if (await artifactStore.exists(gitignorePath)) {
+		const readResult = await artifactStore.read(gitignorePath);
+		if (isOk(readResult)) existing = readResult.data;
+	}
 
-  const lines = existing.split('\n');
-  const missing = REQUIRED_GITIGNORE_ENTRIES.filter(
-    (entry) => !lines.some((line) => line.trim() === entry || line.trim() === entry.replace(/\/$/, '')),
-  );
+	const lines = existing.split("\n");
+	const missing = REQUIRED_GITIGNORE_ENTRIES.filter(
+		(entry) =>
+			!lines.some((line) => line.trim() === entry || line.trim() === entry.replace(/\/$/, "")),
+	);
 
-  if (missing.length === 0) return;
+	if (missing.length === 0) return;
 
-  const suffix = missing.map((e) => e).join('\n');
-  const content =
-    existing.length === 0
-      ? `${suffix}\n`
-      : existing.endsWith('\n')
-        ? `${existing}${suffix}\n`
-        : `${existing}\n${suffix}\n`;
-  await artifactStore.write(gitignorePath, content);
+	const suffix = missing.map((e) => e).join("\n");
+	const content =
+		existing.length === 0
+			? `${suffix}\n`
+			: existing.endsWith("\n")
+				? `${existing}${suffix}\n`
+				: `${existing}\n${suffix}\n`;
+	await artifactStore.write(gitignorePath, content);
 }
