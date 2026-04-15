@@ -7,13 +7,13 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsup --config tools/tsup.config.ts",
+    "build": "tsup --config tsup.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit -p tools/tsconfig.json",
-    "lint": "biome check tools/src/",
-    "lint:fix": "biome check --fix tools/src/",
-    "format": "biome format --write tools/src/"
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --fix src/",
+    "format": "biome format --write src/"
   },
   "keywords": [
     "claude-code",
