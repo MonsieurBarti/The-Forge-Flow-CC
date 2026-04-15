@@ -62,7 +62,7 @@ Verify: Run `/plannotator-review` in Claude Code -- it should open a browser win
 claude /plugin marketplace add MonsieurBarti/The-Forge-Flow-CC
 
 # Install the plugin
-claude /plugin install the-forge-flow@the-forge-flow
+claude /plugin install tff-cc@the-forge-flow
 ```
 
 Verify: Run `/tff:help` in Claude Code to see the command reference.
@@ -315,13 +315,13 @@ the-forge-flow/
   workflows/              # 23 orchestration workflows (.md)
   references/             # 8 reference documents (.md)
   hooks/                  # PostToolUse observation hook (.sh)
-  tools/
-    src/
-      domain/             # Hexagonal domain layer (Zod, Result<T,E>)
-      application/        # Use cases (orchestrate domain via ports)
-      infrastructure/     # Adapters (SQLite, git CLI, filesystem)
-      cli/                # tff-tools.cjs entry point
-    dist/tff-tools.cjs    # Compiled single-file CLI bundle
+  src/
+    domain/               # Hexagonal domain layer (Zod, Result<T,E>)
+    application/          # Use cases (orchestrate domain via ports)
+    infrastructure/       # Adapters (SQLite, git CLI, filesystem)
+    cli/                  # CLI entry point
+  dist/                   # Compiled CLI and native bindings
+  tests/                  # Unit and integration tests
 ```
 
 ### Hexagonal Rules

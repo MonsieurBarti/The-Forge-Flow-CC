@@ -4,17 +4,17 @@ Before every release, complete ALL steps ∈ order.
 
 ## Pre-Release
 
-- [ ] All tests pass: `cd tools && npx vitest run`
-- [ ] Type check passes: `npx tsc --noEmit -p tools/tsconfig.json`
+- [ ] All tests pass: `npx vitest run`
+- [ ] Type check passes: `npx tsc --noEmit`
 - [ ] Build succeeds: `npm run build`
-- [ ] CLI works: `node tools/dist/tff-tools.cjs --help`
+- [ ] CLI works: `node dist/cli/index.js --help`
 
 ## Version Bumps
 
 - [ ] Bump version ∈ `package.json` (`"version": "X.Y.Z"`)
 - [ ] Bump version ∈ `.claude-plugin/plugin.json` (`"version": "X.Y.Z"`)
 - [ ] Bump version ∈ `plugin/.claude-plugin/plugin.json` (`"version": "X.Y.Z"`)
-- [ ] Update `tools/src/cli/index.ts` version string if hardcoded
+- [ ] Update `src/cli/index.ts` version string if hardcoded
 
 ## Documentation
 
