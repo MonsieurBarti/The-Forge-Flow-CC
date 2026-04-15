@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plugin Distribution:** Fully bundled CLI with native bindings for all platforms (darwin-x64/arm64, linux-x64/arm64, win32-x64) — zero npm install required
 - **Compressed Notation:** Applied formal logic symbols (∀∃∈∧∨¬->∅) to 195 markdown files across workflows, skills, agents, and GSD docs
 
+### Changed
+
+- **S01 — AskUserQuestion removal:** Removed AskUserQuestion from AI-facing instruction files (15 commands, 7 workflows, 1 skill, 1 reference); AI now asks questions inline in conversation rather than through a structured tool call; `tff_ask_user` tool remains for TFF's internal use
+
 ### Infrastructure
 
 - Built CLI artifacts committed to `tools/dist/` for out-of-the-box plugin installation
