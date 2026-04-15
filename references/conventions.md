@@ -140,6 +140,6 @@ tff-tools task:close <task-id> --reason "Completed"
 
 ## Tooling CLI
 
-All tooling calls: `node <plugin-path>/tools/dist/tff-tools.cjs <command> [args]`
+All tooling calls: `node <plugin-path>/dist/cli/index.js <command> [args]`
 
 Returns JSON: `{ "ok": true, "data": ... }` ∨ `{ "ok": false, "error": { "code": "...", "message": "..." } }`

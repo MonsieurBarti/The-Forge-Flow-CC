@@ -1,5 +1,5 @@
 {
-	"name": "the-forge-flow",
+	"name": "tff-cc",
 	"description": "Autonomous coding agent orchestrator with SQLite-backed state, plannotator integration, and wave-based parallel execution",
 	"version": "0.9.0",
 	"author": { "name": "MonsieurBarti" },

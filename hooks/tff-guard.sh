@@ -21,7 +21,7 @@ case "$TOOL_NAME" in
 esac
 
 # Call CLI to check for direct edit
-CLI_OUTPUT=$(node "${CLAUDE_PLUGIN_ROOT}/tools/dist/cli/index.cjs" direct-edit:guard 2>/dev/null)
+CLI_OUTPUT=$(node "${CLAUDE_PLUGIN_ROOT}/dist/cli/index.js" direct-edit:guard 2>/dev/null)
 if [ -z "$CLI_OUTPUT" ]; then
   echo '{"suppressOutput":true}'
   exit 0
