@@ -35,7 +35,7 @@ describe("withBranchGuard", () => {
 				.mockReturnValue({ projectStore: "mock", close: vi.fn(), checkpoint: vi.fn() }),
 		}));
 
-		const { withBranchGuard } = await import("./with-branch-guard.js");
+		const { withBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
 		const result = await withBranchGuard(async (stores) => {
 			expect(stores.projectStore).toBe("mock");
 			return "success";
@@ -84,7 +84,7 @@ describe("withBranchGuard", () => {
 			writeSyntheticStamp: vi.fn(),
 		}));
 
-		const { withBranchGuard } = await import("./with-branch-guard.js");
+		const { withBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
 		const result = await withBranchGuard(async () => "recovered");
 		expect(result).toBe("recovered");
 	});
@@ -121,7 +121,7 @@ describe("withBranchGuard", () => {
 
 		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-		const { withBranchGuard } = await import("./with-branch-guard.js");
+		const { withBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
 		const result = await withBranchGuard(async () => "fallback");
 		expect(result).toBe("fallback");
 		expect(mockWriteSyntheticStamp).toHaveBeenCalled();
@@ -140,7 +140,7 @@ describe("withBranchGuard", () => {
 			createClosableStateStoresUnchecked: vi.fn(),
 		}));
 
-		const { withBranchGuard } = await import("./with-branch-guard.js");
+		const { withBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
 		await expect(withBranchGuard(async () => "never")).rejects.toThrow("unrelated failure");
 	});
 });
@@ -170,7 +170,7 @@ describe("withClosableBranchGuard", () => {
 			createClosableStateStoresUnchecked: vi.fn(),
 		}));
 
-		const { withClosableBranchGuard } = await import("./with-branch-guard.js");
+		const { withClosableBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
 		const result = await withClosableBranchGuard(async (stores) => {
 			expect(stores.projectStore).toBe("mock");
 			expect(stores.close).toBe(mockClose);
@@ -217,7 +217,7 @@ describe("withClosableBranchGuard", () => {
 
 		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-		const { withClosableBranchGuard } = await import("./with-branch-guard.js");
+		const { withClosableBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
 		const result = await withClosableBranchGuard(async (stores) => {
 			expect(stores.projectStore).toBe("mock-unchecked");
 			return "closable-recovered";

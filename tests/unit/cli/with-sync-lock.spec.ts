@@ -19,7 +19,7 @@ describe("withSyncLock", () => {
 			createClosableStateStores: vi.fn(),
 		}));
 
-		const { withSyncLock } = await import("./with-sync-lock.js");
+		const { withSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
 		const result = await withSyncLock(async (stores) => {
 			expect(stores.projectStore).toBe("mock");
 			return "success";
@@ -37,7 +37,7 @@ describe("withSyncLock", () => {
 			createClosableStateStores: vi.fn(),
 		}));
 
-		const { withSyncLock } = await import("./with-sync-lock.js");
+		const { withSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
 		const result = await withSyncLock(async () => "should-not-run");
 
 		expect(result).toEqual({
@@ -59,7 +59,7 @@ describe("withSyncLock", () => {
 			createClosableStateStores: vi.fn(),
 		}));
 
-		const { withSyncLock } = await import("./with-sync-lock.js");
+		const { withSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
 		await expect(
 			withSyncLock(async () => {
 				throw new Error("fn failure");
@@ -82,7 +82,7 @@ describe("withSyncLock", () => {
 			createClosableStateStores: vi.fn(),
 		}));
 
-		const { withSyncLock } = await import("./with-sync-lock.js");
+		const { withSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
 		await withSyncLock(async () => "success", { dbPath: "/custom/path/state.db" });
 
 		expect(mockAcquireSyncLock).toHaveBeenCalledWith("/custom/path/state.db", 5000);
@@ -116,7 +116,7 @@ describe("withClosableSyncLock", () => {
 			}),
 		}));
 
-		const { withClosableSyncLock } = await import("./with-sync-lock.js");
+		const { withClosableSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
 		const result = await withClosableSyncLock(async (stores) => {
 			expect(stores.projectStore).toBe("mock-closable");
 			expect(stores.close).toBe(mockClose);
@@ -136,7 +136,7 @@ describe("withClosableSyncLock", () => {
 			createClosableStateStores: vi.fn(),
 		}));
 
-		const { withClosableSyncLock } = await import("./with-sync-lock.js");
+		const { withClosableSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
 		const result = await withClosableSyncLock(async () => "should-not-run");
 
 		expect(result).toEqual({
@@ -162,7 +162,7 @@ describe("withClosableSyncLock", () => {
 			}),
 		}));
 
-		const { withClosableSyncLock } = await import("./with-sync-lock.js");
+		const { withClosableSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
 		await expect(
 			withClosableSyncLock(async () => {
 				throw new Error("fn failure");
@@ -189,7 +189,7 @@ describe("withClosableSyncLock", () => {
 			createClosableStateStores: mockCreateClosableStateStores,
 		}));
 
-		const { withClosableSyncLock } = await import("./with-sync-lock.js");
+		const { withClosableSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
 		await withClosableSyncLock(async () => "success", { dbPath: "/custom/path/state.db" });
 
 		expect(mockAcquireSyncLock).toHaveBeenCalledWith("/custom/path/state.db", 5000);

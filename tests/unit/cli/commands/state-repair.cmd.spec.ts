@@ -300,8 +300,8 @@ describe("state:repair", () => {
 
 		// Initialize proper SQLite state with project data using commands
 		// First create a valid SQLite database via the init/milestone commands
-		const initCmd = (await import("./project-init.cmd.js")).projectInitCmd;
-		const milestoneCmd = (await import("./milestone-create.cmd.js")).milestoneCreateCmd;
+		const initCmd = (await import("../../../../src/infrastructure/adapters/sqlite/project-init.cmd.js")).projectInitCmd;
+		const milestoneCmd = (await import("../../../../src/infrastructure/adapters/sqlite/milestone-create.cmd.js")).milestoneCreateCmd;
 
 		const initResult = JSON.parse(
 			await initCmd(["test-restore-project", "Test project for restore"]),

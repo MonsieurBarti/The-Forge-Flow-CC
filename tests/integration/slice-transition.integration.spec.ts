@@ -470,7 +470,7 @@ describe("slice-transition integration", () => {
 			});
 
 			// Mock checkpoint failure by importing and mocking the checkpoint module
-			const { checkpointSaveCmd } = await import("./checkpoint-save.cmd.js");
+			const { checkpointSaveCmd } = await import("../../../../src/infrastructure/adapters/sqlite/checkpoint-save.cmd.js");
 			vi.mocked(checkpointSaveCmd).mockRejectedValue(new Error("disk full"));
 
 			const result = await sliceTransitionCmd(["M01-S01", "researching"]);
