@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped version to 0.8.1 across all files:
   - `package.json`
   - `plugin/.claude-plugin/plugin.json`
-  - `tools/src/cli/index.ts` (CLI version string)
+  - `src/cli/index.ts` (CLI version string)
 
 ## [0.8.0] - 2026-04-05
 
@@ -367,7 +367,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hooks rewritten: removed Node.js hooks (caused PostToolUse/SessionStart errors), empty hooks.json
 - Fixed label inheritance pollution (`--no-inherit-labels` in `bd create`)
 - Fixed `normalizeBeadData` to find first `tff:` label in labels array
-- Fixed build script: `tsup --config tools/tsup.config.ts`
+- Fixed build script: `tsc -p tsconfig.build.json`
 - Fixed Zod v4 deprecation: `z.string().uuid()` replaced with `z.uuid()` then `z.string().min(1)`
 
 ### Removed

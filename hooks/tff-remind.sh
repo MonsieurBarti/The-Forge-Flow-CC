@@ -12,7 +12,7 @@ fi
 INPUT=$(cat)
 
 # Call CLI to get reminder
-CLI_OUTPUT=$(node "${CLAUDE_PLUGIN_ROOT}/tools/dist/cli/index.cjs" session:remind 2>/dev/null)
+CLI_OUTPUT=$(node "${CLAUDE_PLUGIN_ROOT}/dist/cli/index.js" session:remind 2>/dev/null)
 if [ -z "$CLI_OUTPUT" ]; then
   echo '{"suppressOutput":true}'
   exit 0

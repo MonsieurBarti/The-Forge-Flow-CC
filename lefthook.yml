@@ -2,7 +2,7 @@ pre-commit:
   parallel: true
   commands:
     biome-check:
-      glob: "tools/src/**/*.ts"
+      glob: "src/**/*.ts"
       run: npx biome check --fix --staged {staged_files}
       stage_fixed: true
 

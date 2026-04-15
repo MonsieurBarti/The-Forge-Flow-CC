@@ -21,7 +21,7 @@ else
   # For worktrees: /path/to/repo/.git -> same
   REPO_ROOT=$(dirname "$GIT_COMMON_DIR")
 fi
-TFF_TOOLS="$REPO_ROOT/tools/dist/tff-tools.cjs"
+TFF_TOOLS="$REPO_ROOT/dist/cli/index.js"
 [ -f "$TFF_TOOLS" ] || exit 0
 
 CWD_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)

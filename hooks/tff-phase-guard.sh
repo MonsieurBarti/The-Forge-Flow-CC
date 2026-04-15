@@ -30,7 +30,7 @@ if [ -z "$FILE_PATH" ]; then
 fi
 
 # Call CLI to check for spec edit with the file path
-CLI_OUTPUT=$(node "${CLAUDE_PLUGIN_ROOT}/tools/dist/cli/index.cjs" spec-edit:guard "$FILE_PATH" 2>/dev/null)
+CLI_OUTPUT=$(node "${CLAUDE_PLUGIN_ROOT}/dist/cli/index.js" spec-edit:guard "$FILE_PATH" 2>/dev/null)
 if [ -z "$CLI_OUTPUT" ]; then
   echo '{"suppressOutput":true}'
   exit 0

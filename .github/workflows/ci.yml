@@ -35,4 +35,4 @@ jobs:
         run: npm run build
 
       - name: Verify CLI
-        run: node tools/dist/tff-tools.cjs --help
+        run: node dist/cli/index.js --help

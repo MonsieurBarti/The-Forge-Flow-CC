@@ -48,13 +48,13 @@ jobs:
         run: npm run build
 
       - name: Verify CLI
-        run: node tools/dist/tff-tools.cjs --help
+        run: node dist/cli/index.js --help
 
       - name: Upload native binding
         uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.platform }}
-          path: tools/dist/better_sqlite3.*.node
+          path: dist/better_sqlite3.*.node
 
   release:
     needs: build
@@ -76,12 +76,12 @@ jobs:
       - name: Download all native bindings
         uses: actions/download-artifact@v4
         with:
-          path: tools/dist/
+          path: dist/
           pattern: native-*
           merge-multiple: true
 
       - name: List artifacts
-        run: ls -la tools/dist/
+        run: ls -la dist/
 
       - name: Extract version from tag
         id: version
@@ -93,5 +93,5 @@ jobs:
           name: v${{ steps.version.outputs.VERSION }}
           generate_release_notes: true
           files: |
-            tools/dist/tff-tools.cjs
-            tools/dist/better_sqlite3.*.node
+            dist/cli/index.js
+            dist/better_sqlite3.*.node
