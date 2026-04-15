@@ -8,6 +8,7 @@ import type { ReviewStore } from "../../../domain/ports/review-store.port.js";
 import type { SessionStore } from "../../../domain/ports/session-store.port.js";
 import type { SliceStore } from "../../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../../domain/ports/task-store.port.js";
+import { getProjectId, getProjectHome } from "../../home-directory.js";
 import { JsonlJournalAdapter } from "../journal/jsonl-journal.adapter.js";
 import { SQLiteStateAdapter } from "./sqlite-state.adapter.js";
 
@@ -23,13 +24,33 @@ export interface StateStores {
 	journalRepository: JournalRepository;
 }
 
+/**
+ * Derive state store paths from home directory.
+ * Uses .tff-project-id in cwd to determine project ID.
+ */
+function getDerivedPaths(): { dbPath: string; journalPath: string } {
+	const projectId = getProjectId(process.cwd());
+	const home = getProjectHome(projectId);
+	return {
+		dbPath: path.join(home, "state.db"),
+		journalPath: path.join(home, "journal"),
+	};
+}
+
+/**
+ * Create state stores with optional explicit dbPath (for tests).
+ * If dbPath not provided, derives from home directory.
+ */
 export function createStateStoresUnchecked(dbPath?: string): StateStores {
-	const resolvedPath = dbPath ?? path.join(process.cwd(), ".tff", "state.db");
-	const adapter = SQLiteStateAdapter.create(resolvedPath);
+	const { dbPath: resolvedPath, journalPath } = dbPath
+		? { dbPath, journalPath: path.join(path.dirname(dbPath), "journal") }
+		: getDerivedPaths();
+
+	const adapter = dbPath
+		? SQLiteStateAdapter.createWithPath(resolvedPath)
+		: SQLiteStateAdapter.create();
 	const initResult = adapter.init();
 	if (!initResult.ok) throw new Error(`DB init failed: ${initResult.error.message}`);
-	const tffDir = path.dirname(resolvedPath);
-	const journalPath = path.join(tffDir, "journal");
 	const journalRepository = new JsonlJournalAdapter(journalPath);
 	return {
 		db: adapter,
@@ -53,13 +74,20 @@ export interface ClosableStateStores extends StateStores {
 	checkpoint(): void;
 }
 
+/**
+ * Create closable state stores with optional explicit dbPath (for tests).
+ * If dbPath not provided, derives from home directory.
+ */
 export function createClosableStateStoresUnchecked(dbPath?: string): ClosableStateStores {
-	const resolvedPath = dbPath ?? path.join(process.cwd(), ".tff", "state.db");
-	const adapter = SQLiteStateAdapter.create(resolvedPath);
+	const { dbPath: resolvedPath, journalPath } = dbPath
+		? { dbPath, journalPath: path.join(path.dirname(dbPath), "journal") }
+		: getDerivedPaths();
+
+	const adapter = dbPath
+		? SQLiteStateAdapter.createWithPath(resolvedPath)
+		: SQLiteStateAdapter.create();
 	const initResult = adapter.init();
 	if (!initResult.ok) throw new Error(`DB init failed: ${initResult.error.message}`);
-	const tffDir = path.dirname(resolvedPath);
-	const journalPath = path.join(tffDir, "journal");
 	const journalRepository = new JsonlJournalAdapter(journalPath);
 	return {
 		db: adapter,

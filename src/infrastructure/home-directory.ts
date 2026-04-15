@@ -61,6 +61,10 @@ export function getProjectId(repoRoot: string): string {
 	// Generate new UUID v4
 	const projectId = randomUUID();
 	writeProjectIdFile(repoRoot, projectId);
+
+	// Ensure home directory exists for new projects
+	ensureProjectHomeDir(projectId);
+
 	return projectId;
 }
 
