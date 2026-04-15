@@ -1,0 +1,1 @@
+{"version":3,"file":"has-open-children.error.js","sourceRoot":"","sources":["../../../src/domain/errors/has-open-children.error.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,iBAAiB,EAAoB,MAAM,mBAAmB,CAAC;AAExE,MAAM,CAAC,MAAM,oBAAoB,GAAG,CAAC,QAAgB,EAAE,SAAiB,EAAe,EAAE,CACxF,iBAAiB,CAChB,mBAAmB,EACnB,iBAAiB,QAAQ,OAAO,SAAS,0BAA0B,EACnE;IACC,QAAQ;IACR,SAAS;CACT,CACD,CAAC"}

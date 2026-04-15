@@ -1,0 +1,1 @@
+{"version":3,"file":"sync-failed.error.js","sourceRoot":"","sources":["../../../src/domain/errors/sync-failed.error.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,iBAAiB,EAAE,MAAM,mBAAmB,CAAC;AAEtD,MAAM,CAAC,MAAM,eAAe,GAAG,CAAC,MAAc,EAAE,OAAiC,EAAE,EAAE,CACpF,iBAAiB,CAAC,aAAa,EAAE,6BAA6B,MAAM,EAAE,EAAE,OAAO,CAAC,CAAC"}

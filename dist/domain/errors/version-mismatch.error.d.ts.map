@@ -1,0 +1,1 @@
+{"version":3,"file":"version-mismatch.error.d.ts","sourceRoot":"","sources":["../../../src/domain/errors/version-mismatch.error.ts"],"names":[],"mappings":"AAAA,OAAO,EAAqB,KAAK,WAAW,EAAE,MAAM,mBAAmB,CAAC;AAExE,eAAO,MAAM,oBAAoB,GAAI,WAAW,MAAM,EAAE,aAAa,MAAM,KAAG,WAK5E,CAAC"}

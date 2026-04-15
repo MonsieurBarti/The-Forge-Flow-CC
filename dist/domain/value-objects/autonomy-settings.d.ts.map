@@ -1,0 +1,1 @@
+{"version":3,"file":"autonomy-settings.d.ts","sourceRoot":"","sources":["../../../src/domain/value-objects/autonomy-settings.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,CAAC,EAAE,MAAM,KAAK,CAAC;AAExB,eAAO,MAAM,sBAAsB;;;;;iBAAuD,CAAC;AAC3F,MAAM,MAAM,gBAAgB,GAAG,CAAC,CAAC,KAAK,CAAC,OAAO,sBAAsB,CAAC,CAAC;AAEtE,wBAAgB,iBAAiB,CAAC,GAAG,EAAE,OAAO,GAAG,QAAQ,GAAG,YAAY,CAGvE"}

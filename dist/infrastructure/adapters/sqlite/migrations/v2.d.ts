@@ -1,0 +1,3 @@
+export declare const v2Migration = "\nCREATE TABLE IF NOT EXISTS review (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  slice_id TEXT NOT NULL REFERENCES slice(id),\n  type TEXT NOT NULL,\n  reviewer TEXT NOT NULL,\n  verdict TEXT NOT NULL,\n  commit_sha TEXT NOT NULL,\n  notes TEXT,\n  created_at TEXT NOT NULL DEFAULT (datetime('now'))\n);\n\nCREATE INDEX IF NOT EXISTS idx_review_slice ON review(slice_id, type);\n\nALTER TABLE task ADD COLUMN claimed_by TEXT;\n";
+export declare const SCHEMA_VERSION_2 = 2;
+//# sourceMappingURL=v2.d.ts.map

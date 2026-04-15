@@ -1,0 +1,1 @@
+{"version":3,"file":"task-update-props.d.ts","sourceRoot":"","sources":["../../../src/domain/value-objects/task-update-props.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,CAAC,EAAE,MAAM,KAAK,CAAC;AACxB,eAAO,MAAM,qBAAqB;;;;iBAIhC,CAAC;AACH,MAAM,MAAM,eAAe,GAAG,CAAC,CAAC,KAAK,CAAC,OAAO,qBAAqB,CAAC,CAAC"}

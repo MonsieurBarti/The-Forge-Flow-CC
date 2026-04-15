@@ -1,0 +1,1 @@
+{"version":3,"file":"database-init.port.d.ts","sourceRoot":"","sources":["../../../src/domain/ports/database-init.port.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,2BAA2B,CAAC;AAC7D,OAAO,KAAK,EAAE,MAAM,EAAE,MAAM,cAAc,CAAC;AAE3C,MAAM,WAAW,YAAY;IAC5B,IAAI,IAAI,MAAM,CAAC,IAAI,EAAE,WAAW,CAAC,CAAC;CAClC"}
