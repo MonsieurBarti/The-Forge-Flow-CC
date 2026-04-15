@@ -3,12 +3,12 @@ import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } 
 import os from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { hookPostCheckoutCmd } from '../cli/commands/hook-post-checkout.cmd.js';
-import { BranchMismatchError } from '../domain/errors/branch-mismatch.error.js';
-import { createStateStores } from '../infrastructure/adapters/sqlite/create-state-stores.js';
-import { readLocalStamp, writeLocalStamp, writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.js';
-import { installPostCheckoutHook } from '../infrastructure/hooks/install-post-checkout.js';
-import { TFF_HOOK_MARKER } from '../infrastructure/hooks/post-checkout-template.js';
+import { hookPostCheckoutCmd } from '../../src/cli/commands/hook-post-checkout.cmd.js';
+import { BranchMismatchError } from '../../src/domain/errors/branch-mismatch.error.js';
+import { createStateStores } from '../../src/infrastructure/adapters/sqlite/create-state-stores.js';
+import { readLocalStamp, writeLocalStamp, writeSyntheticStamp } from '../../src/infrastructure/hooks/branch-meta-stamp.js';
+import { installPostCheckoutHook } from '../../src/infrastructure/hooks/install-post-checkout.js';
+import { TFF_HOOK_MARKER } from '../../src/infrastructure/hooks/post-checkout-template.js';
 
 describe('post-checkout restore integration', () => {
   let tmpDir: string;

@@ -4,14 +4,14 @@ import os from 'node:os';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { milestoneCreateCmd } from '../cli/commands/milestone-create.cmd.js';
-import { projectInitCmd } from '../cli/commands/project-init.cmd.js';
-import { sliceCreateCmd } from '../cli/commands/slice-create.cmd.js';
-import { syncBranchCmd } from '../cli/commands/sync-branch.cmd.js';
-import { isErr, isOk } from '../domain/result.js';
-import { createClosableStateStores } from '../infrastructure/adapters/sqlite/create-state-stores.js';
-import { SQLiteSalvage } from '../infrastructure/adapters/sqlite/sqlite-salvage.js';
-import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.js';
+import { milestoneCreateCmd } from '../../src/cli/commands/milestone-create.cmd.js';
+import { projectInitCmd } from '../../src/cli/commands/project-init.cmd.js';
+import { sliceCreateCmd } from '../../src/cli/commands/slice-create.cmd.js';
+import { syncBranchCmd } from '../../src/cli/commands/sync-branch.cmd.js';
+import { isErr, isOk } from '../../src/domain/result.js';
+import { createClosableStateStores } from '../../src/infrastructure/adapters/sqlite/create-state-stores.js';
+import { SQLiteSalvage } from '../../src/infrastructure/adapters/sqlite/sqlite-salvage.js';
+import { writeSyntheticStamp } from '../../src/infrastructure/hooks/branch-meta-stamp.js';
 
 describe('sqlite-salvage integration', () => {
   let tmpDir: string;

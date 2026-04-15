@@ -4,14 +4,14 @@ import os from 'node:os';
 import { join } from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { checkpointSaveCmd } from '../cli/commands/checkpoint-save.cmd.js';
-import { milestoneCreateCmd } from '../cli/commands/milestone-create.cmd.js';
-import { projectInitCmd } from '../cli/commands/project-init.cmd.js';
-import { sliceCreateCmd } from '../cli/commands/slice-create.cmd.js';
-import { stateRepairCmd } from '../cli/commands/state-repair.cmd.js';
-import { taskClaimCmd } from '../cli/commands/task-claim.cmd.js';
-import { createClosableStateStoresUnchecked } from '../infrastructure/adapters/sqlite/create-state-stores.js';
-import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.js';
+import { checkpointSaveCmd } from '../../src/cli/commands/checkpoint-save.cmd.js';
+import { milestoneCreateCmd } from '../../src/cli/commands/milestone-create.cmd.js';
+import { projectInitCmd } from '../../src/cli/commands/project-init.cmd.js';
+import { sliceCreateCmd } from '../../src/cli/commands/slice-create.cmd.js';
+import { stateRepairCmd } from '../../src/cli/commands/state-repair.cmd.js';
+import { taskClaimCmd } from '../../src/cli/commands/task-claim.cmd.js';
+import { createClosableStateStoresUnchecked } from '../../src/infrastructure/adapters/sqlite/create-state-stores.js';
+import { writeSyntheticStamp } from '../../src/infrastructure/hooks/branch-meta-stamp.js';
 
 describe('T2 salvage integration', () => {
   let tmpDir: string;

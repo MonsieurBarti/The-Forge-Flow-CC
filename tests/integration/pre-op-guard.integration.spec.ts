@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Slice } from '../../domain/entities/slice.js';
-import { preOpGuardCmd } from './pre-op-guard.cmd.js';
+import type { Slice } from '../../src/domain/entities/slice.js';
+import { preOpGuardCmd } from '../../src/cli/commands/pre-op-guard.cmd.js';
 
 vi.mock('node:fs');
 

@@ -3,14 +3,14 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { checkpointSaveCmd } from '../cli/commands/checkpoint-save.cmd.js';
-import { milestoneCreateCmd } from '../cli/commands/milestone-create.cmd.js';
-import { projectInitCmd } from '../cli/commands/project-init.cmd.js';
-import { sliceCreateCmd } from '../cli/commands/slice-create.cmd.js';
-import { stateRepairCmd } from '../cli/commands/state-repair.cmd.js';
-import { taskClaimCmd } from '../cli/commands/task-claim.cmd.js';
-import { createClosableStateStores } from '../infrastructure/adapters/sqlite/create-state-stores.js';
-import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.js';
+import { checkpointSaveCmd } from '../../src/cli/commands/checkpoint-save.cmd.js';
+import { milestoneCreateCmd } from '../../src/cli/commands/milestone-create.cmd.js';
+import { projectInitCmd } from '../../src/cli/commands/project-init.cmd.js';
+import { sliceCreateCmd } from '../../src/cli/commands/slice-create.cmd.js';
+import { stateRepairCmd } from '../../src/cli/commands/state-repair.cmd.js';
+import { taskClaimCmd } from '../../src/cli/commands/task-claim.cmd.js';
+import { createClosableStateStores } from '../../src/infrastructure/adapters/sqlite/create-state-stores.js';
+import { writeSyntheticStamp } from '../../src/infrastructure/hooks/branch-meta-stamp.js';
 
 describe('T3 recovery integration', () => {
   let tmpDir: string;

@@ -3,13 +3,13 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { hookPostCheckoutCmd } from '../cli/commands/hook-post-checkout.cmd.js';
-import { milestoneCreateCmd } from '../cli/commands/milestone-create.cmd.js';
-import { projectInitCmd } from '../cli/commands/project-init.cmd.js';
-import { syncBranchCmd } from '../cli/commands/sync-branch.cmd.js';
-import { GitCliAdapter } from '../infrastructure/adapters/git/git-cli.adapter.js';
-import { createStateStores } from '../infrastructure/adapters/sqlite/create-state-stores.js';
-import { writeSyntheticStamp } from '../infrastructure/hooks/branch-meta-stamp.js';
+import { hookPostCheckoutCmd } from '../../src/cli/commands/hook-post-checkout.cmd.js';
+import { milestoneCreateCmd } from '../../src/cli/commands/milestone-create.cmd.js';
+import { projectInitCmd } from '../../src/cli/commands/project-init.cmd.js';
+import { syncBranchCmd } from '../../src/cli/commands/sync-branch.cmd.js';
+import { GitCliAdapter } from '../../src/infrastructure/adapters/git/git-cli.adapter.js';
+import { createStateStores } from '../../src/infrastructure/adapters/sqlite/create-state-stores.js';
+import { writeSyntheticStamp } from '../../src/infrastructure/hooks/branch-meta-stamp.js';
 
 describe('restore-branch-json integration', () => {
   let tmpDir: string;

@@ -3,12 +3,12 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { isOk } from '../domain/result.js';
-import { SQLiteStateExporter } from '../infrastructure/adapters/export/sqlite-state-exporter.js';
-import { SQLiteStateImporter } from '../infrastructure/adapters/export/sqlite-state-importer.js';
-import { GitCliAdapter } from '../infrastructure/adapters/git/git-cli.adapter.js';
-import { GitStateBranchAdapter } from '../infrastructure/adapters/git/git-state-branch.adapter.js';
-import { SQLiteStateAdapter } from '../infrastructure/adapters/sqlite/sqlite-state.adapter.js';
+import { isOk } from '../../src/domain/result.js';
+import { SQLiteStateExporter } from '../../src/infrastructure/adapters/export/sqlite-state-exporter.js';
+import { SQLiteStateImporter } from '../../src/infrastructure/adapters/export/sqlite-state-importer.js';
+import { GitCliAdapter } from '../../src/infrastructure/adapters/git/git-cli.adapter.js';
+import { GitStateBranchAdapter } from '../../src/infrastructure/adapters/git/git-state-branch.adapter.js';
+import { SQLiteStateAdapter } from '../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js';
 
 /** Strip GIT_* env vars to prevent CI runner state from leaking into test subprocesses. */
 const cleanEnv = (): Record<string, string> => {

@@ -3,13 +3,18 @@ pre-commit:
   commands:
     biome-check:
       glob: "src/**/*.ts"
-      run: npx biome check --fix --staged {staged_files}
+      run: bun run biome check --fix --staged {staged_files}
       stage_fixed: true
+
+commit-msg:
+  commands:
+    commitlint:
+      run: bun run commitlint --edit {1}
 
 pre-push:
   parallel: false
   commands:
     typecheck:
-      run: npm run typecheck
+      run: bun run typecheck
     test:
-      run: npm test
+      run: bun test

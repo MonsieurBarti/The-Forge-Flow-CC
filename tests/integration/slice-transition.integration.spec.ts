@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Slice } from '../../domain/entities/slice.js';
+import type { Slice } from '../../src/../domain/entities/slice.js';
 import { sliceTransitionCmd } from './slice-transition.cmd.js';
 
 // Mock with-branch-guard - will pass through to inner function
