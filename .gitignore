@@ -35,5 +35,5 @@ vendor/
 *.log
 coverage/
 .cache/
-tmp/
 .bg-shell/
+.pi/

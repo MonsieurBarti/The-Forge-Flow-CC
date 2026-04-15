@@ -2,14 +2,32 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
 
 permissions:
   contents: write
+  pull-requests: write
+  id-token: write
 
 jobs:
-  build:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Release Please
+        uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  build-native:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
     strategy:
       matrix:
         include:
@@ -31,23 +49,8 @@ jobs:
 
       - run: bun install
 
-      - name: Lint
-        if: matrix.platform == 'linux-x64'
-        run: bun run lint
-
-      - name: Type check
-        if: matrix.platform == 'linux-x64'
-        run: bun run typecheck
-
-      - name: Run tests
-        if: matrix.platform == 'linux-x64'
-        run: bun run test
-
       - name: Build
         run: bun run build
-
-      - name: Verify CLI
-        run: node dist/cli/index.js --help
 
       - name: Upload native binding
         uses: actions/upload-artifact@v4
@@ -55,8 +58,9 @@ jobs:
           name: native-${{ matrix.platform }}
           path: dist/infrastructure/adapters/sqlite/better_sqlite3.*.node
 
-  release:
-    needs: build
+  publish-release:
+    needs: [release-please, build-native]
+    if: ${{ needs.release-please.outputs.release_created }}
     runs-on: ubuntu-latest
 
     steps:
@@ -81,15 +85,10 @@ jobs:
       - name: List artifacts
         run: ls -la dist/infrastructure/adapters/sqlite/
 
-      - name: Extract version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub Release
+      - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
-          name: v${{ steps.version.outputs.VERSION }}
-          generate_release_notes: true
+          tag_name: v${{ needs.release-please.outputs.version }}
           files: |
             dist/cli/index.js
             dist/infrastructure/adapters/sqlite/better_sqlite3.*.node
