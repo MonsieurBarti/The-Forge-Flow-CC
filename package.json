@@ -8,7 +8,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && bun run scripts/add-cli-shebang.ts",
+    "build": "tsc -p tsconfig.build.json && bun run scripts/add-cli-shebang.ts && cp native/*.node dist/infrastructure/adapters/sqlite/",
     "dev": "tsc -p tsconfig.build.json --watch",
     "test": "vitest run",
     "test:watch": "vitest",
