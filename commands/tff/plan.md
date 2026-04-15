@@ -2,7 +2,7 @@
 name: tff:plan
 description: Plan a slice with task decomposition and plannotator review
 argument-hint: "[slice-id] [--tier S|F-lite|F-full]"
-allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion, Bash(plannotator:*)
+allowed-tools: Read, Write, Bash, Grep, Glob, Agent, Bash(plannotator:*)
 ---
 
 <objective>

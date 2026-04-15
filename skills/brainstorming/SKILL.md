@@ -15,7 +15,7 @@ Do NOT invoke any implementation skill, write any code, ∨ take any implementat
 
 ## Conversation Rules
 
-1. One question per message via AskUserQuestion
+1. One question per message
 2. Multiple choice preferred (A/B/C/D) — open-ended when needed
 3. Assess scope first: multi-subsystem -> decompose before detailing
 4. ∀ assumption: surface explicitly, ¬proceed on implicit agreement
@@ -23,14 +23,14 @@ Do NOT invoke any implementation skill, write any code, ∨ take any implementat
 
 ## Flow
 
-1. FRAME: Define problem, constraints, scope (2-4 questions via AskUserQuestion)
+1. FRAME: Define problem, constraints, scope (2-4 questions)
 2. APPROACH: Propose 2-3, recommend one, user picks
-3. DESIGN: Section-by-section, user approves each via AskUserQuestion
+3. DESIGN: Section-by-section, user approves each inline
    - standard: problem, approach, acceptance criteria, non-goals (~1 page)
    - complex: + constraints, architecture, error handling, testing strategy (~3 pages)
 4. WRITE: `project spec document (e.g., docs/specs/SPEC.md)`
 5. REVIEW: Dispatch anonymous spec reviewer subagent (max 3 iterations)
-6. USER GATE: Show spec, ask approval via AskUserQuestion
+6. USER GATE: Show spec, ask approval inline
 
 ## Spec Document Reviewer
 

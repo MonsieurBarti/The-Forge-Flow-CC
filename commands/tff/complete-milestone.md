@@ -1,7 +1,7 @@
 ---
 name: tff:complete-milestone
 description: Create milestone PR, review, and merge to main
-allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion
+allowed-tools: Read, Write, Bash, Grep, Glob, Agent
 ---
 
 <objective>

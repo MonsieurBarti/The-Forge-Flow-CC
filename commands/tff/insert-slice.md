@@ -2,7 +2,7 @@
 name: tff:insert-slice
 description: Insert a slice between existing slices
 argument-hint: "<after-slice-id> <slice-name>"
-allowed-tools: Read, Write, Bash, Grep, Glob, AskUserQuestion
+allowed-tools: Read, Write, Bash, Grep, Glob
 ---
 
 <objective>

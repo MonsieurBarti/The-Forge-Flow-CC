@@ -2,7 +2,7 @@
 name: tff:add-slice
 description: Add a slice to the current milestone
 argument-hint: "<slice-name>"
-allowed-tools: Read, Write, Bash, Grep, Glob, AskUserQuestion
+allowed-tools: Read, Write, Bash, Grep, Glob
 ---
 
 <objective>

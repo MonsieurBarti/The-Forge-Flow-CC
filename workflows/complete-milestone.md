@@ -16,7 +16,7 @@ milestone audit passed
 
 **tff NEVER merges — only creates PR.**
 
-5. MERGE GATE: AskUserQuestion → "PR merged" ∨ "PR needs changes"
+5. MERGE GATE: ask the user inline → "PR merged" ∨ "PR needs changes"
    - merged → continue to step 6
    - needs changes → fix → push → go back to step 5
 6. CLOSE MILESTONE + CLEANUP:
