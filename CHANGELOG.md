@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.8.2...tff-cc-v0.8.3) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ci:** match tff release workflow with npm publish ([035e5c8](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/035e5c8fe9d73b3aa3390e9d7d2f3b4bc9a280df))
+* **ci:** match tff release workflow with npm publish ([8849600](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/88496007c9573371f390b0e2bb10a674c2140be8))
+
 ## [0.8.2](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.8.1...tff-cc-v0.8.2) (2026-04-15)
 
 
