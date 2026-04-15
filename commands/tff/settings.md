@@ -1,7 +1,7 @@
 ---
 name: tff:settings
 description: View and modify all project settings — model profiles, autonomy, auto-learn
-allowed-tools: Read, Write, Bash, Grep, Glob, AskUserQuestion
+allowed-tools: Read, Write, Bash, Grep, Glob
 ---
 
 <objective>

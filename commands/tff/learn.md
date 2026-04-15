@@ -1,7 +1,7 @@
 ---
 name: tff:learn
 description: Detect corrections to existing skills and propose bounded refinements
-allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion, Bash(plannotator:*)
+allowed-tools: Read, Write, Bash, Grep, Glob, Agent, Bash(plannotator:*)
 ---
 
 <objective>

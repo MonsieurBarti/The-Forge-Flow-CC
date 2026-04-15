@@ -15,7 +15,7 @@ CHECK: read slice state + notes
 ### 2. Interactive Design
 LOAD @skills/brainstorming/SKILL.md
 
-**Phase 1 — Scope** (2-4 questions via AskUserQuestion)
+**Phase 1 — Scope** (2-4 questions)
 - What problem does this solve? Who benefits?
 - What constraints? (time, tech, dependencies)
 - What does success look like?
@@ -24,11 +24,11 @@ LOAD @skills/brainstorming/SKILL.md
 **Phase 2 — Approach** (1 message)
 - Propose 2-3 approaches w/ trade-offs
 - Recommend one, explain why
-- User picks via AskUserQuestion
+- User picks inline
 
 **Phase 3 — Design** (section by section)
 - Present each section per tier template from @skills/brainstorming/SKILL.md
-- ∀ section: ask "does this look right?" via AskUserQuestion
+- ∀ section: ask "does this look right?" inline
 - Revise until approved, then next section
 
 ### 3. Write Spec
@@ -41,14 +41,14 @@ APPROVE → note concerns ∈ spec, proceed
 
 ### 5. Validate AC
 LOAD @skills/acceptance-criteria-validation/SKILL.md → SPAWN subagent: {spec_content, acceptance_criteria}
-∀ criterion: testable ∧ binary — gaps → revise via AskUserQuestion
+∀ criterion: testable ∧ binary — gaps → revise by asking the user inline
 
 ### 6. Spec Review
 DISPATCH anonymous reviewer via Agent tool (prompt: @skills/brainstorming/SKILL.md)
 Issues → fix, re-dispatch (max 3)
 
 ### 7. User Gate
-AskUserQuestion: "Spec at `.tff/milestones/<milestone>/slices/<id>/SPEC.md`. Approve?"
+Ask the user: "Spec at `.tff/milestones/<milestone>/slices/<id>/SPEC.md`. Approve?"
 
 ### 8. Classify Complexity
 Based on what was learned during discuss, build `ComplexitySignals`:
@@ -58,7 +58,7 @@ Based on what was learned during discuss, build `ComplexitySignals`:
 
 RUN: `tff-tools slice:classify '<signals-json>'`
 
-PRESENT result to user via AskUserQuestion:
+PRESENT result to user, asking inline:
 - "Based on scope: **<tier>** (S / F-lite / F-full). Confirm ∨ override?"
 - Options: S (single-file fix), F-lite (standard), F-full (complex)
 

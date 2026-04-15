@@ -2,7 +2,7 @@
 name: tff:create-skill
 description: Draft a new skill from a detected pattern or description
 argument-hint: "<candidate-number|description>"
-allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion, Bash(plannotator:*)
+allowed-tools: Read, Write, Bash, Grep, Glob, Agent, Bash(plannotator:*)
 ---
 
 <objective>

@@ -415,6 +415,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plugin Distribution:** Zero-install CLI with native bindings for 5 platforms
 - **Compressed Notation:** Formal logic symbols (∀∃∈∧∨¬) applied to markdown files
 
+### Changed
+
+- **S01 — AskUserQuestion removal:** Removed AskUserQuestion from AI-facing instruction files (15 commands, 7 workflows, 1 skill, 1 reference); AI now asks questions inline in conversation rather than through a structured tool call; `tff_ask_user` tool remains for TFF's internal use
+
 ### Infrastructure
 
 - 1582 tests passing (Node 20 & 22)

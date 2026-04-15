@@ -2,7 +2,7 @@
 name: tff:rollback
 description: Revert execution commits for a slice
 argument-hint: "<slice-id>"
-allowed-tools: Read, Write, Bash, Grep, Glob, AskUserQuestion
+allowed-tools: Read, Write, Bash, Grep, Glob
 ---
 
 <objective>

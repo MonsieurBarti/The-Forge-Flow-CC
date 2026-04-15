@@ -15,13 +15,13 @@ Exception to orchestrator rule 4 ("never load large files ∈ orchestrator"):
 like `discuss`, debug drives multi-turn investigation directly. For broad code
 exploration, spawn Explore subagents ∧ reason about their findings.
 
-1. GATHER: ask user for error/symptom + reproduction steps via AskUserQuestion
+1. GATHER: ask user for error/symptom + reproduction steps inline
 2. LOAD: @skills/systematic-debugging/SKILL.md
 3. CLASSIFY: reproducible error (Track A) ∨ symptom-based (Track B)
 4. INVESTIGATE: orchestrator drives systematic diagnosis per skill methodology
    - Track A: parse error → read implicated code → trace call chain → form hypothesis → verify
    - Track B: clarify symptom → reproduce → binary search → instrument → isolate
-5. PRESENT: root cause + evidence to user, ask for confirmation via AskUserQuestion
+5. PRESENT: root cause + evidence to user, ask for confirmation inline
    - If user disagrees → refine hypothesis, loop back to step 4
    - If diagnosis stalls after 3 hypotheses → escalate with findings so far
    - If root cause is external (dependency, system, infra) → exit with diagnostic report,
@@ -32,7 +32,7 @@ exploration, spawn Explore subagents ∧ reason about their findings.
 6. CREATE slice:
    - Create slice via `tff-tools`
    - Create worktree: `tff-tools worktree:create <slice-id>` → worktree at `.tff/worktrees/<slice-id>/`
-7. CLASSIFY: AskUserQuestion → user picks tier (S / F-lite / F-full)
+7. CLASSIFY: ask the user → user picks tier (S / F-lite / F-full)
    - Default suggestion based on diagnosis: single-file root cause → S, multi-file → F-lite
 8. PLAN: write fix strategy + implicated files ∈ PLAN.md
    - Write to `.tff/milestones/<milestone>/slices/<id>/PLAN.md`

@@ -23,7 +23,7 @@ LOAD @skills/finishing-work/SKILL.md
 
 **tff NEVER merges — only creates PR.**
 
-6. MERGE GATE: AskUserQuestion with options:
+6. MERGE GATE: ask the user with options:
    - **"PR merged"** → continue to step 7
    - **"PR needs changes"** → SPAWN tff-fixer with requested changes → push fixes → go back to step 6
 7. CLOSE + CLEANUP:
