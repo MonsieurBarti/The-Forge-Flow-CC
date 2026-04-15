@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import { detectDirectEdit } from "../../application/guard/detect-direct-edit.js";
-import { withBranchGuard } from "../with-branch-guard.js";
+import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 
 /**
  * Check if direct-edit guards are disabled in settings.yaml.
@@ -48,38 +48,27 @@ export const directEditGuardCmd = async (_args: string[]): Promise<string> => {
 		});
 	}
 
-	const result = await withBranchGuard(async (stores) => {
-		try {
-			const detectResult = detectDirectEdit({
-				sessionStore: stores.sessionStore,
-				taskStore: stores.taskStore,
-			});
+	try {
+		const { sessionStore, taskStore } = createClosableStateStoresUnchecked();
+		const detectResult = detectDirectEdit({
+			sessionStore,
+			taskStore,
+		});
 
-			// Return warning message if present, otherwise null
-			const warning = detectResult.warning?.message ?? null;
+		// Return warning message if present, otherwise null
+		const warning = detectResult.warning?.message ?? null;
 
-			return JSON.stringify({
-				ok: true,
-				data: { warning },
-			});
-		} catch (err) {
-			return JSON.stringify({
-				ok: false,
-				error: {
-					code: "GUARD_CHECK_FAILED",
-					message: err instanceof Error ? err.message : String(err),
-				},
-			});
-		}
-	});
-
-	// withBranchGuard can return a string directly (for BRANCH_MISMATCH errors)
-	// or the result of the callback. If it's already a string, return it.
-	if (typeof result === "string") {
-		return result;
+		return JSON.stringify({
+			ok: true,
+			data: { warning },
+		});
+	} catch (err) {
+		return JSON.stringify({
+			ok: false,
+			error: {
+				code: "GUARD_CHECK_FAILED",
+				message: err instanceof Error ? err.message : String(err),
+			},
+		});
 	}
-
-	// This should not happen as the callback always returns a string,
-	// but handle it defensively
-	return result;
 };

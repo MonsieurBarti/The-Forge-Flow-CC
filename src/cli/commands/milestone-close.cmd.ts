@@ -1,5 +1,5 @@
 import { isOk } from "../../domain/result.js";
-import { withBranchGuard } from "../with-branch-guard.js";
+import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 
 export const milestoneCloseCmd = async (args: string[]): Promise<string> => {
 	const [milestoneId, ...rest] = args;
@@ -18,9 +18,8 @@ export const milestoneCloseCmd = async (args: string[]): Promise<string> => {
 		reason = rest.slice(reasonIdx + 1).join(" ");
 	}
 
-	return withBranchGuard(async ({ milestoneStore }) => {
-		const result = milestoneStore.closeMilestone(milestoneId, reason);
-		if (isOk(result)) return JSON.stringify({ ok: true, data: { status: "closed", reason } });
-		return JSON.stringify({ ok: false, error: result.error });
-	});
+	const { milestoneStore } = createClosableStateStoresUnchecked();
+	const result = milestoneStore.closeMilestone(milestoneId, reason);
+	if (isOk(result)) return JSON.stringify({ ok: true, data: { status: "closed", reason } });
+	return JSON.stringify({ ok: false, error: result.error });
 };

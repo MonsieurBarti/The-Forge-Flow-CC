@@ -7,7 +7,7 @@ import {
 } from "../../application/guard/validate-operation.js";
 import { isValidOperation } from "../../application/index.js";
 import { isOk } from "../../domain/result.js";
-import { withBranchGuard } from "../with-branch-guard.js";
+import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { withSyncLock } from "../with-sync-lock.js";
 
 /**
@@ -80,74 +80,74 @@ export const preOpGuardCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 
-	// Compose withSyncLock (outer) + withBranchGuard (inner) per knowledge.md
-	const result = await withSyncLock(async (_stores) => {
-		return withBranchGuard(async ({ sliceStore }) => {
-			try {
-				// Retrieve the slice
-				const sliceResult = sliceStore.getSlice(sliceId);
-				if (!isOk(sliceResult)) {
-					return JSON.stringify({
-						ok: false,
-						error: {
-							code: "SLICE_NOT_FOUND",
-							message: `Failed to retrieve slice: ${sliceResult.error.message}`,
-							recoveryHint: `Check that slice ${sliceId} exists.`,
-						},
-					});
-				}
-
-				const slice = sliceResult.data;
-				if (!slice) {
-					return JSON.stringify({
-						ok: false,
-						error: {
-							code: "SLICE_NOT_FOUND",
-							message: `Slice ${sliceId} not found`,
-							recoveryHint: `Check that slice ${sliceId} exists.`,
-						},
-					});
-				}
-
-				// Validate operation against current slice status
-				const validationResult = validateOperation(operation, slice.status);
-
-				if (!validationResult.allowed) {
-					return JSON.stringify({
-						ok: false,
-						error: {
-							code: "PREREQUISITE_NOT_MET",
-							message: validationResult.message,
-							recoveryHint: validationResult.recoveryHint,
-						},
-					});
-				}
-
-				// Operation is allowed
-				return JSON.stringify({
-					ok: true,
-					data: { blocked: false },
-				});
-			} catch (err) {
-				if (err instanceof OperationBlockedError) {
-					return JSON.stringify({
-						ok: false,
-						error: {
-							code: "PREREQUISITE_NOT_MET",
-							message: err.message,
-							recoveryHint: err.recoveryHint,
-						},
-					});
-				}
+	// Compose withSyncLock (outer) for concurrency control
+	const result = await withSyncLock(async () => {
+		try {
+			const { sliceStore } = createClosableStateStoresUnchecked();
+			
+			// Retrieve the slice
+			const sliceResult = sliceStore.getSlice(sliceId);
+			if (!isOk(sliceResult)) {
 				return JSON.stringify({
 					ok: false,
 					error: {
-						code: "GUARD_CHECK_FAILED",
-						message: err instanceof Error ? err.message : String(err),
+						code: "SLICE_NOT_FOUND",
+						message: `Failed to retrieve slice: ${sliceResult.error.message}`,
+						recoveryHint: `Check that slice ${sliceId} exists.`,
 					},
 				});
 			}
-		});
+
+			const slice = sliceResult.data;
+			if (!slice) {
+				return JSON.stringify({
+					ok: false,
+					error: {
+						code: "SLICE_NOT_FOUND",
+						message: `Slice ${sliceId} not found`,
+						recoveryHint: `Check that slice ${sliceId} exists.`,
+					},
+				});
+			}
+
+			// Validate operation against current slice status
+			const validationResult = validateOperation(operation, slice.status);
+
+			if (!validationResult.allowed) {
+				return JSON.stringify({
+					ok: false,
+					error: {
+						code: "PREREQUISITE_NOT_MET",
+						message: validationResult.message,
+						recoveryHint: validationResult.recoveryHint,
+					},
+				});
+			}
+
+			// Operation is allowed
+			return JSON.stringify({
+				ok: true,
+				data: { blocked: false },
+			});
+		} catch (err) {
+			if (err instanceof OperationBlockedError) {
+				return JSON.stringify({
+					ok: false,
+					error: {
+						code: "PREREQUISITE_NOT_MET",
+						message: err.message,
+						recoveryHint: err.recoveryHint,
+					},
+				});
+			}
+			return JSON.stringify({
+				ok: false,
+				error: {
+					code: "GUARD_CHECK_FAILED",
+					message: err instanceof Error ? err.message : String(err),
+				},
+			});
+		}
 	});
 
 	// withSyncLock can return SyncLockResult (when lock is held)
@@ -166,12 +166,6 @@ export const preOpGuardCmd = async (args: string[]): Promise<string> => {
 		}
 	}
 
-	// withBranchGuard returns string directly for BRANCH_MISMATCH errors
-	if (typeof result === "string") {
-		return result;
-	}
-
-	// This should not happen - the callback always returns a string
-	// but handle defensively
+	// The callback always returns a string
 	return result as unknown as string;
 };

@@ -9,12 +9,26 @@ import type { Result } from "../../../domain/result.js";
 import { Err, Ok } from "../../../domain/result.js";
 import type { Dependency } from "../../../domain/value-objects/dependency.js";
 import type { ReviewRecord } from "../../../domain/value-objects/review-record.js";
-import {
-	STATE_SNAPSHOT_VERSION,
-	type StateSnapshot,
-} from "../../../domain/value-objects/state-snapshot.js";
 import type { WorkflowSession } from "../../../domain/value-objects/workflow-session.js";
 import { getNativeBindingPath } from "./load-native-binding.js";
+
+/**
+ * Local type for salvaged state (internal to salvage operations).
+ * This replaces the deleted StateSnapshot type.
+ */
+interface SalvagedState {
+	version: string;
+	exportedAt: string;
+	project: Project | null;
+	milestones: Milestone[];
+	slices: Slice[];
+	tasks: Task[];
+	dependencies: Dependency[];
+	workflowSession: WorkflowSession | null;
+	reviews: ReviewRecord[];
+}
+
+const SALVAGE_VERSION = "1.0.0";
 
 /**
  * Metadata about the salvage operation.
@@ -36,7 +50,7 @@ export interface SalvageMetadata {
  * Result of a salvage operation containing partial snapshot and metadata.
  */
 export interface SalvageResult {
-	snapshot: StateSnapshot | null;
+	snapshot: SalvagedState | null;
 	metadata: SalvageMetadata;
 }
 
@@ -108,10 +122,10 @@ export class SQLiteSalvage {
 			const reviews = SQLiteSalvage.salvageReviews(db, metadata);
 
 			// Only create snapshot if we salvaged at least some data
-			let snapshot: StateSnapshot | null = null;
+			let snapshot: SalvagedState | null = null;
 			if (metadata.tablesSalvaged.length > 0) {
 				snapshot = {
-					version: STATE_SNAPSHOT_VERSION,
+					version: SALVAGE_VERSION,
 					exportedAt: new Date().toISOString(),
 					project,
 					milestones,
