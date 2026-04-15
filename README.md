@@ -62,7 +62,7 @@ Verify: Run `/plannotator-review` in Claude Code -- it should open a browser win
 claude /plugin marketplace add MonsieurBarti/The-Forge-Flow-CC
 
 # Install the plugin
-claude /plugin install @the-forge-flow/tff-cc@@the-forge-flow/tff-cc
+claude /plugin install tff-cc@the-forge-flow
 ```
 
 Verify: Run `/tff:help` in Claude Code to see the command reference.
