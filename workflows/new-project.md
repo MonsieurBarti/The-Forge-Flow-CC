@@ -21,7 +21,7 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
    d. SYNTHESIZE: read STACK.md, ARCHITECTURE.md, CONCERNS.md, CONVENTIONS.md
       - Propose: project name, vision statement, initial requirements
    e. PRESENT: "Here's what I understood about your project:" + proposed values
-   f. REFINE: user corrects/approves via AskUserQuestion
+   f. REFINE: user corrects/approves by asking inline
    g. Continue to step 3 with pre-filled values
 
 3. ASK user: project name (required), vision statement

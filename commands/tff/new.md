@@ -2,7 +2,7 @@
 name: tff:new
 description: Initialize a new tff project with vision, requirements, and first milestone
 argument-hint: "[project-name]"
-allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion
+allowed-tools: Read, Write, Bash, Grep, Glob, Agent
 ---
 
 <objective>

@@ -1,7 +1,7 @@
 ---
 name: tff:compose
 description: Detect skill co-activation clusters and propose bundles or agents
-allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion, Bash(plannotator:*)
+allowed-tools: Read, Write, Bash, Grep, Glob, Agent, Bash(plannotator:*)
 ---
 
 <objective>

@@ -2,7 +2,7 @@
 name: tff:new-milestone
 description: Start a new milestone cycle
 argument-hint: "[milestone-name]"
-allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion
+allowed-tools: Read, Write, Bash, Grep, Glob, Agent
 ---
 
 <objective>
