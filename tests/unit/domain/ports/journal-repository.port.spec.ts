@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { JournalRepository } from "../../../src/infrastructure/testing/journal-repository.port.js";
+import type { JournalRepository } from "../../../../src/domain/ports/journal-repository.port.js";
 
 describe("JournalRepository port", () => {
 	it("interface exists and is importable", () => {

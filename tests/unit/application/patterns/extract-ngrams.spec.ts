@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { extractNgrams } from "../../../src/application/patterns/extract-ngrams.js";
-import type { Observation } from "../../src/domain/value-objects/observation.js";
+import { extractNgrams } from "../../../../src/application/patterns/extract-ngrams.js";
+import type { Observation } from "../../../../src/domain/value-objects/observation.js";
 
 describe("extractNgrams", () => {
 	const obs: Observation[] = [

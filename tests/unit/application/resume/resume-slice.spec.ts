@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { type ResumeInput, resumeSlice } from "../../../src/application/resume/resume-slice.js";
-import { isErr, isOk } from "../../src/domain/result.js";
-import { JournalEntryBuilder } from "../../src/domain/value-objects/journal-entry.builder.js";
-import type { JournalEntry } from "../../src/domain/value-objects/journal-entry.js";
-import { InMemoryArtifactStore } from "../../src/infrastructure/testing/in-memory-artifact-store.js";
-import { InMemoryJournalAdapter } from "../../src/infrastructure/testing/in-memory-journal.adapter.js";
-import { type CheckpointData, saveCheckpoint } from "../checkpoint/save-checkpoint.js";
+import {
+	type CheckpointData,
+	saveCheckpoint,
+} from "../../../../src/application/checkpoint/save-checkpoint.js";
+import { type ResumeInput, resumeSlice } from "../../../../src/application/resume/resume-slice.js";
+import { isErr, isOk } from "../../../../src/domain/result.js";
+import { JournalEntryBuilder } from "../../../../src/domain/value-objects/journal-entry.builder.js";
+import type { JournalEntry } from "../../../../src/domain/value-objects/journal-entry.js";
+import { InMemoryArtifactStore } from "../../../../src/infrastructure/testing/in-memory-artifact-store.js";
+import { InMemoryJournalAdapter } from "../../../../src/infrastructure/testing/in-memory-journal.adapter.js";
 
 describe("resumeSlice", () => {
 	let artifactStore: InMemoryArtifactStore;

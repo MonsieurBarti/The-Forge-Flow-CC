@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	postCheckoutHookScript,
 	TFF_HOOK_MARKER,
-} from "../../../src/infrastructure/post-checkout-template.js";
+} from "../../../../src/infrastructure/hooks/post-checkout-template.js";
 
 describe("postCheckoutHookScript", () => {
 	it("starts with shebang", () => {

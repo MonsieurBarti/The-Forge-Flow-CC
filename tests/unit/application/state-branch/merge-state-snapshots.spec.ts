@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { mergeStateSnapshots } from "../../../../src/application/state-branch/merge-state-snapshots.js";
-import type { Milestone } from "../../src/domain/entities/milestone.js";
-import type { Project } from "../../src/domain/entities/project.js";
-import type { Slice } from "../../src/domain/entities/slice.js";
-import type { Task } from "../../src/domain/entities/task.js";
-import type { Dependency } from "../../src/domain/value-objects/dependency.js";
-import type { ReviewRecord } from "../../src/domain/value-objects/review-record.js";
-import type { StateSnapshot } from "../../src/domain/value-objects/state-snapshot.js";
-import type { WorkflowSession } from "../../src/domain/value-objects/workflow-session.js";
+import type { Milestone } from "../../../../src/domain/entities/milestone.js";
+import type { Project } from "../../../../src/domain/entities/project.js";
+import type { Slice } from "../../../../src/domain/entities/slice.js";
+import type { Task } from "../../../../src/domain/entities/task.js";
+import type { Dependency } from "../../../../src/domain/value-objects/dependency.js";
+import type { ReviewRecord } from "../../../../src/domain/value-objects/review-record.js";
+import type { StateSnapshot } from "../../../../src/domain/value-objects/state-snapshot.js";
+import type { WorkflowSession } from "../../../../src/domain/value-objects/workflow-session.js";
 
 describe("mergeStateSnapshots", () => {
 	// Test fixtures

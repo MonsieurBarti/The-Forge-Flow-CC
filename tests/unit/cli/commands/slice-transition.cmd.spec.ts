@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sliceTransitionCmd } from "../../../src/cli/commands/slice-transition.cmd.js";
+import { sliceTransitionCmd } from "../../../../src/cli/commands/slice-transition.cmd.js";
 
 describe("slice-transition result format", () => {
 	it("should include warnings array in success result", () => {

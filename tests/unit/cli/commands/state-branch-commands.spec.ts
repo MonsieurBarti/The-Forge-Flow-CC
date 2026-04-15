@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { branchMergeCmd } from "../../../src/cli/commands/branch-merge.cmd.js";
-import { restoreBranchCmd } from "../../../src/cli/commands/restore-branch.cmd.js";
-import { syncBranchCmd } from "../../../src/cli/commands/sync-branch.cmd.js";
+import { branchMergeCmd } from "../../../../src/cli/commands/branch-merge.cmd.js";
+import { restoreBranchCmd } from "../../../../src/cli/commands/restore-branch.cmd.js";
+import { syncBranchCmd } from "../../../../src/cli/commands/sync-branch.cmd.js";
 
 describe("state branch CLI commands", () => {
 	it("sync:branch should reject missing args", async () => {

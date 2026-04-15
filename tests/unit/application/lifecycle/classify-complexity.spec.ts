@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyComplexity } from "../../../src/application/lifecycle/classify-complexity.js";
+import { classifyComplexity } from "../../../../src/application/lifecycle/classify-complexity.js";
 
 const base = {
 	taskCount: 1,

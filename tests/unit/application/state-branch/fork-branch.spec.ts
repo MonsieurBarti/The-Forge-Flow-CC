@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { forkBranchUseCase } from "../../../src/application/state-branch/fork-branch.js";
-import { isOk } from "../../src/../src/domain/result.js";
-import { GitStateBranchAdapter } from "../../src/../src/infrastructure/adapters/git/git-state-branch.adapter.js";
-import { InMemoryGitOps } from "../../src/../src/infrastructure/testing/in-memory-git-ops.js";
+import { forkBranchUseCase } from "../../../../src/application/state-branch/fork-branch.js";
+import { isOk } from "../../../../src/domain/result.js";
+import { GitStateBranchAdapter } from "../../../../src/infrastructure/adapters/git/git-state-branch.adapter.js";
+import { InMemoryGitOps } from "../../../../src/infrastructure/testing/in-memory-git-ops.js";
 
 describe("forkBranchUseCase", () => {
 	let gitOps: InMemoryGitOps;

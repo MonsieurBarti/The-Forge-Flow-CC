@@ -63,7 +63,7 @@ export function generateReminder(deps: GenerateReminderDeps): string | null {
 	if (!sessionResult.ok) return null;
 
 	const session = sessionResult.data;
-	if (!session || !session.activeSliceId || !session.activeMilestoneId) return null;
+	if (!session?.activeSliceId || !session.activeMilestoneId) return null;
 
 	const phase = session.phase;
 	const sliceId = session.activeSliceId;

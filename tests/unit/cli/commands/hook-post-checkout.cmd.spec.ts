@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hookPostCheckoutCmd } from "../../../src/cli/commands/hook-post-checkout.cmd.js";
+import { hookPostCheckoutCmd } from "../../../../src/cli/commands/hook-post-checkout.cmd.js";
 
 describe("hookPostCheckoutCmd", () => {
 	it("returns INVALID_ARGS when no branch provided", async () => {

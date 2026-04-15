@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MergeResultSchema } from "../../../src/domain/merge-result.js";
+import { MergeResultSchema } from "../../../../src/domain/value-objects/merge-result.js";
 
 describe("MergeResult", () => {
 	it("should validate a valid merge result", () => {

@@ -1,10 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Slice } from "../../src/domain/entities/slice.js";
 import { sliceTransitionCmd } from "../../src/cli/commands/slice-transition.cmd.js";
+import type { Slice } from "../../src/domain/entities/slice.js";
+
+// Define mock stores using vi.hoisted() so they're available when vi.mock() runs
+const { mockSliceStore, mockMilestoneStore, mockTaskStore, mockProjectStore } = vi.hoisted(() => ({
+	mockSliceStore: {} as any,
+	mockMilestoneStore: {} as any,
+	mockTaskStore: {} as any,
+	mockProjectStore: {} as any,
+}));
 
 // Mock with-branch-guard - will pass through to inner function
 const mockWithBranchGuard = vi.fn(async <T>(fn: (stores: any) => Promise<T>) =>
-	fn({ sliceStore: mockSliceStore, milestoneStore: {}, taskStore: {} }),
+	fn({ sliceStore: mockSliceStore, milestoneStore: mockMilestoneStore, taskStore: mockTaskStore }),
 );
 vi.mock("../../src/cli/with-branch-guard.js", () => ({
 	withBranchGuard: (...args: any[]) => mockWithBranchGuard(...args),
@@ -101,12 +109,6 @@ vi.mock("../../src/cli/commands/project-init.cmd.js", () => ({
 	projectInitCmd: vi.fn().mockResolvedValue({ ok: true, data: { id: "test-project" } }),
 }));
 
-// Mock createStateStores
-const mockSliceStore: any = {};
-const mockMilestoneStore: any = {};
-const mockTaskStore: any = {};
-const mockProjectStore: any = {};
-
 vi.mock("../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 	createStateStores: vi.fn().mockReturnValue({
 		sliceStore: mockSliceStore,
@@ -146,19 +148,21 @@ afterEach(() => {
 
 describe("slice-transition integration", () => {
 	it("transitions a slice from discussing to researching", async () => {
-		mockSliceStore.getById = vi.fn().mockResolvedValue({
+		const mockSlice = {
 			id: "M01-S01",
 			milestoneId: "m01",
 			number: 1,
-			status: "discussing",
+			status: "researching",
 			title: "Test Slice",
 			createdAt: new Date(),
+		};
+		mockSliceStore.getById = vi.fn().mockResolvedValue(mockSlice);
+		mockTransitionSliceUseCase.mockResolvedValue({
+			ok: true,
+			data: { slice: mockSlice },
 		});
 
-		const result = await sliceTransitionCmd({
-			sliceId: "M01-S01",
-			targetStatus: "researching",
-		});
+		const result = JSON.parse(await sliceTransitionCmd(["M01-S01", "researching"]));
 
 		expect(mockTransitionSliceUseCase).toHaveBeenCalled();
 		expect(result.ok).toBe(true);
@@ -179,10 +183,7 @@ describe("slice-transition integration", () => {
 			error: { code: "INVALID_TRANSITION", message: "Cannot transition" },
 		});
 
-		const result = await sliceTransitionCmd({
-			sliceId: "M01-S01",
-			targetStatus: "closed",
-		});
+		const result = JSON.parse(await sliceTransitionCmd(["M01-S01", "closed"]));
 
 		expect(result.ok).toBe(false);
 	});

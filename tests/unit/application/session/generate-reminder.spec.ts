@@ -3,14 +3,14 @@ import {
 	type GenerateReminderDeps,
 	generateReminder,
 } from "../../../../src/application/session/generate-reminder.js";
-import type { Task } from "../../domain/entities/task.js";
-import type { DomainError } from "../../domain/errors/domain-error.js";
-import type { DependencyStore } from "../../domain/ports/dependency-store.port.js";
-import type { SessionStore } from "../../domain/ports/session-store.port.js";
-import type { TaskStore } from "../../domain/ports/task-store.port.js";
-import { Err, Ok } from "../../domain/result.js";
-import type { Dependency } from "../../domain/value-objects/dependency.js";
-import type { WorkflowSession } from "../../domain/value-objects/workflow-session.js";
+import type { Task } from "../../../../src/domain/entities/task.js";
+import type { DomainError } from "../../../../src/domain/errors/domain-error.js";
+import type { DependencyStore } from "../../../../src/domain/ports/dependency-store.port.js";
+import type { SessionStore } from "../../../../src/domain/ports/session-store.port.js";
+import type { TaskStore } from "../../../../src/domain/ports/task-store.port.js";
+import { Err, Ok } from "../../../../src/domain/result.js";
+import type { Dependency } from "../../../../src/domain/value-objects/dependency.js";
+import type { WorkflowSession } from "../../../../src/domain/value-objects/workflow-session.js";
 
 type MockResult<T> = Result<T, DomainError>;
 

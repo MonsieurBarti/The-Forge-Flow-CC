@@ -2,8 +2,8 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { mergeStateDbs } from "../../../src/application/state-branch/merge-state-dbs.js";
-import { SQLiteStateAdapter } from "../../src/../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js";
+import { mergeStateDbs } from "../../../../src/application/state-branch/merge-state-dbs.js";
+import { SQLiteStateAdapter } from "../../../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js";
 
 describe("mergeStateDbs", () => {
 	it("should merge child slice entities into parent DB", () => {

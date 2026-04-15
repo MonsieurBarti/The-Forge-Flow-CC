@@ -3,7 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { getCurrentVersion, runMigrations } from "../../../src/infrastructure/schema.js";
+import {
+	getCurrentVersion,
+	runMigrations,
+} from "../../../../../src/infrastructure/adapters/sqlite/schema.js";
 
 describe("schema", () => {
 	let db: Database.Database;

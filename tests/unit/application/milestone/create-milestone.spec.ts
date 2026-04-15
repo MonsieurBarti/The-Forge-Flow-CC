@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createMilestoneUseCase } from "../../../src/application/milestone/create-milestone.js";
-import type { DomainError } from "../../src/../src/domain/errors/domain-error.js";
-import type { StateBranchPort } from "../../src/../src/domain/ports/state-branch.port.js";
-import { isOk, Ok, type Result } from "../../src/../src/domain/result.js";
-import { InMemoryArtifactStore } from "../../src/../src/infrastructure/testing/in-memory-artifact-store.js";
-import { InMemoryGitOps } from "../../src/../src/infrastructure/testing/in-memory-git-ops.js";
-import { InMemoryStateAdapter } from "../../src/../src/infrastructure/testing/in-memory-state-adapter.js";
+import { createMilestoneUseCase } from "../../../../src/application/milestone/create-milestone.js";
+import type { DomainError } from "../../../../src/domain/errors/domain-error.js";
+import type { StateBranchPort } from "../../../../src/domain/ports/state-branch.port.js";
+import { isOk, Ok, type Result } from "../../../../src/domain/result.js";
+import { InMemoryArtifactStore } from "../../../../src/infrastructure/testing/in-memory-artifact-store.js";
+import { InMemoryGitOps } from "../../../../src/infrastructure/testing/in-memory-git-ops.js";
+import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
 
 class InMemoryStateBranch implements StateBranchPort {
 	private branches = new Set<string>();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { WaveSchema } from "../../../src/domain/wave.js";
+import { WaveSchema } from "../../../../src/domain/value-objects/wave.js";
 
 describe("Wave", () => {
 	it("should accept a valid wave", () => {

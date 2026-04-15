@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BranchMismatchError } from "../../../src/infrastructure/testing/branch-mismatch.error.js";
+import { BranchMismatchError } from "../../../../src/domain/errors/branch-mismatch.error.js";
 
 describe("BranchMismatchError", () => {
 	it("is instanceof Error", () => {

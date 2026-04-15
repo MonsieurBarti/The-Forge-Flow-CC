@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { GitOps } from "../../../src/infrastructure/testing/git-ops.port.js";
+import type { GitOps } from "../../../../src/domain/ports/git-ops.port.js";
 
 describe("GitOps port", () => {
 	it("should define all required methods including S03 extensions", () => {

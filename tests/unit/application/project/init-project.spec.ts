@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { initProject } from "../../../src/application/project/init-project.js";
-import { isErr, isOk } from "../../src/domain/result.js";
-import { GitStateBranchAdapter } from "../../src/infrastructure/adapters/git/git-state-branch.adapter.js";
-import { InMemoryArtifactStore } from "../../src/infrastructure/testing/in-memory-artifact-store.js";
-import { InMemoryGitOps } from "../../src/infrastructure/testing/in-memory-git-ops.js";
-import { InMemoryStateAdapter } from "../../src/infrastructure/testing/in-memory-state-adapter.js";
+import { initProject } from "../../../../src/application/project/init-project.js";
+import { isErr, isOk } from "../../../../src/domain/result.js";
+import { GitStateBranchAdapter } from "../../../../src/infrastructure/adapters/git/git-state-branch.adapter.js";
+import { InMemoryArtifactStore } from "../../../../src/infrastructure/testing/in-memory-artifact-store.js";
+import { InMemoryGitOps } from "../../../../src/infrastructure/testing/in-memory-git-ops.js";
+import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
 
 describe("initProject", () => {
 	let adapter: InMemoryStateAdapter;

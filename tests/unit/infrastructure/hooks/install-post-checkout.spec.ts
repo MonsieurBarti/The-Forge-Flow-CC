@@ -3,8 +3,8 @@ import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } 
 import os from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { installPostCheckoutHook } from "../../../src/infrastructure/install-post-checkout.js";
-import { TFF_HOOK_MARKER } from "../../../src/infrastructure/post-checkout-template.js";
+import { installPostCheckoutHook } from "../../../../src/infrastructure/hooks/install-post-checkout.js";
+import { TFF_HOOK_MARKER } from "../../../../src/infrastructure/hooks/post-checkout-template.js";
 
 describe("installPostCheckoutHook", () => {
 	let tmpDir: string;

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { replayJournal } from "../../../src/application/journal/replay-journal.js";
-import { isErr, isOk } from "../../src/domain/result.js";
-import { JournalEntryBuilder } from "../../src/domain/value-objects/journal-entry.builder.js";
-import type { JournalEntry } from "../../src/domain/value-objects/journal-entry.js";
-import { InMemoryJournalAdapter } from "../../src/infrastructure/testing/in-memory-journal.adapter.js";
+import { replayJournal } from "../../../../src/application/journal/replay-journal.js";
+import { isErr, isOk } from "../../../../src/domain/result.js";
+import { JournalEntryBuilder } from "../../../../src/domain/value-objects/journal-entry.builder.js";
+import type { JournalEntry } from "../../../../src/domain/value-objects/journal-entry.js";
+import { InMemoryJournalAdapter } from "../../../../src/infrastructure/testing/in-memory-journal.adapter.js";
 
 describe("replayJournal", () => {
 	const sliceId = "M01-S04";

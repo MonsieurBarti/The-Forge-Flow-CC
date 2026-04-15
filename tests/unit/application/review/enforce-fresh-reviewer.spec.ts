@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { enforceFreshReviewer } from "../../../../src/application/review/enforce-fresh-reviewer.js";
-import { isErr, isOk } from "../../src/../src/domain/result.js";
-import { InMemoryStateAdapter } from "../../src/../src/infrastructure/testing/in-memory-state-adapter.js";
+import { isErr, isOk } from "../../../../src/domain/result.js";
+import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
 
 describe("enforceFreshReviewer", () => {
 	let adapter: InMemoryStateAdapter;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectClusters } from "../../../src/application/compose/detect-clusters.js";
+import { detectClusters } from "../../../../src/application/compose/detect-clusters.js";
 
 describe("detectClusters - density-based", () => {
 	const makeObs = (session: string, tool: string) => ({

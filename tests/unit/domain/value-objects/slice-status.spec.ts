@@ -3,7 +3,7 @@ import {
 	canTransition,
 	SliceStatusSchema,
 	validTransitionsFrom,
-} from "../../../src/domain/slice-status.js";
+} from "../../../../src/domain/value-objects/slice-status.js";
 
 describe("SliceStatus", () => {
 	it("should accept all valid statuses", () => {

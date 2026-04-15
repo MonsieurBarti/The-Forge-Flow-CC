@@ -6,7 +6,7 @@ import {
 	acquireRestoreLock,
 	acquireSyncLock,
 	isLocked,
-} from "../../../src/infrastructure/tff-lock.js";
+} from "../../../../src/infrastructure/locking/tff-lock.js";
 
 describe("tff-lock", () => {
 	let tmpDir: string;

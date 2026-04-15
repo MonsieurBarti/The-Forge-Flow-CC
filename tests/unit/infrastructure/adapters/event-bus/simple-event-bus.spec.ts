@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { SimpleEventBus } from "../../../src/infrastructure/simple-event-bus.js";
-import { createDomainEvent } from "../../src/../domain/events/domain-event.js";
+import { createDomainEvent } from "../../../../../src/domain/events/domain-event.js";
+import { SimpleEventBus } from "../../../../../src/infrastructure/adapters/event-bus/simple-event-bus.js";
 
 describe("SimpleEventBus", () => {
 	it("delivers event to subscriber", () => {

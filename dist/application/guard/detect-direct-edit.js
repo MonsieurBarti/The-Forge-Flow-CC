@@ -71,7 +71,7 @@ export function detectDirectEdit(deps) {
     }
     const session = sessionResult.data;
     // No active slice
-    if (!session || !session.activeSliceId) {
+    if (!session?.activeSliceId) {
         return {
             warning: {
                 code: "NO_ACTIVE_SLICE",

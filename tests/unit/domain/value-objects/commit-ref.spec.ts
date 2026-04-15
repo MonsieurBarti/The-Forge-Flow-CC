@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CommitRefSchema } from "../../../src/domain/commit-ref.js";
+import { CommitRefSchema } from "../../../../src/domain/value-objects/commit-ref.js";
 
 describe("CommitRef", () => {
 	it("should accept a valid 40-char SHA", () => {

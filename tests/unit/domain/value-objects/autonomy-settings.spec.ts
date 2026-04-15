@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	AutonomySettingsSchema,
 	parseAutonomyMode,
-} from "../../../src/domain/autonomy-settings.js";
+} from "../../../../src/domain/value-objects/autonomy-settings.js";
 
 describe("autonomy-settings", () => {
 	it("should parse plan-to-pr mode", () => {

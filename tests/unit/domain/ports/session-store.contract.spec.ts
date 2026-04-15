@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { DatabaseInit } from "../../../src/infrastructure/testing/database-init.port.js";
-import type { SessionStore } from "../../../src/infrastructure/testing/session-store.port.js";
-import { isOk } from "../../src/src/result.js";
+import type { DatabaseInit } from "../../../../src/domain/ports/database-init.port.js";
+import type { SessionStore } from "../../../../src/domain/ports/session-store.port.js";
+import { isOk } from "../../../../src/domain/result.js";
 
 export const runSessionStoreContractTests = (
 	name: string,
@@ -41,8 +41,8 @@ export const runSessionStoreContractTests = (
 	});
 };
 
-import { SQLiteStateAdapter } from "../../src/src/../infrastructure/adapters/sqlite/sqlite-state.adapter.js";
-import { InMemoryStateAdapter } from "../../src/src/../infrastructure/testing/in-memory-state-adapter.js";
+import { SQLiteStateAdapter } from "../../../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js";
+import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
 
 runSessionStoreContractTests("SQLiteStateAdapter", () => SQLiteStateAdapter.createInMemory());
 runSessionStoreContractTests("InMemoryStateAdapter", () => new InMemoryStateAdapter());

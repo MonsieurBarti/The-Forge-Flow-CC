@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { projectInitCmd } from "../../../src/cli/commands/project-init.cmd.js";
+import { projectInitCmd } from "../../../../src/cli/commands/project-init.cmd.js";
 
 describe("project:init — .tff/ auto-creation", () => {
 	let tmpDir: string;

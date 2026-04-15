@@ -3,9 +3,9 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { stateRepairCmd } from "../../../src/cli/commands/state-repair.cmd.js";
-import { GitCliAdapter } from "../../src/infrastructure/adapters/git/git-cli.adapter.js";
-import { GitStateBranchAdapter } from "../../src/infrastructure/adapters/git/git-state-branch.adapter.js";
+import { stateRepairCmd } from "../../../../src/cli/commands/state-repair.cmd.js";
+import { GitCliAdapter } from "../../../../src/infrastructure/adapters/git/git-cli.adapter.js";
+import { GitStateBranchAdapter } from "../../../../src/infrastructure/adapters/git/git-state-branch.adapter.js";
 
 describe("state:repair", () => {
 	let tmpDir: string;
@@ -300,8 +300,10 @@ describe("state:repair", () => {
 
 		// Initialize proper SQLite state with project data using commands
 		// First create a valid SQLite database via the init/milestone commands
-		const initCmd = (await import("../../../../src/infrastructure/adapters/sqlite/project-init.cmd.js")).projectInitCmd;
-		const milestoneCmd = (await import("../../../../src/infrastructure/adapters/sqlite/milestone-create.cmd.js")).milestoneCreateCmd;
+		const initCmd = (await import("../../../../src/cli/commands/project-init.cmd.js"))
+			.projectInitCmd;
+		const milestoneCmd = (await import("../../../../src/cli/commands/milestone-create.cmd.js"))
+			.milestoneCreateCmd;
 
 		const initResult = JSON.parse(
 			await initCmd(["test-restore-project", "Test project for restore"]),

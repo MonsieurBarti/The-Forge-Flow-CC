@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CandidateSchema } from "../../../src/domain/candidate.js";
+import { CandidateSchema } from "../../../../src/domain/value-objects/candidate.js";
 
 describe("Candidate", () => {
 	it("should accept a valid candidate", () => {

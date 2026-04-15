@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SQLiteStateAdapter } from "../../../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js";
+import { SQLiteStateAdapter } from "../../../../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js";
 
 describe("SQLiteStateAdapter — close + checkpoint", () => {
 	it("close() should close the database connection", () => {

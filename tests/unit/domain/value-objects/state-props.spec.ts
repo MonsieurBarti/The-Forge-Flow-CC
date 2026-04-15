@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { DependencySchema } from "../../../src/domain/dependency.js";
-import { MilestonePropsSchema } from "../../../src/domain/milestone-props.js";
-import { MilestoneStatusSchema } from "../../../src/domain/milestone-status.js";
-import { MilestoneUpdatePropsSchema } from "../../../src/domain/milestone-update-props.js";
-import { ProjectPropsSchema } from "../../../src/domain/project-props.js";
-import { SlicePropsSchema } from "../../../src/domain/slice-props.js";
-import { SliceUpdatePropsSchema } from "../../../src/domain/slice-update-props.js";
-import { TaskPropsSchema } from "../../../src/domain/task-props.js";
-import { TaskUpdatePropsSchema } from "../../../src/domain/task-update-props.js";
-import { WorkflowSessionSchema } from "../../../src/domain/workflow-session.js";
+import { DependencySchema } from "../../../../src/domain/value-objects/dependency.js";
+import { MilestonePropsSchema } from "../../../../src/domain/value-objects/milestone-props.js";
+import { MilestoneStatusSchema } from "../../../../src/domain/value-objects/milestone-status.js";
+import { MilestoneUpdatePropsSchema } from "../../../../src/domain/value-objects/milestone-update-props.js";
+import { ProjectPropsSchema } from "../../../../src/domain/value-objects/project-props.js";
+import { SlicePropsSchema } from "../../../../src/domain/value-objects/slice-props.js";
+import { SliceUpdatePropsSchema } from "../../../../src/domain/value-objects/slice-update-props.js";
+import { TaskPropsSchema } from "../../../../src/domain/value-objects/task-props.js";
+import { TaskUpdatePropsSchema } from "../../../../src/domain/value-objects/task-update-props.js";
+import { WorkflowSessionSchema } from "../../../../src/domain/value-objects/workflow-session.js";
 
 describe("MilestoneStatus (extracted)", () => {
 	it("accepts valid statuses", () => {

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { detectWaves, detectWavesFromStores } from "../../../../src/application/waves/detect-waves.js";
-import { isErr, isOk } from "../../src/../src/domain/result.js";
-import { InMemoryStateAdapter } from "../../src/../src/infrastructure/testing/in-memory-state-adapter.js";
+import {
+	detectWaves,
+	detectWavesFromStores,
+} from "../../../../src/application/waves/detect-waves.js";
+import { isErr, isOk } from "../../../../src/domain/result.js";
+import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
 
 describe("detectWaves", () => {
 	it("should put independent tasks in wave 0", () => {

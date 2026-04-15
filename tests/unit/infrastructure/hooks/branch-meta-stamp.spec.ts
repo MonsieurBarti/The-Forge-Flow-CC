@@ -6,7 +6,7 @@ import {
 	readLocalStamp,
 	writeLocalStamp,
 	writeSyntheticStamp,
-} from "../../../src/infrastructure/branch-meta-stamp.js";
+} from "../../../../src/infrastructure/hooks/branch-meta-stamp.js";
 
 describe("branch-meta-stamp", () => {
 	let tffDir: string;

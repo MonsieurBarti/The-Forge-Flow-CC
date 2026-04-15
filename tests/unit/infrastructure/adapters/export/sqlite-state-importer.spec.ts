@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { SQLiteStateExporter } from "../../../src/infrastructure/sqlite-state-exporter.js";
-import { SQLiteStateImporter } from "../../../src/infrastructure/sqlite-state-importer.js";
-import { isOk } from "../../src/../domain/result.js";
-import { SQLiteStateAdapter } from "../sqlite/sqlite-state.adapter.js";
+import { isOk } from "../../../../../src/domain/result.js";
+import { SQLiteStateExporter } from "../../../../../src/infrastructure/adapters/export/sqlite-state-exporter.js";
+import { SQLiteStateImporter } from "../../../../../src/infrastructure/adapters/export/sqlite-state-importer.js";
+import { SQLiteStateAdapter } from "../../../../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js";
 
 describe("SQLiteStateImporter", () => {
 	let adapter: SQLiteStateAdapter;

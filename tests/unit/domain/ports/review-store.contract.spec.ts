@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { DatabaseInit } from "../../../src/infrastructure/testing/database-init.port.js";
-import type { MilestoneStore } from "../../../src/infrastructure/testing/milestone-store.port.js";
-import type { ProjectStore } from "../../../src/infrastructure/testing/project-store.port.js";
-import type { ReviewStore } from "../../../src/infrastructure/testing/review-store.port.js";
-import type { SliceStore } from "../../../src/infrastructure/testing/slice-store.port.js";
-import type { TaskStore } from "../../../src/infrastructure/testing/task-store.port.js";
-import { isOk } from "../result.js";
+import type { DatabaseInit } from "../../../../src/domain/ports/database-init.port.js";
+import type { MilestoneStore } from "../../../../src/domain/ports/milestone-store.port.js";
+import type { ProjectStore } from "../../../../src/domain/ports/project-store.port.js";
+import type { ReviewStore } from "../../../../src/domain/ports/review-store.port.js";
+import type { SliceStore } from "../../../../src/domain/ports/slice-store.port.js";
+import type { TaskStore } from "../../../../src/domain/ports/task-store.port.js";
+import { isOk } from "../../../../src/domain/result.js";
 
 type FullAdapter = ReviewStore &
 	TaskStore &
@@ -207,8 +207,8 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 	});
 };
 
-import { SQLiteStateAdapter } from "../../infrastructure/adapters/sqlite/sqlite-state.adapter.js";
-import { InMemoryStateAdapter } from "../../infrastructure/testing/in-memory-state-adapter.js";
+import { SQLiteStateAdapter } from "../../../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js";
+import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
 
 runReviewStoreContractTests("SQLiteStateAdapter", () => {
 	const adapter = SQLiteStateAdapter.createInMemory();

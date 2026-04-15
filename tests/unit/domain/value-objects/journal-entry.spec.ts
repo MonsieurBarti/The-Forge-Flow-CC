@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { JournalEntrySchema } from "../../../src/domain/journal-entry.js";
+import { JournalEntrySchema } from "../../../../src/domain/value-objects/journal-entry.js";
 
 describe("JournalEntrySchema", () => {
 	const base = { seq: 0, sliceId: "M01-S04", timestamp: new Date().toISOString() };

@@ -2,9 +2,9 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
-import { GitStateBranchAdapter } from "../../../src/infrastructure/testing/git-state-branch.adapter.js";
-import { isOk } from "../../src/../src/../domain/result.js";
-import { InMemoryGitOps } from "../../src/../src/testing/in-memory-git-ops.js";
+import { isOk } from "../../../../../src/domain/result.js";
+import { GitStateBranchAdapter } from "../../../../../src/infrastructure/adapters/git/git-state-branch.adapter.js";
+import { InMemoryGitOps } from "../../../../../src/infrastructure/testing/in-memory-git-ops.js";
 
 describe("GitStateBranchAdapter", () => {
 	let gitOps: InMemoryGitOps;

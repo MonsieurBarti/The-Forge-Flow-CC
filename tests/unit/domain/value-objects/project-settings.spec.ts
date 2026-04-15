@@ -3,7 +3,7 @@ import {
 	loadProjectSettings,
 	ProjectSettingsSchema,
 	parseProjectSettings,
-} from "../../../src/domain/project-settings.js";
+} from "../../../../src/domain/value-objects/project-settings.js";
 
 describe("ProjectSettingsSchema", () => {
 	it("should parse a complete valid settings object", () => {

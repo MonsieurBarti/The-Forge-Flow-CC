@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { JournalRepository } from "../../../src/infrastructure/testing/journal-repository.port.js";
+import type { JournalRepository } from "../../../../src/domain/ports/journal-repository.port.js";
+import { isOk } from "../../../../src/domain/result.js";
+import { JournalEntryBuilder } from "../../../../src/domain/value-objects/journal-entry.builder.js";
 // Run with InMemory adapter when executed standalone (avoids "No test suite found" error)
-import { InMemoryJournalAdapter } from "../../src/infrastructure/testing/in-memory-journal.adapter.js";
-import { isOk } from "../result.js";
-import { JournalEntryBuilder } from "../value-objects/journal-entry.builder.js";
+import { InMemoryJournalAdapter } from "../../../../src/infrastructure/testing/in-memory-journal.adapter.js";
 
 export function runJournalContractTests(
 	name: string,

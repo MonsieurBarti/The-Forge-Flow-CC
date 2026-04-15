@@ -8,7 +8,7 @@ vi.mock("node:fs");
 
 // Mock the with-sync-lock module - will pass through to inner function
 const mockWithSyncLock = vi.fn(async <T>(fn: (stores: any) => Promise<T>) => fn({}));
-vi.mock("../with-sync-lock.js", () => ({
+vi.mock("../../src/cli/with-sync-lock.js", () => ({
 	withSyncLock: (...args: any[]) => mockWithSyncLock(...args),
 }));
 
@@ -16,7 +16,7 @@ vi.mock("../with-sync-lock.js", () => ({
 const mockWithBranchGuard = vi.fn(async <T>(fn: (stores: any) => Promise<T>) =>
 	fn({ sliceStore: mockSliceStore }),
 );
-vi.mock("../with-branch-guard.js", () => ({
+vi.mock("../../src/cli/with-branch-guard.js", () => ({
 	withBranchGuard: (...args: any[]) => mockWithBranchGuard(...args),
 }));
 
@@ -24,12 +24,12 @@ vi.mock("../with-branch-guard.js", () => ({
 let mockSliceStore: any = {};
 
 // Mock the application validation functions
-vi.mock("../../application/index.js", () => ({
+vi.mock("../../src/application/index.js", () => ({
 	isValidOperation: (op: string) =>
 		["discuss", "research", "plan", "execute", "verify", "ship", "complete"].includes(op),
 }));
 
-vi.mock("../../application/guard/validate-operation.js", () => ({
+vi.mock("../../src/application/guard/validate-operation.js", () => ({
 	validateOperation: (operation: string, currentStatus: string) => {
 		const requiredMap: Record<string, string> = {
 			discuss: "discussing",

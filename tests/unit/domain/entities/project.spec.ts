@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createProject, ProjectSchema } from "../../../src/domain/project.js";
+import { createProject, ProjectSchema } from "../../../../src/domain/entities/project.js";
 
 describe("Project", () => {
 	it("should create a project with name and vision", () => {

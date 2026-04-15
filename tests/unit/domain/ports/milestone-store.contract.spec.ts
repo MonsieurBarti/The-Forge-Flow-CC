@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { DatabaseInit } from "../../../src/infrastructure/testing/database-init.port.js";
-import type { MilestoneStore } from "../../../src/infrastructure/testing/milestone-store.port.js";
-import type { ProjectStore } from "../../../src/infrastructure/testing/project-store.port.js";
-import type { SliceStore } from "../../../src/infrastructure/testing/slice-store.port.js";
-import { isErr, isOk } from "../../src/src/result.js";
+import type { DatabaseInit } from "../../../../src/domain/ports/database-init.port.js";
+import type { MilestoneStore } from "../../../../src/domain/ports/milestone-store.port.js";
+import type { ProjectStore } from "../../../../src/domain/ports/project-store.port.js";
+import type { SliceStore } from "../../../../src/domain/ports/slice-store.port.js";
+import { isErr, isOk } from "../../../../src/domain/result.js";
 
 export const runMilestoneStoreContractTests = (
 	name: string,
@@ -89,8 +89,8 @@ export const runMilestoneStoreContractTests = (
 	});
 };
 
-import { SQLiteStateAdapter } from "../../src/src/../infrastructure/adapters/sqlite/sqlite-state.adapter.js";
-import { InMemoryStateAdapter } from "../../src/src/../infrastructure/testing/in-memory-state-adapter.js";
+import { SQLiteStateAdapter } from "../../../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js";
+import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
 
 runMilestoneStoreContractTests("SQLiteStateAdapter", () => SQLiteStateAdapter.createInMemory());
 runMilestoneStoreContractTests("InMemoryStateAdapter", () => new InMemoryStateAdapter());

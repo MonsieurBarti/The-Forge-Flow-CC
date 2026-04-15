@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { completeTask, createTask, startTask, TaskSchema } from "../../../src/domain/task.js";
-import { isErr, isOk } from "../../src/result.js";
+import {
+	completeTask,
+	createTask,
+	startTask,
+	TaskSchema,
+} from "../../../../src/domain/entities/task.js";
+import { isErr, isOk } from "../../../../src/domain/result.js";
 
 describe("Task", () => {
 	const makeTask = () =>

@@ -2,11 +2,11 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { milestoneCreateCmd } from "../../../src/cli/commands/milestone-create.cmd.js";
-import { projectInitCmd } from "../../../src/cli/commands/project-init.cmd.js";
-import { sliceCreateCmd } from "../../../src/cli/commands/slice-create.cmd.js";
-import { taskClaimCmd } from "../../../src/cli/commands/task-claim.cmd.js";
-import { createClosableStateStores } from "../../src/../src/infrastructure/adapters/sqlite/create-state-stores.js";
+import { milestoneCreateCmd } from "../../../../src/cli/commands/milestone-create.cmd.js";
+import { projectInitCmd } from "../../../../src/cli/commands/project-init.cmd.js";
+import { sliceCreateCmd } from "../../../../src/cli/commands/slice-create.cmd.js";
+import { taskClaimCmd } from "../../../../src/cli/commands/task-claim.cmd.js";
+import { createClosableStateStores } from "../../../../src/infrastructure/adapters/sqlite/create-state-stores.js";
 
 describe("task:claim — journal integration", () => {
 	let tmpDir: string;

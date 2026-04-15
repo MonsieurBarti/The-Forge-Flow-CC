@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { checkStaleClaims } from "../../../../src/application/claims/check-stale-claims.js";
-import { isOk } from "../../domain/result.js";
-import { InMemoryStateAdapter } from "../../infrastructure/testing/in-memory-state-adapter.js";
+import { isOk } from "../../../../src/domain/result.js";
+import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
 
 describe("InMemoryStateAdapter — claim + stale detection", () => {
 	let adapter: InMemoryStateAdapter;

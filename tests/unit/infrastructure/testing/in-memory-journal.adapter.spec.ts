@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InMemoryJournalAdapter } from "../../../src/infrastructure/testing/in-memory-journal.adapter.js";
+import { InMemoryJournalAdapter } from "../../../../src/infrastructure/testing/in-memory-journal.adapter.js";
 
 describe("InMemoryJournalAdapter", () => {
 	it("can be instantiated", () => {
@@ -14,6 +14,6 @@ describe("InMemoryJournalAdapter", () => {
 	});
 });
 
-import { runJournalContractTests } from "../../src/domain/ports/journal-repository.contract.spec.js";
+import { runJournalContractTests } from "../../domain/ports/journal-repository.contract.spec.js";
 
 runJournalContractTests("InMemoryJournalAdapter", () => new InMemoryJournalAdapter());

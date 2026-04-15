@@ -20,13 +20,13 @@ describe("checkpoint", () => {
 	};
 
 	it("saveCheckpoint writes valid checkpoint markdown", async () => {
-		const result = await saveCheckpoint(checkpointData, artifactStore);
+		const result = await saveCheckpoint(checkpointData, { artifactStore });
 		expect(isOk(result)).toBe(true);
 	});
 
 	it("loadCheckpoint reads saved checkpoint", async () => {
-		await saveCheckpoint(checkpointData, artifactStore);
-		const result = await loadCheckpoint("M01-S01", artifactStore);
+		await saveCheckpoint(checkpointData, { artifactStore });
+		const result = await loadCheckpoint("M01-S01", { artifactStore });
 		expect(isOk(result)).toBe(true);
 		if (isOk(result)) {
 			expect(result.data.sliceId).toBe("M01-S01");
@@ -35,7 +35,7 @@ describe("checkpoint", () => {
 	});
 
 	it("loadCheckpoint returns NOT_FOUND when checkpoint missing", async () => {
-		const result = await loadCheckpoint("M99-S99", artifactStore);
+		const result = await loadCheckpoint("M99-S99", { artifactStore });
 		expect(isErr(result)).toBe(true);
 	});
 });

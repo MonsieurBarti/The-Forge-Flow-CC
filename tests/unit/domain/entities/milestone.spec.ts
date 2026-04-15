@@ -3,7 +3,7 @@ import {
 	createMilestone,
 	formatMilestoneNumber,
 	MilestoneSchema,
-} from "../../../src/domain/milestone.js";
+} from "../../../../src/domain/entities/milestone.js";
 
 describe("Milestone", () => {
 	it("should create a milestone with human-readable ID", () => {

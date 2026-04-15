@@ -99,7 +99,7 @@ export function parseProjectSettings(raw: unknown): ProjectSettings {
  * Handles corrupted YAML, empty files, and all parse errors gracefully.
  */
 export function loadProjectSettings(yamlContent: string): ProjectSettings {
-	if (!yamlContent || !yamlContent.trim()) {
+	if (!yamlContent?.trim()) {
 		return ProjectSettingsSchema.parse(undefined);
 	}
 	try {

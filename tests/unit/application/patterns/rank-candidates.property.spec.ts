@@ -1,6 +1,6 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { rankCandidates } from "../../../src/application/patterns/rank-candidates.js";
+import { rankCandidates } from "../../../../src/application/patterns/rank-candidates.js";
 
 /** Arbitrary that produces 4 weights summing to exactly 1 */
 const normalizedWeights = fc

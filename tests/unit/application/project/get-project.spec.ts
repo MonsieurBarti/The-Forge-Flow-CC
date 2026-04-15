@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { getProject } from "../../../src/application/project/get-project.js";
-import { isOk } from "../../src/domain/result.js";
-import { InMemoryStateAdapter } from "../../src/infrastructure/testing/in-memory-state-adapter.js";
+import { getProject } from "../../../../src/application/project/get-project.js";
+import { isOk } from "../../../../src/domain/result.js";
+import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
 
 describe("getProject", () => {
 	let adapter: InMemoryStateAdapter;

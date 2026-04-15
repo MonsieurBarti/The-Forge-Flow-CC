@@ -41,8 +41,12 @@ describe("createStateStores guard", () => {
 			}),
 		);
 
-		const { createStateStores } = await import("../../../../../src/infrastructure/adapters/sqlite/create-state-stores.js");
-		const { BranchMismatchError } = await import("../../../../../src/domain/errors/branch-mismatch.error.js");
+		const { createStateStores } = await import(
+			"../../../../../src/infrastructure/adapters/sqlite/create-state-stores.js"
+		);
+		const { BranchMismatchError } = await import(
+			"../../../../../src/domain/errors/branch-mismatch.error.js"
+		);
 
 		expect(() => createStateStores(dbPath)).toThrow(BranchMismatchError);
 	});
@@ -50,8 +54,12 @@ describe("createStateStores guard", () => {
 	it("throws BranchMismatchError when stamp is missing but state.db exists", async () => {
 		writeFileSync(dbPath, "dummy-db");
 
-		const { createStateStores } = await import("../../../../../src/infrastructure/adapters/sqlite/create-state-stores.js");
-		const { BranchMismatchError } = await import("../../../../../src/domain/errors/branch-mismatch.error.js");
+		const { createStateStores } = await import(
+			"../../../../../src/infrastructure/adapters/sqlite/create-state-stores.js"
+		);
+		const { BranchMismatchError } = await import(
+			"../../../../../src/domain/errors/branch-mismatch.error.js"
+		);
 
 		expect(() => createStateStores(dbPath)).toThrow(BranchMismatchError);
 	});
@@ -67,8 +75,12 @@ describe("createStateStores guard", () => {
 			}),
 		);
 
-		const { createStateStoresUnchecked } = await import("../../../../../src/infrastructure/adapters/sqlite/create-state-stores.js");
-		const { BranchMismatchError } = await import("../../../../../src/domain/errors/branch-mismatch.error.js");
+		const { createStateStoresUnchecked } = await import(
+			"../../../../../src/infrastructure/adapters/sqlite/create-state-stores.js"
+		);
+		const { BranchMismatchError } = await import(
+			"../../../../../src/domain/errors/branch-mismatch.error.js"
+		);
 
 		// Should not throw BranchMismatchError even with mismatched stamp
 		try {

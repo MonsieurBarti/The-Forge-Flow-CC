@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	createClosableStateStores,
 	createStateStores,
-} from "../../../src/infrastructure/create-state-stores.js";
+} from "../../../../../src/infrastructure/adapters/sqlite/create-state-stores.js";
 
 describe("createStateStores", () => {
 	it("returns object with all 8 port keys", () => {

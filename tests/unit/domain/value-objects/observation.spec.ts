@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ObservationSchema } from "../../../src/domain/observation.js";
+import { ObservationSchema } from "../../../../src/domain/value-objects/observation.js";
 
 describe("Observation", () => {
 	it("should accept a valid observation", () => {

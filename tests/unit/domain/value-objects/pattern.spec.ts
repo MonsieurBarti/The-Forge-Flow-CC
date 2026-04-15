@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PatternSchema } from "../../../src/domain/pattern.js";
+import { PatternSchema } from "../../../../src/domain/value-objects/pattern.js";
 
 describe("Pattern", () => {
 	it("should accept a valid pattern", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BranchMetaSchema } from "../../../src/domain/branch-meta.js";
+import { BranchMetaSchema } from "../../../../src/domain/value-objects/branch-meta.js";
 
 describe("BranchMeta", () => {
 	it("should validate a valid branch meta", () => {

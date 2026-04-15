@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { getNativeBindingPath } from "../../../src/infrastructure/load-native-binding.js";
+import { getNativeBindingPath } from "../../../../../src/infrastructure/adapters/sqlite/load-native-binding.js";
 
 describe("getNativeBindingPath", () => {
 	let tmpDir: string;

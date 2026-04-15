@@ -46,7 +46,7 @@ export function generateReminder(deps) {
     if (!sessionResult.ok)
         return null;
     const session = sessionResult.data;
-    if (!session || !session.activeSliceId || !session.activeMilestoneId)
+    if (!session?.activeSliceId || !session.activeMilestoneId)
         return null;
     const phase = session.phase;
     const sliceId = session.activeSliceId;

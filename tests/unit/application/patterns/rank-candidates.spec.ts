@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { rankCandidates } from "../../../src/application/patterns/rank-candidates.js";
-import type { Pattern } from "../../src/../src/domain/value-objects/pattern.js";
+import { rankCandidates } from "../../../../src/application/patterns/rank-candidates.js";
+import type { Pattern } from "../../../../src/domain/value-objects/pattern.js";
 
 describe("rankCandidates", () => {
 	const now = "2026-03-21";

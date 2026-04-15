@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RestoreResultSchema } from "../../../src/domain/restore-result.js";
+import { RestoreResultSchema } from "../../../../src/domain/value-objects/restore-result.js";
 
 describe("RestoreResult", () => {
 	it("should validate a valid restore result", () => {

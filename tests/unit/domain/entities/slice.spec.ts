@@ -4,8 +4,8 @@ import {
 	formatSliceId,
 	SliceSchema,
 	transitionSlice,
-} from "../../../src/domain/slice.js";
-import { isErr, isOk } from "../result.js";
+} from "../../../../src/domain/entities/slice.js";
+import { isErr, isOk } from "../../../../src/domain/result.js";
 
 describe("Slice", () => {
 	const makeSlice = () =>

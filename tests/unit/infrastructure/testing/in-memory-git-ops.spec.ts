@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemoryGitOps } from "../../../src/infrastructure/in-memory-git-ops.js";
-import { isOk } from "../../domain/result.js";
+import { isOk } from "../../../../src/domain/result.js";
+import { InMemoryGitOps } from "../../../../src/infrastructure/testing/in-memory-git-ops.js";
 
 describe("InMemoryGitOps — S03 extensions", () => {
 	let git: InMemoryGitOps;

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { JournalEventHandler } from "../../../src/application/journal/journal-event-handler.js";
-import { createDomainEvent } from "../../src/../src/domain/events/domain-event.js";
-import { isOk } from "../../src/../src/domain/result.js";
-import { SimpleEventBus } from "../../src/../src/infrastructure/adapters/event-bus/simple-event-bus.js";
-import { InMemoryJournalAdapter } from "../../src/../src/infrastructure/testing/in-memory-journal.adapter.js";
+import { JournalEventHandler } from "../../../../src/application/journal/journal-event-handler.js";
+import { createDomainEvent } from "../../../../src/domain/events/domain-event.js";
+import { isOk } from "../../../../src/domain/result.js";
+import { SimpleEventBus } from "../../../../src/infrastructure/adapters/event-bus/simple-event-bus.js";
+import { InMemoryJournalAdapter } from "../../../../src/infrastructure/testing/in-memory-journal.adapter.js";
 
 describe("JournalEventHandler", () => {
 	it("writes phase-changed entry on SLICE_STATUS_CHANGED", () => {

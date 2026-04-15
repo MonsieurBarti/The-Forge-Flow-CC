@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import * as generateReminderModule from "../../application/session/generate-reminder.js";
-import { createStateStores } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { sessionRemindCmd } from "./session-remind.cmd.js";
+import * as generateReminderModule from "../../src/application/session/generate-reminder.js";
+import { sessionRemindCmd } from "../../src/cli/commands/session-remind.cmd.js";
+import { createStateStores } from "../../src/infrastructure/adapters/sqlite/create-state-stores.js";
 
 vi.mock("node:fs");
-vi.mock("../../infrastructure/adapters/sqlite/create-state-stores.js");
-vi.mock("../../application/session/generate-reminder.js");
+vi.mock("../../src/infrastructure/adapters/sqlite/create-state-stores.js");
+vi.mock("../../src/application/session/generate-reminder.js");
 
 describe("session-remind integration", () => {
 	const testDir = "/test/project";
