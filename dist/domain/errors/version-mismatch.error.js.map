@@ -1,1 +1,0 @@
-{"version":3,"file":"version-mismatch.error.js","sourceRoot":"","sources":["../../../src/domain/errors/version-mismatch.error.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,iBAAiB,EAAoB,MAAM,mBAAmB,CAAC;AAExE,MAAM,CAAC,MAAM,oBAAoB,GAAG,CAAC,SAAiB,EAAE,WAAmB,EAAe,EAAE,CAC3F,iBAAiB,CAChB,kBAAkB,EAClB,2BAA2B,SAAS,+BAA+B,WAAW,sBAAsB,EACpG,EAAE,SAAS,EAAE,WAAW,EAAE,CAC1B,CAAC"}

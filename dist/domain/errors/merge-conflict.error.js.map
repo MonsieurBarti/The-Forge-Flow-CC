@@ -1,1 +1,0 @@
-{"version":3,"file":"merge-conflict.error.js","sourceRoot":"","sources":["../../../src/domain/errors/merge-conflict.error.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,iBAAiB,EAAE,MAAM,mBAAmB,CAAC;AAEtD,MAAM,CAAC,MAAM,kBAAkB,GAAG,CAAC,WAAmB,EAAE,YAAoB,EAAE,MAAc,EAAE,EAAE,CAC/F,iBAAiB,CAChB,gBAAgB,EAChB,mBAAmB,WAAW,OAAO,YAAY,KAAK,MAAM,EAAE,EAC9D;IACC,WAAW;IACX,YAAY;CACZ,CACD,CAAC"}

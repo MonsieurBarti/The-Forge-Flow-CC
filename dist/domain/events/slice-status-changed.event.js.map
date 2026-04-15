@@ -1,1 +1,0 @@
-{"version":3,"file":"slice-status-changed.event.js","sourceRoot":"","sources":["../../../src/domain/events/slice-status-changed.event.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,iBAAiB,EAAE,MAAM,mBAAmB,CAAC;AAEtD,MAAM,CAAC,MAAM,uBAAuB,GAAG,CAAC,OAAe,EAAE,IAAY,EAAE,EAAU,EAAE,EAAE,CACpF,iBAAiB,CAAC,sBAAsB,EAAE,EAAE,OAAO,EAAE,IAAI,EAAE,EAAE,EAAE,CAAC,CAAC"}

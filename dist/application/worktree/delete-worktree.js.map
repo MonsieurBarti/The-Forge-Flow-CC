@@ -1,1 +1,0 @@
-{"version":3,"file":"delete-worktree.js","sourceRoot":"","sources":["../../../src/application/worktree/delete-worktree.ts"],"names":[],"mappings":"AAWA,MAAM,CAAC,MAAM,qBAAqB,GAAG,KAAK,EACzC,KAA0B,EAC1B,IAAwB,EACa,EAAE;IACvC,MAAM,YAAY,GAAG,kBAAkB,KAAK,CAAC,OAAO,EAAE,CAAC;IACvD,OAAO,IAAI,CAAC,MAAM,CAAC,cAAc,CAAC,YAAY,CAAC,CAAC;AACjD,CAAC,CAAC"}

@@ -1,1 +1,0 @@
-{"version":3,"file":"branch-mismatch.error.d.ts","sourceRoot":"","sources":["../../../src/domain/errors/branch-mismatch.error.ts"],"names":[],"mappings":"AAAA,qBAAa,mBAAoB,SAAQ,KAAK;aAI5B,cAAc,EAAE,MAAM;aACtB,aAAa,EAAE,MAAM;aACrB,SAAS,EAAE,MAAM;IALlC,SAAgB,UAAU,EAAE,MAAM,CAAC;gBAGlB,cAAc,EAAE,MAAM,EACtB,aAAa,EAAE,MAAM,EACrB,SAAS,GAAE,MAAgC;CAS5D"}
