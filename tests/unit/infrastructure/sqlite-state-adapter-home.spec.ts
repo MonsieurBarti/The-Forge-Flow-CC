@@ -9,10 +9,10 @@
  * 3. Commit
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
-import { join } from "path";
-import { tmpdir } from "os";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 describe("T15: SQLiteStateAdapter home directory integration", () => {
 	let tempDir: string;
@@ -39,7 +39,9 @@ describe("T15: SQLiteStateAdapter home directory integration", () => {
 			process.env.TFF_CC_HOME = tempDir;
 			const projectDir = join(tempDir, "test-project");
 			mkdirSync(projectDir, { recursive: true });
-			writeFileSync(join(projectDir, ".tff-project-id"), "test-project-id-123\n");
+			// Use valid UUID v4 format
+			const projectId = "11111111-2222-4000-8000-123456789abc";
+			writeFileSync(join(projectDir, ".tff-project-id"), `${projectId}\n`);
 
 			const { SQLiteStateAdapter } = await import(
 				"../../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js"
@@ -49,7 +51,7 @@ describe("T15: SQLiteStateAdapter home directory integration", () => {
 			);
 
 			// Ensure home dir exists
-			ensureProjectHomeDir("test-project-id-123");
+			ensureProjectHomeDir(projectId);
 
 			// Change cwd to project dir for getProjectId to work
 			const originalCwd = process.cwd();
@@ -63,7 +65,7 @@ describe("T15: SQLiteStateAdapter home directory integration", () => {
 				expect(initResult.ok).toBe(true);
 
 				// Verify database was created in home directory
-				const dbPath = join(tempDir, "test-project-id-123", "state.db");
+				const dbPath = join(tempDir, projectId, "state.db");
 				expect(existsSync(dbPath)).toBe(true);
 
 				adapter.close();

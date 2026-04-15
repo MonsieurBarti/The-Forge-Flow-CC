@@ -9,9 +9,9 @@
  * 3. Commit
  */
 
-import { describe, it, expect } from "vitest";
-import { existsSync } from "fs";
-import { join } from "path";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 // All CLI command files that should be deleted in T04
 const FILES_TO_DELETE = [

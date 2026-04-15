@@ -84,7 +84,7 @@ export const preOpGuardCmd = async (args: string[]): Promise<string> => {
 	const result = await withSyncLock(async () => {
 		try {
 			const { sliceStore } = createClosableStateStoresUnchecked();
-			
+
 			// Retrieve the slice
 			const sliceResult = sliceStore.getSlice(sliceId);
 			if (!isOk(sliceResult)) {

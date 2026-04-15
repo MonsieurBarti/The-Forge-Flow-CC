@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -62,7 +62,7 @@ describe("task:close — journal integration", () => {
 
 	it("writes task-completed journal entry before closing task", async () => {
 		// Journal is now in home directory under project ID
-		const projectId = path.basename(tmpDir); // This won't work - need actual project ID
+		const _projectId = path.basename(tmpDir); // This won't work - need actual project ID
 		// Read project ID from .tff-project-id
 		const projectIdPath = path.join(tmpDir, ".tff-project-id");
 		const projectId2 = readFileSync(projectIdPath, "utf-8").trim();

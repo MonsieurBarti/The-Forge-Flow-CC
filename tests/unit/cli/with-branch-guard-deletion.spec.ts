@@ -9,9 +9,9 @@
  * 3. Commit
  */
 
-import { describe, it, expect } from "vitest";
-import { existsSync } from "fs";
-import { join } from "path";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 describe("T05: with-branch-guard.ts deletion", () => {
 	const projectRoot = process.cwd();

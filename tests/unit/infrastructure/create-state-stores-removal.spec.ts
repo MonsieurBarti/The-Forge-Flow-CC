@@ -9,9 +9,9 @@
  * 3. Commit
  */
 
-import { describe, it, expect } from "vitest";
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 describe("T08: create-state-stores.ts branch alignment removal", () => {
 	const projectRoot = process.cwd();

@@ -5,9 +5,22 @@
  * centralized home directory pattern (~/.tff-cc/{projectId}/).
  */
 
-import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync, copyFileSync, statSync } from "node:fs";
+import {
+	copyFileSync,
+	existsSync,
+	lstatSync,
+	mkdirSync,
+	readdirSync,
+	rmSync,
+	symlinkSync,
+} from "node:fs";
 import { join } from "node:path";
-import { getProjectId, getProjectHome, ensureProjectHomeDir, writeProjectIdFile, readProjectIdFile } from "./home-directory.js";
+import {
+	ensureProjectHomeDir,
+	getProjectId,
+	readProjectIdFile,
+	writeProjectIdFile,
+} from "./home-directory.js";
 
 /**
  * Check if .tff/ exists as a real directory (not symlink) - indicates legacy pattern.
@@ -47,6 +60,16 @@ function copyDir(src: string, dest: string): void {
 function deleteDir(dir: string): void {
 	if (existsSync(dir)) {
 		rmSync(dir, { recursive: true, force: true });
+	}
+}
+
+/**
+ * Restore .tff/ directory from home directory after failed migration.
+ * Used for rollback when symlink creation fails after deletion.
+ */
+function restoreTffDir(projectHome: string, tffPath: string): void {
+	if (existsSync(projectHome)) {
+		copyDir(projectHome, tffPath);
 	}
 }
 
@@ -99,6 +122,13 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 	// Step 5: Delete legacy .tff/ directory
 	deleteDir(tffPath);
 
-	// Step 6: Create symlink .tff → home directory
-	symlinkSync(projectHome, tffPath);
+	// Step 6: Create symlink .tff → home directory (with rollback on failure)
+	try {
+		symlinkSync(projectHome, tffPath);
+	} catch (symlinkError) {
+		// Rollback: restore .tff/ directory from home directory
+		console.error(`Symlink creation failed, rolling back migration: ${symlinkError}`);
+		restoreTffDir(projectHome, tffPath);
+		throw symlinkError;
+	}
 }

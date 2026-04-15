@@ -17,7 +17,7 @@ export const projectInitCmd = async (args: string[]): Promise<string> => {
 	// Note: .tff/ symlink is created by getProjectId() called from createStateStores()
 	const { projectStore } = createStateStores();
 	const artifactStore = new MarkdownArtifactAdapter(cwd);
-	const gitOps = new GitCliAdapter(cwd);
+	const _gitOps = new GitCliAdapter(cwd);
 
 	const result = await initProject({ name, vision }, { projectStore, artifactStore });
 	if (isOk(result)) {

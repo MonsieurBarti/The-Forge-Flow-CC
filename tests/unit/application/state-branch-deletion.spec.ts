@@ -9,9 +9,9 @@
  * 3. Commit
  */
 
-import { describe, it, expect } from "vitest";
-import { existsSync } from "fs";
-import { join } from "path";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 describe("T03: Application state-branch directory deletion", () => {
 	const projectRoot = join(import.meta.dirname, "../../..");

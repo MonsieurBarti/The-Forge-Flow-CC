@@ -5,10 +5,25 @@
  * pattern (~/.tff-cc/{projectId}/) shared across all worktrees.
  */
 
-import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync, lstatSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import {
+	existsSync,
+	lstatSync,
+	mkdirSync,
+	readFileSync,
+	symlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { randomUUID } from "node:crypto";
+
+/** UUID v4 format validation regex */
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** Validate that a string is a valid UUID v4 format. */
+function isValidUuidV4(id: string): boolean {
+	return UUID_V4_REGEX.test(id);
+}
 
 /**
  * Get the TFF_CC_HOME directory.
@@ -28,7 +43,8 @@ export function getProjectHome(projectId: string): string {
 
 /**
  * Read project ID from .tff-project-id file.
- * Returns null if file doesn't exist.
+ * Returns null if file doesn't exist or contains invalid UUID.
+ * Validates UUID v4 format to prevent path traversal attacks.
  */
 export function readProjectIdFile(repoRoot: string): string | null {
 	const idPath = join(repoRoot, ".tff-project-id");
@@ -36,7 +52,15 @@ export function readProjectIdFile(repoRoot: string): string | null {
 		return null;
 	}
 	const content = readFileSync(idPath, "utf-8").trim();
-	return content || null;
+	if (!content) {
+		return null;
+	}
+	// Validate UUID v4 format to prevent path traversal
+	if (!isValidUuidV4(content)) {
+		console.warn(`Invalid project ID format in ${idPath}: expected UUID v4, got "${content}"`);
+		return null;
+	}
+	return content;
 }
 
 /**

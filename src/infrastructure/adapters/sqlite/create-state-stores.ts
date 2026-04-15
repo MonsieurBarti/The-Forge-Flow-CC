@@ -8,7 +8,7 @@ import type { ReviewStore } from "../../../domain/ports/review-store.port.js";
 import type { SessionStore } from "../../../domain/ports/session-store.port.js";
 import type { SliceStore } from "../../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../../domain/ports/task-store.port.js";
-import { createTffSymlink, getProjectId, getProjectHome } from "../../home-directory.js";
+import { createTffSymlink, getProjectHome, getProjectId } from "../../home-directory.js";
 import { runMigrationIfNeeded } from "../../migration.js";
 import { JsonlJournalAdapter } from "../journal/jsonl-journal.adapter.js";
 import { SQLiteStateAdapter } from "./sqlite-state.adapter.js";

@@ -5,7 +5,6 @@ import type { MilestoneStore } from "../../src/domain/ports/milestone-store.port
 import type { ProjectStore } from "../../src/domain/ports/project-store.port.js";
 import type { SliceStore } from "../../src/domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../src/domain/ports/task-store.port.js";
-import type { StateStores } from "../../src/infrastructure/adapters/sqlite/create-state-stores.js";
 
 // All mock variables must be defined in vi.hoisted to be available during vi.mock hoisting
 const {
@@ -106,9 +105,11 @@ beforeEach(() => {
 		get: vi.fn().mockResolvedValue({ id: "test-project", name: "Test Project" }),
 	});
 	mockTransitionSliceUseCase.mockReset();
-	mockTransitionSliceUseCase.mockImplementation(async (input: { sliceId: string; targetStatus: string }) => {
-		return { ok: true, data: { slice: { id: input.sliceId, status: input.targetStatus } } };
-	});
+	mockTransitionSliceUseCase.mockImplementation(
+		async (input: { sliceId: string; targetStatus: string }) => {
+			return { ok: true, data: { slice: { id: input.sliceId, status: input.targetStatus } } };
+		},
+	);
 	vi.clearAllMocks();
 });
 

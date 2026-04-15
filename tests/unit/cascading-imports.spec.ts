@@ -9,8 +9,8 @@
  * 3. Commit
  */
 
-import { describe, it, expect } from "vitest";
-import { execSync } from "child_process";
+import { execSync } from "node:child_process";
+import { describe, expect, it } from "vitest";
 
 describe("T12: Fix cascading import errors", () => {
 	it("should have no TypeScript errors", () => {

@@ -35,7 +35,7 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
 	const cwd = process.cwd();
 	const { milestoneStore, sliceStore } = createClosableStateStoresUnchecked();
 	const artifactStore = new MarkdownArtifactAdapter(cwd);
-	const gitOps = new GitCliAdapter(cwd);
+	const _gitOps = new GitCliAdapter(cwd);
 
 	// Auto-detect active milestone (most recent open one)
 	const milestonesResult = milestoneStore.listMilestones();

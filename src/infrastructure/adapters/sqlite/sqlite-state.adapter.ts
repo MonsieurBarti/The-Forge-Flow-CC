@@ -1,5 +1,5 @@
-import Database from "better-sqlite3";
 import { join } from "node:path";
+import Database from "better-sqlite3";
 import type { Milestone } from "../../../domain/entities/milestone.js";
 import { formatMilestoneNumber } from "../../../domain/entities/milestone.js";
 import type { Project } from "../../../domain/entities/project.js";
@@ -32,7 +32,7 @@ import type { SliceUpdateProps } from "../../../domain/value-objects/slice-updat
 import type { TaskProps } from "../../../domain/value-objects/task-props.js";
 import type { TaskUpdateProps } from "../../../domain/value-objects/task-update-props.js";
 import type { WorkflowSession } from "../../../domain/value-objects/workflow-session.js";
-import { getProjectId, getProjectHome } from "../../home-directory.js";
+import { getProjectHome, getProjectId } from "../../home-directory.js";
 import { getNativeBindingPath } from "./load-native-binding.js";
 import { runMigrations } from "./schema.js";
 
