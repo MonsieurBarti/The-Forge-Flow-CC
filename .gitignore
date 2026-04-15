@@ -26,8 +26,6 @@ Thumbs.db
 dist/
 build/
 
-# But keep the CLI dist for plugin installation (includes JS and native bindings)
-!dist/
 __pycache__/
 *.pyc
 .venv/

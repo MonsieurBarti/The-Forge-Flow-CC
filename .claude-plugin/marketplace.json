@@ -1,9 +1,9 @@
 {
-  "name": "the-forge-flow",
+  "name": "@the-forge-flow/tff-cc",
   "owner": { "name": "MonsieurBarti" },
   "plugins": [
     {
-      "name": "the-forge-flow",
+      "name": "@the-forge-flow/tff-cc",
       "source": "./plugin",
       "description": "Autonomous coding agent orchestrator with SQLite-backed state, plannotator integration, and wave-based parallel execution"
     }

@@ -53,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.platform }}
-          path: dist/better_sqlite3.*.node
+          path: dist/infrastructure/adapters/sqlite/better_sqlite3.*.node
 
   release:
     needs: build
@@ -74,12 +74,12 @@ jobs:
       - name: Download all native bindings
         uses: actions/download-artifact@v4
         with:
-          path: dist/
+          path: dist/infrastructure/adapters/sqlite/
           pattern: native-*
           merge-multiple: true
 
       - name: List artifacts
-        run: ls -la dist/
+        run: ls -la dist/infrastructure/adapters/sqlite/
 
       - name: Extract version from tag
         id: version
@@ -92,4 +92,4 @@ jobs:
           generate_release_notes: true
           files: |
             dist/cli/index.js
-            dist/better_sqlite3.*.node
+            dist/infrastructure/adapters/sqlite/better_sqlite3.*.node
