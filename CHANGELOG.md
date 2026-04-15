@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.8.1...tff-cc-v0.8.2) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ci:** remove deprecated macos-13 runner ([d976e50](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/d976e5065c80426d3b53befd62b5aa95d4a8ba00))
+* **ci:** remove deprecated macos-13 runner from release workflow ([d5e3ca9](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/d5e3ca946983414ccea1604d79b7aa0c1676b99e))
+
 ## [0.8.1](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.8.0...tff-cc-v0.8.1) (2026-04-15)
 
 
