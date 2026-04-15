@@ -3,7 +3,7 @@ import type { DomainError } from "../../domain/errors/domain-error.js";
 import { projectExistsError } from "../../domain/errors/project-exists.error.js";
 import type { ArtifactStore } from "../../domain/ports/artifact-store.port.js";
 import type { ProjectStore } from "../../domain/ports/project-store.port.js";
-import type { StateBranchPort } from "../../domain/ports/state-branch.port.js";
+
 import { Err, isOk, Ok, type Result } from "../../domain/result.js";
 
 interface InitProjectInput {
@@ -13,7 +13,6 @@ interface InitProjectInput {
 interface InitProjectDeps {
 	projectStore: ProjectStore;
 	artifactStore: ArtifactStore;
-	stateBranch?: StateBranchPort;
 }
 interface InitProjectOutput {
 	project: Project;
@@ -43,13 +42,6 @@ export const initProject = async (
 
 	const projectMd = `# ${project.name}\n\n## Vision\n\n${project.vision}\n`;
 	await deps.artifactStore.write(".tff/PROJECT.md", projectMd);
-
-	if (deps.stateBranch) {
-		const createResult = await deps.stateBranch.createRoot();
-		if (!isOk(createResult)) {
-			console.warn(`[tff] Failed to create root state branch: ${createResult.error.message}`);
-		}
-	}
 
 	return Ok({ project: saveResult.data });
 };
