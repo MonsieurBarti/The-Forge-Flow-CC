@@ -41,7 +41,7 @@ jobs:
 
       - name: Run tests
         if: matrix.platform == 'linux-x64'
-        run: bun test
+        run: bun run test
 
       - name: Build
         run: bun run build

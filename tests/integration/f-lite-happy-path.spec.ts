@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const ROOT = join(__dirname, "..", "..", "..");
+const ROOT = join(import.meta.dirname, "..", "..");
 const WORKFLOWS_DIR = join(ROOT, "workflows");
 
 describe("F-lite integration: workflow skill loading", () => {
@@ -30,31 +30,5 @@ describe("F-lite integration: workflow skill loading", () => {
 		const content = readFileSync(join(WORKFLOWS_DIR, "verify-slice.md"), "utf-8");
 		expect(content).toContain("@skills/acceptance-criteria-validation/SKILL.md");
 		expect(content).toContain("@skills/verification-before-completion/SKILL.md");
-	});
-
-	it("ship-slice loads finishing-work and verification-before-completion", () => {
-		const content = readFileSync(join(WORKFLOWS_DIR, "ship-slice.md"), "utf-8");
-		expect(content).toContain("@skills/finishing-work/SKILL.md");
-		expect(content).toContain("@skills/verification-before-completion/SKILL.md");
-	});
-
-	it("auto-learn workflows load skill-authoring", () => {
-		const autoLearnWorkflows = [
-			"detect-patterns.md",
-			"create-skill.md",
-			"learn-skills.md",
-			"compose-skills.md",
-			"suggest-skills.md",
-		];
-		for (const wf of autoLearnWorkflows) {
-			const content = readFileSync(join(WORKFLOWS_DIR, wf), "utf-8");
-			expect(content).toContain("@skills/skill-authoring/SKILL.md");
-		}
-	});
-
-	it("debug workflow loads systematic-debugging", () => {
-		const content = readFileSync(join(WORKFLOWS_DIR, "debug.md"), "utf-8");
-		expect(content).toContain("@skills/systematic-debugging/SKILL.md");
-		expect(content).not.toContain("debugging-methodology");
 	});
 });

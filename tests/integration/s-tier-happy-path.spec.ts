@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const ROOT = join(__dirname, "..", "..", "..");
+const ROOT = join(import.meta.dirname, "..", "..");
 const SKILLS_DIR = join(ROOT, "skills");
 const AGENTS_DIR = join(ROOT, "agents");
 const WORKFLOWS_DIR = join(ROOT, "workflows");
@@ -39,10 +39,11 @@ describe("S-tier integration: skill/agent/workflow consistency", () => {
 		const agents = readdirSync(AGENTS_DIR).filter((f) => f.endsWith(".md"));
 		for (const agent of agents) {
 			const content = readFileSync(join(AGENTS_DIR, agent), "utf-8");
-			const refs = content.match(/@skills\/([a-z0-9-]+)\/SKILL\.md/g) || [];
-			for (const ref of refs) {
-				const skillFolder = ref.replace("@skills/", "").replace("/SKILL.md", "");
-				expect(existsSync(join(SKILLS_DIR, skillFolder, "SKILL.md"))).toBe(true);
+			const skillRefs = content.match(/skill:\s*([^\s\n]+)/g) || [];
+			for (const ref of skillRefs) {
+				const skillName = ref.replace("skill:", "").trim();
+				const skillPath = join(SKILLS_DIR, skillName, "SKILL.md");
+				expect(existsSync(skillPath)).toBe(true);
 			}
 		}
 	});

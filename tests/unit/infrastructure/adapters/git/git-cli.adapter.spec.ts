@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { GitCliAdapter } from "../../../src/infrastructure/testing/git-cli.adapter.js";
-import { isOk } from "../../src/../../src/domain/result.js";
+import { GitCliAdapter } from "../../../../src/infrastructure/adapters/git/git-cli.adapter.js";
+import { isOk } from "../../../../src/domain/result.js";
 
 describe("GitCliAdapter - caching", () => {
 	it("should cache getCurrentBranch within TTL", async () => {

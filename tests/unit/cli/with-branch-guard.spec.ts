@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { BranchMismatchError } from "../../src/domain/errors/branch-mismatch.error.js";
+import { BranchMismatchError } from "../../../src/domain/errors/branch-mismatch.error.js";
 
 /**
  * Helper: mock the BranchMismatchError module so the dynamically-imported
@@ -8,7 +8,7 @@ import { BranchMismatchError } from "../../src/domain/errors/branch-mismatch.err
  * and `instanceof` checks fail.
  */
 function mockBranchMismatchError(): void {
-	vi.doMock("../domain/errors/branch-mismatch.error.js", () => ({
+	vi.doMock("../../../src/domain/errors/branch-mismatch.error.js", () => ({
 		BranchMismatchError,
 	}));
 }
@@ -24,7 +24,7 @@ describe("withBranchGuard", () => {
 
 	it("returns fn result when no mismatch", async () => {
 		mockBranchMismatchError();
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn().mockReturnValue({ projectStore: "mock" }),
 			createStateStoresUnchecked: vi.fn().mockReturnValue({ projectStore: "mock" }),
 			createClosableStateStores: vi
@@ -35,7 +35,7 @@ describe("withBranchGuard", () => {
 				.mockReturnValue({ projectStore: "mock", close: vi.fn(), checkpoint: vi.fn() }),
 		}));
 
-		const { withBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
+		const { withBranchGuard } = await import("../../../src/cli/with-branch-guard.js");
 		const result = await withBranchGuard(async (stores) => {
 			expect(stores.projectStore).toBe("mock");
 			return "success";
@@ -46,7 +46,7 @@ describe("withBranchGuard", () => {
 	it("catches BranchMismatchError and retries after restore", async () => {
 		let callCount = 0;
 		mockBranchMismatchError();
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn().mockImplementation(() => {
 				callCount++;
 				if (callCount === 1) throw new BranchMismatchError("old", "new");
@@ -57,17 +57,17 @@ describe("withBranchGuard", () => {
 			createClosableStateStoresUnchecked: vi.fn(),
 		}));
 
-		vi.doMock("../infrastructure/adapters/git/git-cli.adapter.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/git/git-cli.adapter.js", () => ({
 			GitCliAdapter: class MockGitCliAdapter {
 				extractFile = vi
 					.fn()
 					.mockResolvedValue({ ok: false, error: { code: "NOT_FOUND", message: "mock" } });
 			},
 		}));
-		vi.doMock("../infrastructure/adapters/git/git-state-branch.adapter.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/git/git-state-branch.adapter.js", () => ({
 			GitStateBranchAdapter: class MockGitStateBranchAdapter {},
 		}));
-		vi.doMock("../application/state-branch/restore-branch.js", () => ({
+		vi.doMock("../../../src/application/state-branch/restore-branch.js", () => ({
 			restoreBranchUseCase: vi
 				.fn()
 				.mockResolvedValue({ ok: true, data: { filesRestored: 1, schemaVersion: 0 } }),
@@ -79,12 +79,12 @@ describe("withBranchGuard", () => {
 				existsSync: vi.fn().mockReturnValue(false),
 			};
 		});
-		vi.doMock("../infrastructure/hooks/branch-meta-stamp.js", () => ({
+		vi.doMock("../../../src/infrastructure/hooks/branch-meta-stamp.js", () => ({
 			writeLocalStamp: vi.fn(),
 			writeSyntheticStamp: vi.fn(),
 		}));
 
-		const { withBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
+		const { withBranchGuard } = await import("../../../src/cli/with-branch-guard.js");
 		const result = await withBranchGuard(async () => "recovered");
 		expect(result).toBe("recovered");
 	});
@@ -93,7 +93,7 @@ describe("withBranchGuard", () => {
 		const mockWriteSyntheticStamp = vi.fn();
 
 		mockBranchMismatchError();
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn().mockImplementation(() => {
 				throw new BranchMismatchError("old", "new");
 			}),
@@ -101,27 +101,27 @@ describe("withBranchGuard", () => {
 			createClosableStateStores: vi.fn(),
 			createClosableStateStoresUnchecked: vi.fn(),
 		}));
-		vi.doMock("../infrastructure/adapters/git/git-cli.adapter.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/git/git-cli.adapter.js", () => ({
 			GitCliAdapter: class MockGitCliAdapter {
 				extractFile = vi
 					.fn()
 					.mockResolvedValue({ ok: false, error: { code: "NOT_FOUND", message: "mock" } });
 			},
 		}));
-		vi.doMock("../infrastructure/adapters/git/git-state-branch.adapter.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/git/git-state-branch.adapter.js", () => ({
 			GitStateBranchAdapter: class MockGitStateBranchAdapter {},
 		}));
-		vi.doMock("../application/state-branch/restore-branch.js", () => ({
+		vi.doMock("../../../src/application/state-branch/restore-branch.js", () => ({
 			restoreBranchUseCase: vi.fn().mockResolvedValue({ ok: true, data: null }),
 		}));
-		vi.doMock("../infrastructure/hooks/branch-meta-stamp.js", () => ({
+		vi.doMock("../../../src/infrastructure/hooks/branch-meta-stamp.js", () => ({
 			writeLocalStamp: vi.fn(),
 			writeSyntheticStamp: mockWriteSyntheticStamp,
 		}));
 
 		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-		const { withBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
+		const { withBranchGuard } = await import("../../../src/cli/with-branch-guard.js");
 		const result = await withBranchGuard(async () => "fallback");
 		expect(result).toBe("fallback");
 		expect(mockWriteSyntheticStamp).toHaveBeenCalled();
@@ -131,7 +131,7 @@ describe("withBranchGuard", () => {
 
 	it("rethrows non-BranchMismatchError errors", async () => {
 		mockBranchMismatchError();
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn().mockImplementation(() => {
 				throw new Error("unrelated failure");
 			}),
@@ -140,7 +140,7 @@ describe("withBranchGuard", () => {
 			createClosableStateStoresUnchecked: vi.fn(),
 		}));
 
-		const { withBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
+		const { withBranchGuard } = await import("../../../src/cli/with-branch-guard.js");
 		await expect(withBranchGuard(async () => "never")).rejects.toThrow("unrelated failure");
 	});
 });
@@ -159,7 +159,7 @@ describe("withClosableBranchGuard", () => {
 		const mockCheckpoint = vi.fn();
 
 		mockBranchMismatchError();
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn(),
 			createStateStoresUnchecked: vi.fn(),
 			createClosableStateStores: vi.fn().mockReturnValue({
@@ -170,7 +170,7 @@ describe("withClosableBranchGuard", () => {
 			createClosableStateStoresUnchecked: vi.fn(),
 		}));
 
-		const { withClosableBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
+		const { withClosableBranchGuard } = await import("../../../src/cli/with-branch-guard.js");
 		const result = await withClosableBranchGuard(async (stores) => {
 			expect(stores.projectStore).toBe("mock");
 			expect(stores.close).toBe(mockClose);
@@ -185,7 +185,7 @@ describe("withClosableBranchGuard", () => {
 		const mockCheckpoint = vi.fn();
 
 		mockBranchMismatchError();
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn(),
 			createStateStoresUnchecked: vi.fn(),
 			createClosableStateStores: vi.fn().mockImplementation(() => {
@@ -197,27 +197,27 @@ describe("withClosableBranchGuard", () => {
 				checkpoint: mockCheckpoint,
 			}),
 		}));
-		vi.doMock("../infrastructure/adapters/git/git-cli.adapter.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/git/git-cli.adapter.js", () => ({
 			GitCliAdapter: class MockGitCliAdapter {
 				extractFile = vi
 					.fn()
 					.mockResolvedValue({ ok: false, error: { code: "NOT_FOUND", message: "mock" } });
 			},
 		}));
-		vi.doMock("../infrastructure/adapters/git/git-state-branch.adapter.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/git/git-state-branch.adapter.js", () => ({
 			GitStateBranchAdapter: class MockGitStateBranchAdapter {},
 		}));
-		vi.doMock("../application/state-branch/restore-branch.js", () => ({
+		vi.doMock("../../../src/application/state-branch/restore-branch.js", () => ({
 			restoreBranchUseCase: vi.fn().mockResolvedValue({ ok: true, data: null }),
 		}));
-		vi.doMock("../infrastructure/hooks/branch-meta-stamp.js", () => ({
+		vi.doMock("../../../src/infrastructure/hooks/branch-meta-stamp.js", () => ({
 			writeLocalStamp: vi.fn(),
 			writeSyntheticStamp: vi.fn(),
 		}));
 
 		const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-		const { withClosableBranchGuard } = await import("../../../../../src/infrastructure/adapters/sqlite/with-branch-guard.js");
+		const { withClosableBranchGuard } = await import("../../../src/cli/with-branch-guard.js");
 		const result = await withClosableBranchGuard(async (stores) => {
 			expect(stores.projectStore).toBe("mock-unchecked");
 			return "closable-recovered";

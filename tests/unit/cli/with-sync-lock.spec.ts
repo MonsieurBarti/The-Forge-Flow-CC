@@ -11,15 +11,15 @@ describe("withSyncLock", () => {
 
 	it("returns fn result when lock acquisition succeeds", async () => {
 		const mockRelease = vi.fn().mockResolvedValue(undefined);
-		vi.doMock("../infrastructure/locking/tff-lock.js", () => ({
+		vi.doMock("../../../src/infrastructure/locking/tff-lock.js", () => ({
 			acquireSyncLock: vi.fn().mockResolvedValue(mockRelease),
 		}));
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn().mockReturnValue({ projectStore: "mock" }),
 			createClosableStateStores: vi.fn(),
 		}));
 
-		const { withSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
+		const { withSyncLock } = await import("../../../src/cli/with-sync-lock.js");
 		const result = await withSyncLock(async (stores) => {
 			expect(stores.projectStore).toBe("mock");
 			return "success";
@@ -29,15 +29,15 @@ describe("withSyncLock", () => {
 	});
 
 	it("returns skip response when lock acquisition fails", async () => {
-		vi.doMock("../infrastructure/locking/tff-lock.js", () => ({
+		vi.doMock("../../../src/infrastructure/locking/tff-lock.js", () => ({
 			acquireSyncLock: vi.fn().mockResolvedValue(null),
 		}));
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn(),
 			createClosableStateStores: vi.fn(),
 		}));
 
-		const { withSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
+		const { withSyncLock } = await import("../../../src/cli/with-sync-lock.js");
 		const result = await withSyncLock(async () => "should-not-run");
 
 		expect(result).toEqual({
@@ -51,15 +51,15 @@ describe("withSyncLock", () => {
 
 	it("releases lock even when fn throws", async () => {
 		const mockRelease = vi.fn().mockResolvedValue(undefined);
-		vi.doMock("../infrastructure/locking/tff-lock.js", () => ({
+		vi.doMock("../../../src/infrastructure/locking/tff-lock.js", () => ({
 			acquireSyncLock: vi.fn().mockResolvedValue(mockRelease),
 		}));
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn().mockReturnValue({ projectStore: "mock" }),
 			createClosableStateStores: vi.fn(),
 		}));
 
-		const { withSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
+		const { withSyncLock } = await import("../../../src/cli/with-sync-lock.js");
 		await expect(
 			withSyncLock(async () => {
 				throw new Error("fn failure");
@@ -74,15 +74,15 @@ describe("withSyncLock", () => {
 		const mockAcquireSyncLock = vi.fn().mockResolvedValue(mockRelease);
 		const mockCreateStateStores = vi.fn().mockReturnValue({ projectStore: "mock" });
 
-		vi.doMock("../infrastructure/locking/tff-lock.js", () => ({
+		vi.doMock("../../../src/infrastructure/locking/tff-lock.js", () => ({
 			acquireSyncLock: mockAcquireSyncLock,
 		}));
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: mockCreateStateStores,
 			createClosableStateStores: vi.fn(),
 		}));
 
-		const { withSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
+		const { withSyncLock } = await import("../../../src/cli/with-sync-lock.js");
 		await withSyncLock(async () => "success", { dbPath: "/custom/path/state.db" });
 
 		expect(mockAcquireSyncLock).toHaveBeenCalledWith("/custom/path/state.db", 5000);
@@ -104,10 +104,10 @@ describe("withClosableSyncLock", () => {
 		const mockClose = vi.fn();
 		const mockCheckpoint = vi.fn();
 
-		vi.doMock("../infrastructure/locking/tff-lock.js", () => ({
+		vi.doMock("../../../src/infrastructure/locking/tff-lock.js", () => ({
 			acquireSyncLock: vi.fn().mockResolvedValue(mockRelease),
 		}));
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn(),
 			createClosableStateStores: vi.fn().mockReturnValue({
 				projectStore: "mock-closable",
@@ -116,7 +116,7 @@ describe("withClosableSyncLock", () => {
 			}),
 		}));
 
-		const { withClosableSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
+		const { withClosableSyncLock } = await import("../../../src/cli/with-sync-lock.js");
 		const result = await withClosableSyncLock(async (stores) => {
 			expect(stores.projectStore).toBe("mock-closable");
 			expect(stores.close).toBe(mockClose);
@@ -128,15 +128,15 @@ describe("withClosableSyncLock", () => {
 	});
 
 	it("returns skip response when lock acquisition fails", async () => {
-		vi.doMock("../infrastructure/locking/tff-lock.js", () => ({
+		vi.doMock("../../../src/infrastructure/locking/tff-lock.js", () => ({
 			acquireSyncLock: vi.fn().mockResolvedValue(null),
 		}));
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn(),
 			createClosableStateStores: vi.fn(),
 		}));
 
-		const { withClosableSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
+		const { withClosableSyncLock } = await import("../../../src/cli/with-sync-lock.js");
 		const result = await withClosableSyncLock(async () => "should-not-run");
 
 		expect(result).toEqual({
@@ -150,10 +150,10 @@ describe("withClosableSyncLock", () => {
 
 	it("releases lock even when fn throws", async () => {
 		const mockRelease = vi.fn().mockResolvedValue(undefined);
-		vi.doMock("../infrastructure/locking/tff-lock.js", () => ({
+		vi.doMock("../../../src/infrastructure/locking/tff-lock.js", () => ({
 			acquireSyncLock: vi.fn().mockResolvedValue(mockRelease),
 		}));
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn(),
 			createClosableStateStores: vi.fn().mockReturnValue({
 				projectStore: "mock",
@@ -162,7 +162,7 @@ describe("withClosableSyncLock", () => {
 			}),
 		}));
 
-		const { withClosableSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
+		const { withClosableSyncLock } = await import("../../../src/cli/with-sync-lock.js");
 		await expect(
 			withClosableSyncLock(async () => {
 				throw new Error("fn failure");
@@ -181,15 +181,15 @@ describe("withClosableSyncLock", () => {
 			checkpoint: vi.fn(),
 		});
 
-		vi.doMock("../infrastructure/locking/tff-lock.js", () => ({
+		vi.doMock("../../../src/infrastructure/locking/tff-lock.js", () => ({
 			acquireSyncLock: mockAcquireSyncLock,
 		}));
-		vi.doMock("../infrastructure/adapters/sqlite/create-state-stores.js", () => ({
+		vi.doMock("../../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
 			createStateStores: vi.fn(),
 			createClosableStateStores: mockCreateClosableStateStores,
 		}));
 
-		const { withClosableSyncLock } = await import("../../../../../src/infrastructure/adapters/sqlite/with-sync-lock.js");
+		const { withClosableSyncLock } = await import("../../../src/cli/with-sync-lock.js");
 		await withClosableSyncLock(async () => "success", { dbPath: "/custom/path/state.db" });
 
 		expect(mockAcquireSyncLock).toHaveBeenCalledWith("/custom/path/state.db", 5000);

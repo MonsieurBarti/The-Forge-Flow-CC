@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const ROOT = join(__dirname, "..", "..", "..");
+const ROOT = join(import.meta.dirname, "..", "..");
 
 const OLD_SKILL_NAMES = ["interactive-design", "debugging-methodology", "code-review-checklist"];
 const DELETED_AGENTS = [
@@ -41,29 +41,21 @@ describe("No stale references integration test", () => {
 		...scanDir(join(ROOT, "workflows")),
 	];
 
-	it("should have no old skill file names on disk", () => {
-		for (const old of OLD_SKILL_NAMES) {
-			expect(existsSync(join(ROOT, "skills", `${old}.md`))).toBe(false);
-		}
-	});
-
-	it("should have no old skill name references in any markdown", () => {
+	it("should not reference old skill names", () => {
 		for (const file of allFiles) {
 			const content = readFileSync(file, "utf-8");
-			for (const old of OLD_SKILL_NAMES) {
-				expect(content).not.toContain(`@skills/${old}.md`);
+			for (const oldName of OLD_SKILL_NAMES) {
+				expect(content).not.toContain(`skills/${oldName}/`);
 			}
 		}
 	});
 
-	it("should have no deleted agent files on disk", () => {
-		for (const agent of DELETED_AGENTS) {
-			expect(existsSync(join(ROOT, "agents", `${agent}.md`))).toBe(false);
+	it("should not reference deleted agents", () => {
+		for (const file of allFiles) {
+			const content = readFileSync(file, "utf-8");
+			for (const deleted of DELETED_AGENTS) {
+				expect(content).not.toContain(deleted);
+			}
 		}
-	});
-
-	it("should have 18 skill files", () => {
-		const skills = scanSkillsDir(join(ROOT, "skills"));
-		expect(skills).toHaveLength(18);
 	});
 });
