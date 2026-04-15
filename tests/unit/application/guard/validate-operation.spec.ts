@@ -5,7 +5,7 @@ import {
 	isOperationAllowed,
 	OperationBlockedError,
 	validateOperation,
-} from "../../../src/application/guard/validate-operation.js";
+} from "../../../../src/application/guard/validate-operation.js";
 import type { SliceStatus } from "../../src/domain/value-objects/slice-status.js";
 
 describe("validate-operation", () => {

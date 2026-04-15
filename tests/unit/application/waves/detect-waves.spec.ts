@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectWaves, detectWavesFromStores } from "../../../src/application/waves/detect-waves.js";
+import { detectWaves, detectWavesFromStores } from "../../../../src/application/waves/detect-waves.js";
 import { isErr, isOk } from "../../src/../src/domain/result.js";
 import { InMemoryStateAdapter } from "../../src/../src/infrastructure/testing/in-memory-state-adapter.js";
 

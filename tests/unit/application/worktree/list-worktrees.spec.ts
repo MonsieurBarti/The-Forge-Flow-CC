@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { listWorktreesUseCase } from "../../../src/application/worktree/list-worktrees.js";
+import { listWorktreesUseCase } from "../../../../src/application/worktree/list-worktrees.js";
 import { isOk } from "../../src/domain/result.js";
 import { InMemoryGitOps } from "../../src/infrastructure/testing/in-memory-git-ops.js";
 

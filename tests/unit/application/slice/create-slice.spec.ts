@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createSliceUseCase } from "../../../src/application/slice/create-slice.js";
+import { createSliceUseCase } from "../../../../src/application/slice/create-slice.js";
 import { InMemoryArtifactStore } from "../../src/../src/infrastructure/testing/in-memory-artifact-store.js";
 import { InMemoryStateAdapter } from "../../src/../src/infrastructure/testing/in-memory-state-adapter.js";
 

@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as yaml from "yaml";
-import { detectSpecEdit } from "../../../src/application/guard/detect-spec-edit.js";
+import { detectSpecEdit } from "../../../../src/application/guard/detect-spec-edit.js";
 
 // Mock fs module using factory pattern
 vi.mock("node:fs", () => {

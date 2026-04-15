@@ -4,7 +4,7 @@ import * as yaml from "yaml";
 import {
 	type DetectDirectEditDeps,
 	detectDirectEdit,
-} from "../../../src/application/guard/detect-direct-edit.js";
+} from "../../../../src/application/guard/detect-direct-edit.js";
 import type { Task } from "../../domain/entities/task.js";
 import type { SessionStore } from "../../domain/ports/session-store.port.js";
 import type { TaskStore } from "../../domain/ports/task-store.port.js";

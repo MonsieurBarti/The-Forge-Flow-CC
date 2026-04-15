@@ -6,7 +6,7 @@ import {
 	getSupportedOperations,
 	isValidOperation,
 	type WorkflowOperation,
-} from "../../../src/application/guard/operation-prerequisites.js";
+} from "../../../../src/application/guard/operation-prerequisites.js";
 import type { SliceStatus } from "../../src/../domain/value-objects/slice-status.js";
 
 describe("operation-prerequisites", () => {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { checkStaleClaims } from "../../../src/application/claims/check-stale-claims.js";
+import { checkStaleClaims } from "../../../../src/application/claims/check-stale-claims.js";
 import { isOk } from "../../domain/result.js";
 import { InMemoryStateAdapter } from "../../infrastructure/testing/in-memory-state-adapter.js";
 

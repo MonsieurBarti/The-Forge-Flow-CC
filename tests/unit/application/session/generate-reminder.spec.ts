@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	type GenerateReminderDeps,
 	generateReminder,
-} from "../../../src/application/session/generate-reminder.js";
+} from "../../../../src/application/session/generate-reminder.js";
 import type { Task } from "../../domain/entities/task.js";
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import type { DependencyStore } from "../../domain/ports/dependency-store.port.js";

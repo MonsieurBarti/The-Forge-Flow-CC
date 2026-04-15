@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	nextWorkflow,
 	shouldAutoTransition,
-} from "../../../src/application/lifecycle/chain-workflow.js";
+} from "../../../../src/application/lifecycle/chain-workflow.js";
 
 describe("chain-workflow", () => {
 	it("discussing → research-slice", () => {

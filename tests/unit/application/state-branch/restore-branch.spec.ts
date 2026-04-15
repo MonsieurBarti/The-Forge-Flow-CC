@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { restoreBranchUseCase } from "../../../src/application/state-branch/restore-branch.js";
+import { restoreBranchUseCase } from "../../../../src/application/state-branch/restore-branch.js";
 import { isOk } from "../../src/domain/result.js";
 import { GitStateBranchAdapter } from "../../src/infrastructure/adapters/git/git-state-branch.adapter.js";
 import { InMemoryGitOps } from "../../src/infrastructure/testing/in-memory-git-ops.js";

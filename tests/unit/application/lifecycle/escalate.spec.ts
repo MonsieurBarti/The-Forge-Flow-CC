@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createEscalation } from "../../../src/application/lifecycle/escalate.js";
+import { createEscalation } from "../../../../src/application/lifecycle/escalate.js";
 
 describe("escalate", () => {
 	it("should create escalation with blocker context", () => {

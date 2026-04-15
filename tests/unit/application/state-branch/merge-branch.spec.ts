@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { mergeBranchUseCase } from "../../../src/application/state-branch/merge-branch.js";
+import { mergeBranchUseCase } from "../../../../src/application/state-branch/merge-branch.js";
 import { isOk } from "../../src/../src/domain/result.js";
 import { STATE_SNAPSHOT_VERSION } from "../../src/../src/domain/value-objects/state-snapshot.js";
 import { GitStateBranchAdapter } from "../../src/../src/infrastructure/adapters/git/git-state-branch.adapter.js";

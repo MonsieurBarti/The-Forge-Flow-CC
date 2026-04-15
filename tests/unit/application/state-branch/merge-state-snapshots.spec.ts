@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeStateSnapshots } from "../../../src/application/state-branch/merge-state-snapshots.js";
+import { mergeStateSnapshots } from "../../../../src/application/state-branch/merge-state-snapshots.js";
 import type { Milestone } from "../../src/domain/entities/milestone.js";
 import type { Project } from "../../src/domain/entities/project.js";
 import type { Slice } from "../../src/domain/entities/slice.js";

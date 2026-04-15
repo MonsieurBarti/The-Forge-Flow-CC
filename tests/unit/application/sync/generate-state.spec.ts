@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { generateState } from "../../../src/application/sync/generate-state.js";
+import { generateState } from "../../../../src/application/sync/generate-state.js";
 import { isOk } from "../../src/domain/result.js";
 import { InMemoryArtifactStore } from "../../src/infrastructure/testing/in-memory-artifact-store.js";
 import { InMemoryStateAdapter } from "../../src/infrastructure/testing/in-memory-state-adapter.js";

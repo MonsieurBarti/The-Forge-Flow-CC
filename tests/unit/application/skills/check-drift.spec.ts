@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkDrift } from "../../../src/application/skills/check-drift.js";
+import { checkDrift } from "../../../../src/application/skills/check-drift.js";
 
 describe("checkDrift", () => {
 	it("should return 0 drift when content is identical", () => {

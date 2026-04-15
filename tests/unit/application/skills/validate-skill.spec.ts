@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateSkill } from "../../../src/application/skills/validate-skill.js";
+import { validateSkill } from "../../../../src/application/skills/validate-skill.js";
 import { isErr, isOk } from "../../src/domain/result.js";
 
 describe("validateSkill", () => {

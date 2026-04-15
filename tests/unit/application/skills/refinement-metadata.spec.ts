@@ -3,7 +3,7 @@ import {
 	canRefine,
 	type RefinementMetadata,
 	recordRefinement,
-} from "../../../src/application/skills/refinement-metadata.js";
+} from "../../../../src/application/skills/refinement-metadata.js";
 
 describe("refinement-metadata", () => {
 	it("should allow refinement when no prior refinements exist", () => {
