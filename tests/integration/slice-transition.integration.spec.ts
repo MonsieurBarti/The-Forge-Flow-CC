@@ -13,32 +13,34 @@ const {
 	mockMilestoneStore,
 	mockTaskStore,
 	mockProjectStore,
-	mockWithBranchGuard,
 	mockTransitionSliceUseCase,
+	mockClosableStateStores,
 } = vi.hoisted(() => {
 	const mockSliceStore: Partial<SliceStore> = {
 		getById: vi.fn(),
 		update: vi.fn(),
 		getAllByMilestoneId: vi.fn(),
+		transitionSlice: vi.fn(),
 	};
 	const mockMilestoneStore: Partial<MilestoneStore> = {
 		getById: vi.fn(),
 	};
 	const mockTaskStore: Partial<TaskStore> = {
 		getBySliceId: vi.fn(),
+		listReadyTasks: vi.fn(),
 	};
 	const mockProjectStore: Partial<ProjectStore> = {
 		get: vi.fn(),
 	};
 
-	const mockWithBranchGuard = vi.fn(async <T>(fn: (stores: StateStores) => Promise<T>) =>
-		fn({
-			sliceStore: mockSliceStore as SliceStore,
-			milestoneStore: mockMilestoneStore as MilestoneStore,
-			taskStore: mockTaskStore as TaskStore,
-			projectStore: mockProjectStore as ProjectStore,
-		} as StateStores),
-	);
+	const mockClosableStateStores = {
+		sliceStore: mockSliceStore as SliceStore,
+		milestoneStore: mockMilestoneStore as MilestoneStore,
+		taskStore: mockTaskStore as TaskStore,
+		projectStore: mockProjectStore as ProjectStore,
+		close: vi.fn(),
+		checkpoint: vi.fn(),
+	};
 
 	const mockTransitionSliceUseCase = vi.fn();
 
@@ -47,18 +49,13 @@ const {
 		mockMilestoneStore,
 		mockTaskStore,
 		mockProjectStore,
-		mockWithBranchGuard,
 		mockTransitionSliceUseCase,
+		mockClosableStateStores,
 	};
 });
 
-vi.mock("../../src/cli/with-branch-guard.js", () => ({
-	withBranchGuard: mockWithBranchGuard,
-}));
-
 vi.mock("../../src/application/lifecycle/transition-slice.js", () => ({
 	transitionSliceUseCase: mockTransitionSliceUseCase,
-	isOk: (result: { ok: boolean }) => result.ok === true,
 }));
 
 // Mock isOk from domain/result
@@ -71,38 +68,9 @@ vi.mock("../../src/application/sync/generate-state.js", () => ({
 	generateState: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock sync branch use case
-vi.mock("../../src/application/state-branch/sync-branch.js", () => ({
-	syncBranchUseCase: vi.fn().mockResolvedValue({ ok: true, data: undefined }),
-}));
-
 // Mock logging
 vi.mock("../../src/infrastructure/adapters/logging/warn.js", () => ({
 	tffWarn: vi.fn(),
-}));
-
-// Mock git adapters
-vi.mock("../../src/infrastructure/adapters/git/git-cli.adapter.js", () => ({
-	GitCliAdapter: vi.fn().mockImplementation(() => ({
-		getCurrentBranch: vi.fn().mockResolvedValue({ ok: true, data: "main" }),
-	})),
-}));
-
-vi.mock("../../src/infrastructure/adapters/git/git-state-branch.adapter.js", () => ({
-	GitStateBranchAdapter: vi.fn().mockImplementation(() => ({
-		exists: vi.fn().mockResolvedValue({ ok: true, data: false }),
-	})),
-}));
-
-// Mock branch-meta-stamp
-vi.mock("../../src/infrastructure/hooks/branch-meta-stamp.js", () => ({
-	readLocalStamp: vi.fn().mockReturnValue({
-		codeBranch: "main",
-		stateId: "test-state-id",
-		parentStateBranch: null,
-		createdAt: new Date().toISOString(),
-	}),
-	writeSyntheticStamp: vi.fn(),
 }));
 
 // Mock checkpoint-save
@@ -110,54 +78,8 @@ vi.mock("../../src/cli/commands/checkpoint-save.cmd.js", () => ({
 	checkpointSaveCmd: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
-// Mock sync-state command
-vi.mock("../../src/cli/commands/sync-state.cmd.js", () => ({
-	syncStateCmd: vi.fn().mockResolvedValue({ ok: true }),
-}));
-
-// Mock session:remind command
-vi.mock("../../src/cli/commands/session-remind.cmd.js", () => ({
-	sessionRemindCmd: vi.fn().mockResolvedValue({ ok: true, data: null }),
-}));
-
-// Mock milestone-create command
-vi.mock("../../src/cli/commands/milestone-create.cmd.js", () => ({
-	milestoneCreateCmd: vi.fn().mockResolvedValue({ ok: true, data: { id: "m01", number: 1 } }),
-}));
-
-// Mock slice-create command
-vi.mock("../../src/cli/commands/slice-create.cmd.js", () => ({
-	sliceCreateCmd: vi.fn().mockResolvedValue({ ok: true, data: { id: "s01", number: 1 } }),
-}));
-
-// Mock task-claim command
-vi.mock("../../src/cli/commands/task-claim.cmd.js", () => ({
-	taskClaimCmd: vi.fn().mockResolvedValue({ ok: true }),
-}));
-
-// Mock task-close command
-vi.mock("../../src/cli/commands/task-close.cmd.js", () => ({
-	taskCloseCmd: vi.fn().mockResolvedValue({ ok: true }),
-}));
-
-// Mock project-init command
-vi.mock("../../src/cli/commands/project-init.cmd.js", () => ({
-	projectInitCmd: vi.fn().mockResolvedValue({ ok: true, data: { id: "test-project" } }),
-}));
-
 vi.mock("../../src/infrastructure/adapters/sqlite/create-state-stores.js", () => ({
-	createStateStores: vi.fn().mockReturnValue({
-		sliceStore: mockSliceStore,
-		milestoneStore: mockMilestoneStore,
-		taskStore: mockTaskStore,
-		projectStore: mockProjectStore,
-	}),
-	createStateStoresUnchecked: vi.fn().mockReturnValue({
-		sliceStore: mockSliceStore,
-		milestoneStore: mockMilestoneStore,
-		taskStore: mockTaskStore,
-		projectStore: mockProjectStore,
-	}),
+	createClosableStateStoresUnchecked: vi.fn().mockReturnValue(mockClosableStateStores),
 }));
 
 let capturedSlice: Slice | null = null;
@@ -168,20 +90,24 @@ beforeEach(() => {
 		getById: vi.fn().mockResolvedValue(capturedSlice),
 		update: vi.fn().mockResolvedValue(undefined),
 		getAllByMilestoneId: vi.fn().mockResolvedValue([]),
+		transitionSlice: vi.fn().mockImplementation((id: string, status: string) => ({
+			ok: true,
+			data: { id, status },
+		})),
 	});
 	Object.assign(mockMilestoneStore, {
 		getById: vi.fn().mockResolvedValue({ id: "m01", number: 1, status: "open" }),
 	});
 	Object.assign(mockTaskStore, {
 		getBySliceId: vi.fn().mockResolvedValue([]),
+		listReadyTasks: vi.fn().mockResolvedValue([]),
 	});
 	Object.assign(mockProjectStore, {
 		get: vi.fn().mockResolvedValue({ id: "test-project", name: "Test Project" }),
 	});
 	mockTransitionSliceUseCase.mockReset();
-	mockTransitionSliceUseCase.mockImplementation(async (slice: Slice) => {
-		capturedSlice = slice;
-		return { ok: true, data: slice };
+	mockTransitionSliceUseCase.mockImplementation(async (input: { sliceId: string; targetStatus: string }) => {
+		return { ok: true, data: { slice: { id: input.sliceId, status: input.targetStatus } } };
 	});
 	vi.clearAllMocks();
 });

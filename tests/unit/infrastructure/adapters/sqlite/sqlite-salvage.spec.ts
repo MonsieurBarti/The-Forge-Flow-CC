@@ -691,7 +691,7 @@ describe("SQLiteSalvage", () => {
 			expect(isOk(result)).toBe(true);
 			if (!isOk(result)) return;
 
-			expect(result.data.snapshot!.version).toBe(1);
+			expect(result.data.snapshot!.version).toBe("1.0.0");
 		});
 
 		it("should track which tables were salvaged", () => {
