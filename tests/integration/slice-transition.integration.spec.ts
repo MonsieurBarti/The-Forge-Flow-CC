@@ -1,33 +1,69 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sliceTransitionCmd } from "../../src/cli/commands/slice-transition.cmd.js";
 import type { Slice } from "../../src/domain/entities/slice.js";
+import type { MilestoneStore } from "../../src/domain/ports/milestone-store.port.js";
+import type { ProjectStore } from "../../src/domain/ports/project-store.port.js";
+import type { SliceStore } from "../../src/domain/ports/slice-store.port.js";
+import type { TaskStore } from "../../src/domain/ports/task-store.port.js";
+import type { StateStores } from "../../src/infrastructure/adapters/sqlite/create-state-stores.js";
 
-// Define mock stores using vi.hoisted() so they're available when vi.mock() runs
-const { mockSliceStore, mockMilestoneStore, mockTaskStore, mockProjectStore } = vi.hoisted(() => ({
-	mockSliceStore: {} as any,
-	mockMilestoneStore: {} as any,
-	mockTaskStore: {} as any,
-	mockProjectStore: {} as any,
-}));
+// All mock variables must be defined in vi.hoisted to be available during vi.mock hoisting
+const {
+	mockSliceStore,
+	mockMilestoneStore,
+	mockTaskStore,
+	mockProjectStore,
+	mockWithBranchGuard,
+	mockTransitionSliceUseCase,
+} = vi.hoisted(() => {
+	const mockSliceStore: Partial<SliceStore> = {
+		getById: vi.fn(),
+		update: vi.fn(),
+		getAllByMilestoneId: vi.fn(),
+	};
+	const mockMilestoneStore: Partial<MilestoneStore> = {
+		getById: vi.fn(),
+	};
+	const mockTaskStore: Partial<TaskStore> = {
+		getBySliceId: vi.fn(),
+	};
+	const mockProjectStore: Partial<ProjectStore> = {
+		get: vi.fn(),
+	};
 
-// Mock with-branch-guard - will pass through to inner function
-const mockWithBranchGuard = vi.fn(async <T>(fn: (stores: any) => Promise<T>) =>
-	fn({ sliceStore: mockSliceStore, milestoneStore: mockMilestoneStore, taskStore: mockTaskStore }),
-);
+	const mockWithBranchGuard = vi.fn(async <T>(fn: (stores: StateStores) => Promise<T>) =>
+		fn({
+			sliceStore: mockSliceStore as SliceStore,
+			milestoneStore: mockMilestoneStore as MilestoneStore,
+			taskStore: mockTaskStore as TaskStore,
+			projectStore: mockProjectStore as ProjectStore,
+		} as StateStores),
+	);
+
+	const mockTransitionSliceUseCase = vi.fn();
+
+	return {
+		mockSliceStore,
+		mockMilestoneStore,
+		mockTaskStore,
+		mockProjectStore,
+		mockWithBranchGuard,
+		mockTransitionSliceUseCase,
+	};
+});
+
 vi.mock("../../src/cli/with-branch-guard.js", () => ({
-	withBranchGuard: (...args: any[]) => mockWithBranchGuard(...args),
+	withBranchGuard: mockWithBranchGuard,
 }));
 
-// Mock the transition-slice use case to control behavior
-const mockTransitionSliceUseCase = vi.fn();
 vi.mock("../../src/application/lifecycle/transition-slice.js", () => ({
-	transitionSliceUseCase: (...args: any[]) => mockTransitionSliceUseCase(...args),
-	isOk: (result: any) => result.ok === true,
+	transitionSliceUseCase: mockTransitionSliceUseCase,
+	isOk: (result: { ok: boolean }) => result.ok === true,
 }));
 
 // Mock isOk from domain/result
 vi.mock("../../src/domain/result.js", () => ({
-	isOk: (result: any) => result.ok === true,
+	isOk: (result: { ok: boolean }) => result.ok === true,
 }));
 
 // Mock state generation (non-critical path)
@@ -128,12 +164,20 @@ let capturedSlice: Slice | null = null;
 
 beforeEach(() => {
 	capturedSlice = null;
-	mockSliceStore.getById = vi.fn().mockResolvedValue(capturedSlice);
-	mockSliceStore.update = vi.fn().mockResolvedValue(undefined);
-	mockSliceStore.getAllByMilestoneId = vi.fn().mockResolvedValue([]);
-	mockMilestoneStore.getById = vi.fn().mockResolvedValue({ id: "m01", number: 1, status: "open" });
-	mockTaskStore.getBySliceId = vi.fn().mockResolvedValue([]);
-	mockProjectStore.get = vi.fn().mockResolvedValue({ id: "test-project", name: "Test Project" });
+	Object.assign(mockSliceStore, {
+		getById: vi.fn().mockResolvedValue(capturedSlice),
+		update: vi.fn().mockResolvedValue(undefined),
+		getAllByMilestoneId: vi.fn().mockResolvedValue([]),
+	});
+	Object.assign(mockMilestoneStore, {
+		getById: vi.fn().mockResolvedValue({ id: "m01", number: 1, status: "open" }),
+	});
+	Object.assign(mockTaskStore, {
+		getBySliceId: vi.fn().mockResolvedValue([]),
+	});
+	Object.assign(mockProjectStore, {
+		get: vi.fn().mockResolvedValue({ id: "test-project", name: "Test Project" }),
+	});
 	mockTransitionSliceUseCase.mockReset();
 	mockTransitionSliceUseCase.mockImplementation(async (slice: Slice) => {
 		capturedSlice = slice;
@@ -156,7 +200,9 @@ describe("slice-transition integration", () => {
 			title: "Test Slice",
 			createdAt: new Date(),
 		};
-		mockSliceStore.getById = vi.fn().mockResolvedValue(mockSlice);
+		Object.assign(mockSliceStore, {
+			getById: vi.fn().mockResolvedValue(mockSlice),
+		});
 		mockTransitionSliceUseCase.mockResolvedValue({
 			ok: true,
 			data: { slice: mockSlice },
@@ -169,13 +215,15 @@ describe("slice-transition integration", () => {
 	});
 
 	it("handles invalid transition", async () => {
-		mockSliceStore.getById = vi.fn().mockResolvedValue({
-			id: "M01-S01",
-			milestoneId: "m01",
-			number: 1,
-			status: "discussing",
-			title: "Test Slice",
-			createdAt: new Date(),
+		Object.assign(mockSliceStore, {
+			getById: vi.fn().mockResolvedValue({
+				id: "M01-S01",
+				milestoneId: "m01",
+				number: 1,
+				status: "discussing",
+				title: "Test Slice",
+				createdAt: new Date(),
+			}),
 		});
 
 		mockTransitionSliceUseCase.mockResolvedValue({

@@ -3,6 +3,10 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as generateReminderModule from "../../src/application/session/generate-reminder.js";
 import { sessionRemindCmd } from "../../src/cli/commands/session-remind.cmd.js";
+import type { DependencyStore } from "../../src/domain/ports/dependency-store.port.js";
+import type { SessionStore } from "../../src/domain/ports/session-store.port.js";
+import type { TaskStore } from "../../src/domain/ports/task-store.port.js";
+import type { StateStores } from "../../src/infrastructure/adapters/sqlite/create-state-stores.js";
 import { createStateStores } from "../../src/infrastructure/adapters/sqlite/create-state-stores.js";
 
 vi.mock("node:fs");
@@ -29,12 +33,56 @@ describe("session-remind integration", () => {
 			return false;
 		});
 
-		const mockStores = {
-			sessionStore: { getSession: vi.fn().mockReturnValue(null) },
-			taskStore: { listTasks: vi.fn() },
-			dependencyStore: { listDependencies: vi.fn() },
+		const mockStores: StateStores = {
+			db: { init: vi.fn() },
+			projectStore: { getProject: vi.fn(), saveProject: vi.fn() },
+			milestoneStore: {
+				createMilestone: vi.fn(),
+				getMilestone: vi.fn(),
+				listMilestones: vi.fn(),
+				updateMilestone: vi.fn(),
+				closeMilestone: vi.fn(),
+			},
+			sliceStore: {
+				createSlice: vi.fn(),
+				getSlice: vi.fn(),
+				listSlices: vi.fn(),
+				updateSlice: vi.fn(),
+				transitionSlice: vi.fn(),
+			},
+			taskStore: {
+				createTask: vi.fn(),
+				getTask: vi.fn(),
+				listTasks: vi.fn(),
+				updateTask: vi.fn(),
+				claimTask: vi.fn(),
+				closeTask: vi.fn(),
+				listReadyTasks: vi.fn(),
+				listStaleClaims: vi.fn(),
+				getExecutorsForSlice: vi.fn(),
+			} as TaskStore,
+			dependencyStore: {
+				addDependency: vi.fn(),
+				removeDependency: vi.fn(),
+				getDependencies: vi.fn(),
+			} as DependencyStore,
+			sessionStore: {
+				getSession: vi.fn().mockReturnValue(null),
+				saveSession: vi.fn(),
+			} as SessionStore,
+			reviewStore: {
+				recordReview: vi.fn(),
+				getLatestReview: vi.fn(),
+				listReviews: vi.fn(),
+			},
+			journalRepository: {
+				append: vi.fn(),
+				readAll: vi.fn(),
+				readSince: vi.fn(),
+				count: vi.fn(),
+			},
 		};
-		vi.mocked(createStateStores).mockReturnValue(mockStores as any);
+		vi.mocked(createStateStores).mockReturnValue(mockStores);
 		vi.mocked(generateReminderModule.generateReminder).mockReturnValue(null);
 
 		const result = await sessionRemindCmd([]);
@@ -60,12 +108,56 @@ describe("session-remind integration", () => {
 			wave: 2,
 			totalWaves: 3,
 		};
-		const mockStores = {
-			sessionStore: { getSession: vi.fn().mockReturnValue(mockSession) },
-			taskStore: { listTasks: vi.fn().mockReturnValue([]) },
-			dependencyStore: { listDependencies: vi.fn().mockReturnValue([]) },
+		const mockStores: StateStores = {
+			db: { init: vi.fn() },
+			projectStore: { getProject: vi.fn(), saveProject: vi.fn() },
+			milestoneStore: {
+				createMilestone: vi.fn(),
+				getMilestone: vi.fn(),
+				listMilestones: vi.fn(),
+				updateMilestone: vi.fn(),
+				closeMilestone: vi.fn(),
+			},
+			sliceStore: {
+				createSlice: vi.fn(),
+				getSlice: vi.fn(),
+				listSlices: vi.fn(),
+				updateSlice: vi.fn(),
+				transitionSlice: vi.fn(),
+			},
+			taskStore: {
+				createTask: vi.fn(),
+				getTask: vi.fn(),
+				listTasks: vi.fn().mockReturnValue([]),
+				updateTask: vi.fn(),
+				claimTask: vi.fn(),
+				closeTask: vi.fn(),
+				listReadyTasks: vi.fn(),
+				listStaleClaims: vi.fn(),
+				getExecutorsForSlice: vi.fn(),
+			} as TaskStore,
+			dependencyStore: {
+				addDependency: vi.fn(),
+				removeDependency: vi.fn(),
+				getDependencies: vi.fn().mockReturnValue([]),
+			} as DependencyStore,
+			sessionStore: {
+				getSession: vi.fn().mockReturnValue(mockSession),
+				saveSession: vi.fn(),
+			} as SessionStore,
+			reviewStore: {
+				recordReview: vi.fn(),
+				getLatestReview: vi.fn(),
+				listReviews: vi.fn(),
+			},
+			journalRepository: {
+				append: vi.fn(),
+				readAll: vi.fn(),
+				readSince: vi.fn(),
+				count: vi.fn(),
+			},
 		};
-		vi.mocked(createStateStores).mockReturnValue(mockStores as any);
+		vi.mocked(createStateStores).mockReturnValue(mockStores);
 		vi.mocked(generateReminderModule.generateReminder).mockReturnValue(
 			"```\nM001-S01: executing | Wave 2/3 | Next: /tff:execute or /tff:pause\n```",
 		);
@@ -115,12 +207,56 @@ describe("session-remind integration", () => {
 			wave: 3,
 			totalWaves: 4,
 		};
-		const mockStores = {
-			sessionStore: { getSession: vi.fn().mockReturnValue(mockSession) },
-			taskStore: { listTasks: vi.fn().mockReturnValue([]) },
-			dependencyStore: { listDependencies: vi.fn().mockReturnValue([]) },
+		const mockStores: StateStores = {
+			db: { init: vi.fn() },
+			projectStore: { getProject: vi.fn(), saveProject: vi.fn() },
+			milestoneStore: {
+				createMilestone: vi.fn(),
+				getMilestone: vi.fn(),
+				listMilestones: vi.fn(),
+				updateMilestone: vi.fn(),
+				closeMilestone: vi.fn(),
+			},
+			sliceStore: {
+				createSlice: vi.fn(),
+				getSlice: vi.fn(),
+				listSlices: vi.fn(),
+				updateSlice: vi.fn(),
+				transitionSlice: vi.fn(),
+			},
+			taskStore: {
+				createTask: vi.fn(),
+				getTask: vi.fn(),
+				listTasks: vi.fn().mockReturnValue([]),
+				updateTask: vi.fn(),
+				claimTask: vi.fn(),
+				closeTask: vi.fn(),
+				listReadyTasks: vi.fn(),
+				listStaleClaims: vi.fn(),
+				getExecutorsForSlice: vi.fn(),
+			} as TaskStore,
+			dependencyStore: {
+				addDependency: vi.fn(),
+				removeDependency: vi.fn(),
+				getDependencies: vi.fn().mockReturnValue([]),
+			} as DependencyStore,
+			sessionStore: {
+				getSession: vi.fn().mockReturnValue(mockSession),
+				saveSession: vi.fn(),
+			} as SessionStore,
+			reviewStore: {
+				recordReview: vi.fn(),
+				getLatestReview: vi.fn(),
+				listReviews: vi.fn(),
+			},
+			journalRepository: {
+				append: vi.fn(),
+				readAll: vi.fn(),
+				readSince: vi.fn(),
+				count: vi.fn(),
+			},
 		};
-		vi.mocked(createStateStores).mockReturnValue(mockStores as any);
+		vi.mocked(createStateStores).mockReturnValue(mockStores);
 		vi.mocked(generateReminderModule.generateReminder).mockReturnValue(
 			"```\nM003-S01: reviewing | Wave 3/4\n```",
 		);

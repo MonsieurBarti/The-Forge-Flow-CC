@@ -3,25 +3,30 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { preOpGuardCmd } from "../../src/cli/commands/pre-op-guard.cmd.js";
 import type { Slice } from "../../src/domain/entities/slice.js";
+import type { SliceStore } from "../../src/domain/ports/slice-store.port.js";
+import type { StateStores } from "../../src/infrastructure/adapters/sqlite/create-state-stores.js";
 
 vi.mock("node:fs");
 
-// Mock the with-sync-lock module - will pass through to inner function
-const mockWithSyncLock = vi.fn(async <T>(fn: (stores: any) => Promise<T>) => fn({}));
+// All mock functions must be defined in vi.hoisted to be available during vi.mock hoisting
+const { mockWithSyncLock, mockWithBranchGuard, mockSliceStore } = vi.hoisted(() => {
+	const mockWithSyncLock = vi.fn(async <T>(fn: (stores: StateStores) => Promise<T>) =>
+		fn({} as StateStores),
+	);
+	const mockSliceStore: Partial<SliceStore> = {};
+	const mockWithBranchGuard = vi.fn(async <T>(fn: (stores: StateStores) => Promise<T>) =>
+		fn({ sliceStore: mockSliceStore as SliceStore } as StateStores),
+	);
+	return { mockWithSyncLock, mockWithBranchGuard, mockSliceStore };
+});
+
 vi.mock("../../src/cli/with-sync-lock.js", () => ({
-	withSyncLock: (...args: any[]) => mockWithSyncLock(...args),
+	withSyncLock: mockWithSyncLock,
 }));
 
-// Mock with-branch-guard - will pass through to inner function
-const mockWithBranchGuard = vi.fn(async <T>(fn: (stores: any) => Promise<T>) =>
-	fn({ sliceStore: mockSliceStore }),
-);
 vi.mock("../../src/cli/with-branch-guard.js", () => ({
-	withBranchGuard: (...args: any[]) => mockWithBranchGuard(...args),
+	withBranchGuard: mockWithBranchGuard,
 }));
-
-// Mock slice store that tests can configure
-let mockSliceStore: any = {};
 
 // Mock the application validation functions
 vi.mock("../../src/application/index.js", () => ({
@@ -58,7 +63,13 @@ vi.mock("../../src/application/guard/validate-operation.js", () => ({
 		currentStatus: string;
 		requiredStatus: string;
 		recoveryHint: string;
-		constructor(result: any) {
+		constructor(result: {
+			operation: string;
+			currentStatus: string;
+			requiredStatus: string;
+			message: string;
+			recoveryHint: string;
+		}) {
 			super(result.message);
 			this.name = "OperationBlockedError";
 			this.operation = result.operation;
@@ -74,7 +85,7 @@ describe("pre-op-guard integration", () => {
 
 	beforeEach(() => {
 		vi.resetAllMocks();
-		mockSliceStore = {};
+		Object.assign(mockSliceStore, {});
 		vi.stubGlobal("process", { ...process, cwd: () => testDir });
 	});
 
@@ -147,9 +158,9 @@ describe("pre-op-guard integration", () => {
 		});
 
 		// Mock slice store returning null
-		mockSliceStore = {
+		Object.assign(mockSliceStore, {
 			getSlice: vi.fn().mockReturnValue({ ok: true, data: null }),
-		};
+		});
 
 		const result = await preOpGuardCmd(["S99", "execute"]);
 		const parsed = JSON.parse(result);
@@ -174,9 +185,9 @@ describe("pre-op-guard integration", () => {
 			updatedAt: new Date(),
 		};
 
-		mockSliceStore = {
+		Object.assign(mockSliceStore, {
 			getSlice: vi.fn().mockReturnValue({ ok: true, data: mockSlice }),
-		};
+		});
 
 		// Trying to execute from discussing status (requires executing status)
 		const result = await preOpGuardCmd(["S01", "execute"]);
@@ -204,9 +215,9 @@ describe("pre-op-guard integration", () => {
 			updatedAt: new Date(),
 		};
 
-		mockSliceStore = {
+		Object.assign(mockSliceStore, {
 			getSlice: vi.fn().mockReturnValue({ ok: true, data: mockSlice }),
-		};
+		});
 
 		// Execute from executing status (correct)
 		const result = await preOpGuardCmd(["S01", "execute"]);
@@ -238,7 +249,7 @@ describe("pre-op-guard integration", () => {
 
 		for (const tc of testCases) {
 			// Reset mock for each test case
-			mockSliceStore = {
+			Object.assign(mockSliceStore, {
 				getSlice: vi.fn().mockReturnValue({
 					ok: true,
 					data: {
@@ -250,7 +261,7 @@ describe("pre-op-guard integration", () => {
 						updatedAt: new Date(),
 					},
 				}),
-			};
+			});
 
 			const result = await preOpGuardCmd(["S01", tc.operation]);
 			const parsed = JSON.parse(result);
@@ -280,9 +291,9 @@ describe("pre-op-guard integration", () => {
 			updatedAt: new Date(),
 		};
 
-		mockSliceStore = {
+		Object.assign(mockSliceStore, {
 			getSlice: vi.fn().mockReturnValue({ ok: true, data: mockSlice }),
-		};
+		});
 
 		const result = await preOpGuardCmd(["S01", "execute"]);
 		const parsed = JSON.parse(result);
@@ -309,9 +320,9 @@ describe("pre-op-guard integration", () => {
 			updatedAt: new Date(),
 		};
 
-		mockSliceStore = {
+		Object.assign(mockSliceStore, {
 			getSlice: vi.fn().mockReturnValue({ ok: true, data: mockSlice }),
-		};
+		});
 
 		const result = await preOpGuardCmd(["S01", "execute"]);
 		const parsed = JSON.parse(result);
@@ -327,12 +338,12 @@ describe("pre-op-guard integration", () => {
 			return false;
 		});
 
-		mockSliceStore = {
+		Object.assign(mockSliceStore, {
 			getSlice: vi.fn().mockReturnValue({
 				ok: false,
 				error: { code: "DB_ERROR", message: "Database connection failed" },
 			}),
-		};
+		});
 
 		const result = await preOpGuardCmd(["S01", "execute"]);
 		const parsed = JSON.parse(result);
