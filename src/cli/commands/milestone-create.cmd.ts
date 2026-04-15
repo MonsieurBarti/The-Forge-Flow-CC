@@ -2,8 +2,7 @@ import { createMilestoneUseCase } from "../../application/milestone/create-miles
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
-import { GitStateBranchAdapter } from "../../infrastructure/adapters/git/git-state-branch.adapter.js";
-import { withBranchGuard } from "../with-branch-guard.js";
+import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 
 export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
 	const name = args[0];
@@ -15,25 +14,23 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 
-	return withBranchGuard(async ({ milestoneStore }) => {
-		const cwd = process.cwd();
-		const artifactStore = new MarkdownArtifactAdapter(cwd);
-		const gitOps = new GitCliAdapter(cwd);
-		const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+	const cwd = process.cwd();
+	const { milestoneStore } = createClosableStateStoresUnchecked();
+	const artifactStore = new MarkdownArtifactAdapter(cwd);
+	const gitOps = new GitCliAdapter(cwd);
 
-		// Auto-number: count existing milestones and increment
-		const milestonesResult = milestoneStore.listMilestones();
-		if (!isOk(milestonesResult)) {
-			return JSON.stringify({ ok: false, error: milestonesResult.error });
-		}
-		const number = milestonesResult.data.length + 1;
+	// Auto-number: count existing milestones and increment
+	const milestonesResult = milestoneStore.listMilestones();
+	if (!isOk(milestonesResult)) {
+		return JSON.stringify({ ok: false, error: milestonesResult.error });
+	}
+	const number = milestonesResult.data.length + 1;
 
-		const result = await createMilestoneUseCase(
-			{ name, number },
-			{ milestoneStore, artifactStore, gitOps, stateBranch },
-		);
+	const result = await createMilestoneUseCase(
+		{ name, number },
+		{ milestoneStore, artifactStore, gitOps },
+	);
 
-		if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-		return JSON.stringify({ ok: false, error: result.error });
-	});
+	if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+	return JSON.stringify({ ok: false, error: result.error });
 };

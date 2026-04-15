@@ -1,7 +1,4 @@
-import { execSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { BranchMismatchError } from "../../../domain/errors/branch-mismatch.error.js";
 import type { DatabaseInit } from "../../../domain/ports/database-init.port.js";
 import type { DependencyStore } from "../../../domain/ports/dependency-store.port.js";
 import type { JournalRepository } from "../../../domain/ports/journal-repository.port.js";
@@ -11,7 +8,8 @@ import type { ReviewStore } from "../../../domain/ports/review-store.port.js";
 import type { SessionStore } from "../../../domain/ports/session-store.port.js";
 import type { SliceStore } from "../../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../../domain/ports/task-store.port.js";
-import { BranchMetaSchema } from "../../../domain/value-objects/branch-meta.js";
+import { createTffSymlink, getProjectHome, getProjectId } from "../../home-directory.js";
+import { runMigrationIfNeeded } from "../../migration.js";
 import { JsonlJournalAdapter } from "../journal/jsonl-journal.adapter.js";
 import { SQLiteStateAdapter } from "./sqlite-state.adapter.js";
 
@@ -27,41 +25,44 @@ export interface StateStores {
 	journalRepository: JournalRepository;
 }
 
-function checkBranchAlignment(tffDir: string): void {
-	try {
-		const stampPath = path.join(tffDir, "branch-meta.json");
-		const dbFilePath = path.join(tffDir, "state.db");
+/**
+ * Derive state store paths from home directory.
+ * Uses .tff-project-id in cwd to determine project ID.
+ * Also runs migration and ensures symlink exists.
+ */
+function getDerivedPaths(): { dbPath: string; journalPath: string; projectId: string } {
+	const repoRoot = process.cwd();
 
-		if (existsSync(stampPath)) {
-			const raw = JSON.parse(readFileSync(stampPath, "utf8"));
-			const meta = BranchMetaSchema.parse(raw);
-			const currentBranch = execSync("git branch --show-current", {
-				cwd: path.dirname(tffDir), // run git from parent of .tff/
-				encoding: "utf8",
-			}).trim();
-			if (meta.codeBranch !== currentBranch) {
-				throw new BranchMismatchError(meta.codeBranch, currentBranch);
-			}
-		} else if (existsSync(dbFilePath)) {
-			const currentBranch = execSync("git branch --show-current", {
-				cwd: path.dirname(tffDir),
-				encoding: "utf8",
-			}).trim();
-			throw new BranchMismatchError("unknown", currentBranch);
-		}
-	} catch (e) {
-		if (e instanceof BranchMismatchError) throw e;
-		// execSync failed (not git repo) or stamp parse failed — skip guard
-	}
+	// Run migration if needed (legacy .tff/ → home directory)
+	runMigrationIfNeeded(repoRoot);
+
+	const projectId = getProjectId(repoRoot);
+	const home = getProjectHome(projectId);
+
+	// Ensure symlink exists (for new projects or after migration)
+	createTffSymlink(repoRoot, projectId);
+
+	return {
+		dbPath: path.join(home, "state.db"),
+		journalPath: path.join(home, "journal"),
+		projectId,
+	};
 }
 
+/**
+ * Create state stores with optional explicit dbPath (for tests).
+ * If dbPath not provided, derives from home directory.
+ */
 export function createStateStoresUnchecked(dbPath?: string): StateStores {
-	const resolvedPath = dbPath ?? path.join(process.cwd(), ".tff", "state.db");
-	const adapter = SQLiteStateAdapter.create(resolvedPath);
+	const { dbPath: resolvedPath, journalPath } = dbPath
+		? { dbPath, journalPath: path.join(path.dirname(dbPath), "journal") }
+		: getDerivedPaths();
+
+	const adapter = dbPath
+		? SQLiteStateAdapter.createWithPath(resolvedPath)
+		: SQLiteStateAdapter.create();
 	const initResult = adapter.init();
 	if (!initResult.ok) throw new Error(`DB init failed: ${initResult.error.message}`);
-	const tffDir = path.dirname(resolvedPath);
-	const journalPath = path.join(tffDir, "journal");
 	const journalRepository = new JsonlJournalAdapter(journalPath);
 	return {
 		db: adapter,
@@ -77,8 +78,6 @@ export function createStateStoresUnchecked(dbPath?: string): StateStores {
 }
 
 export function createStateStores(dbPath?: string): StateStores {
-	const resolvedPath = dbPath ?? path.join(process.cwd(), ".tff", "state.db");
-	checkBranchAlignment(path.dirname(resolvedPath));
 	return createStateStoresUnchecked(dbPath);
 }
 
@@ -87,13 +86,20 @@ export interface ClosableStateStores extends StateStores {
 	checkpoint(): void;
 }
 
+/**
+ * Create closable state stores with optional explicit dbPath (for tests).
+ * If dbPath not provided, derives from home directory.
+ */
 export function createClosableStateStoresUnchecked(dbPath?: string): ClosableStateStores {
-	const resolvedPath = dbPath ?? path.join(process.cwd(), ".tff", "state.db");
-	const adapter = SQLiteStateAdapter.create(resolvedPath);
+	const { dbPath: resolvedPath, journalPath } = dbPath
+		? { dbPath, journalPath: path.join(path.dirname(dbPath), "journal") }
+		: getDerivedPaths();
+
+	const adapter = dbPath
+		? SQLiteStateAdapter.createWithPath(resolvedPath)
+		: SQLiteStateAdapter.create();
 	const initResult = adapter.init();
 	if (!initResult.ok) throw new Error(`DB init failed: ${initResult.error.message}`);
-	const tffDir = path.dirname(resolvedPath);
-	const journalPath = path.join(tffDir, "journal");
 	const journalRepository = new JsonlJournalAdapter(journalPath);
 	return {
 		db: adapter,
@@ -111,7 +117,5 @@ export function createClosableStateStoresUnchecked(dbPath?: string): ClosableSta
 }
 
 export function createClosableStateStores(dbPath?: string): ClosableStateStores {
-	const resolvedPath = dbPath ?? path.join(process.cwd(), ".tff", "state.db");
-	checkBranchAlignment(path.dirname(resolvedPath));
 	return createClosableStateStoresUnchecked(dbPath);
 }

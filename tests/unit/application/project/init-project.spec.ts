@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { initProject } from "../../../../src/application/project/init-project.js";
 import { isErr, isOk } from "../../../../src/domain/result.js";
-import { GitStateBranchAdapter } from "../../../../src/infrastructure/adapters/git/git-state-branch.adapter.js";
 import { InMemoryArtifactStore } from "../../../../src/infrastructure/testing/in-memory-artifact-store.js";
-import { InMemoryGitOps } from "../../../../src/infrastructure/testing/in-memory-git-ops.js";
 import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
 
 describe("initProject", () => {
@@ -108,36 +106,5 @@ describe("initProject", () => {
 		);
 		expect(isErr(result)).toBe(true);
 		if (isErr(result)) expect(result.error.code).toBe("PROJECT_EXISTS");
-	});
-});
-
-describe("initProject — state branch", () => {
-	let adapter: InMemoryStateAdapter;
-	let artifactStore: InMemoryArtifactStore;
-	let gitOps: InMemoryGitOps;
-	let stateBranch: GitStateBranchAdapter;
-
-	beforeEach(() => {
-		adapter = new InMemoryStateAdapter();
-		artifactStore = new InMemoryArtifactStore();
-		gitOps = new InMemoryGitOps();
-		stateBranch = new GitStateBranchAdapter(gitOps, "/tmp/repo");
-	});
-
-	it("should create root state branch after project init", async () => {
-		const result = await initProject(
-			{ name: "my-app", vision: "A great app" },
-			{ projectStore: adapter, artifactStore, stateBranch },
-		);
-		expect(isOk(result)).toBe(true);
-		expect(gitOps.hasBranch("tff-state/main")).toBe(true);
-	});
-
-	it("should succeed even without stateBranch (backward compat)", async () => {
-		const result = await initProject(
-			{ name: "my-app", vision: "A great app" },
-			{ projectStore: adapter, artifactStore },
-		);
-		expect(isOk(result)).toBe(true);
 	});
 });

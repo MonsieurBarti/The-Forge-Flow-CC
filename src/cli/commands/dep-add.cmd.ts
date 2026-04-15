@@ -1,5 +1,5 @@
 import { isOk } from "../../domain/result.js";
-import { withBranchGuard } from "../with-branch-guard.js";
+import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 
 export const depAddCmd = async (args: string[]): Promise<string> => {
 	const [fromId, toId] = args;
@@ -12,9 +12,8 @@ export const depAddCmd = async (args: string[]): Promise<string> => {
 			},
 		});
 
-	return withBranchGuard(async ({ dependencyStore }) => {
-		const result = dependencyStore.addDependency(fromId, toId, "blocks");
-		if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-		return JSON.stringify({ ok: false, error: result.error });
-	});
+	const { dependencyStore } = createClosableStateStoresUnchecked();
+	const result = dependencyStore.addDependency(fromId, toId, "blocks");
+	if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+	return JSON.stringify({ ok: false, error: result.error });
 };

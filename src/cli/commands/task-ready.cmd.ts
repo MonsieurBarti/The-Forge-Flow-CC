@@ -1,5 +1,5 @@
 import { isOk } from "../../domain/result.js";
-import { withBranchGuard } from "../with-branch-guard.js";
+import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 
 export const taskReadyCmd = async (args: string[]): Promise<string> => {
 	const [sliceId] = args;
@@ -9,9 +9,8 @@ export const taskReadyCmd = async (args: string[]): Promise<string> => {
 			error: { code: "INVALID_ARGS", message: "Usage: task:ready <slice-id>" },
 		});
 
-	return withBranchGuard(async ({ taskStore }) => {
-		const result = taskStore.listReadyTasks(sliceId);
-		if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
-		return JSON.stringify({ ok: false, error: result.error });
-	});
+	const { taskStore } = createClosableStateStoresUnchecked();
+	const result = taskStore.listReadyTasks(sliceId);
+	if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
+	return JSON.stringify({ ok: false, error: result.error });
 };

@@ -1,7 +1,7 @@
 import { generateState } from "../../application/sync/generate-state.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
-import { withBranchGuard } from "../with-branch-guard.js";
+import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { withSyncLock } from "../with-sync-lock.js";
 
 export const syncStateCmd = async (args: string[]): Promise<string> => {
@@ -13,15 +13,14 @@ export const syncStateCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 	const result = await withSyncLock(async () => {
-		return withBranchGuard(async ({ milestoneStore, sliceStore, taskStore }) => {
-			const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-			const result = await generateState(
-				{ milestoneId },
-				{ milestoneStore, sliceStore, taskStore, artifactStore },
-			);
-			if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-			return JSON.stringify({ ok: false, error: result.error });
-		});
+		const { milestoneStore, sliceStore, taskStore } = createClosableStateStoresUnchecked();
+		const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+		const result = await generateState(
+			{ milestoneId },
+			{ milestoneStore, sliceStore, taskStore, artifactStore },
+		);
+		if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+		return JSON.stringify({ ok: false, error: result.error });
 	});
 	// If result is a string, it came from the inner function; otherwise it's a SyncLockResult
 	if (typeof result === "string") return result;

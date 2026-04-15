@@ -1,9 +1,7 @@
-import { mkdirSync } from "node:fs";
 import { initProject } from "../../application/project/init-project.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
-import { GitStateBranchAdapter } from "../../infrastructure/adapters/git/git-state-branch.adapter.js";
 import { createStateStores } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { installPostCheckoutHook } from "../../infrastructure/hooks/install-post-checkout.js";
 
@@ -16,13 +14,12 @@ export const projectInitCmd = async (args: string[]): Promise<string> => {
 			error: { code: "INVALID_ARGS", message: "Usage: project:init <name> [vision]" },
 		});
 	const cwd = process.cwd();
-	mkdirSync(".tff", { recursive: true });
+	// Note: .tff/ symlink is created by getProjectId() called from createStateStores()
 	const { projectStore } = createStateStores();
 	const artifactStore = new MarkdownArtifactAdapter(cwd);
-	const gitOps = new GitCliAdapter(cwd);
-	const stateBranch = new GitStateBranchAdapter(gitOps, cwd);
+	const _gitOps = new GitCliAdapter(cwd);
 
-	const result = await initProject({ name, vision }, { projectStore, artifactStore, stateBranch });
+	const result = await initProject({ name, vision }, { projectStore, artifactStore });
 	if (isOk(result)) {
 		try {
 			installPostCheckoutHook(process.cwd());

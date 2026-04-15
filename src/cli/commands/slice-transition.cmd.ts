@@ -1,5 +1,4 @@
 import { transitionSliceUseCase } from "../../application/lifecycle/transition-slice.js";
-import { syncBranchUseCase } from "../../application/state-branch/sync-branch.js";
 import { generateState } from "../../application/sync/generate-state.js";
 import { isOk } from "../../domain/result.js";
 import {
@@ -8,11 +7,8 @@ import {
 	validTransitionsFrom,
 } from "../../domain/value-objects/slice-status.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
-import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
-import { GitStateBranchAdapter } from "../../infrastructure/adapters/git/git-state-branch.adapter.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { withBranchGuard } from "../with-branch-guard.js";
 
 export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 	const [sliceId, targetStatus] = args;
@@ -35,7 +31,10 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 
-	return withBranchGuard(async ({ sliceStore, milestoneStore, taskStore }) => {
+	const closableStores = createClosableStateStoresUnchecked();
+	const { sliceStore, milestoneStore, taskStore } = closableStores;
+
+	try {
 		const artifactStore = new MarkdownArtifactAdapter(process.cwd());
 
 		const result = await transitionSliceUseCase(
@@ -59,30 +58,13 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 				warnings.push(msg);
 			}
 
-			// Auto-sync state branch (S03)
+			// Auto-checkpoint database
 			try {
-				const closableStores = createClosableStateStoresUnchecked();
-				try {
-					closableStores.checkpoint();
-				} finally {
-					closableStores.close();
-				}
-				const gitOps = new GitCliAdapter(process.cwd());
-				const stateBranchAdapter = new GitStateBranchAdapter(gitOps, process.cwd());
-				const branchR = await gitOps.getCurrentBranch();
-				if (isOk(branchR)) {
-					const existsR = await stateBranchAdapter.exists(branchR.data);
-					if (isOk(existsR) && existsR.data) {
-						await syncBranchUseCase(
-							{ codeBranch: branchR.data, message: `sync: ${sliceId} -> ${targetStatus}` },
-							{ stateBranch: stateBranchAdapter },
-						);
-					}
-				}
+				closableStores.checkpoint();
 			} catch (e) {
-				const syncMsg = `state branch sync failed: ${String(e)}`;
-				tffWarn(syncMsg);
-				warnings.push(syncMsg);
+				const msg = `checkpoint failed: ${String(e)}`;
+				tffWarn(msg);
+				warnings.push(msg);
 			}
 
 			// Auto-save CHECKPOINT.md (CRITICAL — blocks transition)
@@ -127,5 +109,7 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 		}
 
 		return JSON.stringify({ ok: false, error: result.error });
-	});
+	} finally {
+		closableStores.close();
+	}
 };
