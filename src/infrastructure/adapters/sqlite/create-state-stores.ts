@@ -8,7 +8,8 @@ import type { ReviewStore } from "../../../domain/ports/review-store.port.js";
 import type { SessionStore } from "../../../domain/ports/session-store.port.js";
 import type { SliceStore } from "../../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../../domain/ports/task-store.port.js";
-import { getProjectId, getProjectHome } from "../../home-directory.js";
+import { createTffSymlink, getProjectId, getProjectHome } from "../../home-directory.js";
+import { runMigrationIfNeeded } from "../../migration.js";
 import { JsonlJournalAdapter } from "../journal/jsonl-journal.adapter.js";
 import { SQLiteStateAdapter } from "./sqlite-state.adapter.js";
 
@@ -27,13 +28,24 @@ export interface StateStores {
 /**
  * Derive state store paths from home directory.
  * Uses .tff-project-id in cwd to determine project ID.
+ * Also runs migration and ensures symlink exists.
  */
-function getDerivedPaths(): { dbPath: string; journalPath: string } {
-	const projectId = getProjectId(process.cwd());
+function getDerivedPaths(): { dbPath: string; journalPath: string; projectId: string } {
+	const repoRoot = process.cwd();
+
+	// Run migration if needed (legacy .tff/ → home directory)
+	runMigrationIfNeeded(repoRoot);
+
+	const projectId = getProjectId(repoRoot);
 	const home = getProjectHome(projectId);
+
+	// Ensure symlink exists (for new projects or after migration)
+	createTffSymlink(repoRoot, projectId);
+
 	return {
 		dbPath: path.join(home, "state.db"),
 		journalPath: path.join(home, "journal"),
+		projectId,
 	};
 }
 

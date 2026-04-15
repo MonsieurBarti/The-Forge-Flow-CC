@@ -1,4 +1,3 @@
-import { mkdirSync } from "node:fs";
 import { initProject } from "../../application/project/init-project.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
@@ -15,7 +14,7 @@ export const projectInitCmd = async (args: string[]): Promise<string> => {
 			error: { code: "INVALID_ARGS", message: "Usage: project:init <name> [vision]" },
 		});
 	const cwd = process.cwd();
-	mkdirSync(".tff", { recursive: true });
+	// Note: .tff/ symlink is created by getProjectId() called from createStateStores()
 	const { projectStore } = createStateStores();
 	const artifactStore = new MarkdownArtifactAdapter(cwd);
 	const gitOps = new GitCliAdapter(cwd);

@@ -50,6 +50,8 @@ export function writeProjectIdFile(repoRoot: string, projectId: string): void {
 /**
  * Get or generate the project ID.
  * If .tff-project-id exists, reads it. Otherwise generates a new UUID v4 and writes it.
+ * Also ensures home directory exists.
+ * Note: Does NOT create symlink - caller must do that after any migration.
  * @param repoRoot - The repository root directory
  */
 export function getProjectId(repoRoot: string): string {
@@ -70,7 +72,7 @@ export function getProjectId(repoRoot: string): string {
 
 /**
  * Ensure the project home directory exists with required subdirectories.
- * Creates: ~/.tff-cc/{projectId}/, ~/.tff-cc/{projectId}/milestones/, ~/.tff-cc/{projectId}/worktrees/
+ * Creates: ~/.tff-cc/{projectId}/, ~/.tff-cc/{projectId}/milestones/, ~/.tff-cc/{projectId}/worktrees/, ~/.tff-cc/{projectId}/journal/
  * @param projectId - The project's unique identifier
  * @returns The project home directory path
  */
@@ -85,6 +87,7 @@ export function ensureProjectHomeDir(projectId: string): string {
 	// Create subdirectories
 	const milestonesDir = join(home, "milestones");
 	const worktreesDir = join(home, "worktrees");
+	const journalDir = join(home, "journal");
 
 	if (!existsSync(milestonesDir)) {
 		mkdirSync(milestonesDir, { recursive: true, mode: 0o700 });
@@ -92,6 +95,10 @@ export function ensureProjectHomeDir(projectId: string): string {
 
 	if (!existsSync(worktreesDir)) {
 		mkdirSync(worktreesDir, { recursive: true, mode: 0o700 });
+	}
+
+	if (!existsSync(journalDir)) {
+		mkdirSync(journalDir, { recursive: true, mode: 0o700 });
 	}
 
 	return home;
