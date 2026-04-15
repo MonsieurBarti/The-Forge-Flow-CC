@@ -15,11 +15,16 @@ import { createClosableStateStores } from "../../src/infrastructure/adapters/sql
 
 describe("journal T1 crash recovery integration", () => {
 	let tmpDir: string;
+	let homeDir: string;
 	let originalCwd: string;
+	let originalTffCcHome: string | undefined;
 
 	beforeEach(async () => {
 		tmpDir = mkdtempSync(path.join(tmpdir(), "tff-journal-recovery-test-"));
+		homeDir = mkdtempSync(path.join(tmpdir(), "tff-home-"));
 		originalCwd = process.cwd();
+		originalTffCcHome = process.env.TFF_CC_HOME;
+		process.env.TFF_CC_HOME = homeDir;
 		process.chdir(tmpDir);
 
 		// Initialize project
@@ -39,7 +44,13 @@ describe("journal T1 crash recovery integration", () => {
 
 	afterEach(() => {
 		process.chdir(originalCwd);
+		if (originalTffCcHome === undefined) {
+			delete process.env.TFF_CC_HOME;
+		} else {
+			process.env.TFF_CC_HOME = originalTffCcHome;
+		}
 		rmSync(tmpDir, { recursive: true, force: true });
+		rmSync(homeDir, { recursive: true, force: true });
 	});
 
 	it("recovers correctly after crash mid-wave-1", async () => {

@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -10,11 +10,16 @@ import { createClosableStateStores } from "../../../../src/infrastructure/adapte
 
 describe("task:claim — journal integration", () => {
 	let tmpDir: string;
+	let homeDir: string;
 	let originalCwd: string;
+	let originalTffCcHome: string | undefined;
 
 	beforeEach(async () => {
 		tmpDir = mkdtempSync(path.join(tmpdir(), "tff-claim-test-"));
+		homeDir = mkdtempSync(path.join(tmpdir(), "tff-home-"));
 		originalCwd = process.cwd();
+		originalTffCcHome = process.env.TFF_CC_HOME;
+		process.env.TFF_CC_HOME = homeDir;
 		process.chdir(tmpDir);
 
 		// Initialize project
@@ -41,11 +46,20 @@ describe("task:claim — journal integration", () => {
 
 	afterEach(() => {
 		process.chdir(originalCwd);
+		if (originalTffCcHome === undefined) {
+			delete process.env.TFF_CC_HOME;
+		} else {
+			process.env.TFF_CC_HOME = originalTffCcHome;
+		}
 		rmSync(tmpDir, { recursive: true, force: true });
+		rmSync(homeDir, { recursive: true, force: true });
 	});
 
 	it("writes task-started journal entry before claiming task", async () => {
-		const journalPath = path.join(tmpDir, ".tff", "journal", "M01-S01.jsonl");
+		// Read project ID for journal path
+		const projectIdPath = path.join(tmpDir, ".tff-project-id");
+		const projectId = readFileSync(projectIdPath, "utf-8").trim();
+		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
 
 		// Claim the task
 		const result = JSON.parse(await taskClaimCmd(["M01-S01-T01", "test-agent"]));
@@ -72,7 +86,10 @@ describe("task:claim — journal integration", () => {
 	});
 
 	it("uses anonymous agent identity when not specified", async () => {
-		const journalPath = path.join(tmpDir, ".tff", "journal", "M01-S01.jsonl");
+		// Read project ID for journal path
+		const projectIdPath = path.join(tmpDir, ".tff-project-id");
+		const projectId = readFileSync(projectIdPath, "utf-8").trim();
+		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
 
 		// Claim without specifying agent
 		const result = JSON.parse(await taskClaimCmd(["M01-S01-T01"]));
@@ -110,7 +127,10 @@ describe("task:claim — journal integration", () => {
 		stores.close();
 		expect(taskResult.ok).toBe(true);
 
-		const journalPath = path.join(tmpDir, ".tff", "journal", "M01-S01.jsonl");
+		// Read project ID for journal path
+		const projectIdPath = path.join(tmpDir, ".tff-project-id");
+		const projectId = readFileSync(projectIdPath, "utf-8").trim();
+		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
 
 		// Claim the task with wave
 		const result = JSON.parse(await taskClaimCmd(["M01-S01-T02", "wave-agent"]));
