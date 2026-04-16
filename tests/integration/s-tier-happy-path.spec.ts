@@ -21,7 +21,9 @@ const DELETED_AGENTS = [
 
 describe("S-tier integration: skill/agent/workflow consistency", () => {
 	it("should have exactly 4 agent files", () => {
-		const agents = readdirSync(AGENTS_DIR).filter((f) => f.endsWith(".md") && !f.endsWith(".original.md"));
+		const agents = readdirSync(AGENTS_DIR).filter(
+			(f) => f.endsWith(".md") && !f.endsWith(".original.md"),
+		);
 		expect(agents).toHaveLength(4);
 	});
 
