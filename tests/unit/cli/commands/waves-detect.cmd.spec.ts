@@ -1,20 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { wavesDetectCmd, wavesDetectSchema } from "../../../../src/cli/commands/waves-detect.cmd.js";
+import {
+	wavesDetectCmd,
+	wavesDetectSchema,
+} from "../../../../src/cli/commands/waves-detect.cmd.js";
 
 describe("waves-detect command", () => {
 	describe("schema", () => {
 		it("should have optional --classify flag", () => {
-			const classifyFlag = wavesDetectSchema.optionalFlags.find(
-				(f) => f.name === "classify",
-			);
+			const classifyFlag = wavesDetectSchema.optionalFlags.find((f) => f.name === "classify");
 			expect(classifyFlag).toBeDefined();
 			expect(classifyFlag?.type).toBe("boolean");
 		});
 
 		it("should have optional --slice-tier flag", () => {
-			const tierFlag = wavesDetectSchema.optionalFlags.find(
-				(f) => f.name === "slice-tier",
-			);
+			const tierFlag = wavesDetectSchema.optionalFlags.find((f) => f.name === "slice-tier");
 			expect(tierFlag).toBeDefined();
 			expect(tierFlag?.type).toBe("string");
 		});
