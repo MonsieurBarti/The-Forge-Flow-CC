@@ -37,3 +37,6 @@ coverage/
 .cache/
 .bg-shell/
 .pi/
+
+# TFF defaults
+/.tff
