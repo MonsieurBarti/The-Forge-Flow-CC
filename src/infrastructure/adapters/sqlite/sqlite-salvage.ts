@@ -223,6 +223,7 @@ export class SQLiteSalvage {
 				number: number;
 				name: string;
 				status: string;
+				branch: string;
 				close_reason: string | null;
 				created_at: string;
 			}>;
@@ -262,6 +263,7 @@ export class SQLiteSalvage {
 						number: row.number,
 						name: row.name,
 						status: (row.status as Milestone["status"]) ?? "open",
+						branch: row.branch ?? "",
 						closeReason: row.close_reason ?? undefined,
 						createdAt,
 					});
