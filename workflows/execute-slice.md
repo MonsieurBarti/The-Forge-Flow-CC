@@ -34,8 +34,16 @@ status = executing ∧ worktree ∃ at `.tff/worktrees/<slice-id>/`
     tester writes failing .spec.ts + commits in worktree
   ∀ task ∈ wave (parallel):
     IF task.ref ∈ checkpoint.completedTasks → SKIP
+    
+    ## Model Selection (Difficulty-Based)
+    READ task.difficulty → IF undefined SET difficulty = "medium" (default)
+    RESOLVE difficulty → profile → model via .tff/settings.yaml "model-profiles"
+    - low → budget → haiku (fast, cheap)
+    - medium → balanced → sonnet (capable, balanced)
+    - high → quality → opus (most capable)
+    
     tff-tools task:claim --task-id <id>
-    LOAD @skills/executing-plans/SKILL.md + domain skills (see routing below) → SPAWN subagent: {task.description, task.criteria, task.files, @references/conventions.md}
+    LOAD @skills/executing-plans/SKILL.md + domain skills (see routing below) → SPAWN subagent: {task.description, task.criteria, task.files, @references/conventions.md, --model <MODEL>}
     agent works in worktree → implement → tests pass → commit
     tff-tools task:close --task-id <id> --reason "Completed"
     tff-tools checkpoint:save --slice-id <slice-id> '<updated-data-json>'   ← per-task checkpoint

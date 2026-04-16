@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-	parseDifficultyOverride,
 	computeTaskDifficulty,
+	parseDifficultyOverride,
 	type TaskDifficultyInput,
 } from "../../../../src/application/planning/task-difficulty.js";
 import type { ComplexityTier } from "../../../../src/domain/value-objects/complexity-tier.js";
@@ -59,9 +59,7 @@ describe("task-difficulty", () => {
 	});
 
 	describe("computeTaskDifficulty", () => {
-		const makeInput = (
-			overrides: Partial<TaskDifficultyInput> = {},
-		): TaskDifficultyInput => ({
+		const makeInput = (overrides: Partial<TaskDifficultyInput> = {}): TaskDifficultyInput => ({
 			title: "Test task",
 			description: undefined,
 			files: ["src/file.ts"],
