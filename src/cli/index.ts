@@ -120,6 +120,55 @@ function generateSyntax(schema: CommandSchema): string {
 	return `${schema.name} ${required.join(" ")} ${optional.join(" ")}`.trim();
 }
 
+/**
+ * Convert a CommandSchema to JSON Schema format
+ */
+function schemaToJsonSchema(schema: CommandSchema): Record<string, unknown> {
+	const properties: Record<string, Record<string, unknown>> = {};
+	const required: string[] = [];
+
+	for (const flag of schema.requiredFlags) {
+		required.push(flag.name);
+		properties[flag.name] = flagToJsonSchema(flag);
+	}
+
+	for (const flag of schema.optionalFlags) {
+		properties[flag.name] = flagToJsonSchema(flag);
+	}
+
+	return {
+		type: "object",
+		required,
+		properties,
+	};
+}
+
+/**
+ * Convert a FlagDefinition to JSON Schema format
+ */
+function flagToJsonSchema(flag: {
+	name: string;
+	type: string;
+	description: string;
+	enum?: string[];
+	pattern?: string;
+}): Record<string, unknown> {
+	const schema: Record<string, unknown> = {
+		type: flag.type === "json" ? "object" : flag.type,
+		description: flag.description,
+	};
+
+	if (flag.enum) {
+		schema.enum = flag.enum;
+	}
+
+	if (flag.pattern) {
+		schema.pattern = flag.pattern;
+	}
+
+	return schema;
+}
+
 const main = async () => {
 	const [command, ...args] = process.argv.slice(2);
 
@@ -137,6 +186,17 @@ const main = async () => {
 	if (args.includes("--help") || args.includes("-h")) {
 		const schema = getCommandSchema(command);
 		if (schema) {
+			// Check for --json flag - output schema format instead of help format
+			if (args.includes("--json")) {
+				console.log(JSON.stringify({
+					ok: true,
+					data: {
+						command: schema.name,
+						flags: schemaToJsonSchema(schema),
+					},
+				}));
+				return;
+			}
 			console.log(generateHelp(schema));
 			return;
 		}
