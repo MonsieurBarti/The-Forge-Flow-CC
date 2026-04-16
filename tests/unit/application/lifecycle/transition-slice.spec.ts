@@ -5,17 +5,20 @@ import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-
 
 describe("transitionSliceUseCase", () => {
 	let adapter: InMemoryStateAdapter;
+	let sliceId: string;
 
 	beforeEach(() => {
 		adapter = new InMemoryStateAdapter();
 		adapter.saveProject({ name: "Test", vision: "v" });
-		adapter.createMilestone({ number: 1, name: "MVP" });
-		adapter.createSlice({ milestoneId: "M01", number: 1, title: "Auth" });
+		const msResult = adapter.createMilestone({ number: 1, name: "MVP" });
+		const milestoneId = isOk(msResult) ? msResult.data.id : "M01";
+		const slResult = adapter.createSlice({ milestoneId, number: 1, title: "Auth" });
+		sliceId = isOk(slResult) ? slResult.data.id : "M01-S01";
 	});
 
 	it("should transition slice and update store status", async () => {
 		const result = await transitionSliceUseCase(
-			{ sliceId: "M01-S01", targetStatus: "researching" },
+			{ sliceId, targetStatus: "researching" },
 			{ sliceStore: adapter },
 		);
 		expect(isOk(result)).toBe(true);
@@ -27,7 +30,7 @@ describe("transitionSliceUseCase", () => {
 
 	it("should reject invalid transition", async () => {
 		const result = await transitionSliceUseCase(
-			{ sliceId: "M01-S01", targetStatus: "executing" },
+			{ sliceId, targetStatus: "executing" },
 			{ sliceStore: adapter },
 		);
 		expect(isErr(result)).toBe(true);
@@ -39,14 +42,16 @@ describe("transitionSlice with EventBus", () => {
 	it("publishes SLICE_STATUS_CHANGED event via EventBus (AC13)", async () => {
 		const adapter = new InMemoryStateAdapter();
 		adapter.saveProject({ name: "Test", vision: "v" });
-		adapter.createMilestone({ number: 1, name: "M01" });
-		adapter.createSlice({ milestoneId: "M01", number: 1, title: "Test" });
+		const msResult = adapter.createMilestone({ number: 1, name: "M01" });
+		const milestoneId = isOk(msResult) ? msResult.data.id : "M01";
+		const slResult = adapter.createSlice({ milestoneId, number: 1, title: "Test" });
+		const sliceId = isOk(slResult) ? slResult.data.id : "M01-S01";
 
 		const publishFn = vi.fn();
 		const eventBus = { publish: publishFn, subscribe: () => {} };
 
 		const result = await transitionSliceUseCase(
-			{ sliceId: "M01-S01", targetStatus: "researching" },
+			{ sliceId, targetStatus: "researching" },
 			{ sliceStore: adapter, eventBus },
 		);
 		expect(isOk(result)).toBe(true);

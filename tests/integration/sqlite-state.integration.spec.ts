@@ -1,6 +1,6 @@
 import type Database from "better-sqlite3";
 import { beforeEach, describe, expect, it } from "vitest";
-import { isErr } from "../../src/domain/result.js";
+import { isErr, isOk } from "../../src/domain/result.js";
 import { SQLiteStateAdapter } from "../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js";
 
 // Integration tests access the private `db` field for direct SQL operations.
@@ -25,24 +25,28 @@ describe("SQLite integration", () => {
 
 	it("FK: cannot delete milestone with slices", () => {
 		adapter.saveProject({ name: "P" });
-		adapter.createMilestone({ number: 1, name: "M" });
-		adapter.createSlice({ milestoneId: "M01", number: 1, title: "S" });
+		const msResult = adapter.createMilestone({ number: 1, name: "M" });
+		const milestoneId = isOk(msResult) ? msResult.data.id : "M01";
+		adapter.createSlice({ milestoneId, number: 1, title: "S" });
 		const db = getDb(adapter);
 		expect(() => {
-			db.prepare("DELETE FROM milestone WHERE id = 'M01'").run();
+			db.prepare("DELETE FROM milestone WHERE id = ?").run(milestoneId);
 		}).toThrow();
 	});
 
 	it("CASCADE: deleting task removes dependency edges", () => {
 		adapter.saveProject({ name: "P" });
-		adapter.createMilestone({ number: 1, name: "M" });
-		adapter.createSlice({ milestoneId: "M01", number: 1, title: "S" });
-		adapter.createTask({ sliceId: "M01-S01", number: 1, title: "T1" });
-		adapter.createTask({ sliceId: "M01-S01", number: 2, title: "T2" });
-		adapter.addDependency("M01-S01-T01", "M01-S01-T02", "blocks");
+		const msResult = adapter.createMilestone({ number: 1, name: "M" });
+		const milestoneId = isOk(msResult) ? msResult.data.id : "M01";
+		const slResult = adapter.createSlice({ milestoneId, number: 1, title: "S" });
+		const sliceId = isOk(slResult) ? slResult.data.id : "M01-S01";
+		adapter.createTask({ sliceId, number: 1, title: "T1" });
+		adapter.createTask({ sliceId, number: 2, title: "T2" });
+		// Task IDs are derived from sliceId
+		adapter.addDependency(`${sliceId}-T01`, `${sliceId}-T02`, "blocks");
 
 		const db = getDb(adapter);
-		db.prepare("DELETE FROM task WHERE id = 'M01-S01-T01'").run();
+		db.prepare("DELETE FROM task WHERE id = ?").run(`${sliceId}-T01`);
 		const deps = db.prepare("SELECT * FROM dependency").all();
 		expect(deps).toHaveLength(0);
 	});
@@ -88,9 +92,10 @@ describe("SQLite integration", () => {
 
 	it("closeMilestone with open slices returns HAS_OPEN_CHILDREN", () => {
 		adapter.saveProject({ name: "P" });
-		adapter.createMilestone({ number: 1, name: "M" });
-		adapter.createSlice({ milestoneId: "M01", number: 1, title: "S" });
-		const result = adapter.closeMilestone("M01");
+		const msResult = adapter.createMilestone({ number: 1, name: "M" });
+		const milestoneId = isOk(msResult) ? msResult.data.id : "M01";
+		adapter.createSlice({ milestoneId, number: 1, title: "S" });
+		const result = adapter.closeMilestone(milestoneId);
 		expect(isErr(result)).toBe(true);
 		if (isErr(result)) expect(result.error.code).toBe("HAS_OPEN_CHILDREN");
 	});

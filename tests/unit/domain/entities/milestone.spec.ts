@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
 	createMilestone,
-	milestoneLabel,
 	MilestoneSchema,
+	milestoneLabel,
 } from "../../../../src/domain/entities/milestone.js";
 
 describe("Milestone", () => {

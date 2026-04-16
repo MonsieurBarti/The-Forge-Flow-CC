@@ -11,10 +11,10 @@
 
 import { describe, expect, it } from "vitest";
 import {
-	milestoneLabel,
-	sliceLabel,
 	milestoneBranchName,
+	milestoneLabel,
 	sliceBranchName,
+	sliceLabel,
 } from "../../../../src/domain/helpers/branch-naming.js";
 
 describe("T02: Branch naming helpers", () => {

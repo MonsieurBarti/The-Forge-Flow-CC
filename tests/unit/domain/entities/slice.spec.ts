@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
 	createSlice,
-	sliceLabel,
 	SliceSchema,
+	sliceLabel,
 	transitionSlice,
 } from "../../../../src/domain/entities/slice.js";
 import { isErr, isOk } from "../../../../src/domain/result.js";

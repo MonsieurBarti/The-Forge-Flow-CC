@@ -20,52 +20,57 @@ export const runDependencyStoreContractTests = (
 ) => {
 	describe(`DependencyStore contract [${name}]`, () => {
 		let store: DependencyTestAdapter;
+		let sliceId: string;
+		let task1Id: string;
+		let task2Id: string;
+		let task3Id: string;
 
 		beforeEach(() => {
 			store = createAdapter();
 			store.init();
 			// Seed parent chain
 			store.saveProject({ name: "Test" });
-			store.createMilestone({ number: 1, name: "M1" });
-			store.createSlice({ milestoneId: "M01", number: 1, title: "S1" });
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "T1" });
-			store.createTask({ sliceId: "M01-S01", number: 2, title: "T2" });
-			store.createTask({ sliceId: "M01-S01", number: 3, title: "T3" });
+			const msResult = store.createMilestone({ number: 1, name: "M1" });
+			const milestoneId = isOk(msResult) ? msResult.data.id : "M01";
+			const slResult = store.createSlice({ milestoneId, number: 1, title: "S1" });
+			sliceId = isOk(slResult) ? slResult.data.id : "M01-S01";
+			store.createTask({ sliceId, number: 1, title: "T1" });
+			store.createTask({ sliceId, number: 2, title: "T2" });
+			store.createTask({ sliceId, number: 3, title: "T3" });
+			task1Id = `${sliceId}-T01`;
+			task2Id = `${sliceId}-T02`;
+			task3Id = `${sliceId}-T03`;
 		});
 
 		it("addDependency creates edge", () => {
-			const result = store.addDependency("M01-S01-T01", "M01-S01-T02", "blocks");
+			const result = store.addDependency(task1Id, task2Id, "blocks");
 			expect(isOk(result)).toBe(true);
 		});
 
 		it("getDependencies returns outbound and inbound edges", () => {
-			store.addDependency("M01-S01-T01", "M01-S01-T02", "blocks");
+			store.addDependency(task1Id, task2Id, "blocks");
 
 			// T01 is blocked by T02 (T01 has outbound dep to T02)
-			const t1Deps = store.getDependencies("M01-S01-T01");
+			const t1Deps = store.getDependencies(task1Id);
 			expect(isOk(t1Deps)).toBe(true);
 			if (isOk(t1Deps)) {
 				expect(t1Deps.data.length).toBeGreaterThanOrEqual(1);
-				expect(
-					t1Deps.data.some((d) => d.fromId === "M01-S01-T01" && d.toId === "M01-S01-T02"),
-				).toBe(true);
+				expect(t1Deps.data.some((d) => d.fromId === task1Id && d.toId === task2Id)).toBe(true);
 			}
 
 			// T02 should also show the edge (as it blocks T01)
-			const t2Deps = store.getDependencies("M01-S01-T02");
+			const t2Deps = store.getDependencies(task2Id);
 			expect(isOk(t2Deps)).toBe(true);
 			if (isOk(t2Deps)) {
-				expect(
-					t2Deps.data.some((d) => d.fromId === "M01-S01-T01" && d.toId === "M01-S01-T02"),
-				).toBe(true);
+				expect(t2Deps.data.some((d) => d.fromId === task1Id && d.toId === task2Id)).toBe(true);
 			}
 		});
 
 		it("removeDependency deletes edge", () => {
-			store.addDependency("M01-S01-T01", "M01-S01-T02", "blocks");
-			store.removeDependency("M01-S01-T01", "M01-S01-T02");
+			store.addDependency(task1Id, task2Id, "blocks");
+			store.removeDependency(task1Id, task2Id);
 
-			const result = store.getDependencies("M01-S01-T01");
+			const result = store.getDependencies(task1Id);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).toHaveLength(0);
@@ -73,14 +78,14 @@ export const runDependencyStoreContractTests = (
 		});
 
 		it("getDependencies returns empty for task with no deps", () => {
-			const result = store.getDependencies("M01-S01-T03");
+			const result = store.getDependencies(task3Id);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) expect(result.data).toHaveLength(0);
 		});
 
 		it("duplicate addDependency is idempotent or returns clear error", () => {
-			store.addDependency("M01-S01-T01", "M01-S01-T02", "blocks");
-			const result = store.addDependency("M01-S01-T01", "M01-S01-T02", "blocks");
+			store.addDependency(task1Id, task2Id, "blocks");
+			const result = store.addDependency(task1Id, task2Id, "blocks");
 			// Either succeeds (idempotent) or returns an error (not a crash)
 			expect(typeof result.ok).toBe("boolean");
 		});

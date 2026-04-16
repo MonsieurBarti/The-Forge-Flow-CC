@@ -30,7 +30,9 @@ describe("createMilestoneUseCase", () => {
 			expect(milestone.name).toBe("MVP");
 			expect(milestone.number).toBe(1);
 			// ID should be a UUID
-			expect(milestone.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+			expect(milestone.id).toMatch(
+				/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+			);
 			// Branch name should be milestone/<8-char-uuid-prefix>
 			expect(branchName).toMatch(/^milestone\/[0-9a-f]{8}$/);
 			// Branch should be created in git
