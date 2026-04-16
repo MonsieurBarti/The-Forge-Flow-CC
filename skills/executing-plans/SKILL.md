@@ -32,13 +32,41 @@ Fresh subagent per task. Controller curates exactly what context is needed.
      e. Close: `close task in tracker`
   4. Sync: `sync state`
 
+## Subagent Dispatch Rules
+
+### When to Spawn
+| Condition | Action |
+|-----------|--------|
+| Wave has >1 task | Spawn parallel agents |
+| Task requires specialized skill | Spawn with skill loaded |
+| Task touches multiple domains | Spawn single agent with multiple skills |
+| Implementation + verification separate | Spawn sequential agents |
+
+### When NOT to Spawn
+| Condition | Action |
+|-----------|--------|
+| Single simple task | Execute directly |
+| Sequential dependency chain | Single agent, no parallelism |
+| Context already loaded | Continue in same agent |
+| Task is documentation only | Execute directly |
+
 ## Context Curation
 
-∀ subagent spawn, provide ONLY:
-- Task description + acceptance criteria
-- Exact file paths from plan
-- Relevant skills (TDD, architecture skills, commit-conventions)
-- ¬prior task context, ¬full SPEC.md (unless needed)
+### What to Pass
+| Include | Reason |
+|---------|--------|
+| Task description + ACs | Scope definition |
+| Exact file paths | No exploration needed |
+| Relevant skills (TDD, architecture, commit-conventions) | Methodology injection |
+| Code snippets from plan | Implementation hints |
+
+### What NOT to Pass
+| Exclude | Reason |
+|---------|--------|
+| Prior task context | Context pollution |
+| Full SPEC.md (unless needed) | Token overhead |
+| Full session history | Noise |
+| Unrelated domain knowledge | Distraction |
 
 ## Domain Routing
 
