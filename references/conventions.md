@@ -47,10 +47,14 @@ Project
 
 ## Naming
 
-- Milestone numbers: `M01`, `M02`, ...
-- Slice IDs: `M01-S01`, `M01-S02`, ...
-- Task refs: `T01`, `T02`, ...
-- Branches: `milestone/M01`, `slice/M01-S01`
+- Milestone numbers: `M01`, `M02`, ... (human-readable labels)
+- Slice IDs: `M01-S01`, `M01-S02`, ... (human-readable labels)
+- Task refs: `T01`, `T02`, ... (local to slice)
+- Branches:
+  - Milestone: `milestone/<8hex>` (UUID prefix, e.g., `milestone/a1b2c3d4`)
+  - Slice: `slice/<8hex>` (UUID prefix, e.g., `slice/12345678`)
+
+**Note:** Entity IDs are UUIDs, not labels. Labels are computed from numbers for human readability. Branch names use the first 8 characters of the UUID for collision-safe naming.
 
 ## Commit Format
 
