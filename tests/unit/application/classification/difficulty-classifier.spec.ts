@@ -186,19 +186,19 @@ describe("difficulty-classifier", () => {
 			expect(resolveModelFromProfile("budget", defaultSettings)).toBe("claude-3-5-haiku-20241022");
 		});
 
-		it("falls back to opus for missing quality profile", () => {
+		it("returns undefined for missing quality profile", () => {
 			const settings = { "model-profiles": {} };
-			expect(resolveModelFromProfile("quality", settings)).toBe("opus");
+			expect(resolveModelFromProfile("quality", settings)).toBeUndefined();
 		});
 
-		it("falls back to sonnet for missing balanced profile", () => {
+		it("returns undefined for missing balanced profile", () => {
 			const settings = { "model-profiles": {} };
-			expect(resolveModelFromProfile("balanced", settings)).toBe("sonnet");
+			expect(resolveModelFromProfile("balanced", settings)).toBeUndefined();
 		});
 
-		it("falls back to haiku for missing budget profile", () => {
+		it("returns undefined for missing budget profile", () => {
 			const settings = { "model-profiles": {} };
-			expect(resolveModelFromProfile("budget", settings)).toBe("haiku");
+			expect(resolveModelFromProfile("budget", settings)).toBeUndefined();
 		});
 	});
 });

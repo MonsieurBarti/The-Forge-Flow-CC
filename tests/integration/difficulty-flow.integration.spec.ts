@@ -54,7 +54,7 @@ describe("difficulty flow integration", () => {
 			},
 		};
 
-		it("resolves correct model from difficulty flow: low → budget → haiku", () => {
+		it("resolves correct model from difficulty flow: low → budget", () => {
 			const signals: DifficultySignals = {
 				fileCount: 1,
 				filesTouched: 1,
@@ -74,7 +74,7 @@ describe("difficulty flow integration", () => {
 			expect(model).toBe("claude-3-5-haiku-20241022");
 		});
 
-		it("resolves correct model from difficulty flow: medium → balanced → sonnet", () => {
+		it("resolves correct model from difficulty flow: medium → balanced", () => {
 			const signals: DifficultySignals = {
 				fileCount: 3,
 				filesTouched: 3,
@@ -94,7 +94,7 @@ describe("difficulty flow integration", () => {
 			expect(model).toBe("claude-sonnet-4-20250514");
 		});
 
-		it("resolves correct model from difficulty flow: high → quality → opus", () => {
+		it("resolves correct model from difficulty flow: high → quality", () => {
 			const signals: DifficultySignals = {
 				fileCount: 10,
 				filesTouched: 10,
@@ -112,6 +112,12 @@ describe("difficulty flow integration", () => {
 			expect(difficulty).toBe("high");
 			expect(profile).toBe("quality");
 			expect(model).toBe("claude-opus-4-20250514");
+		});
+
+		it("returns undefined when profile not configured (uses Claude Code default)", () => {
+			const settings = { "model-profiles": {} };
+			const model = resolveModelFromProfile("budget", settings);
+			expect(model).toBeUndefined();
 		});
 	});
 

@@ -96,14 +96,14 @@ export function resolveModelFromProfile(
 			budget?: { model: string };
 		};
 	},
-): string {
+): string | undefined {
 	const profiles = settings["model-profiles"];
 	switch (profile) {
 		case "quality":
-			return profiles.quality?.model ?? "opus";
+			return profiles.quality?.model;
 		case "balanced":
-			return profiles.balanced?.model ?? "sonnet";
+			return profiles.balanced?.model;
 		case "budget":
-			return profiles.budget?.model ?? "haiku";
+			return profiles.budget?.model;
 	}
 }
