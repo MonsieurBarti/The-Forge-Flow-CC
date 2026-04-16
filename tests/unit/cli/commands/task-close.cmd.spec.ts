@@ -215,9 +215,7 @@ describe("task:close — journal integration", () => {
 			.map((line) => JSON.parse(line));
 
 		// Find the task-completed entry for T02
-		const completedEntry = entries.find(
-			(e) => e.type === "task-completed" && e.taskId === task2Id,
-		);
+		const completedEntry = entries.find((e) => e.type === "task-completed" && e.taskId === task2Id);
 		expect(completedEntry).toBeDefined();
 		expect(completedEntry!.waveIndex).toBe(3);
 	});
