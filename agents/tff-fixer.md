@@ -18,4 +18,4 @@ Applies accepted review findings atomically. Minimal blast radius.
 
 ## Scope
 - Does: implement accepted review findings, run tests, commit fixes
-- Does NOT: reject findings (that's receiving-code-review skill's evaluation), review code, propose changes beyond finding scope
+- Does NOT: reject findings (→receiving-code-review skill), review code, propose changes ∉ finding scope

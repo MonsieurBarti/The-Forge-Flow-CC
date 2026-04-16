@@ -9,10 +9,10 @@ View ∧ modify all tff project settings. Detects missing fields ∧ offers to a
 </objective>
 
 <context>
-Read the tff conventions: @references/conventions.md
-Read the settings template: @references/settings-template.md
+Read tff conventions: @references/conventions.md
+Read settings template: @references/settings-template.md
 </context>
 
 <execution_context>
-Execute the settings workflow from @workflows/settings.md.
+Execute settings workflow from @workflows/settings.md.
 </execution_context>

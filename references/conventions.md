@@ -6,9 +6,9 @@
 |---|---|
 | Project | Top-level singleton |
 | Milestone | Versioned delivery unit |
-| Slice | Scoped unit of work within a milestone |
-| Task | Atomic work item within a slice |
-| Requirement | Acceptance criterion scoped to a milestone |
+| Slice | Scoped work unit ∈ milestone |
+| Task | Atomic work item ∈ slice |
+| Requirement | AC scoped to milestone |
 
 ## Status Flow
 
@@ -27,7 +27,7 @@ Back-edges (loops):
 
 ### Human Gates
 
-These transitions require explicit human approval:
+Transitions requiring explicit human approval:
 - Plan approval (via plannotator annotation on PLAN.md)
 - Replan approval (if verification fails)
 - Slice PR review (slice branch → milestone branch)
@@ -86,17 +86,17 @@ Special formats:
 
 ## State Rules
 
-- State is managed by SQLite via tff-tools
-- STATE.md is always derived, never hand-edited
-- tff-tools is the single source of truth for status ∧ dependencies
+- State managed by SQLite via tff-tools
+- STATE.md always derived, never hand-edited
+- tff-tools = single source of truth for status ∧ dependencies
 
 ## Complexity Tiers
 
-Classification happens at end of discuss. User confirms the tier — ¬ auto-routing.
+Classification at end of discuss. User confirms tier — ¬ auto-routing.
 
 **S-tier criteria (ALL must be true):** ≤1 file affected, 0 new files, ¬ investigation needed, ¬ architecture impact, 0 unknowns.
 
-All tiers follow the same pipeline. Tiers control **depth**, ¬ which steps run.
+All tiers follow same pipeline. Tiers control **depth**, ¬ which steps run.
 
 | Tier | Discuss | Research | Plan Review | Execute | Code Review |
 |---|---|---|---|---|---|
@@ -108,31 +108,31 @@ All tiers follow the same pipeline. Tiers control **depth**, ¬ which steps run.
 
 ### Task Claiming
 
-Use `tff-tools task:claim <id>` to atomically claim a task (sets assignee + status to in_progress).
+Use `tff-tools task:claim <id>` to atomically claim task (sets assignee + status → in_progress).
 
 ### Adding Dependencies
 
 Use `tff-tools dep:add <from-id> <to-id>` to create blocking dependencies between slices ∨ tasks.
-This means `<from-id>` depends on (is blocked by) `<to-id>`.
+`<from-id>` depends on (blocked by) `<to-id>`.
 
 ### Finding Ready Work
 
-Use `tff-tools task:ready` to list unblocked tasks. This respects the dependency graph — only tasks whose blockers are all resolved appear.
+Use `tff-tools task:ready` to list unblocked tasks. Respects dependency graph — only tasks whose blockers all resolved appear.
 
 ### Closing with Reason
 
-Always close with a reason:
+Always close with reason:
 ```bash
-tff-tools slice:close <id> --reason "Completed — all acceptance criteria met"
+tff-tools slice:close <id> --reason "Completed — all AC met"
 ```
 
 ### Agent Session Pattern
 
 ```bash
-# Claim task atomically
+# Claim atomically
 tff-tools task:claim <task-id>
 
-# Do the work...
+# Do work...
 
 # Close with reason
 tff-tools task:close <task-id> --reason "Completed"

@@ -1,6 +1,6 @@
 # Model Profiles
 
-Agent model assignments are configured per-project ∈ `.tff/settings.yaml`.
+Agent model assignments configured per-project ∈ `.tff/settings.yaml`.
 
 ## Default Profiles
 

@@ -1,6 +1,6 @@
 # Release Checklist
 
-Before every release, complete ALL steps ∈ order.
+Complete ALL steps ∈ order before every release.
 
 ## Pre-Release
 
@@ -18,7 +18,7 @@ Before every release, complete ALL steps ∈ order.
 
 ## Documentation
 
-- [ ] Update `CHANGELOG.md` with release notes (what was added/changed/fixed)
+- [ ] Update `CHANGELOG.md` with release notes (added/changed/fixed)
 - [ ] Update `README.md` if commands, agents, ∨ skills changed
 - [ ] Verify command counts ∈ README match actual files
 
@@ -37,7 +37,7 @@ Before every release, complete ALL steps ∈ order.
 
 ## Rules
 
-- **tff NEVER merges.** Only create PRs. User merges via GitHub.
-- **PR links are ALWAYS shown** to the user when created.
-- **CHANGELOG is ALWAYS updated** ∀ release — ¬ exceptions.
+- **tff NEVER merges.** Only creates PRs. User merges via GitHub.
+- **PR links ALWAYS shown** to user when created.
+- **CHANGELOG ALWAYS updated** ∀ release — ¬ exceptions.
 - **docs/ is NOT tracked** ∈ git — internal design docs stay local.

@@ -48,7 +48,7 @@ Dispatch via Agent tool (subagent_type: general-purpose). Checks: completeness, 
 
 ## Anti-Patterns
 
-- "This is too simple to need a design" — WRONG. Simple projects are where unexamined assumptions cause the most wasted work.
+- "This is too simple to need a design" — WRONG. Simple projects are where unexamined assumptions cause most wasted work.
 - Implementing before design approved
 - Skipping the FRAME phase (defining problem before solving)
 - Rubber-stamping spec review iterations

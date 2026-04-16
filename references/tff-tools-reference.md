@@ -6,41 +6,41 @@ Complete reference for all tff-tools CLI commands.
 
 | Command | Purpose | Required Flags | Optional Flags |
 |---------|---------|----------------|----------------|
-| `project:init` | Initialize a new TFF project | `--name` | `--vision` |
-| `project:get` | Get current project information | none | none |
-| `milestone:create` | Create a new milestone | `--name` | none |
+| `project:init` | Initialize new TFF project | `--name` | `--vision` |
+| `project:get` | Get current project info | none | none |
+| `milestone:create` | Create new milestone | `--name` | none |
 | `milestone:list` | List all milestones | none | none |
-| `milestone:close` | Close a milestone | `--milestone-id` | `--reason` |
-| `slice:create` | Create a new slice | `--title` | `--milestone-id` |
+| `milestone:close` | Close milestone | `--milestone-id` | `--reason` |
+| `slice:create` | Create new slice | `--title` | `--milestone-id` |
 | `slice:list` | List all slices | none | `--milestone-id` |
-| `slice:transition` | Transition a slice to a new status | `--slice-id`, `--status` | none |
-| `slice:close` | Close a slice | `--slice-id` | `--reason` |
+| `slice:transition` | Transition slice to new status | `--slice-id`, `--status` | none |
+| `slice:close` | Close slice | `--slice-id` | `--reason` |
 | `slice:classify` | Classify slice complexity | `--signals` | none |
-| `task:claim` | Claim a task for execution | `--task-id` | `--claimed-by` |
-| `task:close` | Close a completed task | `--task-id` | `--reason` |
-| `task:ready` | List ready tasks for a slice | `--slice-id` | none |
-| `dep:add` | Add a dependency between entities | `--from-id`, `--to-id` | none |
+| `task:claim` | Claim task for execution | `--task-id` | `--claimed-by` |
+| `task:close` | Close completed task | `--task-id` | `--reason` |
+| `task:ready` | List ready tasks for slice | `--slice-id` | none |
+| `dep:add` | Add dependency between entities | `--from-id`, `--to-id` | none |
 | `direct-edit:guard` | Check for direct edits | none | none |
-| `pre-op:guard` | Validate operation is allowed | `--slice-id`, `--operation` | none |
+| `pre-op:guard` | Validate operation allowed | `--slice-id`, `--operation` | none |
 | `spec-edit:guard` | Check for spec edits | none | none |
 | `waves:detect` | Detect execution waves from tasks | `--tasks` | none |
-| `sync:state` | Synchronize STATE.md for a milestone | `--milestone-id` | none |
-| `worktree:create` | Create a git worktree for a slice | `--slice-id` | none |
-| `worktree:delete` | Delete a git worktree | `--slice-id` | none |
+| `sync:state` | Synchronize STATE.md for milestone | `--milestone-id` | none |
+| `worktree:create` | Create git worktree for slice | `--slice-id` | none |
+| `worktree:delete` | Delete git worktree | `--slice-id` | none |
 | `worktree:list` | List all git worktrees | none | none |
 | `review:check-fresh` | Check if reviewer is fresh | `--slice-id`, `--agent` | none |
-| `review:record` | Record a review for a slice | `--slice-id`, `--agent`, `--verdict`, `--type`, `--commit-sha` | none |
-| `checkpoint:save` | Save a checkpoint for a slice | `--slice-id`, `--base-commit`, `--current-wave`, `--completed-waves`, `--completed-tasks`, `--executor-log` | none |
-| `checkpoint:load` | Load a checkpoint for a slice | `--slice-id` | none |
-| `observe:record` | Record an observation | `--ts`, `--session`, `--tool`, `--args`, `--project` | none |
+| `review:record` | Record review for slice | `--slice-id`, `--agent`, `--verdict`, `--type`, `--commit-sha` | none |
+| `checkpoint:save` | Save checkpoint for slice | `--slice-id`, `--base-commit`, `--current-wave`, `--completed-waves`, `--completed-tasks`, `--executor-log` | none |
+| `checkpoint:load` | Load checkpoint for slice | `--slice-id` | none |
+| `observe:record` | Record observation | `--ts`, `--session`, `--tool`, `--args`, `--project` | none |
 | `patterns:extract` | Extract patterns from observations | none | none |
 | `patterns:aggregate` | Aggregate patterns by frequency | none | `--min-count` |
 | `patterns:rank` | Rank pattern candidates | none | `--threshold` |
 | `compose:detect` | Detect clusters from observations | `--observations` | `--options` |
 | `skills:drift` | Check for drift between content | `--original`, `--current` | none |
-| `skills:validate` | Validate a skill definition | `--skill` | none |
+| `skills:validate` | Validate skill definition | `--skill` | none |
 | `workflow:next` | Get next workflow status | `--status` | none |
-| `workflow:should-auto` | Check if auto-transition is allowed | `--status`, `--mode` | none |
+| `workflow:should-auto` | Check if auto-transition allowed | `--status`, `--mode` | none |
 | `claim:check-stale` | Check for stale task claims | none | `--ttl-minutes` |
 | `session:remind` | Generate session reminder | none | none |
 
@@ -48,7 +48,7 @@ Complete reference for all tff-tools CLI commands.
 
 ### project:init
 
-**Purpose:** Initialize a new TFF project
+**Purpose:** Initialize new TFF project
 
 **Syntax:** `project:init --name <string> [--vision <string>]`
 
@@ -74,7 +74,7 @@ project:init --name "My Project" --vision "Build the best thing"
 
 ### project:get
 
-**Purpose:** Get the current project information
+**Purpose:** Get current project info
 
 **Syntax:** `project:get`
 
@@ -93,7 +93,7 @@ project:get
 
 ### milestone:create
 
-**Purpose:** Create a new milestone
+**Purpose:** Create new milestone
 
 **Syntax:** `milestone:create --name <string>`
 
@@ -134,7 +134,7 @@ milestone:list
 
 ### milestone:close
 
-**Purpose:** Close a milestone
+**Purpose:** Close milestone
 
 **Syntax:** `milestone:close --milestone-id <string> [--reason <string>]`
 
@@ -160,14 +160,14 @@ milestone:close --milestone-id M01 --reason "Completed"
 
 ### slice:create
 
-**Purpose:** Create a new slice in a milestone
+**Purpose:** Create new slice in milestone
 
 **Syntax:** `slice:create --title <string> [--milestone-id <string>]`
 
 **Required Flags:**
 | Flag | Type | Description |
 |------|------|-------------|
-| `--title` | string | Title for the new slice |
+| `--title` | string | Title for new slice |
 
 **Optional Flags:**
 | Flag | Type | Description | Pattern |
@@ -209,7 +209,7 @@ slice:list --milestone-id M01
 
 ### slice:transition
 
-**Purpose:** Transition a slice to a new status
+**Purpose:** Transition slice to new status
 
 **Syntax:** `slice:transition --slice-id <string> --status <string>`
 
@@ -232,7 +232,7 @@ slice:transition --slice-id M01-S01 --status planning
 
 ### slice:close
 
-**Purpose:** Close a slice
+**Purpose:** Close slice
 
 **Syntax:** `slice:close --slice-id <string> [--reason <string>]`
 
@@ -258,7 +258,7 @@ slice:close --slice-id M01-S01 --reason "Completed"
 
 ### slice:classify
 
-**Purpose:** Classify a slice's complexity tier based on signals
+**Purpose:** Classify slice complexity tier based on signals
 
 **Syntax:** `slice:classify --signals <json>`
 
@@ -280,7 +280,7 @@ slice:classify --signals '{"taskCount":5,"estimatedFilesAffected":3,"newFilesCre
 
 ### task:claim
 
-**Purpose:** Claim a task for execution
+**Purpose:** Claim task for execution
 
 **Syntax:** `task:claim --task-id <string> [--claimed-by <string>]`
 
@@ -292,7 +292,7 @@ slice:classify --signals '{"taskCount":5,"estimatedFilesAffected":3,"newFilesCre
 **Optional Flags:**
 | Flag | Type | Description |
 |------|------|-------------|
-| `--claimed-by` | string | Agent identity claiming the task |
+| `--claimed-by` | string | Agent identity claiming task |
 
 **Examples:**
 ```bash
@@ -306,7 +306,7 @@ task:claim --task-id M01-S01-T01 --claimed-by executor
 
 ### task:close
 
-**Purpose:** Close a completed task
+**Purpose:** Close completed task
 
 **Syntax:** `task:close --task-id <string> [--reason <string>]`
 
@@ -332,7 +332,7 @@ task:close --task-id M01-S01-T01 --reason "Completed successfully"
 
 ### task:ready
 
-**Purpose:** List ready tasks for a slice
+**Purpose:** List ready tasks for slice
 
 **Syntax:** `task:ready --slice-id <string>`
 
@@ -354,15 +354,15 @@ task:ready --slice-id M01-S01
 
 ### dep:add
 
-**Purpose:** Add a dependency between two entities
+**Purpose:** Add dependency between two entities
 
 **Syntax:** `dep:add --from-id <string> --to-id <string>`
 
 **Required Flags:**
 | Flag | Type | Description |
 |------|------|-------------|
-| `--from-id` | string | ID of the entity that is blocked |
-| `--to-id` | string | ID of the blocking entity |
+| `--from-id` | string | ID of entity that is blocked |
+| `--to-id` | string | ID of blocking entity |
 
 **Optional Flags:** none
 
@@ -377,7 +377,7 @@ dep:add --from-id M01-S01-T02 --to-id M01-S01-T01
 
 ### checkpoint:save
 
-**Purpose:** Save a checkpoint for a slice
+**Purpose:** Save checkpoint for slice
 
 **Syntax:** `checkpoint:save --slice-id <string> --base-commit <string> --current-wave <number> --completed-waves <json> --completed-tasks <json> --executor-log <json>`
 
@@ -404,7 +404,7 @@ checkpoint:save --slice-id M01-S01 --base-commit abc123 --current-wave 0 --compl
 
 ### checkpoint:load
 
-**Purpose:** Load a checkpoint for a slice
+**Purpose:** Load checkpoint for slice
 
 **Syntax:** `checkpoint:load --slice-id <string>`
 

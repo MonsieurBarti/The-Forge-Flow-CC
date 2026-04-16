@@ -1,23 +1,23 @@
 # Flag Naming Conventions
 
-This document establishes the single source of truth for flag naming across all tff-tools CLI commands.
+Single source of truth for flag naming across all tff-tools CLI commands.
 
 ## Core Principles
 
-1. **Flags-only syntax** — No positional arguments. Every parameter is passed via a named flag.
-2. **Self-documenting names** — Flag names clearly indicate their purpose.
-3. **Consistency** — Same concept uses the same flag name across all commands.
+1. **Flags-only syntax** — No positional arguments. ∀ parameter via named flag.
+2. **Self-documenting names** — Flag names clearly indicate purpose.
+3. **Consistency** — Same concept → same flag name across commands.
 
 ## Naming Rules
 
 ### Format
 
-- **Kebab-case**: All flag names use lowercase with hyphens (e.g., `--slice-id`, `--base-commit`)
+- **Kebab-case**: All flag names use lowercase w/ hyphens (e.g., `--slice-id`, `--base-commit`)
 - **Double-dash prefix**: Flags always start with `--` (no single-dash shortcuts)
 
 ### Entity IDs
 
-Always use the pattern `--<entity>-id`:
+Always use pattern `--<entity>-id`:
 
 | Entity | Flag Name | Example Value |
 |--------|-----------|---------------|
@@ -26,7 +26,7 @@ Always use the pattern `--<entity>-id`:
 | Slice | `--slice-id` | `M01-S01` |
 | Task | `--task-id` | `T01` |
 
-**Never** use generic names like `--id` or `--target-id`. Always be specific about which entity.
+**Never** use generic names like `--id` or `--target-id`. Always be specific.
 
 ### Statuses
 
@@ -62,7 +62,7 @@ Common boolean flags:
 
 ### File Paths
 
-Use `--file-path` for file system paths:
+Use `--file-path` for filesystem paths:
 
 ```bash
 direct-edit:guard --file-path src/domain/slice.ts
@@ -70,7 +70,7 @@ direct-edit:guard --file-path src/domain/slice.ts
 
 ### JSON Data
 
-For structured data that cannot be expressed as simple flags:
+For structured data not expressible as simple flags:
 
 | Flag | Purpose |
 |------|---------|
@@ -112,7 +112,7 @@ checkpoint:save --slice-id M01-S01 --base-commit abc123 --current-wave 1 --compl
 
 ## Reserved Flag Names
 
-These flags have special meaning and should not be repurposed:
+These have special meaning — do not repurpose:
 
 | Flag | Purpose |
 |------|---------|
@@ -121,7 +121,7 @@ These flags have special meaning and should not be repurposed:
 
 ## Error Messages
 
-When a flag error occurs, the error must include valid alternatives:
+Flag errors must include valid alternatives:
 
 ### Missing Required Flag
 
@@ -168,8 +168,6 @@ When a flag error occurs, the error must include valid alternatives:
 ## Command Categories
 
 ### Entity Operations
-
-Commands that create, read, update, or delete entities:
 
 | Command | Required Flags | Optional Flags |
 |---------|----------------|----------------|
@@ -273,7 +271,7 @@ Commands that create, read, update, or delete entities:
 
 ## Validation Checklist
 
-When adding or modifying a command, verify:
+When adding/modifying a command, verify:
 
 - [ ] All parameters use named flags (no positional args)
 - [ ] Entity IDs follow `--<entity>-id` pattern
