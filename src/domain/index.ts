@@ -27,7 +27,6 @@ export { versionMismatchError } from "./errors/version-mismatch.error.js";
 export type { DomainEvent, DomainEventType } from "./events/domain-event.js";
 // Events
 export { createDomainEvent } from "./events/domain-event.js";
-export { slicePlannedEvent } from "./events/slice-planned.event.js";
 export { sliceStatusChangedEvent } from "./events/slice-status-changed.event.js";
 export { taskCompletedEvent } from "./events/task-completed.event.js";
 export type { ArtifactStore } from "./ports/artifact-store.port.js";
