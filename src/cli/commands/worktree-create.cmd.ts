@@ -1,7 +1,5 @@
-import path from "node:path";
 import { createWorktreeUseCase } from "../../application/worktree/create-worktree.js";
 import { isOk } from "../../domain/result.js";
-import { copyTffToWorktree } from "../../infrastructure/adapters/git/copy-tff-to-worktree.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
@@ -63,9 +61,6 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
 		{ gitOps },
 	);
 	if (isOk(result)) {
-		const tffDir = path.join(cwd, ".tff");
-		const worktreeAbsPath = path.resolve(cwd, result.data.worktreePath);
-		copyTffToWorktree(tffDir, worktreeAbsPath);
 		return JSON.stringify({ ok: true, data: result.data });
 	}
 	return JSON.stringify({ ok: false, error: result.error });
