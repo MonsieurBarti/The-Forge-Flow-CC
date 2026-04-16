@@ -36,7 +36,17 @@ Before requesting review, verify:
 
 ## Calibration
 
-Bug ∈ prod? -> Critical | Confuses next dev? -> Important | ¬noticed ∈ 1000-line diff? -> skip
+**Core Principle:** Only flag issues that cause real problems. Not theoretical concerns, not style preferences.
+
+| Question | If Yes | If No |
+|----------|--------|-------|
+| Bug ∈ prod? | Critical | Continue |
+| Confuses next dev? | Important | Continue |
+| ¬noticed ∈ 1000-line diff? | Skip | Continue |
+| Blocks merge? | Flag | Skip |
+| Just cosmetic? | Skip | Skip |
+
+**Anti-Pattern:** Nitpicking wastes time and erodes trust. Prefer clear, blocking issues over style commentary.
 
 ## Fresh-Reviewer Enforcement
 
