@@ -17,4 +17,4 @@ pre-push:
     typecheck:
       run: bun run typecheck
     test:
-      run: bun test
+      run: bun run test
