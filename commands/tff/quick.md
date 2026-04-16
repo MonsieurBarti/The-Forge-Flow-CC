@@ -2,7 +2,7 @@
 name: tff:quick
 description: Execute a quick fix with S-tier defaults — skip discuss and research
 argument-hint: "<description>"
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent, AskUserQuestion, Bash(plannotator:*)
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent, Bash(plannotator:*)
 ---
 
 <objective>

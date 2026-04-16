@@ -38,7 +38,7 @@ tff workflows are orchestrators. They coordinate — they don't do heavy work.
 
 ## Exception: Conversation-Driven Workflows
 
-discuss workflow: orchestrator drives Q&A directly via AskUserQuestion (rule 2 exception).
+discuss workflow: orchestrator drives Q&A directly inline (rule 2 exception).
 Reason: multi-turn user context ¬delegable to subagent.
 Agents spawned for independent tasks only (challenge, validate, review).
 ∀ other workflows: standard pattern applies.

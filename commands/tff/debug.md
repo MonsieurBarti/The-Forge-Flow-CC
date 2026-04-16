@@ -2,7 +2,7 @@
 name: tff:debug
 description: Diagnose and fix a bug with systematic debugging — diagnosis first, then fix via slice
 argument-hint: "<error description or symptom>"
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent, AskUserQuestion
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent
 ---
 
 <objective>

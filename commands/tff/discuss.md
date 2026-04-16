@@ -2,7 +2,7 @@
 name: tff:discuss
 description: Brainstorm and scope a slice
 argument-hint: "[slice-id]"
-allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion
+allowed-tools: Read, Write, Bash, Grep, Glob, Agent
 ---
 
 <objective>
