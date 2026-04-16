@@ -40,7 +40,7 @@ describe("detect-direct-edit", () => {
 
 		// Default: project initialized, guards enabled
 		mockedExistsSync.mockImplementation((p: string) => {
-			if (typeof p === "string" && p.includes(".tff")) return true;
+			if (typeof p === "string" && p.includes(".tff-cc")) return true;
 			return false;
 		});
 		mockedReadFileSync.mockReturnValue("");
@@ -76,8 +76,8 @@ describe("detect-direct-edit", () => {
 	describe("GUARD_DISABLED", () => {
 		it("should return null warning when workflow.guards is false in settings.yaml", () => {
 			mockedExistsSync.mockImplementation((p: string) => {
-				if (typeof p === "string" && p.includes(".tff/settings.yaml")) return true;
-				if (typeof p === "string" && p.includes(".tff")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc/settings.yaml")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc")) return true;
 				return false;
 			});
 			mockedReadFileSync.mockReturnValue("workflow:\n  guards: false");
@@ -91,8 +91,8 @@ describe("detect-direct-edit", () => {
 
 		it("should proceed with detection when workflow.guards is true", () => {
 			mockedExistsSync.mockImplementation((p: string) => {
-				if (typeof p === "string" && p.includes(".tff/settings.yaml")) return true;
-				if (typeof p === "string" && p.includes(".tff")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc/settings.yaml")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc")) return true;
 				return false;
 			});
 			mockedReadFileSync.mockReturnValue("workflow:\n  guards: true");
@@ -108,8 +108,8 @@ describe("detect-direct-edit", () => {
 
 		it("should proceed with detection when workflow.guards is not set", () => {
 			mockedExistsSync.mockImplementation((p: string) => {
-				if (typeof p === "string" && p.includes(".tff/settings.yaml")) return true;
-				if (typeof p === "string" && p.includes(".tff")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc/settings.yaml")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc")) return true;
 				return false;
 			});
 			mockedReadFileSync.mockReturnValue("workflow:\n  reminders: true");
@@ -125,8 +125,8 @@ describe("detect-direct-edit", () => {
 
 		it("should proceed with detection when settings.yaml does not exist", () => {
 			mockedExistsSync.mockImplementation((p: string) => {
-				if (typeof p === "string" && p.includes(".tff/settings.yaml")) return false;
-				if (typeof p === "string" && p.includes(".tff")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc/settings.yaml")) return false;
+				if (typeof p === "string" && p.includes(".tff-cc")) return true;
 				return false;
 			});
 
@@ -140,8 +140,8 @@ describe("detect-direct-edit", () => {
 
 		it("should proceed with detection when settings.yaml is empty", () => {
 			mockedExistsSync.mockImplementation((p: string) => {
-				if (typeof p === "string" && p.includes(".tff/settings.yaml")) return true;
-				if (typeof p === "string" && p.includes(".tff")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc/settings.yaml")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc")) return true;
 				return false;
 			});
 			mockedReadFileSync.mockReturnValue("");
@@ -157,8 +157,8 @@ describe("detect-direct-edit", () => {
 
 		it("should proceed with detection when settings.yaml fails to parse", () => {
 			mockedExistsSync.mockImplementation((p: string) => {
-				if (typeof p === "string" && p.includes(".tff/settings.yaml")) return true;
-				if (typeof p === "string" && p.includes(".tff")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc/settings.yaml")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc")) return true;
 				return false;
 			});
 			mockedReadFileSync.mockReturnValue("invalid: yaml: content:");
@@ -176,9 +176,9 @@ describe("detect-direct-edit", () => {
 	});
 
 	describe("NOT_INITIALIZED", () => {
-		it("should return null warning when .tff directory does not exist", () => {
+		it("should return null warning when .tff-cc directory does not exist", () => {
 			mockedExistsSync.mockImplementation((p: string) => {
-				if (typeof p === "string" && p.includes(".tff")) return false;
+				if (typeof p === "string" && p.includes(".tff-cc")) return false;
 				return false;
 			});
 
