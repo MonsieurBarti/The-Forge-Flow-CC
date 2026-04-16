@@ -9,10 +9,10 @@ Analyze skill co-activation patterns ∧ propose skill bundles ∨ specialized a
 </objective>
 
 <context>
-Read the tff conventions: @references/conventions.md
-Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read tff conventions: @references/conventions.md
+Read orchestrator pattern: @references/orchestrator-pattern.md
 </context>
 
 <execution_context>
-Execute the compose-skills workflow from @workflows/compose-skills.md.
+Execute compose-skills workflow from @workflows/compose-skills.md.
 </execution_context>

@@ -11,7 +11,7 @@ description: "Use when implementing features/fixes. Iron law: ¬∃ production c
 
 ## HARD-GATE
 
-¬∃ production_code without failing_test_first. If code ∃ before test -> DELETE IT ∧ start over. The sunk cost is irrelevant — the time is gone regardless.
+¬∃ production_code without failing_test_first. If code ∃ before test -> DELETE IT ∧ start over. Sunk cost irrelevant — time gone regardless.
 
 ## Cycle
 
@@ -53,11 +53,11 @@ Improve structure, ¬change behavior, tests stay green.
 
 ## Sunk Cost Rule
 
-Deleting hours of work to start test-first is correct. The time is gone regardless. Starting over with proper TDD produces better code faster than retrofitting tests.
+Deleting hours of work to start test-first is correct. Time gone regardless. Starting over w/ proper TDD produces better code faster than retrofitting tests.
 
 ## 3-Fix Red Flag
 
-3+ test fixes attempted -> question the design, ¬ the test. The test is probably right; the implementation approach is wrong.
+3+ test fixes attempted -> question the design, ¬ the test. Test probably right; impl approach wrong.
 
 ## Anti-Patterns
 

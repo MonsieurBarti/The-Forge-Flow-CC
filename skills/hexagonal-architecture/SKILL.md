@@ -28,13 +28,13 @@ Presentation → Infrastructure → Application → Domain
 | Infrastructure | Domain, Application     | Presentation                    |
 | Presentation   | Application             | Domain directly, Infra directly |
 
-The dependency arrow always points **inward**. Outer layers know about inner layers; inner layers are oblivious to the outside world.
+Dependency arrow always points **inward**. Outer layers know about inner layers; inner layers oblivious to outside world.
 
 ---
 
 ## 2. Domain Layer
 
-The innermost ring. Pure business logic, zero framework dependencies.
+Innermost ring. Pure business logic, zero framework dependencies.
 
 **Allowed imports:** `zod`, `node:crypto`, `Result` type — NOTHING else.
 
@@ -114,8 +114,8 @@ export class Email {
 
 ### Aggregates
 
-- Cluster of entities + value objects with a single **aggregate root**
-- Consistency boundary: ∀ invariants enforced within the aggregate
+- Cluster of entities + value objects with single **aggregate root**
+- Consistency boundary: ∀ invariants enforced within aggregate
 - External references by ID only — ¬direct object references across aggregates
 - One transaction = one aggregate
 
@@ -137,7 +137,7 @@ export class UserCreatedEvent {
 
 ### Domain Services
 
-- Business logic that doesn't belong to a single entity
+- Business logic that doesn't belong to single entity
 - Stateless — operates on entities/VOs passed ∈
 - Still pure domain: ¬I/O, ¬framework imports
 
@@ -337,7 +337,7 @@ export type CreateUserResponse = z.infer<typeof CreateUserResponseSchema>;
 ### Exception Filters / Error Mapping
 
 - Map `Result` errors to HTTP status codes (∨ CLI exit codes)
-- Centralized error handling at the presentation boundary
+- Centralized error handling at presentation boundary
 - ¬leak domain error internals to consumers
 
 ### Dependency Injection Wiring
@@ -363,7 +363,7 @@ container.bind<UserRepository>(USER_REPOSITORY).to(SqlUserRepository);
 - `z.infer<typeof Schema>` for all derived types
 - Domain validation: ∈ entity factories + value objects
 - Presentation validation: ∈ DTOs at the boundary
-- ∀ schemas export both the schema ∧ the inferred type
+- ∀ schemas export both schema ∧ inferred type
 
 ---
 

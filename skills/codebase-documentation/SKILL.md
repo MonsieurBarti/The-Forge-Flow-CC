@@ -13,10 +13,10 @@ description: "Use when generating or maintaining codebase documentation. Divio f
 
 | Type | Purpose | Audience | Style |
 |---|---|---|---|
-| Tutorial | Learning-oriented | New developer | Step-by-step, "do this, then this" |
-| How-to | Task-oriented | Working developer | "To achieve X, do Y" |
-| Reference | Information-oriented | Any developer | Accurate, complete, terse |
-| Explanation | Understanding-oriented | Curious developer | Discursive, "why" focused |
+| Tutorial | Learning-oriented | New dev | Step-by-step, "do this, then this" |
+| How-to | Task-oriented | Working dev | "To achieve X, do Y" |
+| Reference | Information-oriented | Any dev | Accurate, complete, terse |
+| Explanation | Understanding-oriented | Curious dev | Discursive, "why" focused |
 
 ## Documentation Outputs
 

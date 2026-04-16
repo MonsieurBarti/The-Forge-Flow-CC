@@ -6,14 +6,14 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent, Bash(plannotator:*)
 ---
 
 <objective>
-Create the task decomposition, detect waves, review via plannotator, ∧ set up the worktree.
+Create task decomposition, detect waves, review via plannotator, ∧ set up worktree.
 </objective>
 
 <context>
-Read the tff conventions: @references/conventions.md
+Read tff conventions: @references/conventions.md
 Read model profiles: @references/model-profiles.md
 </context>
 
 <execution_context>
-Execute the plan-slice workflow from @workflows/plan-slice.md.
+Execute plan-slice workflow from @workflows/plan-slice.md.
 </execution_context>

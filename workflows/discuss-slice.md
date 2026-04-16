@@ -41,14 +41,14 @@ APPROVE → note concerns ∈ spec, proceed
 
 ### 5. Validate AC
 LOAD @skills/acceptance-criteria-validation/SKILL.md → SPAWN subagent: {spec_content, acceptance_criteria}
-∀ criterion: testable ∧ binary — gaps → revise by asking the user inline
+∀ criterion: testable ∧ binary — gaps → revise by asking user inline
 
 ### 6. Spec Review
 DISPATCH anonymous reviewer via Agent tool (prompt: @skills/brainstorming/SKILL.md)
 Issues → fix, re-dispatch (max 3)
 
 ### 7. User Gate
-Ask the user: "Spec at `.tff/milestones/<milestone>/slices/<id>/SPEC.md`. Approve?"
+Ask user: "Spec at `.tff/milestones/<milestone>/slices/<id>/SPEC.md`. Approve?"
 
 ### 8. Classify Complexity
 Based on what was learned during discuss, build `ComplexitySignals`:
@@ -76,7 +76,7 @@ CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ ab
 After completing all steps above:
 1. READ `.tff/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
-   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
+   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask user
    - Human gates (plan approval, spec approval, completion): pause ∧ ask
 3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
 4. Log: `[tff] <slice-id>: discussing → researching|planning`

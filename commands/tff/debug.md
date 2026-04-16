@@ -6,14 +6,14 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent
 ---
 
 <objective>
-Systematically diagnose a bug, confirm root cause with user, then fix via slice + ship.
+Systematically diagnose bug, confirm root cause with user, then fix via slice + ship.
 </objective>
 
 <context>
-Read the tff conventions: @references/conventions.md
-Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read tff conventions: @references/conventions.md
+Read orchestrator pattern: @references/orchestrator-pattern.md
 </context>
 
 <execution_context>
-Execute the debug workflow from @workflows/debug.md.
+Execute debug workflow from @workflows/debug.md.
 </execution_context>

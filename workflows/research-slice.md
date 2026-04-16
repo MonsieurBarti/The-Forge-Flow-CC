@@ -24,7 +24,7 @@ LOAD @skills/architecture-review/SKILL.md
 After completing all steps above:
 1. READ `.tff/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
-   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
+   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask user
    - Human gates (plan approval, spec approval, completion): pause ∧ ask
 3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
 4. Log: `[tff] <slice-id>: researching → planning`

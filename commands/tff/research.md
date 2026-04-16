@@ -6,13 +6,13 @@ allowed-tools: Read, Write, Bash, Grep, Glob, WebSearch, Agent
 ---
 
 <objective>
-Conduct research for the slice — investigate technical approach, dependencies, ∧ integration points.
+Conduct research for slice — investigate technical approach, dependencies, ∧ integration points.
 </objective>
 
 <context>
-Read the tff conventions: @references/conventions.md
+Read tff conventions: @references/conventions.md
 </context>
 
 <execution_context>
-Execute the research-slice workflow from @workflows/research-slice.md.
+Execute research-slice workflow from @workflows/research-slice.md.
 </execution_context>

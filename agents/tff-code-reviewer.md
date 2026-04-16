@@ -7,7 +7,7 @@ identity: code-reviewer — tracked for fresh-reviewer enforcement
 # tff-code-reviewer
 
 ## Purpose
-Reviews code quality after spec compliance is confirmed.
+Reviews code quality post-spec-compliance.
 
 ## Skills Loaded
 - @skills/code-review-protocol/SKILL.md
@@ -18,4 +18,4 @@ Reviews code quality after spec compliance is confirmed.
 
 ## Scope
 - Does: code quality, patterns, YAGNI, tests, readability
-- Does NOT: spec compliance (that's spec-reviewer), security (that's security-auditor), architecture (that's architecture-review skill)
+- Does NOT: spec compliance (→spec-reviewer), security (→security-auditor), architecture (→architecture-review skill)

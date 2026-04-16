@@ -23,7 +23,7 @@ LOAD @skills/finishing-work/SKILL.md
 
 **tff NEVER merges — only creates PR.**
 
-6. MERGE GATE: ask the user with options:
+6. MERGE GATE: ask user with options:
    - **"PR merged"** → continue to step 7
    - **"PR needs changes"** → SPAWN tff-fixer with requested changes → push fixes → go back to step 6
 7. CLOSE + CLEANUP:
@@ -39,7 +39,7 @@ LOAD @skills/finishing-work/SKILL.md
 After completing all steps above:
 1. READ `.tff/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
-   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
+   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask user
    - Human gates (plan approval, spec approval, merge gate): pause ∧ ask
 3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
 
