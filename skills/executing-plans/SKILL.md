@@ -88,6 +88,23 @@ Read task file paths from PLAN.md to decide which domain skills to load:
 - Work never silently stalls
 - 3+ failed attempts -> escalation task (¬infinite retry)
 
+## Result Aggregation
+
+When subagents complete, aggregate results:
+
+| Result Type | Aggregation Method |
+|-------------|-------------------|
+| File changes | Git diff per task, merge to wave summary |
+| Test results | Collect pass/fail counts, report failures |
+| Task status | Mark closed/failed in tracker |
+| Artifacts | Collect paths, report to controller |
+
+**Aggregation Rules:**
+- ∀ completed task: close in tracker, record commit SHA
+- ∀ failed task: log error, retry ≤ 3 times, then escalate
+- ∀ wave: produce summary (files changed, tests passed, commits made)
+- On wave failure: halt → report → await instruction
+
 ## Anti-Patterns
 
 - Reusing agent context across tasks (pollution)
