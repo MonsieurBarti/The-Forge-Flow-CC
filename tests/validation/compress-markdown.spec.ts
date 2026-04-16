@@ -46,36 +46,37 @@ describe('compress-markdown.sh', () => {
     expect(content).toContain('agents');
   });
 
-  it('should invoke ultra-compress via pi non-interactive mode', () => {
+  it('should invoke ultra-compress for symbolic compression', () => {
     if (!existsSync(SCRIPT_PATH)) {
       throw new Error('Script does not exist');
     }
     const content = readFileSync(SCRIPT_PATH, 'utf8');
     
-    // Should invoke pi with ultra-compress skill
-    expect(content).toMatch(/pi\s+-p\s+"\/uc-file/);
-    expect(content).toContain('symbolic');
-    expect(content).toContain('--yes');
+    // Should invoke compression via Node.js script
+    expect(content).toContain('compress-symbolic.mjs');
+    expect(content).toContain('node');
   });
 
-  it('should use dynamic find for file enumeration', () => {
+  it('should use dynamic file enumeration via Node.js', () => {
     if (!existsSync(SCRIPT_PATH)) {
       throw new Error('Script does not exist');
     }
     const content = readFileSync(SCRIPT_PATH, 'utf8');
     
-    // Should use find command for dynamic enumeration
-    expect(content).toContain('find');
-    expect(content).toContain('SKILL.md');
+    // Should delegate to Node.js script which handles enumeration
+    expect(content).toContain('compress-symbolic.mjs');
   });
 
-  it('should handle validation failures and log errors', () => {
+  it('should handle errors via Node.js script', () => {
     if (!existsSync(SCRIPT_PATH)) {
       throw new Error('Script does not exist');
     }
     const content = readFileSync(SCRIPT_PATH, 'utf8');
     
-    // Should have error handling and logging
-    expect(content).toMatch(/FAILED|error|log/i);
+    // Should use set -e for error handling
+    expect(content).toContain('set -e');
+    
+    // The Node.js script handles detailed error handling
+    expect(content).toContain('compress-symbolic.mjs');
   });
 });

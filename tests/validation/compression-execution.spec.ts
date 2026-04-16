@@ -28,6 +28,7 @@ const EXCLUDED_PATTERNS = [
 
 /**
  * Find all target .md files (the files that should be compressed)
+ * Excludes .original.md backup files
  */
 function findTargetFiles(): string[] {
   const files: string[] = [];
@@ -44,7 +45,7 @@ function findTargetFiles(): string[] {
       // Non-recursive search for other dirs
       const entries = readdirSync(dirPath);
       for (const entry of entries) {
-        if (entry.endsWith('.md')) {
+        if (entry.endsWith('.md') && !entry.endsWith('.original.md')) {
           files.push(join(dirPath, entry));
         }
       }
