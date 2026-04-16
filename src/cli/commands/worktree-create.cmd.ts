@@ -3,14 +3,31 @@ import { createWorktreeUseCase } from "../../application/worktree/create-worktre
 import { isOk } from "../../domain/result.js";
 import { copyTffToWorktree } from "../../infrastructure/adapters/git/copy-tff-to-worktree.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
+import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+
+export const worktreeCreateSchema: CommandSchema = {
+	name: "worktree:create",
+	purpose: "Create a git worktree for a slice",
+	requiredFlags: [
+		{
+			name: "slice-id",
+			type: "string",
+			description: "Slice ID to create worktree for",
+			pattern: "^M\\d+-S\\d+$",
+		},
+	],
+	optionalFlags: [],
+	examples: ["worktree:create --slice-id M01-S01"],
+};
 
 export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
-	const [sliceId] = args;
-	if (!sliceId)
-		return JSON.stringify({
-			ok: false,
-			error: { code: "INVALID_ARGS", message: "Usage: worktree:create <slice-id>" },
-		});
+	const parsed = parseFlags(args, worktreeCreateSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
+	}
+
+	const { "slice-id": sliceId } = parsed.data as { "slice-id": string };
+
 	const cwd = process.cwd();
 	const gitOps = new GitCliAdapter(cwd);
 	// Derive milestone branch from slice ID (e.g., M01-S01 → milestone/M01)

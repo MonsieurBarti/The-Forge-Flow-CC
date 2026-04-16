@@ -29,16 +29,16 @@ describe("journal T1 crash recovery integration", () => {
 
 		// Initialize project
 		const initResult = JSON.parse(
-			await projectInitCmd(["recovery-test-project", "Test crash recovery"]),
+			await projectInitCmd(["--name", "recovery-test-project", "--vision", "Test crash recovery"]),
 		);
 		expect(initResult.ok).toBe(true);
 
 		// Create milestone M01
-		const milestoneResult = JSON.parse(await milestoneCreateCmd(["Test Milestone"]));
+		const milestoneResult = JSON.parse(await milestoneCreateCmd(["--name", "Test Milestone"]));
 		expect(milestoneResult.ok).toBe(true);
 
 		// Create slice S01
-		const sliceResult = JSON.parse(await sliceCreateCmd(["Test Slice"]));
+		const sliceResult = JSON.parse(await sliceCreateCmd(["--title", "Test Slice"]));
 		expect(sliceResult.ok).toBe(true);
 	});
 
@@ -89,10 +89,10 @@ describe("journal T1 crash recovery integration", () => {
 		expect(depResult.ok).toBe(true);
 
 		// Execute wave 0: Claim and close T01 (writes journal + checkpoint)
-		const claimT01Result = JSON.parse(await taskClaimCmd(["M01-S01-T01", "agent-1"]));
+		const claimT01Result = JSON.parse(await taskClaimCmd(["--task-id", "M01-S01-T01", "--claimed-by", "agent-1"]));
 		expect(claimT01Result.ok).toBe(true);
 
-		const closeT01Result = JSON.parse(await taskCloseCmd(["M01-S01-T01"]));
+		const closeT01Result = JSON.parse(await taskCloseCmd(["--task-id", "M01-S01-T01"]));
 		expect(closeT01Result.ok).toBe(true);
 
 		// Verify T01 is closed
@@ -100,15 +100,14 @@ describe("journal T1 crash recovery integration", () => {
 		expect(t01AfterClose.ok && t01AfterClose.data?.status).toBe("closed");
 
 		// Save checkpoint after wave 0 completes
-		const checkpointData = {
-			sliceId: "M01-S01",
-			baseCommit: "abc123",
-			currentWave: 1, // Moving to wave 1
-			completedWaves: [0],
-			completedTasks: ["M01-S01-T01"],
-			executorLog: [{ taskRef: "M01-S01-T01", agent: "agent-1" }],
-		};
-		const checkpointResult = JSON.parse(await checkpointSaveCmd([JSON.stringify(checkpointData)]));
+		const checkpointResult = JSON.parse(await checkpointSaveCmd([
+			"--slice-id", "M01-S01",
+			"--base-commit", "abc123",
+			"--current-wave", "1",
+			"--completed-waves", "[0]",
+			"--completed-tasks", "[\"M01-S01-T01\"]",
+			"--executor-log", "[{\"taskRef\":\"M01-S01-T01\",\"agent\":\"agent-1\"}]"
+		]));
 		expect(checkpointResult.ok).toBe(true);
 
 		// Verify checkpoint file exists
@@ -124,7 +123,7 @@ describe("journal T1 crash recovery integration", () => {
 		expect(existsSync(checkpointPath)).toBe(true);
 
 		// Start wave 1: Claim T02 (writes task-started to journal)
-		const claimT02Result = JSON.parse(await taskClaimCmd(["M01-S01-T02", "agent-2"]));
+		const claimT02Result = JSON.parse(await taskClaimCmd(["--task-id", "M01-S01-T02", "--claimed-by", "agent-2"]));
 		expect(claimT02Result.ok).toBe(true);
 
 		// Verify T02 is now in-progress
@@ -221,15 +220,14 @@ describe("journal T1 crash recovery integration", () => {
 		expect(t01Result.ok).toBe(true);
 
 		// Save checkpoint at wave 0 (no completed tasks)
-		const checkpointData = {
-			sliceId: "M01-S01",
-			baseCommit: "abc123",
-			currentWave: 0,
-			completedWaves: [],
-			completedTasks: [],
-			executorLog: [],
-		};
-		const checkpointResult = JSON.parse(await checkpointSaveCmd([JSON.stringify(checkpointData)]));
+		const checkpointResult = JSON.parse(await checkpointSaveCmd([
+			"--slice-id", "M01-S01",
+			"--base-commit", "abc123",
+			"--current-wave", "0",
+			"--completed-waves", "[]",
+			"--completed-tasks", "[]",
+			"--executor-log", "[]"
+		]));
 		expect(checkpointResult.ok).toBe(true);
 
 		// Empty journal (no task activity)
@@ -278,15 +276,14 @@ describe("journal T1 crash recovery integration", () => {
 		expect(t01Result.ok).toBe(true);
 
 		// Save checkpoint claiming T01 is completed (but no journal entry)
-		const checkpointData = {
-			sliceId: "M01-S01",
-			baseCommit: "abc123",
-			currentWave: 1,
-			completedWaves: [0],
-			completedTasks: ["M01-S01-T01"], // Claimed but no journal proof
-			executorLog: [{ taskRef: "M01-S01-T01", agent: "agent-1" }],
-		};
-		const checkpointResult = JSON.parse(await checkpointSaveCmd([JSON.stringify(checkpointData)]));
+		const checkpointResult = JSON.parse(await checkpointSaveCmd([
+			"--slice-id", "M01-S01",
+			"--base-commit", "abc123",
+			"--current-wave", "1",
+			"--completed-waves", "[0]",
+			"--completed-tasks", "[\"M01-S01-T01\"]",
+			"--executor-log", "[{\"taskRef\":\"M01-S01-T01\",\"agent\":\"agent-1\"}]"
+		]));
 		expect(checkpointResult.ok).toBe(true);
 
 		stores.close();

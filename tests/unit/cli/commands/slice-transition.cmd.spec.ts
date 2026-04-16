@@ -36,12 +36,12 @@ describe("sliceTransitionCmd — S03 auto-sync", () => {
 	it("should reject invalid args", async () => {
 		const result = JSON.parse(await sliceTransitionCmd([]));
 		expect(result.ok).toBe(false);
-		expect(result.error.code).toBe("INVALID_ARGS");
+		expect(result.error.code).toBe("MISSING_REQUIRED_FLAG");
 	});
 
 	it("should reject invalid status", async () => {
-		const result = JSON.parse(await sliceTransitionCmd(["M01-S01", "invalid-status"]));
+		const result = JSON.parse(await sliceTransitionCmd(["--slice-id", "M01-S01", "--status", "invalid-status"]));
 		expect(result.ok).toBe(false);
-		expect(result.error.code).toBe("INVALID_ARGS");
+		expect(result.error.code).toBe("INVALID_ENUM_VALUE");
 	});
 });

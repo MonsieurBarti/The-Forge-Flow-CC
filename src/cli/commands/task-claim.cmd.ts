@@ -1,14 +1,39 @@
 import { isOk } from "../../domain/result.js";
 import type { TaskStartedEntry } from "../../domain/value-objects/journal-entry.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+
+export const taskClaimSchema: CommandSchema = {
+	name: "task:claim",
+	purpose: "Claim a task for execution",
+	requiredFlags: [
+		{
+			name: "task-id",
+			type: "string",
+			description: "Task ID to claim",
+			pattern: "^M\\d+-S\\d+-T\\d+$",
+		},
+	],
+	optionalFlags: [
+		{
+			name: "claimed-by",
+			type: "string",
+			description: "Agent identity claiming the task",
+		},
+	],
+	examples: ["task:claim --task-id T01", "task:claim --task-id T01 --claimed-by executor"],
+};
 
 export const taskClaimCmd = async (args: string[]): Promise<string> => {
-	const [taskId, claimedBy] = args;
-	if (!taskId)
-		return JSON.stringify({
-			ok: false,
-			error: { code: "INVALID_ARGS", message: "Usage: task:claim <task-id> [claimed-by]" },
-		});
+	const parsed = parseFlags(args, taskClaimSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
+	}
+
+	const { "task-id": taskId, "claimed-by": claimedBy } = parsed.data as {
+		"task-id": string;
+		"claimed-by"?: string;
+	};
 
 	const { taskStore, journalRepository } = createClosableStateStoresUnchecked();
 	// Read task to get wave index and sliceId for journal entry

@@ -1,8 +1,8 @@
 import type { ComplexityTier } from "../../domain/value-objects/complexity-tier.js";
 
-type RiskLevel = "low" | "medium" | "high";
+export type RiskLevel = "low" | "medium" | "high";
 
-interface ComplexitySignals {
+export interface ComplexitySignals {
 	taskCount: number;
 	estimatedFilesAffected: number;
 	newFilesCreated: number;

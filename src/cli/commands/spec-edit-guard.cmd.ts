@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import { detectSpecEdit } from "../../application/guard/detect-spec-edit.js";
+import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
 
 /**
  * Check if direct-edit guards are disabled in settings.yaml.
@@ -30,9 +31,22 @@ function isProjectInitialized(): boolean {
 	return existsSync(tffDir);
 }
 
+export const specEditGuardSchema: CommandSchema = {
+	name: "spec-edit:guard",
+	purpose: "Check for spec file edits outside proper workflow",
+	requiredFlags: [],
+	optionalFlags: [],
+	examples: ["spec-edit:guard"],
+};
+
 export const specEditGuardCmd = async (args: string[]): Promise<string> => {
-	// Get file path from args[0], or null if not provided
-	const filePath = args[0] ?? null;
+	const parsed = parseFlags(args, specEditGuardSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
+	}
+
+	// Get file path from parsed data (optional)
+	const filePath = parsed.data["file-path"] as string | undefined ?? null;
 
 	// Fast path: check if guards are disabled
 	if (areGuardsDisabled()) {

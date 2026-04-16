@@ -1,13 +1,29 @@
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+
+export const taskReadySchema: CommandSchema = {
+	name: "task:ready",
+	purpose: "List ready tasks for a slice",
+	requiredFlags: [
+		{
+			name: "slice-id",
+			type: "string",
+			description: "Slice ID to list ready tasks for",
+			pattern: "^M\\d+-S\\d+$",
+		},
+	],
+	optionalFlags: [],
+	examples: ["task:ready --slice-id M01-S01"],
+};
 
 export const taskReadyCmd = async (args: string[]): Promise<string> => {
-	const [sliceId] = args;
-	if (!sliceId)
-		return JSON.stringify({
-			ok: false,
-			error: { code: "INVALID_ARGS", message: "Usage: task:ready <slice-id>" },
-		});
+	const parsed = parseFlags(args, taskReadySchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
+	}
+
+	const { "slice-id": sliceId } = parsed.data as { "slice-id": string };
 
 	const { taskStore } = createClosableStateStoresUnchecked();
 	const result = taskStore.listReadyTasks(sliceId);

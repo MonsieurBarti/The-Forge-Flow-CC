@@ -1,21 +1,29 @@
 import { detectWaves } from "../../application/waves/detect-waves.js";
 import { isOk } from "../../domain/result.js";
+import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
 
-const USAGE =
-	'Usage: waves:detect \'[{"id":"T01","dependsOn":[]},{"id":"T02","dependsOn":["T01"]}]\'';
+export const wavesDetectSchema: CommandSchema = {
+	name: "waves:detect",
+	purpose: "Detect execution waves from task dependencies",
+	requiredFlags: [
+		{
+			name: "tasks",
+			type: "json",
+			description: 'JSON array of tasks with id and dependsOn fields',
+		},
+	],
+	optionalFlags: [],
+	examples: ['waves:detect --tasks \'[{"id":"T01","dependsOn":[]},{"id":"T02","dependsOn":["T01"]}]\''],
+};
 
 export const wavesDetectCmd = async (args: string[]): Promise<string> => {
-	const input = args[0];
-	if (!input) return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: USAGE } });
-	let tasks: unknown;
-	try {
-		tasks = JSON.parse(input);
-	} catch {
-		return JSON.stringify({
-			ok: false,
-			error: { code: "INVALID_ARGS", message: `Invalid JSON. ${USAGE}` },
-		});
+	const parsed = parseFlags(args, wavesDetectSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
 	}
+
+	const { tasks } = parsed.data as { tasks: unknown };
+
 	if (
 		!Array.isArray(tasks) ||
 		!tasks.every((t) => typeof t?.id === "string" && Array.isArray(t?.dependsOn))
@@ -24,7 +32,7 @@ export const wavesDetectCmd = async (args: string[]): Promise<string> => {
 			ok: false,
 			error: {
 				code: "INVALID_ARGS",
-				message: `Each task must have { id: string, dependsOn: string[] }. ${USAGE}`,
+				message: "Each task must have { id: string, dependsOn: string[] }",
 			},
 		});
 	}

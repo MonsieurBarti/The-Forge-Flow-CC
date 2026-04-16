@@ -2,16 +2,32 @@ import { generateState } from "../../application/sync/generate-state.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
 import { withSyncLock } from "../with-sync-lock.js";
 
+export const syncStateSchema: CommandSchema = {
+	name: "sync:state",
+	purpose: "Synchronize STATE.md for a milestone",
+	requiredFlags: [
+		{
+			name: "milestone-id",
+			type: "string",
+			description: "Milestone ID to sync",
+			pattern: "^M\\d+$",
+		},
+	],
+	optionalFlags: [],
+	examples: ["sync:state --milestone-id M01"],
+};
+
 export const syncStateCmd = async (args: string[]): Promise<string> => {
-	const [milestoneId] = args;
-	if (!milestoneId) {
-		return JSON.stringify({
-			ok: false,
-			error: { code: "INVALID_ARGS", message: "Usage: sync:state <milestone-id>" },
-		});
+	const parsed = parseFlags(args, syncStateSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
 	}
+
+	const { "milestone-id": milestoneId } = parsed.data as { "milestone-id": string };
+
 	const result = await withSyncLock(async () => {
 		const { milestoneStore, sliceStore, taskStore } = createClosableStateStoresUnchecked();
 		const artifactStore = new MarkdownArtifactAdapter(process.cwd());

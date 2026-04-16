@@ -9,18 +9,48 @@ import {
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+
+export const sliceTransitionSchema: CommandSchema = {
+	name: "slice:transition",
+	purpose: "Transition a slice to a new status",
+	requiredFlags: [
+		{
+			name: "slice-id",
+			type: "string",
+			description: "Slice ID (e.g., M01-S01)",
+			pattern: "^M\\d+-S\\d+$",
+		},
+		{
+			name: "status",
+			type: "string",
+			description: "Target status",
+			enum: [
+				"discussing",
+				"researching",
+				"planning",
+				"executing",
+				"verifying",
+				"reviewing",
+				"shipping",
+				"closed",
+			],
+		},
+	],
+	optionalFlags: [],
+	examples: ["slice:transition --slice-id M01-S01 --status planning"],
+};
 
 export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
-	const [sliceId, targetStatus] = args;
-	if (!sliceId || !targetStatus) {
-		return JSON.stringify({
-			ok: false,
-			error: {
-				code: "INVALID_ARGS",
-				message: "Usage: slice:transition <slice-id> <target-status>",
-			},
-		});
+	const parsed = parseFlags(args, sliceTransitionSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
 	}
+
+	const { "slice-id": sliceId, status: targetStatus } = parsed.data as {
+		"slice-id": string;
+		status: string;
+	};
 
 	try {
 		SliceStatusSchema.parse(targetStatus);
@@ -70,15 +100,21 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 			// Auto-save CHECKPOINT.md (CRITICAL — blocks transition)
 			try {
 				const { checkpointSaveCmd } = await import("./checkpoint-save.cmd.js");
-				const checkpointData = JSON.stringify({
+				const checkpointArgs = [
+					"--slice-id",
 					sliceId,
-					baseCommit: "",
-					currentWave: 0,
-					completedWaves: [],
-					completedTasks: [],
-					executorLog: [],
-				});
-				await checkpointSaveCmd([checkpointData]);
+					"--base-commit",
+					"",
+					"--current-wave",
+					"0",
+					"--completed-waves",
+					"[]",
+					"--completed-tasks",
+					"[]",
+					"--executor-log",
+					"[]",
+				];
+				await checkpointSaveCmd(checkpointArgs);
 			} catch (e) {
 				return JSON.stringify({
 					ok: false,

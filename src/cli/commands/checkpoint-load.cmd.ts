@@ -1,15 +1,31 @@
 import { loadCheckpoint } from "../../application/checkpoint/load-checkpoint.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
+import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+
+export const checkpointLoadSchema: CommandSchema = {
+	name: "checkpoint:load",
+	purpose: "Load a checkpoint for a slice",
+	requiredFlags: [
+		{
+			name: "slice-id",
+			type: "string",
+			description: "Slice ID",
+			pattern: "^M\\d+-S\\d+$",
+		},
+	],
+	optionalFlags: [],
+	examples: ["checkpoint:load --slice-id M01-S01"],
+};
 
 export const checkpointLoadCmd = async (args: string[]): Promise<string> => {
-	const [sliceId] = args;
-	if (!sliceId) {
-		return JSON.stringify({
-			ok: false,
-			error: { code: "INVALID_ARGS", message: "Usage: checkpoint:load <slice-id>" },
-		});
+	const parsed = parseFlags(args, checkpointLoadSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
 	}
+
+	const { "slice-id": sliceId } = parsed.data as { "slice-id": string };
+
 	const artifactStore = new MarkdownArtifactAdapter(process.cwd());
 	const result = await loadCheckpoint(sliceId, { artifactStore });
 	if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });

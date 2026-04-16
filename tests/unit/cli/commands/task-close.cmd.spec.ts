@@ -24,14 +24,14 @@ describe("task:close — journal integration", () => {
 		process.chdir(tmpDir);
 
 		// Initialize project
-		await projectInitCmd(["test-project", "A test project"]);
+		await projectInitCmd(["--name", "test-project", "--vision", "A test project"]);
 
 		// Create milestone (auto-numbered as M01)
-		const milestoneResult = JSON.parse(await milestoneCreateCmd(["Test Milestone"]));
+		const milestoneResult = JSON.parse(await milestoneCreateCmd(["--name", "Test Milestone"]));
 		expect(milestoneResult.ok).toBe(true);
 
 		// Create slice (auto-numbered as S01 under M01)
-		const sliceResult = JSON.parse(await sliceCreateCmd(["Test Slice"]));
+		const sliceResult = JSON.parse(await sliceCreateCmd(["--title", "Test Slice"]));
 		expect(sliceResult.ok).toBe(true);
 
 		// Create task directly via store
@@ -45,7 +45,7 @@ describe("task:close — journal integration", () => {
 		expect(taskResult.ok).toBe(true);
 
 		// Claim the task first (required before closing)
-		const claimResult = JSON.parse(await taskClaimCmd(["M01-S01-T01", "test-agent"]));
+		const claimResult = JSON.parse(await taskClaimCmd(["--task-id", "M01-S01-T01", "--claimed-by", "test-agent"]));
 		expect(claimResult.ok).toBe(true);
 	});
 
@@ -69,7 +69,7 @@ describe("task:close — journal integration", () => {
 		const journalPath = path.join(homeDir, projectId2, "journal", "M01-S01.jsonl");
 
 		// Close the task
-		const result = JSON.parse(await taskCloseCmd(["M01-S01-T01"]));
+		const result = JSON.parse(await taskCloseCmd(["--task-id", "M01-S01-T01"]));
 		expect(result.ok).toBe(true);
 
 		// Verify journal file exists and contains both entries
@@ -104,7 +104,7 @@ describe("task:close — journal integration", () => {
 	it("accepts optional reason parameter", async () => {
 		// Close with reason
 		const result = JSON.parse(
-			await taskCloseCmd(["M01-S01-T01", "--reason", "Completed successfully"]),
+			await taskCloseCmd(["--task-id", "M01-S01-T01", "--reason", "Completed successfully"]),
 		);
 		expect(result.ok).toBe(true);
 
@@ -117,7 +117,7 @@ describe("task:close — journal integration", () => {
 	});
 
 	it("fails fast when task does not exist", async () => {
-		const result = JSON.parse(await taskCloseCmd(["M01-S01-T99"]));
+		const result = JSON.parse(await taskCloseCmd(["--task-id", "M01-S01-T99"]));
 
 		expect(result.ok).toBe(false);
 		expect(result.error.code).toBe("TASK_NOT_FOUND");
@@ -127,7 +127,7 @@ describe("task:close — journal integration", () => {
 		const result = JSON.parse(await taskCloseCmd([]));
 
 		expect(result.ok).toBe(false);
-		expect(result.error.code).toBe("INVALID_ARGS");
+		expect(result.error.code).toBe("MISSING_REQUIRED_FLAG");
 	});
 
 	it("preserves wave index from task in journal entry", async () => {
@@ -143,7 +143,7 @@ describe("task:close — journal integration", () => {
 		stores.close();
 
 		// Claim the task first
-		const claimResult = JSON.parse(await taskClaimCmd(["M01-S01-T02", "wave-agent"]));
+		const claimResult = JSON.parse(await taskClaimCmd(["--task-id", "M01-S01-T02", "--claimed-by", "wave-agent"]));
 		expect(claimResult.ok).toBe(true);
 
 		// Read project ID for journal path
@@ -152,7 +152,7 @@ describe("task:close — journal integration", () => {
 		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
 
 		// Close the task with wave
-		const result = JSON.parse(await taskCloseCmd(["M01-S01-T02"]));
+		const result = JSON.parse(await taskCloseCmd(["--task-id", "M01-S01-T02"]));
 		expect(result.ok).toBe(true);
 
 		const journalContent = readFileSync(journalPath, "utf-8");
@@ -176,7 +176,7 @@ describe("task:close — journal integration", () => {
 		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
 
 		// Close the task (which adds task-completed after task-started)
-		const result = JSON.parse(await taskCloseCmd(["M01-S01-T01"]));
+		const result = JSON.parse(await taskCloseCmd(["--task-id", "M01-S01-T01"]));
 		expect(result.ok).toBe(true);
 
 		const journalContent = readFileSync(journalPath, "utf-8");
