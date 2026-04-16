@@ -48,6 +48,26 @@ Target: ~62% token reduction vs prose
 - **Rigid** (follow exactly): TDD, commit conventions, verification gates
 - **Flexible** (adapt to context): brainstorming, documentation, debugging
 
+## Skill Composition (LOAD Pattern)
+
+Skills can load other skills for layered behavior:
+
+```
+LOAD @skills/<name>/SKILL.md
+```
+
+**Use Cases:**
+- Layering methodology: base skill + domain-specific skill
+- Review injection: brainstorming loads code-review-protocol for spec review
+- Composition: executing-plans loads TDD + commit-conventions as baseline
+
+**Example:** Brainstorming skill loads code-review-protocol for spec document reviewer:
+```
+# In brainstorming/SKILL.md review section:
+LOAD @skills/code-review-protocol/SKILL.md
+# Apply fresh-reviewer rule to spec review
+```
+
 ## Modes
 
 ### Draft New Skill

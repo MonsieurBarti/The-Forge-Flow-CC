@@ -32,13 +32,41 @@ Fresh subagent per task. Controller curates exactly what context is needed.
      e. Close: `close task in tracker`
   4. Sync: `sync state`
 
+## Subagent Dispatch Rules
+
+### When to Spawn
+| Condition | Action |
+|-----------|--------|
+| Wave has >1 task | Spawn parallel agents |
+| Task requires specialized skill | Spawn with skill loaded |
+| Task touches multiple domains | Spawn single agent with multiple skills |
+| Implementation + verification separate | Spawn sequential agents |
+
+### When NOT to Spawn
+| Condition | Action |
+|-----------|--------|
+| Single simple task | Execute directly |
+| Sequential dependency chain | Single agent, no parallelism |
+| Context already loaded | Continue in same agent |
+| Task is documentation only | Execute directly |
+
 ## Context Curation
 
-∀ subagent spawn, provide ONLY:
-- Task description + acceptance criteria
-- Exact file paths from plan
-- Relevant skills (TDD, architecture skills, commit-conventions)
-- ¬prior task context, ¬full SPEC.md (unless needed)
+### What to Pass
+| Include | Reason |
+|---------|--------|
+| Task description + ACs | Scope definition |
+| Exact file paths | No exploration needed |
+| Relevant skills (TDD, architecture, commit-conventions) | Methodology injection |
+| Code snippets from plan | Implementation hints |
+
+### What NOT to Pass
+| Exclude | Reason |
+|---------|--------|
+| Prior task context | Context pollution |
+| Full SPEC.md (unless needed) | Token overhead |
+| Full session history | Noise |
+| Unrelated domain knowledge | Distraction |
 
 ## Domain Routing
 
@@ -59,6 +87,23 @@ Read task file paths from PLAN.md to decide which domain skills to load:
 - Blocked agent -> create follow-up task + notify user
 - Work never silently stalls
 - 3+ failed attempts -> escalation task (¬infinite retry)
+
+## Result Aggregation
+
+When subagents complete, aggregate results:
+
+| Result Type | Aggregation Method |
+|-------------|-------------------|
+| File changes | Git diff per task, merge to wave summary |
+| Test results | Collect pass/fail counts, report failures |
+| Task status | Mark closed/failed in tracker |
+| Artifacts | Collect paths, report to controller |
+
+**Aggregation Rules:**
+- ∀ completed task: close in tracker, record commit SHA
+- ∀ failed task: log error, retry ≤ 3 times, then escalate
+- ∀ wave: produce summary (files changed, tests passed, commits made)
+- On wave failure: halt → report → await instruction
 
 ## Anti-Patterns
 
