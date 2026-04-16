@@ -38,7 +38,6 @@ export { extractNgrams } from "./patterns/extract-ngrams.js";
 export { rankCandidates } from "./patterns/rank-candidates.js";
 export { getProject } from "./project/get-project.js";
 export { initProject } from "./project/init-project.js";
-export { type ResumeInput, type ResumeResult, resumeSlice } from "./resume/resume-slice.js";
 export { enforceFreshReviewer } from "./review/enforce-fresh-reviewer.js";
 export { checkDrift } from "./skills/check-drift.js";
 export { validateSkill } from "./skills/validate-skill.js";
