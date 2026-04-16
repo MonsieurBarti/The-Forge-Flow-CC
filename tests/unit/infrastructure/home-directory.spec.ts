@@ -101,7 +101,7 @@ describe("T14: Home directory resolver module", () => {
 	});
 
 	describe("createTffSymlink", () => {
-		it("should create symlink from .tff to project home", async () => {
+		it("should create symlink from .tff-cc to project home", async () => {
 			process.env.TFF_CC_HOME = tempDir;
 			const projectDir = join(tempDir, "project3");
 			mkdirSync(projectDir, { recursive: true });
@@ -112,15 +112,15 @@ describe("T14: Home directory resolver module", () => {
 			const _projectHome = ensureProjectHomeDir("symlink-test");
 			createTffSymlink(projectDir, "symlink-test");
 
-			const symlinkPath = join(projectDir, ".tff");
+			const symlinkPath = join(projectDir, ".tff-cc");
 			expect(existsSync(symlinkPath)).toBe(true);
 		});
 
-		it("should throw if .tff/ is a real directory (migration needed)", async () => {
+		it("should throw if .tff-cc/ is a real directory (migration needed)", async () => {
 			process.env.TFF_CC_HOME = tempDir;
 			const projectDir = join(tempDir, "project4");
 			mkdirSync(projectDir, { recursive: true });
-			mkdirSync(join(projectDir, ".tff"), { recursive: true }); // Real directory, not symlink
+			mkdirSync(join(projectDir, ".tff-cc"), { recursive: true }); // Real directory, not symlink
 
 			const { createTffSymlink } = await import("../../../src/infrastructure/home-directory.js");
 

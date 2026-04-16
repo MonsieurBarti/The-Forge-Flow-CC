@@ -30,17 +30,17 @@ describe("initProject", () => {
 			{ name: "my-app", vision: "A great app" },
 			{ projectStore: adapter, artifactStore },
 		);
-		expect(await artifactStore.exists(".tff/PROJECT.md")).toBe(true);
+		expect(await artifactStore.exists(".tff-cc/PROJECT.md")).toBe(true);
 	});
 
-	it("should add .tff/ and build/ to .gitignore", async () => {
+	it("should add .tff-cc/ and build/ to .gitignore", async () => {
 		await initProject(
 			{ name: "my-app", vision: "A great app" },
 			{ projectStore: adapter, artifactStore },
 		);
 		expect(await artifactStore.exists(".gitignore")).toBe(true);
 		const content = await artifactStore.read(".gitignore");
-		expect(isOk(content) && content.data).toContain(".tff/");
+		expect(isOk(content) && content.data).toContain(".tff-cc/");
 		expect(isOk(content) && content.data).toContain("build/");
 	});
 
@@ -52,19 +52,19 @@ describe("initProject", () => {
 		);
 		const content = await artifactStore.read(".gitignore");
 		expect(isOk(content) && content.data).toContain("node_modules/");
-		expect(isOk(content) && content.data).toContain(".tff/");
+		expect(isOk(content) && content.data).toContain(".tff-cc/");
 		expect(isOk(content) && content.data).toContain("build/");
 	});
 
 	it("should not duplicate entries already in .gitignore", async () => {
-		artifactStore.seed({ ".gitignore": "node_modules/\n.tff/\nbuild/\n" });
+		artifactStore.seed({ ".gitignore": "node_modules/\n.tff-cc/\nbuild/\n" });
 		await initProject(
 			{ name: "my-app", vision: "A great app" },
 			{ projectStore: adapter, artifactStore },
 		);
 		const content = await artifactStore.read(".gitignore");
 		if (isOk(content)) {
-			const tffMatches = content.data.split("\n").filter((l) => l.trim() === ".tff/");
+			const tffMatches = content.data.split("\n").filter((l) => l.trim() === ".tff-cc/");
 			const buildMatches = content.data.split("\n").filter((l) => l.trim() === "build/");
 			expect(tffMatches).toHaveLength(1);
 			expect(buildMatches).toHaveLength(1);
@@ -79,7 +79,7 @@ describe("initProject", () => {
 		);
 		const content = await artifactStore.read(".gitignore");
 		if (isOk(content)) {
-			expect(content.data).toContain(".tff/");
+			expect(content.data).toContain(".tff-cc/");
 			const buildMatches = content.data.split("\n").filter((l) => l.trim() === "build/");
 			expect(buildMatches).toHaveLength(1);
 		}
@@ -99,7 +99,7 @@ describe("initProject", () => {
 	});
 
 	it("should reject if PROJECT.md already exists", async () => {
-		artifactStore.seed({ ".tff/PROJECT.md": "# Existing" });
+		artifactStore.seed({ ".tff-cc/PROJECT.md": "# Existing" });
 		const result = await initProject(
 			{ name: "my-app", vision: "Vision" },
 			{ projectStore: adapter, artifactStore },

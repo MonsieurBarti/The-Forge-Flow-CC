@@ -16,7 +16,7 @@ export interface SyncLockResult {
 }
 
 function resolveLockPath(dbPath?: string): string {
-	return dbPath ?? path.join(process.cwd(), ".tff", "state.db");
+	return dbPath ?? path.join(process.cwd(), ".tff-cc", "state.db");
 }
 
 export async function withSyncLock<T>(

@@ -28,7 +28,7 @@ describe("detect-spec-edit", () => {
 
 		// Default: project initialized, guards enabled
 		mockedExistsSync.mockImplementation((p: string) => {
-			if (typeof p === "string" && p.includes(".tff/settings.yaml")) return true;
+			if (typeof p === "string" && p.includes(".tff-cc/settings.yaml")) return true;
 			return false;
 		});
 		mockedReadFileSync.mockReturnValue("workflow:\n  guards: true");
@@ -42,7 +42,7 @@ describe("detect-spec-edit", () => {
 	describe("GUARD_DISABLED", () => {
 		it("should return GUARD_DISABLED when workflow.guards is false", () => {
 			mockedExistsSync.mockImplementation((p: string) => {
-				if (typeof p === "string" && p.includes(".tff/settings.yaml")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc/settings.yaml")) return true;
 				return false;
 			});
 			mockedReadFileSync.mockReturnValue("workflow:\n  guards: false");
@@ -65,7 +65,7 @@ describe("detect-spec-edit", () => {
 
 		it("should return GUARD_DISABLED when workflow.guards is explicitly false for lowercase spec.md", () => {
 			mockedExistsSync.mockImplementation((p: string) => {
-				if (typeof p === "string" && p.includes(".tff/settings.yaml")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc/settings.yaml")) return true;
 				return false;
 			});
 			mockedReadFileSync.mockReturnValue("workflow:\n  guards: false");
@@ -79,7 +79,7 @@ describe("detect-spec-edit", () => {
 
 		it("should return GUARD_DISABLED when YAML parsing throws error", () => {
 			mockedExistsSync.mockImplementation((p: string) => {
-				if (typeof p === "string" && p.includes(".tff/settings.yaml")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc/settings.yaml")) return true;
 				return false;
 			});
 			mockedReadFileSync.mockReturnValue("invalid: yaml: content:");
@@ -275,7 +275,7 @@ describe("detect-spec-edit", () => {
 
 		it("should handle empty settings.yaml gracefully", () => {
 			mockedExistsSync.mockImplementation((p: string) => {
-				if (typeof p === "string" && p.includes(".tff/settings.yaml")) return true;
+				if (typeof p === "string" && p.includes(".tff-cc/settings.yaml")) return true;
 				return false;
 			});
 			mockedReadFileSync.mockReturnValue("");

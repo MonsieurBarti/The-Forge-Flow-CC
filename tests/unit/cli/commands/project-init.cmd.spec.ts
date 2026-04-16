@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { projectInitCmd } from "../../../../src/cli/commands/project-init.cmd.js";
 
-describe("project:init — .tff/ auto-creation", () => {
+describe("project:init — .tff-cc/ auto-creation", () => {
 	let tmpDir: string;
 	let homeDir: string;
 	let originalCwd: string;
@@ -30,16 +30,16 @@ describe("project:init — .tff/ auto-creation", () => {
 		rmSync(homeDir, { recursive: true, force: true });
 	});
 
-	it("creates .tff/ directory before opening database", async () => {
-		expect(existsSync(path.join(tmpDir, ".tff"))).toBe(false);
+	it("creates .tff-cc/ directory before opening database", async () => {
+		expect(existsSync(path.join(tmpDir, ".tff-cc"))).toBe(false);
 
 		const result = JSON.parse(
 			await projectInitCmd(["--name", "test-project", "--vision", "A test"]),
 		);
 
 		expect(result.ok).toBe(true);
-		// .tff/ is created for artifacts
-		expect(existsSync(path.join(tmpDir, ".tff"))).toBe(true);
+		// .tff-cc/ is created for artifacts
+		expect(existsSync(path.join(tmpDir, ".tff-cc"))).toBe(true);
 		// Project ID file is created
 		expect(existsSync(path.join(tmpDir, ".tff-project-id"))).toBe(true);
 

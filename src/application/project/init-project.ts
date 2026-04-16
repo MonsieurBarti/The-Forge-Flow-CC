@@ -22,7 +22,7 @@ export const initProject = async (
 	input: InitProjectInput,
 	deps: InitProjectDeps,
 ): Promise<Result<InitProjectOutput, DomainError>> => {
-	if (await deps.artifactStore.exists(".tff/PROJECT.md"))
+	if (await deps.artifactStore.exists(".tff-cc/PROJECT.md"))
 		return Err(projectExistsError(input.name));
 
 	const existing = deps.projectStore.getProject();
@@ -34,19 +34,19 @@ export const initProject = async (
 	const saveResult = deps.projectStore.saveProject({ name: project.name, vision: project.vision });
 	if (!isOk(saveResult)) return saveResult;
 
-	await deps.artifactStore.mkdir(".tff");
-	await deps.artifactStore.mkdir(".tff/milestones");
+	await deps.artifactStore.mkdir(".tff-cc");
+	await deps.artifactStore.mkdir(".tff-cc/milestones");
 
 	// Ensure .tff/ and build/ are in .gitignore so artifacts never land on code branches
 	await ensureGitignored(deps.artifactStore);
 
 	const projectMd = `# ${project.name}\n\n## Vision\n\n${project.vision}\n`;
-	await deps.artifactStore.write(".tff/PROJECT.md", projectMd);
+	await deps.artifactStore.write(".tff-cc/PROJECT.md", projectMd);
 
 	return Ok({ project: saveResult.data });
 };
 
-const REQUIRED_GITIGNORE_ENTRIES = [".tff/", "build/"];
+const REQUIRED_GITIGNORE_ENTRIES = [".tff-cc/", "build/"];
 
 async function ensureGitignored(artifactStore: ArtifactStore): Promise<void> {
 	const gitignorePath = ".gitignore";
