@@ -1,5 +1,6 @@
 import type { Slice } from "../../domain/entities/slice.js";
 import { createDomainError, type DomainError } from "../../domain/errors/domain-error.js";
+import { milestoneLabel, sliceLabel } from "../../domain/helpers/branch-naming.js";
 import type { ArtifactStore } from "../../domain/ports/artifact-store.port.js";
 import type { MilestoneStore } from "../../domain/ports/milestone-store.port.js";
 import type { SliceStore } from "../../domain/ports/slice-store.port.js";
@@ -44,13 +45,15 @@ export const createSliceUseCase = async (
 	if (!isOk(sliceResult)) return sliceResult;
 	const slice = sliceResult.data;
 
-	// Create slice directory with stub PLAN.md
-	const milestoneDir = `.tff/milestones/${input.milestoneId}`;
-	const sliceDir = `${milestoneDir}/slices/${slice.id}`;
+	// Create slice directory with stub PLAN.md using label format
+	const msLabel = milestoneLabel(milestone.number);
+	const slLabel = sliceLabel(milestone.number, slice.number);
+	const milestoneDir = `.tff/milestones/${msLabel}`;
+	const sliceDir = `${milestoneDir}/slices/${slLabel}`;
 	await deps.artifactStore.mkdir(sliceDir);
 	await deps.artifactStore.write(
 		`${sliceDir}/PLAN.md`,
-		`# Plan — ${slice.id}: ${input.title}\n\n_Plan will be defined during /tff:plan._\n`,
+		`# Plan — ${slLabel}: ${input.title}\n\n_Plan will be defined during /tff:plan._\n`,
 	);
 
 	return Ok({ slice });
