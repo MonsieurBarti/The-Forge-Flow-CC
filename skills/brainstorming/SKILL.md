@@ -11,7 +11,7 @@ description: "Use when starting design or discovery work. MUST use before any cr
 
 ## HARD-GATE
 
-Do NOT invoke any implementation skill, write any code, ∨ take any implementation action until design presented ∧ approved. Applies to EVERY project regardless of perceived simplicity.
+Do NOT invoke any implementation skill, write any code, ∨ take any implementation action until design presented ∧ approved. Applies to EVERY project regardless of perceived simplicity. VIOLATION -> abort ∧ notify user. No exceptions, no shortcuts.
 
 ## Conversation Rules
 
@@ -34,11 +34,17 @@ Do NOT invoke any implementation skill, write any code, ∨ take any implementat
 
 ## Spec Document Reviewer
 
-Dispatch via Agent tool (subagent_type: general-purpose) with prompt from brainstorming review template. Max 3 iterations. Calibration: only flag issues that cause real problems during planning.
+Dispatch via Agent tool (subagent_type: general-purpose) with prompt from brainstorming review template. Max 3 iterations.
+
+**Calibration:** Only flag issues that cause real problems during planning. Not theoretical concerns.
+
+**Escalation:** 3+ failed iterations -> abort review, create escalation task for human review. Never infinite retry loops.
 
 ## Plan Document Reviewer
 
 Dispatch via Agent tool (subagent_type: general-purpose). Checks: completeness, task decomposition, buildability, TDD, traceability, YAGNI, file structure. Max 3 iterations.
+
+**Escalation:** 3+ failed iterations -> abort review, create escalation task for human review.
 
 ## Anti-Patterns
 
