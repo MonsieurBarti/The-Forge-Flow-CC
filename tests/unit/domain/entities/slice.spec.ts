@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	createSlice,
-	formatSliceId,
+	sliceLabel,
 	SliceSchema,
 	transitionSlice,
 } from "../../../../src/domain/entities/slice.js";
@@ -10,15 +10,16 @@ import { isErr, isOk } from "../../../../src/domain/result.js";
 describe("Slice", () => {
 	const makeSlice = () =>
 		createSlice({
-			milestoneId: "M01",
-			title: "Auth flow",
+			milestoneId: "uuid-m01-1234-5678",
 			milestoneNumber: 1,
+			title: "Auth flow",
 			sliceNumber: 1,
 		});
 
-	it("should create a slice with human-readable id", () => {
+	it("should create a slice with UUID id", () => {
 		const slice = makeSlice();
-		expect(slice.id).toBe("M01-S01");
+		// ID should be a UUID, not a label
+		expect(slice.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 		expect(slice.status).toBe("discussing");
 		expect(slice.title).toBe("Auth flow");
 		expect(slice.number).toBe(1);
@@ -29,9 +30,9 @@ describe("Slice", () => {
 		expect(slice).not.toHaveProperty("sliceId");
 	});
 
-	it("should format slice ID as M01-S01", () => {
-		expect(formatSliceId(1, 1)).toBe("M01-S01");
-		expect(formatSliceId(2, 12)).toBe("M02-S12");
+	it("should format slice label as M##-S## via sliceLabel function", () => {
+		expect(sliceLabel(1, 1)).toBe("M01-S01");
+		expect(sliceLabel(2, 12)).toBe("M02-S12");
 	});
 
 	it("should validate against schema", () => {
@@ -56,7 +57,8 @@ describe("Slice", () => {
 			expect(isErr(result)).toBe(true);
 			if (isErr(result)) {
 				expect(result.error.code).toBe("INVALID_TRANSITION");
-				expect(result.error.context?.sliceId).toBe("M01-S01");
+				// The sliceId in context should be the UUID
+				expect(result.error.context?.sliceId).toBe(slice.id);
 			}
 		});
 

@@ -3,6 +3,7 @@ import type { DomainError } from "../errors/domain-error.js";
 import { invalidTransitionError } from "../errors/invalid-transition.error.js";
 import type { DomainEvent } from "../events/domain-event.js";
 import { sliceStatusChangedEvent } from "../events/slice-status-changed.event.js";
+import { sliceLabel as sliceLabelHelper } from "../helpers/branch-naming.js";
 import { Err, Ok, type Result } from "../result.js";
 import { ComplexityTierSchema } from "../value-objects/complexity-tier.js";
 import {
@@ -23,6 +24,13 @@ export const SliceSchema = z.object({
 
 export type Slice = z.infer<typeof SliceSchema>;
 
+/**
+ * Generate a random UUID v4
+ */
+const generateUuid = (): string => {
+	return crypto.randomUUID();
+};
+
 export const createSlice = (input: {
 	milestoneId: string;
 	title: string;
@@ -30,7 +38,7 @@ export const createSlice = (input: {
 	sliceNumber: number;
 }): Slice => {
 	const slice = {
-		id: formatSliceId(input.milestoneNumber, input.sliceNumber),
+		id: generateUuid(),
 		milestoneId: input.milestoneId,
 		number: input.sliceNumber,
 		title: input.title,
@@ -40,8 +48,13 @@ export const createSlice = (input: {
 	return SliceSchema.parse(slice);
 };
 
-export const formatSliceId = (milestoneNumber: number, sliceNumber: number): string =>
-	`M${milestoneNumber.toString().padStart(2, "0")}-S${sliceNumber.toString().padStart(2, "0")}`;
+/**
+ * Format a slice number as a human-readable label (M##-S##).
+ * Re-exported from branch-naming helper for convenience.
+ */
+export const sliceLabel = (milestoneNumber: number, sliceNumber: number): string => {
+	return sliceLabelHelper(milestoneNumber, sliceNumber);
+};
 
 export const transitionSlice = (
 	slice: Slice,

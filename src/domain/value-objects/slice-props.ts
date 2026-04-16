@@ -5,5 +5,6 @@ export const SlicePropsSchema = z.object({
 	number: z.number().int().min(1),
 	title: z.string().min(1),
 	tier: ComplexityTierSchema.optional(),
+	id: z.string().optional(),
 });
 export type SliceProps = z.infer<typeof SlicePropsSchema>;
