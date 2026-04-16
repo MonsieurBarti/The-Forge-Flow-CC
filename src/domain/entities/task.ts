@@ -3,6 +3,7 @@ import { createDomainError, type DomainError } from "../errors/domain-error.js";
 import type { DomainEvent } from "../events/domain-event.js";
 import { taskCompletedEvent } from "../events/task-completed.event.js";
 import { Err, Ok, type Result } from "../result.js";
+import { DifficultySchema } from "../value-objects/difficulty.js";
 
 export const TaskStatusSchema = z.enum(["open", "in_progress", "closed"]);
 export type TaskStatus = z.infer<typeof TaskStatusSchema>;
@@ -15,6 +16,7 @@ export const TaskSchema = z.object({
 	description: z.string().optional(),
 	status: TaskStatusSchema,
 	wave: z.number().int().nonnegative().optional(),
+	difficulty: DifficultySchema.optional(),
 	claimedAt: z.date().optional(),
 	claimedBy: z.string().optional(),
 	closedReason: z.string().optional(),
@@ -28,6 +30,7 @@ export const createTask = (input: {
 	number: number;
 	title: string;
 	description?: string;
+	difficulty?: "low" | "medium" | "high";
 }): Task => {
 	const task = {
 		id: `${input.sliceId}-T${input.number.toString().padStart(2, "0")}`,
@@ -35,6 +38,7 @@ export const createTask = (input: {
 		number: input.number,
 		title: input.title,
 		description: input.description,
+		difficulty: input.difficulty,
 		status: "open" as const,
 		createdAt: new Date(),
 	};
