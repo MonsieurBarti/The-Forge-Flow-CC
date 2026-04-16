@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-export const DomainEventTypeSchema = z.enum([
-	"SLICE_STATUS_CHANGED",
-	"TASK_COMPLETED",
-]);
+export const DomainEventTypeSchema = z.enum(["SLICE_STATUS_CHANGED", "TASK_COMPLETED"]);
 
 export type DomainEventType = z.infer<typeof DomainEventTypeSchema>;
 
