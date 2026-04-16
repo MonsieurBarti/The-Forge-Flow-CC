@@ -11,7 +11,7 @@ export const taskCloseSchema: CommandSchema = {
 			name: "task-id",
 			type: "string",
 			description: "Task ID to close",
-			pattern: "^M\\d+-S\\d+-T\\d+$",
+			pattern: "^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|M\\d+-S\\d+)-T\\d+$",
 		},
 	],
 	optionalFlags: [
@@ -22,8 +22,8 @@ export const taskCloseSchema: CommandSchema = {
 		},
 	],
 	examples: [
-		"task:close --task-id T01",
-		'task:close --task-id T01 --reason "Completed successfully"',
+		"task:close --task-id M01-S01-T01",
+		'task:close --task-id 12345678-abcd-ef01-2345-67890abcdef0-T01 --reason "Completed successfully"',
 	],
 };
 
