@@ -12,7 +12,7 @@ Read `.tff/settings.yaml` → `auto-learn.clustering`.
 Pass: `tff-tools compose:detect --min-sessions 3 --min-patterns 2 --max-distance 0.3`
 
 ## Steps
-1. DETECT: `tff-tools compose:detect '<co-activations-json>' <total-sessions>`
+1. DETECT: `tff-tools compose:detect --observations '<co-activations-json>'`
 2. DISPLAY clusters (≥70% co-activation):
    ```
    1. [85%] hexagonal-architecture + commit-conventions + tdd

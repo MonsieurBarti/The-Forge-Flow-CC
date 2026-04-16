@@ -13,7 +13,7 @@ Check cooldown: read `.tff/drafts/metadata.jsonl`, verify canRefine().
 Pass maxDrift: `tff-tools skills:drift --max-drift 0.2`
 
 ## Steps
-1. DRIFT CHECK: ∀ skill, `tff-tools skills:drift "<original>" "<current>"`
+1. DRIFT CHECK: ∀ skill, `tff-tools skills:drift --original "<original>" --current "<current>"`
 2. COMPARE actual sequences (sessions.jsonl) vs skill's documented steps → flag consistent deviations (≥3 occurrences)
 3. divergences found → LOAD @skills/skill-authoring/SKILL.md → SPAWN subagent ("Refine Existing Skill" mode):
    - provide original + divergence evidence → bounded diff (max 20% change)

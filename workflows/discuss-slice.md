@@ -56,7 +56,7 @@ Based on what was learned during discuss, build `ComplexitySignals`:
 - `requiresInvestigation`, `architectureImpact`, `hasExternalIntegrations`
 - `taskCount`, `unknownsSurfaced`
 
-RUN: `tff-tools slice:classify '<signals-json>'`
+RUN: `tff-tools slice:classify --signals '<signals-json>'`
 
 PRESENT result to user, asking inline:
 - "Based on scope: **<tier>** (S / F-lite / F-full). Confirm ∨ override?"
@@ -66,8 +66,8 @@ User confirms → `tff-tools slice:classify` records tier.
 If F-full confirmed → run step 4 (Challenge Spec) now if ¬ already done.
 
 ### 9. Transition
-tier = S → `tff-tools slice:transition <id> planning` (skip research)
-tier = F-lite ∨ F-full → `tff-tools slice:transition <id> researching`
+tier = S → `tff-tools slice:transition --slice-id <id> --status planning` (skip research)
+tier = F-lite ∨ F-full → `tff-tools slice:transition --slice-id <id> --status researching`
 CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ abort
   IF `ok` = true ∧ `warnings.length > 0`:
     ∀ warning ∈ warnings: display `⚠ <warning>` to user
