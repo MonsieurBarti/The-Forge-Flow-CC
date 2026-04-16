@@ -73,7 +73,7 @@ export const wavesDetectCmd = async (args: string[]): Promise<string> => {
 		const tier = (sliceTier as "S" | "F-lite" | "F-full") || "S";
 		const maxWave = result.data.length - 1;
 
-		const classifiedTasks = tasks.map((task, index) => {
+		const classifiedTasks = tasks.map((task) => {
 			const taskWithDeps = task as {
 				id: string;
 				dependsOn: string[];

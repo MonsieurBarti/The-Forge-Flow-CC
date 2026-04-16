@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
 	classifyDifficulty,
+	type DifficultySignals,
 	difficultyToProfile,
 	resolveModelFromProfile,
-	type DifficultySignals,
 } from "../../src/application/classification/difficulty-classifier.js";
 import {
-	parseDifficultyOverride,
 	computeTaskDifficulty,
+	parseDifficultyOverride,
 	type TaskDifficultyInput,
 } from "../../src/application/planning/task-difficulty.js";
 import type { ComplexityTier } from "../../src/domain/value-objects/complexity-tier.js";
