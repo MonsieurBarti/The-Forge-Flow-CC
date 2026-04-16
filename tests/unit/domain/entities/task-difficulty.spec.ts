@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { createTask, TaskSchema } from "../../../../src/domain/entities/task.js";
 import { TaskPropsSchema } from "../../../../src/domain/value-objects/task-props.js";
 import { TaskUpdatePropsSchema } from "../../../../src/domain/value-objects/task-update-props.js";
-import { TaskSchema, createTask } from "../../../../src/domain/entities/task.js";
 
 describe("Task difficulty field", () => {
 	it("TaskSchema should accept optional difficulty field", () => {
