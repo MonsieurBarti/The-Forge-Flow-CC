@@ -1,20 +1,42 @@
 import { isOk } from "../../domain/result.js";
 import type { TaskCompletedEntry } from "../../domain/value-objects/journal-entry.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
+
+export const taskCloseSchema: CommandSchema = {
+	name: "task:close",
+	purpose: "Close a completed task",
+	requiredFlags: [
+		{
+			name: "task-id",
+			type: "string",
+			description: "Task ID to close",
+			pattern: "^M\\d+-S\\d+-T\\d+$",
+		},
+	],
+	optionalFlags: [
+		{
+			name: "reason",
+			type: "string",
+			description: "Reason for closing",
+		},
+	],
+	examples: [
+		"task:close --task-id T01",
+		'task:close --task-id T01 --reason "Completed successfully"',
+	],
+};
 
 export const taskCloseCmd = async (args: string[]): Promise<string> => {
-	const [taskId, ...rest] = args;
-	if (!taskId)
-		return JSON.stringify({
-			ok: false,
-			error: { code: "INVALID_ARGS", message: 'Usage: task:close <task-id> [--reason "..."]' },
-		});
-
-	let reason: string | undefined;
-	const reasonIdx = rest.indexOf("--reason");
-	if (reasonIdx !== -1 && rest[reasonIdx + 1]) {
-		reason = rest.slice(reasonIdx + 1).join(" ");
+	const parsed = parseFlags(args, taskCloseSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
 	}
+
+	const { "task-id": taskId, reason } = parsed.data as {
+		"task-id": string;
+		reason?: string;
+	};
 
 	const { taskStore, journalRepository } = createClosableStateStoresUnchecked();
 	// Read task to get wave index and sliceId for journal entry

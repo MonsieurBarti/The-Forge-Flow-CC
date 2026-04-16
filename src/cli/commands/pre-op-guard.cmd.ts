@@ -8,6 +8,7 @@ import {
 import { isValidOperation } from "../../application/index.js";
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { withSyncLock } from "../with-sync-lock.js";
 
 /**
@@ -37,20 +38,37 @@ function isProjectInitialized(): boolean {
 	return existsSync(tffDir);
 }
 
-export const preOpGuardCmd = async (args: string[]): Promise<string> => {
-	// Parse args: expect (sliceId, operation)
-	const sliceId = args[0];
-	const operation = args[1];
+export const preOpGuardSchema: CommandSchema = {
+	name: "pre-op:guard",
+	purpose: "Validate an operation is allowed for a slice",
+	requiredFlags: [
+		{
+			name: "slice-id",
+			type: "string",
+			description: "Slice ID",
+			pattern: "^M\\d+-S\\d+$",
+		},
+		{
+			name: "operation",
+			type: "string",
+			description: "Operation to validate",
+			enum: ["discuss", "research", "plan", "execute", "verify", "ship", "complete"],
+		},
+	],
+	optionalFlags: [],
+	examples: ["pre-op:guard --slice-id M01-S01 --operation execute"],
+};
 
-	if (!sliceId || !operation) {
-		return JSON.stringify({
-			ok: false,
-			error: {
-				code: "INVALID_ARGS",
-				message: "Usage: pre-op-guard <sliceId> <operation>",
-			},
-		});
+export const preOpGuardCmd = async (args: string[]): Promise<string> => {
+	const parsed = parseFlags(args, preOpGuardSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
 	}
+
+	const { "slice-id": sliceId, operation } = parsed.data as {
+		"slice-id": string;
+		operation: string;
+	};
 
 	// Fast path: check if guards are disabled
 	if (areGuardsDisabled()) {

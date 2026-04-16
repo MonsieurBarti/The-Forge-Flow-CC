@@ -6,11 +6,11 @@ allowed-tools: Read, Write, Bash, Grep, Glob
 ---
 
 <objective>
-Insert a new slice between existing slices, adjusting dependencies.
+Insert new slice between existing slices, adjusting dependencies.
 </objective>
 
 <execution_context>
-1. Validate the target position
+1. Validate target position
 2. Create new slice with correct dependencies
 3. Update downstream slice dependencies
 </execution_context>

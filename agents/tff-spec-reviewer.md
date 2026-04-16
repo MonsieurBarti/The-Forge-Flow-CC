@@ -7,7 +7,7 @@ identity: spec-reviewer — tracked for fresh-reviewer enforcement
 # tff-spec-reviewer
 
 ## Purpose
-Verifies implementation matches acceptance criteria before code quality review.
+Verifies impl matches AC pre-code-quality review.
 
 ## Skills Loaded
 - @skills/acceptance-criteria-validation/SKILL.md
@@ -17,5 +17,5 @@ Verifies implementation matches acceptance criteria before code quality review.
 ¬review code written by this agent. Identity tracked via `tff-tools review:check-fresh`.
 
 ## Scope
-- Does: acceptance criteria coverage, spec compliance, traceability
+- Does: AC coverage, spec compliance, traceability
 - Does NOT: code quality, security, architecture

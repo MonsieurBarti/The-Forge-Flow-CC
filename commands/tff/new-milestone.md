@@ -6,13 +6,13 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent
 ---
 
 <objective>
-Create a new milestone with slices ∧ dependencies.
+Create new milestone with slices ∧ dependencies.
 </objective>
 
 <context>
-Read the tff conventions: @references/conventions.md
+Read tff conventions: @references/conventions.md
 </context>
 
 <execution_context>
-Execute the new-milestone workflow from @workflows/new-milestone.md end-to-end.
+Execute new-milestone workflow from @workflows/new-milestone.md end-to-end.
 </execution_context>

@@ -63,7 +63,7 @@ WRITE `.tff/milestones/<milestone>/slices/<id>/PLAN.md`:
 
 ### 5. Create Tasks + Detect Waves
 CREATE tasks: `tff-tools` ∀ task w/ deps
-DETECT: `tff-tools waves:detect '[{"id":"T01","dependsOn":[]},{"id":"T02","dependsOn":["T01"]}]'` → show user
+DETECT: `tff-tools waves:detect --tasks '[{"id":"T01","dependsOn":[]},{"id":"T02","dependsOn":["T01"]}]'` → show user
 
 ### 6. Architecture Review (F-lite ∧ F-full)
 LOAD @skills/architecture-review/SKILL.md + @skills/writing-plans/SKILL.md → SPAWN subagent: {plan_content, spec_content}
@@ -78,9 +78,9 @@ invoke Skill `plannotator-annotate` with arg `.tff/milestones/<milestone>/slices
 feedback → revise ∨ approved → continue
 
 ### 9. Worktree + Transition
-`tff-tools worktree:create <id>`
-CHECK: `ok` = true → continue | `ok` = false → warn (worktree failure is non-blocking at plan time; execute-slice will block F-lite/F-full if worktree is still missing)
-`tff-tools slice:transition <id> executing`
+`tff-tools worktree:create --slice-id <id>`
+CHECK: `ok` = true → continue | `ok` = false → warn (worktree failure is non-blocking at plan time; execute-slice will block F-lite/F-full if worktree still missing)
+`tff-tools slice:transition --slice-id <id> --status executing`
 CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ abort
   IF `ok` = true ∧ `warnings.length > 0`:
     ∀ warning ∈ warnings: display `⚠ <warning>` to user
@@ -89,7 +89,7 @@ CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ ab
 After completing all steps above:
 1. READ `.tff/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
-   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
+   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask user
    - Human gates (plan approval, spec approval, completion): pause ∧ ask
 3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
 4. Log: `[tff] <slice-id>: planning → executing`

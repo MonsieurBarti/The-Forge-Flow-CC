@@ -3,58 +3,72 @@ import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
+
+export const sliceCreateSchema: CommandSchema = {
+	name: "slice:create",
+	purpose: "Create a new slice in a milestone",
+	requiredFlags: [
+		{
+			name: "title",
+			type: "string",
+			description: "Title for the new slice",
+		},
+	],
+	optionalFlags: [
+		{
+			name: "milestone-id",
+			type: "string",
+			description: "Milestone ID (auto-detected if not provided)",
+			pattern: "^M\\d+$",
+		},
+	],
+	examples: [
+		'slice:create --title "Implement feature X"',
+		'slice:create --title "Fix bug Y" --milestone-id M01',
+	],
+};
 
 export const sliceCreateCmd = async (args: string[]): Promise<string> => {
-	// Parse --title flag or fall back to positional arg
-	let name: string | undefined;
-	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--title" && i + 1 < args.length) {
-			name = args[i + 1];
-			break;
-		}
-		if (!args[i].startsWith("--")) {
-			name = args[i];
-			break;
-		}
-		// Skip unknown flags with values (e.g. --milestone M01)
-		if (args[i].startsWith("--") && i + 1 < args.length && !args[i + 1].startsWith("--")) {
-			i++;
-		}
+	const parsed = parseFlags(args, sliceCreateSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
 	}
 
-	if (!name) {
-		return JSON.stringify({
-			ok: false,
-			error: {
-				code: "INVALID_ARGS",
-				message: "Usage: slice:create <name> or slice:create --title <name>",
-			},
-		});
-	}
+	const { title, "milestone-id": explicitMilestoneId } = parsed.data as {
+		title: string;
+		"milestone-id"?: string;
+	};
 
 	const cwd = process.cwd();
 	const { milestoneStore, sliceStore } = createClosableStateStoresUnchecked();
 	const artifactStore = new MarkdownArtifactAdapter(cwd);
 	const _gitOps = new GitCliAdapter(cwd);
 
-	// Auto-detect active milestone (most recent open one)
-	const milestonesResult = milestoneStore.listMilestones();
-	if (!isOk(milestonesResult) || milestonesResult.data.length === 0) {
-		return JSON.stringify({
-			ok: false,
-			error: { code: "NOT_FOUND", message: "No milestone found. Run /tff:new-milestone first." },
-		});
+	let milestoneId: string;
+
+	if (explicitMilestoneId) {
+		milestoneId = explicitMilestoneId;
+	} else {
+		// Auto-detect active milestone (most recent open one)
+		const milestonesResult = milestoneStore.listMilestones();
+		if (!isOk(milestonesResult) || milestonesResult.data.length === 0) {
+			return JSON.stringify({
+				ok: false,
+				error: { code: "NOT_FOUND", message: "No milestone found. Run /tff:new-milestone first." },
+			});
+		}
+		// Use the last open milestone, or the last one if none are open
+		const openMilestones = milestonesResult.data.filter((m) => m.status !== "closed");
+		const milestone =
+			openMilestones.length > 0
+				? openMilestones[openMilestones.length - 1]
+				: milestonesResult.data[milestonesResult.data.length - 1];
+		milestoneId = milestone.id;
 	}
-	// Use the last open milestone, or the last one if none are open
-	const openMilestones = milestonesResult.data.filter((m) => m.status !== "closed");
-	const milestone =
-		openMilestones.length > 0
-			? openMilestones[openMilestones.length - 1]
-			: milestonesResult.data[milestonesResult.data.length - 1];
-	const milestoneId = milestone.id;
 
 	const result = await createSliceUseCase(
-		{ milestoneId, title: name },
+		{ milestoneId, title: title },
 		{ milestoneStore, sliceStore, artifactStore },
 	);
 

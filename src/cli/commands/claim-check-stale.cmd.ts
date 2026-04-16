@@ -1,15 +1,37 @@
 import { checkStaleClaims } from "../../application/claims/check-stale-claims.js";
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
+
+export const claimCheckStaleSchema: CommandSchema = {
+	name: "claim:check-stale",
+	purpose: "Check for stale task claims",
+	requiredFlags: [],
+	optionalFlags: [
+		{
+			name: "ttl-minutes",
+			type: "number",
+			description: "Time-to-live in minutes (default: 30)",
+		},
+	],
+	examples: ["claim:check-stale", "claim:check-stale --ttl-minutes 60"],
+};
 
 export const claimCheckStaleCmd = async (args: string[]): Promise<string> => {
-	const ttlMinutes = args[0] ? parseInt(args[0], 10) : 30;
-	if (Number.isNaN(ttlMinutes) || ttlMinutes <= 0) {
+	const parsed = parseFlags(args, claimCheckStaleSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
+	}
+
+	const ttlMinutes = (parsed.data["ttl-minutes"] as number | undefined) ?? 30;
+
+	if (ttlMinutes <= 0) {
 		return JSON.stringify({
 			ok: false,
-			error: { code: "INVALID_ARGS", message: "Usage: claim:check-stale [ttl-minutes]" },
+			error: { code: "INVALID_ARGS", message: "ttl-minutes must be a positive number" },
 		});
 	}
+
 	const { taskStore } = createClosableStateStoresUnchecked();
 	const result = await checkStaleClaims({ ttlMinutes }, { taskStore });
 	if (isOk(result)) {

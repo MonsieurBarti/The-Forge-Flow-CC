@@ -31,8 +31,8 @@ exploration, spawn Explore subagents ∧ reason about their findings.
 
 6. CREATE slice:
    - Create slice via `tff-tools`
-   - Create worktree: `tff-tools worktree:create <slice-id>` → worktree at `.tff/worktrees/<slice-id>/`
-7. CLASSIFY: ask the user → user picks tier (S / F-lite / F-full)
+   - Create worktree: `tff-tools worktree:create --slice-id <slice-id>` → worktree at `.tff/worktrees/<slice-id>/`
+7. CLASSIFY: ask user → user picks tier (S / F-lite / F-full)
    - Default suggestion based on diagnosis: single-file root cause → S, multi-file → F-lite
 8. PLAN: write fix strategy + implicated files ∈ PLAN.md
    - Write to `.tff/milestones/<milestone>/slices/<id>/PLAN.md`

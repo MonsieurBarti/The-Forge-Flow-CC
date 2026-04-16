@@ -6,14 +6,14 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent, Bash(plannotator:*)
 ---
 
 <objective>
-Fast-track a small change through plan, execute, ship with S-tier defaults. Skips brainstorming, research, ∧ TDD.
+Fast-track small change through plan, execute, ship with S-tier defaults. Skips brainstorming, research, ∧ TDD.
 </objective>
 
 <context>
-Read the tff conventions: @references/conventions.md
-Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read tff conventions: @references/conventions.md
+Read orchestrator pattern: @references/orchestrator-pattern.md
 </context>
 
 <execution_context>
-Execute the quick workflow from @workflows/quick.md.
+Execute quick workflow from @workflows/quick.md.
 </execution_context>

@@ -14,7 +14,7 @@ LOAD @skills/architecture-review/SKILL.md
    - Read relevant codebase areas
    - Check dependencies + integration points
    - Output → `.tff/milestones/<milestone>/slices/<slice-id>/RESEARCH.md`
-3. TRANSITION: `tff-tools slice:transition <id> planning`
+3. TRANSITION: `tff-tools slice:transition --slice-id <id> --status planning`
    CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ abort
   IF `ok` = true ∧ `warnings.length > 0`:
     ∀ warning ∈ warnings: display `⚠ <warning>` to user
@@ -24,7 +24,7 @@ LOAD @skills/architecture-review/SKILL.md
 After completing all steps above:
 1. READ `.tff/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
-   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask the user
+   - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask user
    - Human gates (plan approval, spec approval, completion): pause ∧ ask
 3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
 4. Log: `[tff] <slice-id>: researching → planning`

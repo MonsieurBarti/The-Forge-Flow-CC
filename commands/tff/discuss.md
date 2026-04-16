@@ -6,14 +6,14 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent
 ---
 
 <objective>
-Run the discussing phase: challenge assumptions, surface unknowns, lock scope, classify complexity.
+Run discussing phase: challenge assumptions, surface unknowns, lock scope, classify complexity.
 </objective>
 
 <context>
-Read the tff conventions: @references/conventions.md
+Read tff conventions: @references/conventions.md
 Read model profiles: @references/model-profiles.md
 </context>
 
 <execution_context>
-Execute the discuss-slice workflow from @workflows/discuss-slice.md.
+Execute discuss-slice workflow from @workflows/discuss-slice.md.
 </execution_context>

@@ -14,8 +14,10 @@ import { patternsRankCmd } from "./commands/patterns-rank.cmd.js";
 import { preOpGuardCmd } from "./commands/pre-op-guard.cmd.js";
 import { projectGetCmd } from "./commands/project-get.cmd.js";
 import { projectInitCmd } from "./commands/project-init.cmd.js";
+import { getCommandSchema } from "./commands/registry.js";
 import { reviewCheckFreshCmd } from "./commands/review-check-fresh.cmd.js";
 import { reviewRecordCmd } from "./commands/review-record.cmd.js";
+import { schemaCmd } from "./commands/schema.cmd.js";
 import { sessionRemindCmd } from "./commands/session-remind.cmd.js";
 import { skillsDriftCmd } from "./commands/skills-drift.cmd.js";
 import { skillsValidateCmd } from "./commands/skills-validate.cmd.js";
@@ -35,6 +37,7 @@ import { workflowShouldAutoCmd } from "./commands/workflow-should-auto.cmd.js";
 import { worktreeCreateCmd } from "./commands/worktree-create.cmd.js";
 import { worktreeDeleteCmd } from "./commands/worktree-delete.cmd.js";
 import { worktreeListCmd } from "./commands/worktree-list.cmd.js";
+import type { CommandSchema } from "./utils/flag-parser.js";
 
 type CommandFn = (args: string[]) => Promise<string>;
 
@@ -76,7 +79,95 @@ const commands: Record<string, CommandFn> = {
 	"workflow:should-auto": workflowShouldAutoCmd,
 	"claim:check-stale": claimCheckStaleCmd,
 	"session:remind": sessionRemindCmd,
+	schema: schemaCmd,
 };
+
+/**
+ * Generate help output for a command
+ */
+function generateHelp(schema: CommandSchema): string {
+	return JSON.stringify({
+		ok: true,
+		data: {
+			name: schema.name,
+			purpose: schema.purpose,
+			syntax: generateSyntax(schema),
+			requiredFlags: schema.requiredFlags.map((f) => ({
+				name: `--${f.name}`,
+				type: f.type,
+				description: f.description,
+				enum: f.enum,
+				pattern: f.pattern,
+			})),
+			optionalFlags: schema.optionalFlags.map((f) => ({
+				name: `--${f.name}`,
+				type: f.type,
+				description: f.description,
+				enum: f.enum,
+				pattern: f.pattern,
+			})),
+			examples: schema.examples,
+		},
+	});
+}
+
+/**
+ * Generate syntax string from schema
+ */
+function generateSyntax(schema: CommandSchema): string {
+	const required = schema.requiredFlags.map((f) => `--${f.name} <${f.type}>`);
+	const optional = schema.optionalFlags.map((f) => `[--${f.name}]`);
+	return `${schema.name} ${required.join(" ")} ${optional.join(" ")}`.trim();
+}
+
+/**
+ * Convert a CommandSchema to JSON Schema format
+ */
+function schemaToJsonSchema(schema: CommandSchema): Record<string, unknown> {
+	const properties: Record<string, Record<string, unknown>> = {};
+	const required: string[] = [];
+
+	for (const flag of schema.requiredFlags) {
+		required.push(flag.name);
+		properties[flag.name] = flagToJsonSchema(flag);
+	}
+
+	for (const flag of schema.optionalFlags) {
+		properties[flag.name] = flagToJsonSchema(flag);
+	}
+
+	return {
+		type: "object",
+		required,
+		properties,
+	};
+}
+
+/**
+ * Convert a FlagDefinition to JSON Schema format
+ */
+function flagToJsonSchema(flag: {
+	name: string;
+	type: string;
+	description: string;
+	enum?: string[];
+	pattern?: string;
+}): Record<string, unknown> {
+	const schema: Record<string, unknown> = {
+		type: flag.type === "json" ? "object" : flag.type,
+		description: flag.description,
+	};
+
+	if (flag.enum) {
+		schema.enum = flag.enum;
+	}
+
+	if (flag.pattern) {
+		schema.pattern = flag.pattern;
+	}
+
+	return schema;
+}
 
 const main = async () => {
 	const [command, ...args] = process.argv.slice(2);
@@ -91,6 +182,39 @@ const main = async () => {
 		return;
 	}
 
+	// Handle --help flag for any command
+	if (args.includes("--help") || args.includes("-h")) {
+		const schema = getCommandSchema(command);
+		if (schema) {
+			// Check for --json flag - output schema format instead of help format
+			if (args.includes("--json")) {
+				console.log(
+					JSON.stringify({
+						ok: true,
+						data: {
+							command: schema.name,
+							flags: schemaToJsonSchema(schema),
+						},
+					}),
+				);
+				return;
+			}
+			console.log(generateHelp(schema));
+			return;
+		}
+		console.log(
+			JSON.stringify({
+				ok: false,
+				error: {
+					code: "UNKNOWN_COMMAND",
+					message: `Unknown command "${command}". Run --help for available commands.`,
+					availableCommands: Object.keys(commands).filter((c) => c !== "schema"),
+				},
+			}),
+		);
+		return;
+	}
+
 	const handler = commands[command];
 	if (!handler) {
 		console.log(
@@ -99,6 +223,7 @@ const main = async () => {
 				error: {
 					code: "UNKNOWN_COMMAND",
 					message: `Unknown command "${command}". Run --help for available commands.`,
+					availableCommands: Object.keys(commands).filter((c) => c !== "schema"),
 				},
 			}),
 		);

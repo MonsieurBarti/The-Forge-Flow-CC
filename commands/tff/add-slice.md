@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob
 ---
 
 <objective>
-Add a new slice to the end of the current milestone's slice list.
+Add new slice to end of current milestone's slice list.
 </objective>
 
 <execution_context>

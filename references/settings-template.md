@@ -37,12 +37,12 @@ autonomy:
 # ── Auto-Learn ────────────────────────────────────────────────
 # Skill detection and refinement from observed execution patterns.
 # Note: these fields are forward-looking. Modifying them currently
-# has no runtime effect — the runtime uses hardcoded defaults until
-# the auto-learn consumer is implemented.
+# has no runtime effect — runtime uses hardcoded defaults until
+# auto-learn consumer is implemented.
 auto-learn:
   # Weights for pattern ranking (should sum to ~1.0)
   weights:
-    frequency: 0.25    # how often the pattern appears
+    frequency: 0.25    # how often pattern appears
     breadth: 0.30      # how many projects contain it
     recency: 0.25      # how recently observed (14-day half-life)
     consistency: 0.20   # fraction of sessions containing it
@@ -53,8 +53,8 @@ auto-learn:
     max-drift-pct: 20   # max % change per refinement (60% cumulative)
   # Pattern clustering thresholds
   clustering:
-    min-sessions: 3     # min sessions to establish a pattern
-    min-patterns: 2     # min similar patterns to form a cluster
+    min-sessions: 3     # min sessions to establish pattern
+    min-patterns: 2     # min similar patterns to form cluster
     jaccard-threshold: 0.3  # max Jaccard distance for cluster membership
 
 # ── Workflow ──────────────────────────────────────────────────
@@ -62,7 +62,7 @@ auto-learn:
 #
 # Soft enforcement philosophy (D001): Advisory warnings guide users toward
 # tracked workflow commands without blocking legitimate direct edits.
-# This balances guidance for newcomers with flexibility for experts.
+# Balances guidance for newcomers with flexibility for experts.
 
 # Show reminder on new Claude Code sessions with current
 # milestone, slice, phase, and wave position
@@ -79,8 +79,8 @@ workflow:
   #    - Triggers on Edit/Write PreToolUse events targeting SPEC.md files
   #    - Suggests using /tff:discuss for spec changes to ensure STATE.md sync
   #
-  # Both guards follow the D001 soft enforcement philosophy:
-  # - Advisory only (never blocking) - users can proceed after seeing the warning
+  # Both guards follow D001 soft enforcement philosophy:
+  # - Advisory only (never blocking) - users can proceed after seeing warning
   # - Respects guards: false to disable all detection
   # - Integrates with PreToolUse hooks for real-time interception
   #

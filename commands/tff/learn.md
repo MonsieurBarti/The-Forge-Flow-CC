@@ -9,10 +9,10 @@ Compare observed behavior against existing skills, detect consistent divergences
 </objective>
 
 <context>
-Read the tff conventions: @references/conventions.md
-Read the orchestrator pattern: @references/orchestrator-pattern.md
+Read tff conventions: @references/conventions.md
+Read orchestrator pattern: @references/orchestrator-pattern.md
 </context>
 
 <execution_context>
-Execute the learn-skills workflow from @workflows/learn-skills.md.
+Execute learn-skills workflow from @workflows/learn-skills.md.
 </execution_context>

@@ -1,32 +1,67 @@
 import { saveCheckpoint } from "../../application/checkpoint/save-checkpoint.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
-const USAGE =
-	'Usage: checkpoint:save \'{"sliceId":"M01-S01","baseCommit":"abc123","currentWave":0,"completedWaves":[],"completedTasks":[],"executorLog":[]}\'';
+export const checkpointSaveSchema: CommandSchema = {
+	name: "checkpoint:save",
+	purpose: "Save a checkpoint for a slice",
+	requiredFlags: [
+		{
+			name: "slice-id",
+			type: "string",
+			description: "Slice ID",
+			pattern: "^M\\d+-S\\d+$",
+		},
+		{
+			name: "base-commit",
+			type: "string",
+			description: "Base commit SHA",
+		},
+		{
+			name: "current-wave",
+			type: "number",
+			description: "Current wave index",
+		},
+		{
+			name: "completed-waves",
+			type: "json",
+			description: "JSON array of completed wave indices",
+		},
+		{
+			name: "completed-tasks",
+			type: "json",
+			description: "JSON array of completed task IDs",
+		},
+		{
+			name: "executor-log",
+			type: "json",
+			description: "JSON array of executor log entries",
+		},
+	],
+	optionalFlags: [],
+	examples: [
+		"checkpoint:save --slice-id M01-S01 --base-commit abc123 --current-wave 0 --completed-waves '[]' --completed-tasks '[]' --executor-log '[]'",
+	],
+};
 
 export const checkpointSaveCmd = async (args: string[]): Promise<string> => {
-	const [dataJson] = args;
-	if (!dataJson) {
-		return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: USAGE } });
+	const parsed = parseFlags(args, checkpointSaveSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
 	}
-	let data: unknown;
-	try {
-		data = JSON.parse(dataJson);
-	} catch {
-		return JSON.stringify({
-			ok: false,
-			error: { code: "INVALID_ARGS", message: `Invalid JSON. ${USAGE}` },
-		});
-	}
-	if (typeof (data as Record<string, unknown>)?.sliceId !== "string") {
-		return JSON.stringify({
-			ok: false,
-			error: { code: "INVALID_ARGS", message: `Missing required field "sliceId". ${USAGE}` },
-		});
-	}
+
+	const data = {
+		sliceId: parsed.data["slice-id"] as string,
+		baseCommit: parsed.data["base-commit"] as string,
+		currentWave: parsed.data["current-wave"] as number,
+		completedWaves: parsed.data["completed-waves"] as number[],
+		completedTasks: parsed.data["completed-tasks"] as string[],
+		executorLog: parsed.data["executor-log"] as Array<{ taskRef: string; agent: string }>,
+	};
+
 	const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-	const result = await saveCheckpoint(data as Parameters<typeof saveCheckpoint>[0], {
+	const result = await saveCheckpoint(data, {
 		artifactStore,
 	});
 	if (isOk(result)) return JSON.stringify({ ok: true, data: null });

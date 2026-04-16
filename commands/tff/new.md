@@ -6,13 +6,13 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent
 ---
 
 <objective>
-Initialize a new tff project. Guide the user through defining their project vision, requirements, ∧ first milestone.
+Initialize new tff project. Guide user through defining project vision, requirements, ∧ first milestone.
 </objective>
 
 <context>
-Read the tff conventions: @references/conventions.md
+Read tff conventions: @references/conventions.md
 </context>
 
 <execution_context>
-Execute the new-project workflow from @workflows/new-project.md end-to-end.
+Execute new-project workflow from @workflows/new-project.md end-to-end.
 </execution_context>

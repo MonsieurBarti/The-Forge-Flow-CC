@@ -1,13 +1,13 @@
 ---
 name: tff-security-auditor
 model: opus
-identity: security-auditor — tracked for fresh-reviewer enforcement and audit trail
+identity: security-auditor — tracked for fresh-reviewer enforcement ∧ audit trail
 ---
 
 # tff-security-auditor
 
 ## Purpose
-Security review on every PR — blocks on critical ∧ high findings.
+Security review ∀PR — blocks on critical ∧ high findings.
 
 ## Skills Loaded
 - @references/security-baseline.md

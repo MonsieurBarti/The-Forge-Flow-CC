@@ -5,13 +5,13 @@ allowed-tools: Read, Bash, Grep, Glob
 ---
 
 <objective>
-Lightweight status check — show where you are ∈ the tff lifecycle ∧ suggest the next command. Does NOT regenerate STATE.md (use /tff:progress for that).
+Lightweight status check — show where you are ∈ tff lifecycle ∧ suggest next command. Does NOT regenerate STATE.md (use /tff:progress for that).
 </objective>
 
 <execution_context>
-1. Read .tff/STATE.md if it ∃ (don't regenerate)
+1. Read .tff/STATE.md if ∃ (don't regenerate)
 2. Check state for any ∈-progress slices
-3. Show the current position:
+3. Show current position:
    - Active milestone
    - Current slice ∧ its status
    - What phase we're ∈

@@ -10,10 +10,10 @@ Run fresh reviewer enforcement, spawn review agents, review via plannotator, cre
 </objective>
 
 <context>
-Read the tff conventions: @references/conventions.md
+Read tff conventions: @references/conventions.md
 Read model profiles: @references/model-profiles.md
 </context>
 
 <execution_context>
-Execute the ship-slice workflow from @workflows/ship-slice.md.
+Execute ship-slice workflow from @workflows/ship-slice.md.
 </execution_context>
