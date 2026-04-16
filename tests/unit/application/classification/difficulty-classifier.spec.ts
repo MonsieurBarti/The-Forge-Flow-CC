@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
 	classifyDifficulty,
-	difficultyToProfile,
-	resolveModelFromProfile,
+	computeDependencyScore,
 	computeFileScopeScore,
 	computeSemanticScore,
-	computeDependencyScore,
 	computeTierScore,
 	type DifficultySignals,
+	difficultyToProfile,
+	resolveModelFromProfile,
 } from "../../../../src/application/classification/difficulty-classifier.js";
 import type { ComplexityTier } from "../../../../src/domain/value-objects/complexity-tier.js";
 
