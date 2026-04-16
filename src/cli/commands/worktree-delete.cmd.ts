@@ -1,7 +1,7 @@
 import { deleteWorktreeUseCase } from "../../application/worktree/delete-worktree.js";
 import { isOk } from "../../domain/result.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const worktreeDeleteSchema: CommandSchema = {
 	name: "worktree:delete",

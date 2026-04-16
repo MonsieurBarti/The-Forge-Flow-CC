@@ -1,7 +1,7 @@
 import { saveCheckpoint } from "../../application/checkpoint/save-checkpoint.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const checkpointSaveSchema: CommandSchema = {
 	name: "checkpoint:save",

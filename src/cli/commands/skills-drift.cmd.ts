@@ -1,5 +1,5 @@
 import { checkDrift } from "../../application/skills/check-drift.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const skillsDriftSchema: CommandSchema = {
 	name: "skills:drift",

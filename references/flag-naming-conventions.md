@@ -47,18 +47,17 @@ Boolean flags are presence-based (no value needed):
 
 ```bash
 # Correct
-slice:transition --slice-id M01-S01 --status planning --force
+project:get --json
 
 # Incorrect
-slice:transition --slice-id M01-S01 --status planning --force true
+project:get --json true
 ```
 
 Common boolean flags:
 
 | Flag | Meaning |
 |------|---------|
-| `--force` | Skip confirmation/safety checks |
-| `--json` | Output in JSON format (when applicable) |
+| `--json` | JSON output mode (for help/schema) |
 | `--help` | Show command help |
 
 ### File Paths
@@ -146,7 +145,7 @@ When a flag error occurs, the error must include valid alternatives:
   "error": {
     "code": "UNKNOWN_FLAG",
     "message": "Unknown flag: --target-status",
-    "validFlags": ["--slice-id", "--status", "--force"]
+    "validFlags": ["--slice-id", "--status"]
   }
 }
 ```

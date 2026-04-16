@@ -1,5 +1,5 @@
 import type { CommandSchema } from "../utils/flag-parser.js";
-import { getCommandSchema, getAllCommandNames } from "./registry.js";
+import { getAllCommandNames, getCommandSchema } from "./registry.js";
 
 export const schemaCmd = async (args: string[]): Promise<string> => {
 	// Parse --command flag

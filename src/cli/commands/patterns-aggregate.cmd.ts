@@ -1,7 +1,7 @@
 import { aggregatePatterns } from "../../application/patterns/aggregate-patterns.js";
 import { isOk } from "../../domain/result.js";
 import { JsonlStoreAdapter } from "../../infrastructure/adapters/jsonl/jsonl-store.adapter.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const patternsAggregateSchema: CommandSchema = {
 	name: "patterns:aggregate",

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { parseFlags, type CommandSchema, type FlagDefinition } from "../../../../src/cli/utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../../../../src/cli/utils/flag-parser.js";
 
 describe("parseFlags", () => {
 	const simpleSchema: CommandSchema = {
 		name: "test:command",
 		purpose: "Test command for parser",
 		requiredFlags: [{ name: "slice-id", type: "string", description: "Slice ID" }],
-		optionalFlags: [{ name: "force", type: "boolean", description: "Force operation" }],
+		optionalFlags: [{ name: "verbose", type: "boolean", description: "Verbose output" }],
 		examples: ["test:command --slice-id M01-S01"],
 	};
 
@@ -28,10 +28,10 @@ describe("parseFlags", () => {
 		});
 
 		it("parses boolean flags without value", () => {
-			const result = parseFlags(["--slice-id", "M01-S01", "--force"], simpleSchema);
+			const result = parseFlags(["--slice-id", "M01-S01", "--verbose"], simpleSchema);
 			expect(result).toEqual({
 				ok: true,
-				data: { "slice-id": "M01-S01", force: true },
+				data: { "slice-id": "M01-S01", verbose: true },
 			});
 		});
 
@@ -51,7 +51,7 @@ describe("parseFlags", () => {
 				expect(result.error.code).toBe("UNKNOWN_FLAG");
 				expect(result.error.unknownFlag).toBe("unknown-flag");
 				expect(result.error.validFlags).toContain("slice-id");
-				expect(result.error.validFlags).toContain("force");
+				expect(result.error.validFlags).toContain("verbose");
 			}
 		});
 	});

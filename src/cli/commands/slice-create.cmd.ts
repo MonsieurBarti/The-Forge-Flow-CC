@@ -3,7 +3,7 @@ import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const sliceCreateSchema: CommandSchema = {
 	name: "slice:create",
@@ -23,7 +23,10 @@ export const sliceCreateSchema: CommandSchema = {
 			pattern: "^M\\d+$",
 		},
 	],
-	examples: ["slice:create --title \"Implement feature X\"", "slice:create --title \"Fix bug Y\" --milestone-id M01"],
+	examples: [
+		'slice:create --title "Implement feature X"',
+		'slice:create --title "Fix bug Y" --milestone-id M01',
+	],
 };
 
 export const sliceCreateCmd = async (args: string[]): Promise<string> => {

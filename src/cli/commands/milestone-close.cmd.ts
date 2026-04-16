@@ -1,6 +1,6 @@
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const milestoneCloseSchema: CommandSchema = {
 	name: "milestone:close",
@@ -20,7 +20,10 @@ export const milestoneCloseSchema: CommandSchema = {
 			description: "Reason for closing",
 		},
 	],
-	examples: ["milestone:close --milestone-id M01", "milestone:close --milestone-id M01 --reason \"Completed\""],
+	examples: [
+		"milestone:close --milestone-id M01",
+		'milestone:close --milestone-id M01 --reason "Completed"',
+	],
 };
 
 export const milestoneCloseCmd = async (args: string[]): Promise<string> => {

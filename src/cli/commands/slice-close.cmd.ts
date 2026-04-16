@@ -1,6 +1,6 @@
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const sliceCloseSchema: CommandSchema = {
 	name: "slice:close",
@@ -20,7 +20,10 @@ export const sliceCloseSchema: CommandSchema = {
 			description: "Reason for closing",
 		},
 	],
-	examples: ["slice:close --slice-id M01-S01", "slice:close --slice-id M01-S01 --reason \"Completed\""],
+	examples: [
+		"slice:close --slice-id M01-S01",
+		'slice:close --slice-id M01-S01 --reason "Completed"',
+	],
 };
 
 export const sliceCloseCmd = async (args: string[]): Promise<string> => {

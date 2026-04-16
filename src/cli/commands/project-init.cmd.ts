@@ -4,7 +4,7 @@ import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesyste
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
 import { createStateStores } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { installPostCheckoutHook } from "../../infrastructure/hooks/install-post-checkout.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const projectInitSchema: CommandSchema = {
 	name: "project:init",
@@ -23,7 +23,10 @@ export const projectInitSchema: CommandSchema = {
 			description: "Project vision statement",
 		},
 	],
-	examples: ['project:init --name "My Project"', 'project:init --name "My Project" --vision "Build the best thing"'],
+	examples: [
+		'project:init --name "My Project"',
+		'project:init --name "My Project" --vision "Build the best thing"',
+	],
 };
 
 export const projectInitCmd = async (args: string[]): Promise<string> => {

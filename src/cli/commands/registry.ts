@@ -1,43 +1,42 @@
 import type { CommandSchema } from "../utils/flag-parser.js";
-
-// Import all command schemas
-import { sliceTransitionSchema } from "./slice-transition.cmd.js";
-import { sliceCreateSchema } from "./slice-create.cmd.js";
-import { sliceListSchema } from "./slice-list.cmd.js";
-import { sliceCloseSchema } from "./slice-close.cmd.js";
-import { sliceClassifySchema } from "./slice-classify.cmd.js";
-import { projectInitSchema } from "./project-init.cmd.js";
-import { projectGetSchema } from "./project-get.cmd.js";
+import { checkpointLoadSchema } from "./checkpoint-load.cmd.js";
+import { checkpointSaveSchema } from "./checkpoint-save.cmd.js";
+import { claimCheckStaleSchema } from "./claim-check-stale.cmd.js";
+import { composeDetectSchema } from "./compose-detect.cmd.js";
+import { depAddSchema } from "./dep-add.cmd.js";
+import { directEditGuardSchema } from "./direct-edit-guard.cmd.js";
+import { milestoneCloseSchema } from "./milestone-close.cmd.js";
 import { milestoneCreateSchema } from "./milestone-create.cmd.js";
 import { milestoneListSchema } from "./milestone-list.cmd.js";
-import { milestoneCloseSchema } from "./milestone-close.cmd.js";
+import { observeRecordSchema } from "./observe-record.cmd.js";
+import { patternsAggregateSchema } from "./patterns-aggregate.cmd.js";
+import { patternsExtractSchema } from "./patterns-extract.cmd.js";
+import { patternsRankSchema } from "./patterns-rank.cmd.js";
+import { preOpGuardSchema } from "./pre-op-guard.cmd.js";
+import { projectGetSchema } from "./project-get.cmd.js";
+import { projectInitSchema } from "./project-init.cmd.js";
+import { reviewCheckFreshSchema } from "./review-check-fresh.cmd.js";
+import { reviewRecordSchema } from "./review-record.cmd.js";
+import { sessionRemindSchema } from "./session-remind.cmd.js";
+import { skillsDriftSchema } from "./skills-drift.cmd.js";
+import { skillsValidateSchema } from "./skills-validate.cmd.js";
+import { sliceClassifySchema } from "./slice-classify.cmd.js";
+import { sliceCloseSchema } from "./slice-close.cmd.js";
+import { sliceCreateSchema } from "./slice-create.cmd.js";
+import { sliceListSchema } from "./slice-list.cmd.js";
+// Import all command schemas
+import { sliceTransitionSchema } from "./slice-transition.cmd.js";
+import { specEditGuardSchema } from "./spec-edit-guard.cmd.js";
+import { syncStateSchema } from "./sync-state.cmd.js";
 import { taskClaimSchema } from "./task-claim.cmd.js";
 import { taskCloseSchema } from "./task-close.cmd.js";
 import { taskReadySchema } from "./task-ready.cmd.js";
-import { depAddSchema } from "./dep-add.cmd.js";
-import { directEditGuardSchema } from "./direct-edit-guard.cmd.js";
-import { preOpGuardSchema } from "./pre-op-guard.cmd.js";
-import { specEditGuardSchema } from "./spec-edit-guard.cmd.js";
 import { wavesDetectSchema } from "./waves-detect.cmd.js";
-import { syncStateSchema } from "./sync-state.cmd.js";
+import { workflowNextSchema } from "./workflow-next.cmd.js";
+import { workflowShouldAutoSchema } from "./workflow-should-auto.cmd.js";
 import { worktreeCreateSchema } from "./worktree-create.cmd.js";
 import { worktreeDeleteSchema } from "./worktree-delete.cmd.js";
 import { worktreeListSchema } from "./worktree-list.cmd.js";
-import { reviewCheckFreshSchema } from "./review-check-fresh.cmd.js";
-import { reviewRecordSchema } from "./review-record.cmd.js";
-import { checkpointSaveSchema } from "./checkpoint-save.cmd.js";
-import { checkpointLoadSchema } from "./checkpoint-load.cmd.js";
-import { observeRecordSchema } from "./observe-record.cmd.js";
-import { patternsExtractSchema } from "./patterns-extract.cmd.js";
-import { patternsAggregateSchema } from "./patterns-aggregate.cmd.js";
-import { patternsRankSchema } from "./patterns-rank.cmd.js";
-import { composeDetectSchema } from "./compose-detect.cmd.js";
-import { skillsDriftSchema } from "./skills-drift.cmd.js";
-import { skillsValidateSchema } from "./skills-validate.cmd.js";
-import { workflowNextSchema } from "./workflow-next.cmd.js";
-import { workflowShouldAutoSchema } from "./workflow-should-auto.cmd.js";
-import { claimCheckStaleSchema } from "./claim-check-stale.cmd.js";
-import { sessionRemindSchema } from "./session-remind.cmd.js";
 
 /**
  * Registry of all command schemas

@@ -62,7 +62,9 @@ describe("task:claim — journal integration", () => {
 		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
 
 		// Claim the task
-		const result = JSON.parse(await taskClaimCmd(["--task-id", "M01-S01-T01", "--claimed-by", "test-agent"]));
+		const result = JSON.parse(
+			await taskClaimCmd(["--task-id", "M01-S01-T01", "--claimed-by", "test-agent"]),
+		);
 		expect(result.ok).toBe(true);
 
 		// Verify journal file exists and contains task-started entry
@@ -102,7 +104,9 @@ describe("task:claim — journal integration", () => {
 	});
 
 	it("fails fast when task does not exist", async () => {
-		const result = JSON.parse(await taskClaimCmd(["--task-id", "M01-S01-T99", "--claimed-by", "test-agent"]));
+		const result = JSON.parse(
+			await taskClaimCmd(["--task-id", "M01-S01-T99", "--claimed-by", "test-agent"]),
+		);
 
 		expect(result.ok).toBe(false);
 		expect(result.error.code).toBe("TASK_NOT_FOUND");
@@ -133,7 +137,9 @@ describe("task:claim — journal integration", () => {
 		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
 
 		// Claim the task with wave
-		const result = JSON.parse(await taskClaimCmd(["--task-id", "M01-S01-T02", "--claimed-by", "wave-agent"]));
+		const result = JSON.parse(
+			await taskClaimCmd(["--task-id", "M01-S01-T02", "--claimed-by", "wave-agent"]),
+		);
 		expect(result.ok).toBe(true);
 
 		const journalContent = readFileSync(journalPath, "utf-8");

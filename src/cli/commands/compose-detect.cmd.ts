@@ -1,7 +1,7 @@
-import { detectClusters, type Cluster } from "../../application/compose/detect-clusters.js";
-import type { ObservationSchema } from "../../domain/value-objects/observation.js";
 import type { z } from "zod";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type Cluster, detectClusters } from "../../application/compose/detect-clusters.js";
+import type { ObservationSchema } from "../../domain/value-objects/observation.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 type Observation = z.infer<typeof ObservationSchema>;
 

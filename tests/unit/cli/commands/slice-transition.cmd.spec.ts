@@ -40,7 +40,9 @@ describe("sliceTransitionCmd — S03 auto-sync", () => {
 	});
 
 	it("should reject invalid status", async () => {
-		const result = JSON.parse(await sliceTransitionCmd(["--slice-id", "M01-S01", "--status", "invalid-status"]));
+		const result = JSON.parse(
+			await sliceTransitionCmd(["--slice-id", "M01-S01", "--status", "invalid-status"]),
+		);
 		expect(result.ok).toBe(false);
 		expect(result.error.code).toBe("INVALID_ENUM_VALUE");
 	});

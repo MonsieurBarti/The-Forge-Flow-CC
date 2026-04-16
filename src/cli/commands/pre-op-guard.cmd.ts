@@ -8,7 +8,7 @@ import {
 import { isValidOperation } from "../../application/index.js";
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { withSyncLock } from "../with-sync-lock.js";
 
 /**

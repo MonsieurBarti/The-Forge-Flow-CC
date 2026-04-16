@@ -1,8 +1,8 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { spawn } from "node:child_process";
-import { tmpdir } from "node:os";
 import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 describe("CLI --help flag", () => {
 	let tmpDir: string;

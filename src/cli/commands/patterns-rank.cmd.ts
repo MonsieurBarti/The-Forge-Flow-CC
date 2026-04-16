@@ -1,7 +1,7 @@
 import { rankCandidates } from "../../application/patterns/rank-candidates.js";
 import { isOk } from "../../domain/result.js";
 import { JsonlStoreAdapter } from "../../infrastructure/adapters/jsonl/jsonl-store.adapter.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const patternsRankSchema: CommandSchema = {
 	name: "patterns:rank",

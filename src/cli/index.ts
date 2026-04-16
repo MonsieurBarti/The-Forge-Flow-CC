@@ -14,6 +14,7 @@ import { patternsRankCmd } from "./commands/patterns-rank.cmd.js";
 import { preOpGuardCmd } from "./commands/pre-op-guard.cmd.js";
 import { projectGetCmd } from "./commands/project-get.cmd.js";
 import { projectInitCmd } from "./commands/project-init.cmd.js";
+import { getCommandSchema } from "./commands/registry.js";
 import { reviewCheckFreshCmd } from "./commands/review-check-fresh.cmd.js";
 import { reviewRecordCmd } from "./commands/review-record.cmd.js";
 import { schemaCmd } from "./commands/schema.cmd.js";
@@ -37,7 +38,6 @@ import { worktreeCreateCmd } from "./commands/worktree-create.cmd.js";
 import { worktreeDeleteCmd } from "./commands/worktree-delete.cmd.js";
 import { worktreeListCmd } from "./commands/worktree-list.cmd.js";
 import type { CommandSchema } from "./utils/flag-parser.js";
-import { getCommandSchema } from "./commands/registry.js";
 
 type CommandFn = (args: string[]) => Promise<string>;
 
@@ -188,13 +188,15 @@ const main = async () => {
 		if (schema) {
 			// Check for --json flag - output schema format instead of help format
 			if (args.includes("--json")) {
-				console.log(JSON.stringify({
-					ok: true,
-					data: {
-						command: schema.name,
-						flags: schemaToJsonSchema(schema),
-					},
-				}));
+				console.log(
+					JSON.stringify({
+						ok: true,
+						data: {
+							command: schema.name,
+							flags: schemaToJsonSchema(schema),
+						},
+					}),
+				);
 				return;
 			}
 			console.log(generateHelp(schema));

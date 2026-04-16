@@ -45,7 +45,9 @@ describe("task:close — journal integration", () => {
 		expect(taskResult.ok).toBe(true);
 
 		// Claim the task first (required before closing)
-		const claimResult = JSON.parse(await taskClaimCmd(["--task-id", "M01-S01-T01", "--claimed-by", "test-agent"]));
+		const claimResult = JSON.parse(
+			await taskClaimCmd(["--task-id", "M01-S01-T01", "--claimed-by", "test-agent"]),
+		);
 		expect(claimResult.ok).toBe(true);
 	});
 
@@ -143,7 +145,9 @@ describe("task:close — journal integration", () => {
 		stores.close();
 
 		// Claim the task first
-		const claimResult = JSON.parse(await taskClaimCmd(["--task-id", "M01-S01-T02", "--claimed-by", "wave-agent"]));
+		const claimResult = JSON.parse(
+			await taskClaimCmd(["--task-id", "M01-S01-T02", "--claimed-by", "wave-agent"]),
+		);
 		expect(claimResult.ok).toBe(true);
 
 		// Read project ID for journal path

@@ -1,5 +1,5 @@
 import { shouldAutoTransition } from "../../application/lifecycle/chain-workflow.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const workflowShouldAutoSchema: CommandSchema = {
 	name: "workflow:should-auto",

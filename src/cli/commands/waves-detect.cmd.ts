@@ -1,6 +1,6 @@
 import { detectWaves } from "../../application/waves/detect-waves.js";
 import { isOk } from "../../domain/result.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const wavesDetectSchema: CommandSchema = {
 	name: "waves:detect",
@@ -9,11 +9,13 @@ export const wavesDetectSchema: CommandSchema = {
 		{
 			name: "tasks",
 			type: "json",
-			description: 'JSON array of tasks with id and dependsOn fields',
+			description: "JSON array of tasks with id and dependsOn fields",
 		},
 	],
 	optionalFlags: [],
-	examples: ['waves:detect --tasks \'[{"id":"T01","dependsOn":[]},{"id":"T02","dependsOn":["T01"]}]\''],
+	examples: [
+		'waves:detect --tasks \'[{"id":"T01","dependsOn":[]},{"id":"T02","dependsOn":["T01"]}]\'',
+	],
 };
 
 export const wavesDetectCmd = async (args: string[]): Promise<string> => {

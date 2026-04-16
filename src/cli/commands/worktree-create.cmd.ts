@@ -3,7 +3,7 @@ import { createWorktreeUseCase } from "../../application/worktree/create-worktre
 import { isOk } from "../../domain/result.js";
 import { copyTffToWorktree } from "../../infrastructure/adapters/git/copy-tff-to-worktree.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const worktreeCreateSchema: CommandSchema = {
 	name: "worktree:create",

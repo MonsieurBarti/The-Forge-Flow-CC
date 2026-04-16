@@ -1,6 +1,6 @@
-import { validateSkill, type SkillInput } from "../../application/skills/validate-skill.js";
+import { type SkillInput, validateSkill } from "../../application/skills/validate-skill.js";
 import { isOk } from "../../domain/result.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const skillsValidateSchema: CommandSchema = {
 	name: "skills:validate",

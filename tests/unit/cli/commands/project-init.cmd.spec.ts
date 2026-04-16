@@ -33,7 +33,9 @@ describe("project:init — .tff/ auto-creation", () => {
 	it("creates .tff/ directory before opening database", async () => {
 		expect(existsSync(path.join(tmpDir, ".tff"))).toBe(false);
 
-		const result = JSON.parse(await projectInitCmd(["--name", "test-project", "--vision", "A test"]));
+		const result = JSON.parse(
+			await projectInitCmd(["--name", "test-project", "--vision", "A test"]),
+		);
 
 		expect(result.ok).toBe(true);
 		// .tff/ is created for artifacts

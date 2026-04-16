@@ -1,5 +1,8 @@
-import { classifyComplexity, type ComplexitySignals } from "../../application/lifecycle/classify-complexity.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import {
+	type ComplexitySignals,
+	classifyComplexity,
+} from "../../application/lifecycle/classify-complexity.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const sliceClassifySchema: CommandSchema = {
 	name: "slice:classify",

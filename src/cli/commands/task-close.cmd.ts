@@ -1,7 +1,7 @@
 import { isOk } from "../../domain/result.js";
 import type { TaskCompletedEntry } from "../../domain/value-objects/journal-entry.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const taskCloseSchema: CommandSchema = {
 	name: "task:close",
@@ -21,7 +21,10 @@ export const taskCloseSchema: CommandSchema = {
 			description: "Reason for closing",
 		},
 	],
-	examples: ["task:close --task-id T01", "task:close --task-id T01 --reason \"Completed successfully\""],
+	examples: [
+		"task:close --task-id T01",
+		'task:close --task-id T01 --reason "Completed successfully"',
+	],
 };
 
 export const taskCloseCmd = async (args: string[]): Promise<string> => {

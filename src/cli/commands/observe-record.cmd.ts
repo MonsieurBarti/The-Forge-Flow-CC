@@ -1,7 +1,7 @@
 import { isOk } from "../../domain/result.js";
 import { ObservationSchema } from "../../domain/value-objects/observation.js";
 import { JsonlStoreAdapter } from "../../infrastructure/adapters/jsonl/jsonl-store.adapter.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const observeRecordSchema: CommandSchema = {
 	name: "observe:record",
@@ -34,7 +34,9 @@ export const observeRecordSchema: CommandSchema = {
 		},
 	],
 	optionalFlags: [],
-	examples: ['observe:record --ts "2024-01-01T00:00:00Z" --session sess-1 --tool Read --args \'{"path":"file.ts"}\' --project proj-1'],
+	examples: [
+		'observe:record --ts "2024-01-01T00:00:00Z" --session sess-1 --tool Read --args \'{"path":"file.ts"}\' --project proj-1',
+	],
 };
 
 export const observeRecordCmd = async (args: string[]): Promise<string> => {

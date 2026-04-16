@@ -2,7 +2,7 @@ import { generateState } from "../../application/sync/generate-state.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { withSyncLock } from "../with-sync-lock.js";
 
 export const syncStateSchema: CommandSchema = {

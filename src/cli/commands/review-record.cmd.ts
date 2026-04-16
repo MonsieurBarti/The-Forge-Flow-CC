@@ -2,7 +2,7 @@ import { recordReviewUseCase } from "../../application/review/record-review.js";
 import { isOk } from "../../domain/result.js";
 import { ReviewTypeSchema } from "../../domain/value-objects/review-record.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { parseFlags, type CommandSchema } from "../utils/flag-parser.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const reviewRecordSchema: CommandSchema = {
 	name: "review:record",
@@ -49,7 +49,13 @@ export const reviewRecordCmd = async (args: string[]): Promise<string> => {
 		return JSON.stringify(parsed);
 	}
 
-	const { "slice-id": sliceId, agent, verdict, type, "commit-sha": commitSha } = parsed.data as {
+	const {
+		"slice-id": sliceId,
+		agent,
+		verdict,
+		type,
+		"commit-sha": commitSha,
+	} = parsed.data as {
 		"slice-id": string;
 		agent: string;
 		verdict: string;
