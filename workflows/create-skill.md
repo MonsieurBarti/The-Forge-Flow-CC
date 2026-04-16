@@ -9,7 +9,7 @@ Draft new skill from pattern candidate ∨ user description.
 2. LOAD @skills/skill-authoring/SKILL.md → SPAWN subagent ("Draft New Skill" mode):
    - provide pattern evidence (∨ description) + existing skills as format examples
    - draft → `.tff/drafts/<skill-name>.md`
-3. VALIDATE: `tff-tools skills:validate '<json>'`
+3. VALIDATE: `tff-tools skills:validate --skill '<json>'`
    - fail → drafter fixes ∧ re-validates
 4. REVIEW: invoke Skill `plannotator-annotate` with arg `.tff/drafts/<skill-name>.md`
 5. HANDLE:

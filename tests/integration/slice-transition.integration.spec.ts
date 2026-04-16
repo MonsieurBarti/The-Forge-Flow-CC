@@ -135,7 +135,9 @@ describe("slice-transition integration", () => {
 			data: { slice: mockSlice },
 		});
 
-		const result = JSON.parse(await sliceTransitionCmd(["M01-S01", "researching"]));
+		const result = JSON.parse(
+			await sliceTransitionCmd(["--slice-id", "M01-S01", "--status", "researching"]),
+		);
 
 		expect(mockTransitionSliceUseCase).toHaveBeenCalled();
 		expect(result.ok).toBe(true);
@@ -158,7 +160,9 @@ describe("slice-transition integration", () => {
 			error: { code: "INVALID_TRANSITION", message: "Cannot transition" },
 		});
 
-		const result = JSON.parse(await sliceTransitionCmd(["M01-S01", "closed"]));
+		const result = JSON.parse(
+			await sliceTransitionCmd(["--slice-id", "M01-S01", "--status", "closed"]),
+		);
 
 		expect(result.ok).toBe(false);
 	});

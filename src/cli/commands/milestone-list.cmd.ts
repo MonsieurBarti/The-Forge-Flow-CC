@@ -1,8 +1,32 @@
 import { listMilestones } from "../../application/milestone/list-milestones.js";
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import type { CommandSchema } from "../utils/flag-parser.js";
 
-export const milestoneListCmd = async (_args: string[]): Promise<string> => {
+export const milestoneListSchema: CommandSchema = {
+	name: "milestone:list",
+	purpose: "List all milestones",
+	requiredFlags: [],
+	optionalFlags: [],
+	examples: ["milestone:list"],
+};
+
+export const milestoneListCmd = async (args: string[]): Promise<string> => {
+	// Check for --help flag
+	if (args.includes("--help")) {
+		return JSON.stringify({
+			ok: true,
+			data: {
+				name: milestoneListSchema.name,
+				purpose: milestoneListSchema.purpose,
+				syntax: milestoneListSchema.name,
+				requiredFlags: [],
+				optionalFlags: [],
+				examples: milestoneListSchema.examples,
+			},
+		});
+	}
+
 	const { milestoneStore } = createClosableStateStoresUnchecked();
 	const result = await listMilestones({ milestoneStore });
 	if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });

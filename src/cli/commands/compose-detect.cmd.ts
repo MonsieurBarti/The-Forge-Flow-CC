@@ -1,21 +1,42 @@
-import { detectClusters } from "../../application/compose/detect-clusters.js";
+import type { z } from "zod";
+import { type Cluster, detectClusters } from "../../application/compose/detect-clusters.js";
+import type { ObservationSchema } from "../../domain/value-objects/observation.js";
+import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
+
+type Observation = z.infer<typeof ObservationSchema>;
+
+export const composeDetectSchema: CommandSchema = {
+	name: "compose:detect",
+	purpose: "Detect clusters from observations",
+	requiredFlags: [
+		{
+			name: "observations",
+			type: "json",
+			description: "JSON array of observations",
+		},
+	],
+	optionalFlags: [
+		{
+			name: "options",
+			type: "json",
+			description: "JSON object with detection options",
+		},
+	],
+	examples: ['compose:detect --observations \'[{"tool":"Read"},{"tool":"Write"}]\''],
+};
 
 export const composeDetectCmd = async (args: string[]): Promise<string> => {
-	const input = args[0];
-	if (!input)
-		return JSON.stringify({
-			ok: false,
-			error: {
-				code: "INVALID_ARGS",
-				message: "Usage: compose:detect <observations-json> [options-json]",
-			},
-		});
+	const parsed = parseFlags(args, composeDetectSchema);
+	if (!parsed.ok) {
+		return JSON.stringify(parsed);
+	}
+
 	try {
-		const observations = JSON.parse(input);
-		const opts = args[1] ? JSON.parse(args[1]) : {};
-		const result = detectClusters(observations, opts);
+		const observations = parsed.data.observations as Observation[];
+		const opts = (parsed.data.options as Record<string, unknown>) ?? {};
+		const result: Cluster[] = detectClusters(observations, opts);
 		return JSON.stringify({ ok: true, data: result });
-	} catch {
-		return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: "Invalid JSON" } });
+	} catch (e) {
+		return JSON.stringify({ ok: false, error: { code: "INVALID_ARGS", message: String(e) } });
 	}
 };

@@ -27,7 +27,7 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
    | Stale claims | OK/X stale |
    | Worktrees | OK/X orphans |
    ```
-6. stale slices found → ask the user: "Close stale slices?" → yes → `tff-tools slice:close <id> --reason "PR already merged"`
+6. stale slices found → ask the user: "Close stale slices?" → yes → `tff-tools slice:close --slice-id <id> --reason "PR already merged"`
 7. other issues found → offer `/tff:sync` to reconcile
 
 8. NEXT: @references/next-steps.md

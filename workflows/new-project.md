@@ -26,7 +26,7 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 3. ASK user: project name (required), vision statement
    - Pre-filled from step 2 if onboarding occurred
-4. INIT: `tff-tools project:init "<name>" "<vision>"`
+4. INIT: `tff-tools project:init --name "<name>" --vision "<vision>"`
 5. SETTINGS: generate `.tff/settings.yaml` from @references/settings-template.md
 6. SUMMARY: show created files (PROJECT.md, settings.yaml)
    - suggest `/tff:new-milestone` to create the first milestone

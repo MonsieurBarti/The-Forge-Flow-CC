@@ -14,7 +14,7 @@ LOAD @skills/architecture-review/SKILL.md
    - Read relevant codebase areas
    - Check dependencies + integration points
    - Output → `.tff/milestones/<milestone>/slices/<slice-id>/RESEARCH.md`
-3. TRANSITION: `tff-tools slice:transition <id> planning`
+3. TRANSITION: `tff-tools slice:transition --slice-id <id> --status planning`
    CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ abort
   IF `ok` = true ∧ `warnings.length > 0`:
     ∀ warning ∈ warnings: display `⚠ <warning>` to user

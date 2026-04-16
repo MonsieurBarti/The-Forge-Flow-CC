@@ -3,6 +3,7 @@ import path from "node:path";
 import { generateReminder } from "../../application/session/generate-reminder.js";
 import { loadProjectSettings } from "../../domain/value-objects/project-settings.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import type { CommandSchema } from "../utils/flag-parser.js";
 
 /**
  * Check if reminders are disabled in settings.yaml.
@@ -31,7 +32,30 @@ function isProjectInitialized(): boolean {
 	return existsSync(tffDir);
 }
 
-export const sessionRemindCmd = async (_args: string[]): Promise<string> => {
+export const sessionRemindSchema: CommandSchema = {
+	name: "session:remind",
+	purpose: "Generate a reminder for the current session",
+	requiredFlags: [],
+	optionalFlags: [],
+	examples: ["session:remind"],
+};
+
+export const sessionRemindCmd = async (args: string[]): Promise<string> => {
+	// Check for --help flag
+	if (args.includes("--help")) {
+		return JSON.stringify({
+			ok: true,
+			data: {
+				name: sessionRemindSchema.name,
+				purpose: sessionRemindSchema.purpose,
+				syntax: sessionRemindSchema.name,
+				requiredFlags: [],
+				optionalFlags: [],
+				examples: sessionRemindSchema.examples,
+			},
+		});
+	}
+
 	// Fast path: check if reminders are disabled
 	if (areRemindersDisabled()) {
 		return JSON.stringify({

@@ -3,6 +3,7 @@ import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import { detectDirectEdit } from "../../application/guard/detect-direct-edit.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import type { CommandSchema } from "../utils/flag-parser.js";
 
 /**
  * Check if direct-edit guards are disabled in settings.yaml.
@@ -31,7 +32,30 @@ function isProjectInitialized(): boolean {
 	return existsSync(tffDir);
 }
 
-export const directEditGuardCmd = async (_args: string[]): Promise<string> => {
+export const directEditGuardSchema: CommandSchema = {
+	name: "direct-edit:guard",
+	purpose: "Check for direct edits without proper workflow",
+	requiredFlags: [],
+	optionalFlags: [],
+	examples: ["direct-edit:guard"],
+};
+
+export const directEditGuardCmd = async (args: string[]): Promise<string> => {
+	// Check for --help flag
+	if (args.includes("--help")) {
+		return JSON.stringify({
+			ok: true,
+			data: {
+				name: directEditGuardSchema.name,
+				purpose: directEditGuardSchema.purpose,
+				syntax: directEditGuardSchema.name,
+				requiredFlags: [],
+				optionalFlags: [],
+				examples: directEditGuardSchema.examples,
+			},
+		});
+	}
+
 	// Fast path: check if guards are disabled
 	if (areGuardsDisabled()) {
 		return JSON.stringify({

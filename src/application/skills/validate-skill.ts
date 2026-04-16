@@ -1,7 +1,7 @@
 import { createDomainError, type DomainError } from "../../domain/errors/domain-error.js";
 import { Err, Ok, type Result } from "../../domain/result.js";
 
-interface SkillInput {
+export interface SkillInput {
 	name: string;
 	description: string;
 	content?: string;
