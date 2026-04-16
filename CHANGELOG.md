@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-04-16
+
+### Added
+
+- **M002-S02 — Pattern Adoption from Superpowers/GSD:** Adopted agent/protocol patterns from superpowers framework
+  - **T01 — Brainstorming escalation:** Added explicit escalation rules (3+ failures → human review) and stronger HARD-GATE enforcement to brainstorming skill
+  - **T02 — Subagent dispatch rules:** Added explicit when-to-spawn vs when-NOT-to-spawn tables with context isolation tables to executing-plans skill
+  - **T03 — Skill LOAD convention:** Added `LOAD @skills/<name>/SKILL.md` pattern for skill composition to skill-authoring skill
+  - **T04 — Review calibration:** Added "only flag blocking issues" calibration guidance with anti-nitpicking principle to code-review-protocol skill
+  - **T06 — Result aggregation:** Added result aggregation rules for subagent coordination to executing-plans skill
+
+### Changed
+
+- Skills now use formal escalation pattern: 3+ failures → escalation task, never infinite retry
+- Context isolation now has explicit pass/exclude tables for subagent spawning
+- Review calibration focuses on blocking issues only, avoiding nitpicking
+
 ## [0.8.0] - 2026-04-05
 
 ### Added
