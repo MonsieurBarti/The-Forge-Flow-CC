@@ -1,14 +1,14 @@
 import type { Milestone } from "../../domain/entities/milestone.js";
-import { formatMilestoneNumber } from "../../domain/entities/milestone.js";
 import type { Project } from "../../domain/entities/project.js";
 import type { Slice } from "../../domain/entities/slice.js";
-import { formatSliceId, transitionSlice } from "../../domain/entities/slice.js";
+import { transitionSlice } from "../../domain/entities/slice.js";
 import type { Task } from "../../domain/entities/task.js";
 import { alreadyClaimedError } from "../../domain/errors/already-claimed.error.js";
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { createDomainError } from "../../domain/errors/domain-error.js";
 import { hasOpenChildrenError } from "../../domain/errors/has-open-children.error.js";
 import type { DomainEvent } from "../../domain/events/domain-event.js";
+import { milestoneBranchName } from "../../domain/helpers/branch-naming.js";
 import type { DatabaseInit } from "../../domain/ports/database-init.port.js";
 import type { DependencyStore } from "../../domain/ports/dependency-store.port.js";
 import type { MilestoneStore } from "../../domain/ports/milestone-store.port.js";
@@ -71,13 +71,17 @@ export class InMemoryStateAdapter
 
 	// MilestoneStore
 	createMilestone(props: MilestoneProps): Result<Milestone, DomainError> {
-		const id = formatMilestoneNumber(props.number);
+		// Use provided id or generate a new UUID
+		const id = props.id ?? crypto.randomUUID();
+		// Use provided branch or compute from UUID
+		const branch = props.branch ?? milestoneBranchName(id);
 		const milestone: Milestone = {
 			id,
 			projectId: "singleton",
 			number: props.number,
 			name: props.name,
 			status: "open",
+			branch,
 			createdAt: new Date(),
 		};
 		this.milestones.set(id, milestone);
@@ -122,7 +126,8 @@ export class InMemoryStateAdapter
 		if (!milestone) {
 			return Err(createDomainError("NOT_FOUND", `Milestone "${props.milestoneId}" not found`));
 		}
-		const id = formatSliceId(milestone.number, props.number);
+		// Use provided id or generate a new UUID
+		const id = props.id ?? crypto.randomUUID();
 		const slice: Slice = {
 			id,
 			milestoneId: props.milestoneId,
