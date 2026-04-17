@@ -17,22 +17,26 @@ type FullAdapter = TaskStore &
 export const runTaskStoreContractTests = (name: string, createAdapter: () => FullAdapter) => {
 	describe(`TaskStore contract [${name}]`, () => {
 		let store: FullAdapter;
+		let milestoneId: string;
+		let sliceId: string;
 
 		beforeEach(() => {
 			store = createAdapter();
 			store.init();
 			store.saveProject({ name: "Test Project" });
-			store.createMilestone({ number: 1, name: "M1" });
-			store.createSlice({ milestoneId: "M01", number: 1, title: "S01" });
+			const msResult = store.createMilestone({ number: 1, name: "M1" });
+			milestoneId = isOk(msResult) ? msResult.data.id : "M01";
+			const slResult = store.createSlice({ milestoneId, number: 1, title: "S01" });
+			sliceId = isOk(slResult) ? slResult.data.id : "M01-S01";
 		});
 
 		it("createTask returns task with id format {sliceId}-T{number}", () => {
-			const result = store.createTask({ sliceId: "M01-S01", number: 1, title: "First Task" });
+			const result = store.createTask({ sliceId, number: 1, title: "First Task" });
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
-				expect(result.data.id).toBe("M01-S01-T01");
+				expect(result.data.id).toBe(`${sliceId}-T01`);
 				expect(result.data.title).toBe("First Task");
-				expect(result.data.sliceId).toBe("M01-S01");
+				expect(result.data.sliceId).toBe(sliceId);
 				expect(result.data.number).toBe(1);
 				expect(result.data.status).toBe("open");
 			}
@@ -45,8 +49,8 @@ export const runTaskStoreContractTests = (name: string, createAdapter: () => Ful
 		});
 
 		it("getTask returns saved task", () => {
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "Task" });
-			const result = store.getTask("M01-S01-T01");
+			store.createTask({ sliceId, number: 1, title: "Task" });
+			const result = store.getTask(`${sliceId}-T01`);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).not.toBeNull();
@@ -55,17 +59,17 @@ export const runTaskStoreContractTests = (name: string, createAdapter: () => Ful
 		});
 
 		it("listTasks returns all tasks for a slice", () => {
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "T1" });
-			store.createTask({ sliceId: "M01-S01", number: 2, title: "T2" });
-			const result = store.listTasks("M01-S01");
+			store.createTask({ sliceId, number: 1, title: "T1" });
+			store.createTask({ sliceId, number: 2, title: "T2" });
+			const result = store.listTasks(sliceId);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) expect(result.data).toHaveLength(2);
 		});
 
 		it("updateTask updates title and description", () => {
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "Old" });
-			store.updateTask("M01-S01-T01", { title: "New", description: "Updated desc" });
-			const result = store.getTask("M01-S01-T01");
+			store.createTask({ sliceId, number: 1, title: "Old" });
+			store.updateTask(`${sliceId}-T01`, { title: "New", description: "Updated desc" });
+			const result = store.getTask(`${sliceId}-T01`);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data!.title).toBe("New");
@@ -74,10 +78,10 @@ export const runTaskStoreContractTests = (name: string, createAdapter: () => Ful
 		});
 
 		it("claimTask sets status=in_progress and claimedAt", () => {
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "Task" });
-			const claimResult = store.claimTask("M01-S01-T01");
+			store.createTask({ sliceId, number: 1, title: "Task" });
+			const claimResult = store.claimTask(`${sliceId}-T01`);
 			expect(isOk(claimResult)).toBe(true);
-			const result = store.getTask("M01-S01-T01");
+			const result = store.getTask(`${sliceId}-T01`);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data!.status).toBe("in_progress");
@@ -86,9 +90,9 @@ export const runTaskStoreContractTests = (name: string, createAdapter: () => Ful
 		});
 
 		it("claimTask on non-open task returns ALREADY_CLAIMED", () => {
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "Task" });
-			store.claimTask("M01-S01-T01"); // claim once
-			const result = store.claimTask("M01-S01-T01"); // claim again
+			store.createTask({ sliceId, number: 1, title: "Task" });
+			store.claimTask(`${sliceId}-T01`); // claim once
+			const result = store.claimTask(`${sliceId}-T01`); // claim again
 			expect(isErr(result)).toBe(true);
 			if (isErr(result)) {
 				expect(result.error.code).toBe("ALREADY_CLAIMED");
@@ -96,10 +100,10 @@ export const runTaskStoreContractTests = (name: string, createAdapter: () => Ful
 		});
 
 		it("closeTask sets status=closed and reason", () => {
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "Task" });
-			store.claimTask("M01-S01-T01");
-			store.closeTask("M01-S01-T01", "Done");
-			const result = store.getTask("M01-S01-T01");
+			store.createTask({ sliceId, number: 1, title: "Task" });
+			store.claimTask(`${sliceId}-T01`);
+			store.closeTask(`${sliceId}-T01`, "Done");
+			const result = store.getTask(`${sliceId}-T01`);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data!.status).toBe("closed");
@@ -108,50 +112,50 @@ export const runTaskStoreContractTests = (name: string, createAdapter: () => Ful
 		});
 
 		it("listReadyTasks: returns open tasks with no unresolved deps", () => {
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "Task A" });
-			const result = store.listReadyTasks("M01-S01");
+			store.createTask({ sliceId, number: 1, title: "Task A" });
+			const result = store.listReadyTasks(sliceId);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).toHaveLength(1);
-				expect(result.data[0].id).toBe("M01-S01-T01");
+				expect(result.data[0].id).toBe(`${sliceId}-T01`);
 			}
 		});
 
 		it("listReadyTasks: excludes tasks blocked by open deps", () => {
 			// T01 blocks T02 (T02 depends on T01, T01 is still open)
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "Blocker" });
-			store.createTask({ sliceId: "M01-S01", number: 2, title: "Blocked" });
+			store.createTask({ sliceId, number: 1, title: "Blocker" });
+			store.createTask({ sliceId, number: 2, title: "Blocked" });
 			// T02 depends on T01 — T01 blocks T02
-			store.addDependency("M01-S01-T02", "M01-S01-T01", "blocks");
-			const result = store.listReadyTasks("M01-S01");
+			store.addDependency(`${sliceId}-T02`, `${sliceId}-T01`, "blocks");
+			const result = store.listReadyTasks(sliceId);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				const ids = result.data.map((t) => t.id);
-				expect(ids).toContain("M01-S01-T01");
-				expect(ids).not.toContain("M01-S01-T02");
+				expect(ids).toContain(`${sliceId}-T01`);
+				expect(ids).not.toContain(`${sliceId}-T02`);
 			}
 		});
 
 		it("listReadyTasks: includes tasks whose deps are all closed", () => {
 			// T01 blocks T02, but T01 is closed → T02 should be ready
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "Done Task" });
-			store.createTask({ sliceId: "M01-S01", number: 2, title: "Now Ready" });
-			store.addDependency("M01-S01-T02", "M01-S01-T01", "blocks");
+			store.createTask({ sliceId, number: 1, title: "Done Task" });
+			store.createTask({ sliceId, number: 2, title: "Now Ready" });
+			store.addDependency(`${sliceId}-T02`, `${sliceId}-T01`, "blocks");
 			// Close T01
-			store.claimTask("M01-S01-T01");
-			store.closeTask("M01-S01-T01", "done");
-			const result = store.listReadyTasks("M01-S01");
+			store.claimTask(`${sliceId}-T01`);
+			store.closeTask(`${sliceId}-T01`, "done");
+			const result = store.listReadyTasks(sliceId);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				const ids = result.data.map((t) => t.id);
 				// T01 is closed so not in open tasks, T02 should appear since its dep is closed
-				expect(ids).toContain("M01-S01-T02");
+				expect(ids).toContain(`${sliceId}-T02`);
 			}
 		});
 
 		it("listStaleClaims: returns tasks claimed before TTL cutoff", () => {
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "Stale Task" });
-			store.claimTask("M01-S01-T01");
+			store.createTask({ sliceId, number: 1, title: "Stale Task" });
+			store.claimTask(`${sliceId}-T01`);
 			// With a very large TTL (999999 minutes), nothing should be stale
 			const noStale = store.listStaleClaims(999999);
 			expect(isOk(noStale)).toBe(true);
@@ -163,7 +167,7 @@ export const runTaskStoreContractTests = (name: string, createAdapter: () => Ful
 			if (isOk(allStale)) {
 				expect(allStale.data.length).toBeGreaterThanOrEqual(1);
 				const ids = allStale.data.map((t) => t.id);
-				expect(ids).toContain("M01-S01-T01");
+				expect(ids).toContain(`${sliceId}-T01`);
 			}
 		});
 	});

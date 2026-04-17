@@ -19,13 +19,13 @@ describe("schema", () => {
 
 	it("runs migrations on fresh db", () => {
 		runMigrations(db);
-		expect(getCurrentVersion(db)).toBe(2);
+		expect(getCurrentVersion(db)).toBe(3);
 	});
 
 	it("is idempotent", () => {
 		runMigrations(db);
 		runMigrations(db);
-		expect(getCurrentVersion(db)).toBe(2);
+		expect(getCurrentVersion(db)).toBe(3);
 	});
 
 	it("enables WAL mode", () => {
@@ -85,7 +85,7 @@ describe("schema", () => {
 		runMigrations(db);
 		db.prepare("INSERT INTO project (id, name) VALUES ('singleton', 'P')").run();
 		db.prepare(
-			"INSERT INTO milestone (id, project_id, number, name) VALUES ('M01', 'singleton', 1, 'M')",
+			"INSERT INTO milestone (id, project_id, number, name, branch) VALUES ('M01', 'singleton', 1, 'M', 'milestone/test')",
 		).run();
 		db.prepare(
 			"INSERT INTO slice (id, milestone_id, number, title) VALUES ('M01-S01', 'M01', 1, 'S')",
@@ -107,7 +107,7 @@ describe("schema", () => {
 		runMigrations(db);
 		db.prepare("INSERT INTO project (id, name) VALUES ('singleton', 'P')").run();
 		db.prepare(
-			"INSERT INTO milestone (id, project_id, number, name) VALUES ('M01', 'singleton', 1, 'M')",
+			"INSERT INTO milestone (id, project_id, number, name, branch) VALUES ('M01', 'singleton', 1, 'M', 'milestone/test')",
 		).run();
 		db.prepare(
 			"INSERT INTO slice (id, milestone_id, number, title) VALUES ('M01-S01', 'M01', 1, 'S')",

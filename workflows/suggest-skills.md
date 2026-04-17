@@ -8,7 +8,7 @@ Show ranked pattern candidates with human-readable summaries.
 `/tff:detect-patterns` run (candidates.jsonl ∃) — if ∄ → suggest detect first
 
 ## Steps
-1. LOAD `.tff/observations/candidates.jsonl`
+1. LOAD `.tff-cc/observations/candidates.jsonl`
 2. SUMMARIZE: ∀ candidate, LOAD @skills/skill-authoring/SKILL.md → SPAWN subagent (summarize mode) → one-line summary
 3. DISPLAY numbered list:
    ```

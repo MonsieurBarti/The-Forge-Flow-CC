@@ -1,12 +1,12 @@
 // Result
 
 export type { Milestone } from "./entities/milestone.js";
-export { createMilestone, formatMilestoneNumber, MilestoneSchema } from "./entities/milestone.js";
+export { createMilestone, MilestoneSchema, milestoneLabel } from "./entities/milestone.js";
 export type { Project } from "./entities/project.js";
 // Entities
 export { createProject, ProjectSchema } from "./entities/project.js";
 export type { Slice } from "./entities/slice.js";
-export { createSlice, formatSliceId, SliceSchema, transitionSlice } from "./entities/slice.js";
+export { createSlice, SliceSchema, sliceLabel, transitionSlice } from "./entities/slice.js";
 export type { Task, TaskStatus } from "./entities/task.js";
 export {
 	completeTask,

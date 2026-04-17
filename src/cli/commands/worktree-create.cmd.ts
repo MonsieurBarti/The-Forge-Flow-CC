@@ -1,8 +1,8 @@
-import path from "node:path";
 import { createWorktreeUseCase } from "../../application/worktree/create-worktree.js";
 import { isOk } from "../../domain/result.js";
-import { copyTffToWorktree } from "../../infrastructure/adapters/git/copy-tff-to-worktree.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
+import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { createTffSymlink, getProjectId } from "../../infrastructure/home-directory.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const worktreeCreateSchema: CommandSchema = {
@@ -12,12 +12,15 @@ export const worktreeCreateSchema: CommandSchema = {
 		{
 			name: "slice-id",
 			type: "string",
-			description: "Slice ID to create worktree for",
-			pattern: "^M\\d+-S\\d+$",
+			description: "Slice ID to create worktree for (UUID or label format)",
+			pattern: "^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|M\\d+-S\\d+)$",
 		},
 	],
 	optionalFlags: [],
-	examples: ["worktree:create --slice-id M01-S01"],
+	examples: [
+		"worktree:create --slice-id M01-S01",
+		"worktree:create --slice-id 12345678-abcd-ef01-2345-67890abcdef0",
+	],
 };
 
 export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
@@ -30,14 +33,40 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
 
 	const cwd = process.cwd();
 	const gitOps = new GitCliAdapter(cwd);
-	// Derive milestone branch from slice ID (e.g., M01-S01 → milestone/M01)
-	const milestoneMatch = sliceId.match(/^(M\d+)/);
-	const startPoint = milestoneMatch ? `milestone/${milestoneMatch[1]}` : undefined;
-	const result = await createWorktreeUseCase({ sliceId, startPoint }, { gitOps });
+
+	// Fetch slice and milestone from store
+	const { sliceStore, milestoneStore } = createClosableStateStoresUnchecked();
+	const sliceResult = sliceStore.getSlice(sliceId);
+	if (!isOk(sliceResult) || !sliceResult.data) {
+		return JSON.stringify({
+			ok: false,
+			error: { code: "NOT_FOUND", message: `Slice ${sliceId} not found` },
+		});
+	}
+	const slice = sliceResult.data;
+
+	const milestoneResult = milestoneStore.getMilestone(slice.milestoneId);
+	if (!isOk(milestoneResult) || !milestoneResult.data) {
+		return JSON.stringify({
+			ok: false,
+			error: { code: "NOT_FOUND", message: `Milestone ${slice.milestoneId} not found` },
+		});
+	}
+	const milestone = milestoneResult.data;
+
+	// Start from the milestone branch
+	const startPoint = milestone.branch;
+
+	const result = await createWorktreeUseCase(
+		{ slice, milestoneNumber: milestone.number, startPoint },
+		{ gitOps },
+	);
 	if (isOk(result)) {
-		const tffDir = path.join(cwd, ".tff");
-		const worktreeAbsPath = path.resolve(cwd, result.data.worktreePath);
-		copyTffToWorktree(tffDir, worktreeAbsPath);
+		// Create .tff-cc symlink in the worktree pointing to the project home directory
+		const projectId = getProjectId(cwd);
+		const worktreePath = result.data.worktreePath;
+		createTffSymlink(worktreePath, projectId);
+
 		return JSON.stringify({ ok: true, data: result.data });
 	}
 	return JSON.stringify({ ok: false, error: result.error });

@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -8,19 +8,48 @@ import { sliceCreateCmd } from "../../../../src/cli/commands/slice-create.cmd.js
 import { taskClaimCmd } from "../../../../src/cli/commands/task-claim.cmd.js";
 import { createClosableStateStores } from "../../../../src/infrastructure/adapters/sqlite/create-state-stores.js";
 
+// Git environment variables that can leak between tests and main repo
+const GIT_ENV_VARS = [
+	"GIT_DIR",
+	"GIT_WORK_TREE",
+	"GIT_INDEX_FILE",
+	"GIT_OBJECT_DIRECTORY",
+	"GIT_ALTERNATE_OBJECT_DIRECTORIES",
+	"GIT_CONFIG_GLOBAL",
+	"GIT_CONFIG_SYSTEM",
+];
+
 describe("task:claim — journal integration", () => {
 	let tmpDir: string;
 	let homeDir: string;
 	let originalCwd: string;
 	let originalTffCcHome: string | undefined;
+	let originalGitEnv: Record<string, string | undefined>;
+	let sliceId: string;
 
 	beforeEach(async () => {
 		tmpDir = mkdtempSync(path.join(tmpdir(), "tff-claim-test-"));
 		homeDir = mkdtempSync(path.join(tmpdir(), "tff-home-"));
 		originalCwd = process.cwd();
 		originalTffCcHome = process.env.TFF_CC_HOME;
+
+		// Save and clear git environment variables to prevent leakage
+		originalGitEnv = {};
+		for (const key of GIT_ENV_VARS) {
+			originalGitEnv[key] = process.env[key];
+			delete process.env[key];
+		}
+
 		process.env.TFF_CC_HOME = homeDir;
 		process.chdir(tmpDir);
+
+		// Initialize minimal git repo (required by milestone/slice creation)
+		const gitDir = path.join(tmpDir, ".git");
+		mkdirSync(gitDir, { recursive: true });
+		mkdirSync(path.join(gitDir, "refs", "heads"), { recursive: true });
+		mkdirSync(path.join(gitDir, "objects"), { recursive: true });
+		writeFileSync(path.join(gitDir, "HEAD"), "ref: refs/heads/main\n");
+		writeFileSync(path.join(gitDir, "config"), "[core]\n\trepositoryformatversion = 0\n");
 
 		// Initialize project
 		await projectInitCmd(["--name", "test-project", "--vision", "A test project"]);
@@ -32,11 +61,15 @@ describe("task:claim — journal integration", () => {
 		// Create slice (auto-numbered as S01 under M01)
 		const sliceResult = JSON.parse(await sliceCreateCmd(["--title", "Test Slice"]));
 		expect(sliceResult.ok).toBe(true);
+		// Get the actual slice ID (UUID)
+		if (sliceResult.ok) {
+			sliceId = sliceResult.data?.slice?.id || "M01-S01";
+		}
 
 		// Create task directly via store (no CLI command for task creation)
 		const stores = createClosableStateStores();
 		const taskResult = stores.taskStore.createTask({
-			sliceId: "M01-S01",
+			sliceId,
 			number: 1,
 			title: "Test Task",
 		});
@@ -46,11 +79,23 @@ describe("task:claim — journal integration", () => {
 
 	afterEach(() => {
 		process.chdir(originalCwd);
+
+		// Restore TFF_CC_HOME
 		if (originalTffCcHome === undefined) {
 			delete process.env.TFF_CC_HOME;
 		} else {
 			process.env.TFF_CC_HOME = originalTffCcHome;
 		}
+
+		// Restore git environment variables
+		for (const key of GIT_ENV_VARS) {
+			if (originalGitEnv[key] === undefined) {
+				delete process.env[key];
+			} else {
+				process.env[key] = originalGitEnv[key];
+			}
+		}
+
 		rmSync(tmpDir, { recursive: true, force: true });
 		rmSync(homeDir, { recursive: true, force: true });
 	});
@@ -59,11 +104,12 @@ describe("task:claim — journal integration", () => {
 		// Read project ID for journal path
 		const projectIdPath = path.join(tmpDir, ".tff-project-id");
 		const projectId = readFileSync(projectIdPath, "utf-8").trim();
-		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
+		// Journal filename uses slice UUID, not label
+		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);
 
 		// Claim the task
 		const result = JSON.parse(
-			await taskClaimCmd(["--task-id", "M01-S01-T01", "--claimed-by", "test-agent"]),
+			await taskClaimCmd(["--task-id", `${sliceId}-T01`, "--claimed-by", "test-agent"]),
 		);
 		expect(result.ok).toBe(true);
 
@@ -78,8 +124,8 @@ describe("task:claim — journal integration", () => {
 		expect(entries).toHaveLength(1);
 		expect(entries[0]).toMatchObject({
 			type: "task-started",
-			sliceId: "M01-S01",
-			taskId: "M01-S01-T01",
+			sliceId,
+			taskId: `${sliceId}-T01`,
 			waveIndex: 0,
 			agentIdentity: "test-agent",
 		});
@@ -91,10 +137,11 @@ describe("task:claim — journal integration", () => {
 		// Read project ID for journal path
 		const projectIdPath = path.join(tmpDir, ".tff-project-id");
 		const projectId = readFileSync(projectIdPath, "utf-8").trim();
-		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
+		// Journal filename uses slice UUID, not label
+		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);
 
 		// Claim without specifying agent
-		const result = JSON.parse(await taskClaimCmd(["--task-id", "M01-S01-T01"]));
+		const result = JSON.parse(await taskClaimCmd(["--task-id", `${sliceId}-T01`]));
 		expect(result.ok).toBe(true);
 
 		const journalContent = readFileSync(journalPath, "utf-8");
@@ -105,7 +152,7 @@ describe("task:claim — journal integration", () => {
 
 	it("fails fast when task does not exist", async () => {
 		const result = JSON.parse(
-			await taskClaimCmd(["--task-id", "M01-S01-T99", "--claimed-by", "test-agent"]),
+			await taskClaimCmd(["--task-id", `${sliceId}-T99`, "--claimed-by", "test-agent"]),
 		);
 
 		expect(result.ok).toBe(false);
@@ -123,7 +170,7 @@ describe("task:claim — journal integration", () => {
 		// Create another task with specific wave
 		const stores = createClosableStateStores();
 		const taskResult = stores.taskStore.createTask({
-			sliceId: "M01-S01",
+			sliceId,
 			number: 2,
 			title: "Wave Task",
 			wave: 2,
@@ -134,11 +181,12 @@ describe("task:claim — journal integration", () => {
 		// Read project ID for journal path
 		const projectIdPath = path.join(tmpDir, ".tff-project-id");
 		const projectId = readFileSync(projectIdPath, "utf-8").trim();
-		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
+		// Journal filename uses slice UUID, not label
+		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);
 
 		// Claim the task with wave
 		const result = JSON.parse(
-			await taskClaimCmd(["--task-id", "M01-S01-T02", "--claimed-by", "wave-agent"]),
+			await taskClaimCmd(["--task-id", `${sliceId}-T02`, "--claimed-by", "wave-agent"]),
 		);
 		expect(result.ok).toBe(true);
 
@@ -150,7 +198,7 @@ describe("task:claim — journal integration", () => {
 
 		expect(entries[0]).toMatchObject({
 			type: "task-started",
-			taskId: "M01-S01-T02",
+			taskId: `${sliceId}-T02`,
 			waveIndex: 2,
 			agentIdentity: "wave-agent",
 		});

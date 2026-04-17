@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -9,19 +9,49 @@ import { taskClaimCmd } from "../../../../src/cli/commands/task-claim.cmd.js";
 import { taskCloseCmd } from "../../../../src/cli/commands/task-close.cmd.js";
 import { createClosableStateStores } from "../../../../src/infrastructure/adapters/sqlite/create-state-stores.js";
 
+// Git environment variables that can leak between tests and main repo
+const GIT_ENV_VARS = [
+	"GIT_DIR",
+	"GIT_WORK_TREE",
+	"GIT_INDEX_FILE",
+	"GIT_OBJECT_DIRECTORY",
+	"GIT_ALTERNATE_OBJECT_DIRECTORIES",
+	"GIT_CONFIG_GLOBAL",
+	"GIT_CONFIG_SYSTEM",
+];
+
 describe("task:close — journal integration", () => {
 	let tmpDir: string;
 	let homeDir: string;
 	let originalCwd: string;
 	let originalTffCcHome: string | undefined;
+	let originalGitEnv: Record<string, string | undefined>;
+	let sliceId: string;
+	let taskId: string;
 
 	beforeEach(async () => {
 		tmpDir = mkdtempSync(path.join(tmpdir(), "tff-close-test-"));
 		homeDir = mkdtempSync(path.join(tmpdir(), "tff-home-"));
 		originalCwd = process.cwd();
 		originalTffCcHome = process.env.TFF_CC_HOME;
+
+		// Save and clear git environment variables to prevent leakage
+		originalGitEnv = {};
+		for (const key of GIT_ENV_VARS) {
+			originalGitEnv[key] = process.env[key];
+			delete process.env[key];
+		}
+
 		process.env.TFF_CC_HOME = homeDir;
 		process.chdir(tmpDir);
+
+		// Initialize minimal git repo (required by milestone/slice creation)
+		const gitDir = path.join(tmpDir, ".git");
+		mkdirSync(gitDir, { recursive: true });
+		mkdirSync(path.join(gitDir, "refs", "heads"), { recursive: true });
+		mkdirSync(path.join(gitDir, "objects"), { recursive: true });
+		writeFileSync(path.join(gitDir, "HEAD"), "ref: refs/heads/main\n");
+		writeFileSync(path.join(gitDir, "config"), "[core]\n\trepositoryformatversion = 0\n");
 
 		// Initialize project
 		await projectInitCmd(["--name", "test-project", "--vision", "A test project"]);
@@ -33,11 +63,16 @@ describe("task:close — journal integration", () => {
 		// Create slice (auto-numbered as S01 under M01)
 		const sliceResult = JSON.parse(await sliceCreateCmd(["--title", "Test Slice"]));
 		expect(sliceResult.ok).toBe(true);
+		// Get the actual slice ID (UUID)
+		if (sliceResult.ok) {
+			sliceId = sliceResult.data?.slice?.id || "M01-S01";
+		}
+		taskId = `${sliceId}-T01`;
 
 		// Create task directly via store
 		const stores = createClosableStateStores();
 		const taskResult = stores.taskStore.createTask({
-			sliceId: "M01-S01",
+			sliceId,
 			number: 1,
 			title: "Test Task",
 		});
@@ -46,32 +81,44 @@ describe("task:close — journal integration", () => {
 
 		// Claim the task first (required before closing)
 		const claimResult = JSON.parse(
-			await taskClaimCmd(["--task-id", "M01-S01-T01", "--claimed-by", "test-agent"]),
+			await taskClaimCmd(["--task-id", taskId, "--claimed-by", "test-agent"]),
 		);
 		expect(claimResult.ok).toBe(true);
 	});
 
 	afterEach(() => {
 		process.chdir(originalCwd);
+
+		// Restore TFF_CC_HOME
 		if (originalTffCcHome === undefined) {
 			delete process.env.TFF_CC_HOME;
 		} else {
 			process.env.TFF_CC_HOME = originalTffCcHome;
 		}
+
+		// Restore git environment variables
+		for (const key of GIT_ENV_VARS) {
+			if (originalGitEnv[key] === undefined) {
+				delete process.env[key];
+			} else {
+				process.env[key] = originalGitEnv[key];
+			}
+		}
+
 		rmSync(tmpDir, { recursive: true, force: true });
 		rmSync(homeDir, { recursive: true, force: true });
 	});
 
 	it("writes task-completed journal entry before closing task", async () => {
 		// Journal is now in home directory under project ID
-		const _projectId = path.basename(tmpDir); // This won't work - need actual project ID
 		// Read project ID from .tff-project-id
 		const projectIdPath = path.join(tmpDir, ".tff-project-id");
-		const projectId2 = readFileSync(projectIdPath, "utf-8").trim();
-		const journalPath = path.join(homeDir, projectId2, "journal", "M01-S01.jsonl");
+		const projectId = readFileSync(projectIdPath, "utf-8").trim();
+		// Journal filename uses slice UUID, not label
+		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);
 
 		// Close the task
-		const result = JSON.parse(await taskCloseCmd(["--task-id", "M01-S01-T01"]));
+		const result = JSON.parse(await taskCloseCmd(["--task-id", taskId]));
 		expect(result.ok).toBe(true);
 
 		// Verify journal file exists and contains both entries
@@ -87,15 +134,15 @@ describe("task:close — journal integration", () => {
 		// First entry should be task-started from beforeEach
 		expect(entries[0]).toMatchObject({
 			type: "task-started",
-			sliceId: "M01-S01",
-			taskId: "M01-S01-T01",
+			sliceId,
+			taskId,
 		});
 
 		// Second entry should be task-completed
 		expect(entries[1]).toMatchObject({
 			type: "task-completed",
-			sliceId: "M01-S01",
-			taskId: "M01-S01-T01",
+			sliceId,
+			taskId,
 			waveIndex: 0,
 			durationMs: 0,
 		});
@@ -106,20 +153,20 @@ describe("task:close — journal integration", () => {
 	it("accepts optional reason parameter", async () => {
 		// Close with reason
 		const result = JSON.parse(
-			await taskCloseCmd(["--task-id", "M01-S01-T01", "--reason", "Completed successfully"]),
+			await taskCloseCmd(["--task-id", taskId, "--reason", "Completed successfully"]),
 		);
 		expect(result.ok).toBe(true);
 
 		// Task state should reflect the close operation
 		const stores = createClosableStateStores();
-		const task = stores.taskStore.getTask("M01-S01-T01");
+		const task = stores.taskStore.getTask(taskId);
 		stores.close();
 
 		expect(task.data?.status).toBe("closed");
 	});
 
 	it("fails fast when task does not exist", async () => {
-		const result = JSON.parse(await taskCloseCmd(["--task-id", "M01-S01-T99"]));
+		const result = JSON.parse(await taskCloseCmd(["--task-id", `${sliceId}-T99`]));
 
 		expect(result.ok).toBe(false);
 		expect(result.error.code).toBe("TASK_NOT_FOUND");
@@ -136,27 +183,29 @@ describe("task:close — journal integration", () => {
 		// Create and claim another task with specific wave
 		const stores = createClosableStateStores();
 		const taskResult = stores.taskStore.createTask({
-			sliceId: "M01-S01",
+			sliceId,
 			number: 2,
 			title: "Wave Task",
 			wave: 3,
 		});
 		expect(taskResult.ok).toBe(true);
 		stores.close();
+		const task2Id = `${sliceId}-T02`;
 
 		// Claim the task first
 		const claimResult = JSON.parse(
-			await taskClaimCmd(["--task-id", "M01-S01-T02", "--claimed-by", "wave-agent"]),
+			await taskClaimCmd(["--task-id", task2Id, "--claimed-by", "wave-agent"]),
 		);
 		expect(claimResult.ok).toBe(true);
 
 		// Read project ID for journal path
 		const projectIdPath = path.join(tmpDir, ".tff-project-id");
 		const projectId = readFileSync(projectIdPath, "utf-8").trim();
-		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
+		// Journal filename uses slice UUID, not label
+		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);
 
 		// Close the task with wave
-		const result = JSON.parse(await taskCloseCmd(["--task-id", "M01-S01-T02"]));
+		const result = JSON.parse(await taskCloseCmd(["--task-id", task2Id]));
 		expect(result.ok).toBe(true);
 
 		const journalContent = readFileSync(journalPath, "utf-8");
@@ -166,21 +215,20 @@ describe("task:close — journal integration", () => {
 			.map((line) => JSON.parse(line));
 
 		// Find the task-completed entry for T02
-		const completedEntry = entries.find(
-			(e) => e.type === "task-completed" && e.taskId === "M01-S01-T02",
-		);
+		const completedEntry = entries.find((e) => e.type === "task-completed" && e.taskId === task2Id);
 		expect(completedEntry).toBeDefined();
-		expect(completedEntry.waveIndex).toBe(3);
+		expect(completedEntry!.waveIndex).toBe(3);
 	});
 
 	it("increments sequence number for each journal entry", async () => {
 		// Read project ID for journal path
 		const projectIdPath = path.join(tmpDir, ".tff-project-id");
 		const projectId = readFileSync(projectIdPath, "utf-8").trim();
-		const journalPath = path.join(homeDir, projectId, "journal", "M01-S01.jsonl");
+		// Journal filename uses slice UUID, not label
+		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);
 
 		// Close the task (which adds task-completed after task-started)
-		const result = JSON.parse(await taskCloseCmd(["--task-id", "M01-S01-T01"]));
+		const result = JSON.parse(await taskCloseCmd(["--task-id", taskId]));
 		expect(result.ok).toBe(true);
 
 		const journalContent = readFileSync(journalPath, "utf-8");

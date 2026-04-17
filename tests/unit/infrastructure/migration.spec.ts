@@ -40,29 +40,29 @@ describe("T17: Auto-migration logic", () => {
 	});
 
 	describe("detectLegacyPattern", () => {
-		it("should detect .tff/ as real directory (legacy)", async () => {
+		it("should detect .tff-cc/ as real directory (legacy)", async () => {
 			process.env.TFF_CC_HOME = homeDir;
-			mkdirSync(join(tempDir, ".tff"), { recursive: true });
-			writeFileSync(join(tempDir, ".tff", "state.db"), "fake db");
+			mkdirSync(join(tempDir, ".tff-cc"), { recursive: true });
+			writeFileSync(join(tempDir, ".tff-cc", "state.db"), "fake db");
 
 			const { detectLegacyPattern } = await import("../../../src/infrastructure/migration.js");
 			expect(detectLegacyPattern(tempDir)).toBe(true);
 		});
 
-		it("should NOT detect .tff/ as legacy if it's a symlink", async () => {
+		it("should NOT detect .tff-cc/ as legacy if it's a symlink", async () => {
 			process.env.TFF_CC_HOME = homeDir;
 			const projectId = "test-project";
 			mkdirSync(join(homeDir, projectId), { recursive: true });
 
 			// Create symlink
 			const { symlinkSync } = await import("node:fs");
-			symlinkSync(join(homeDir, projectId), join(tempDir, ".tff"));
+			symlinkSync(join(homeDir, projectId), join(tempDir, ".tff-cc"));
 
 			const { detectLegacyPattern } = await import("../../../src/infrastructure/migration.js");
 			expect(detectLegacyPattern(tempDir)).toBe(false);
 		});
 
-		it("should NOT detect legacy if .tff/ doesn't exist", async () => {
+		it("should NOT detect legacy if .tff-cc/ doesn't exist", async () => {
 			process.env.TFF_CC_HOME = homeDir;
 
 			const { detectLegacyPattern } = await import("../../../src/infrastructure/migration.js");
@@ -71,15 +71,15 @@ describe("T17: Auto-migration logic", () => {
 	});
 
 	describe("runMigrationIfNeeded", () => {
-		it("should migrate .tff/ contents to home directory", async () => {
+		it("should migrate .tff-cc/ contents to home directory", async () => {
 			process.env.TFF_CC_HOME = homeDir;
 
 			// Create legacy structure
-			mkdirSync(join(tempDir, ".tff", "milestones", "M01"), { recursive: true });
-			mkdirSync(join(tempDir, ".tff", "journal"), { recursive: true });
-			writeFileSync(join(tempDir, ".tff", "state.db"), "fake db");
-			writeFileSync(join(tempDir, ".tff", "PROJECT.md"), "# Test Project");
-			writeFileSync(join(tempDir, ".tff", "journal", "M01-S01.jsonl"), '{"type":"test"}\n');
+			mkdirSync(join(tempDir, ".tff-cc", "milestones", "M01"), { recursive: true });
+			mkdirSync(join(tempDir, ".tff-cc", "journal"), { recursive: true });
+			writeFileSync(join(tempDir, ".tff-cc", "state.db"), "fake db");
+			writeFileSync(join(tempDir, ".tff-cc", "PROJECT.md"), "# Test Project");
+			writeFileSync(join(tempDir, ".tff-cc", "journal", "M01-S01.jsonl"), '{"type":"test"}\n');
 
 			const { runMigrationIfNeeded } = await import("../../../src/infrastructure/migration.js");
 			runMigrationIfNeeded(tempDir);
@@ -94,12 +94,12 @@ describe("T17: Auto-migration logic", () => {
 			expect(existsSync(join(projectHome, "PROJECT.md"))).toBe(true);
 			expect(existsSync(join(projectHome, "journal", "M01-S01.jsonl"))).toBe(true);
 
-			// Verify .tff/ is now a symlink
-			const stats = lstatSync(join(tempDir, ".tff"));
+			// Verify .tff-cc/ is now a symlink
+			const stats = lstatSync(join(tempDir, ".tff-cc"));
 			expect(stats.isSymbolicLink()).toBe(true);
 		});
 
-		it("should not migrate if .tff/ doesn't exist", async () => {
+		it("should not migrate if .tff-cc/ doesn't exist", async () => {
 			process.env.TFF_CC_HOME = homeDir;
 
 			const { runMigrationIfNeeded } = await import("../../../src/infrastructure/migration.js");
@@ -109,7 +109,7 @@ describe("T17: Auto-migration logic", () => {
 			expect(existsSync(join(tempDir, ".tff-project-id"))).toBe(false);
 		});
 
-		it("should not migrate if .tff/ is already a symlink", async () => {
+		it("should not migrate if .tff-cc/ is already a symlink", async () => {
 			process.env.TFF_CC_HOME = homeDir;
 
 			// Create home structure with valid UUID
@@ -120,7 +120,7 @@ describe("T17: Auto-migration logic", () => {
 
 			// Create symlink
 			const { symlinkSync } = await import("node:fs");
-			symlinkSync(join(homeDir, projectId), join(tempDir, ".tff"));
+			symlinkSync(join(homeDir, projectId), join(tempDir, ".tff-cc"));
 
 			const { runMigrationIfNeeded } = await import("../../../src/infrastructure/migration.js");
 			runMigrationIfNeeded(tempDir);
@@ -133,9 +133,9 @@ describe("T17: Auto-migration logic", () => {
 			process.env.TFF_CC_HOME = homeDir;
 
 			// Create legacy structure
-			mkdirSync(join(tempDir, ".tff", "milestones"), { recursive: true });
-			writeFileSync(join(tempDir, ".tff", "state.db"), "fake db");
-			writeFileSync(join(tempDir, ".tff", "PROJECT.md"), "# Test");
+			mkdirSync(join(tempDir, ".tff-cc", "milestones"), { recursive: true });
+			writeFileSync(join(tempDir, ".tff-cc", "state.db"), "fake db");
+			writeFileSync(join(tempDir, ".tff-cc", "PROJECT.md"), "# Test");
 
 			// Create a blocker that will prevent symlink creation
 			// We can't easily force symlinkSync to fail, so we skip this test
@@ -147,7 +147,7 @@ describe("T17: Auto-migration logic", () => {
 			runMigrationIfNeeded(tempDir);
 
 			// Verify symlink was created
-			const stats = lstatSync(join(tempDir, ".tff"));
+			const stats = lstatSync(join(tempDir, ".tff-cc"));
 			expect(stats.isSymbolicLink()).toBe(true);
 		});
 	});

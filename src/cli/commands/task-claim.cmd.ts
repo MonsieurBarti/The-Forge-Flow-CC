@@ -11,7 +11,7 @@ export const taskClaimSchema: CommandSchema = {
 			name: "task-id",
 			type: "string",
 			description: "Task ID to claim",
-			pattern: "^M\\d+-S\\d+-T\\d+$",
+			pattern: "^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|M\\d+-S\\d+)-T\\d+$",
 		},
 	],
 	optionalFlags: [
@@ -21,7 +21,10 @@ export const taskClaimSchema: CommandSchema = {
 			description: "Agent identity claiming the task",
 		},
 	],
-	examples: ["task:claim --task-id T01", "task:claim --task-id T01 --claimed-by executor"],
+	examples: [
+		"task:claim --task-id M01-S01-T01",
+		"task:claim --task-id 12345678-abcd-ef01-2345-67890abcdef0-T01 --claimed-by executor",
+	],
 };
 
 export const taskClaimCmd = async (args: string[]): Promise<string> => {

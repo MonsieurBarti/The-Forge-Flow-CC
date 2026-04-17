@@ -8,7 +8,7 @@ Detect skill co-activation clusters → propose bundles ∨ agents.
 observation enabled ∧ multiple skills ∈ `skills/`
 
 ## Settings
-Read `.tff/settings.yaml` → `auto-learn.clustering`.
+Read `.tff-cc/settings.yaml` → `auto-learn.clustering`.
 Pass: `tff-tools compose:detect --min-sessions 3 --min-patterns 2 --max-distance 0.3`
 
 ## Steps
@@ -22,8 +22,8 @@ Pass: `tff-tools compose:detect --min-sessions 3 --min-patterns 2 --max-distance
    ```
 3. LOAD @skills/skill-authoring/SKILL.md → SPAWN subagent ("Compose Bundle" mode) for selected cluster:
    - provide cluster skills + co-activation rate → decides bundle vs agent
-   - draft → `.tff/drafts/<name>.md`
-4. REVIEW: invoke Skill `plannotator-annotate` with arg `.tff/drafts/<name>.md`
+   - draft → `.tff-cc/drafts/<name>.md`
+4. REVIEW: invoke Skill `plannotator-annotate` with arg `.tff-cc/drafts/<name>.md`
 5. HANDLE:
    - approved bundle → `skills/<name>.md`
    - approved agent → `agents/<name>.md`

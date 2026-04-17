@@ -28,8 +28,8 @@ describe("session-remind integration", () => {
 	it("returns null when no active session exists", async () => {
 		// Setup initialized project without session
 		vi.mocked(existsSync).mockImplementation((p) => {
-			if (p === path.join(testDir, ".tff")) return true;
-			if (p === path.join(testDir, ".tff", "settings.yaml")) return false;
+			if (p === path.join(testDir, ".tff-cc")) return true;
+			if (p === path.join(testDir, ".tff-cc", "settings.yaml")) return false;
 			return false;
 		});
 
@@ -95,8 +95,8 @@ describe("session-remind integration", () => {
 	it("returns formatted reminder when session is active", async () => {
 		// Setup project with active session and reminders enabled
 		vi.mocked(existsSync).mockImplementation((p) => {
-			if (p === path.join(testDir, ".tff")) return true;
-			if (p === path.join(testDir, ".tff", "settings.yaml")) return true;
+			if (p === path.join(testDir, ".tff-cc")) return true;
+			if (p === path.join(testDir, ".tff-cc", "settings.yaml")) return true;
 			return false;
 		});
 		vi.mocked(readFileSync).mockReturnValue("workflow:\n  reminders: true");
@@ -176,8 +176,8 @@ describe("session-remind integration", () => {
 	it("returns null when reminders are disabled in settings", async () => {
 		// Setup project with reminders disabled
 		vi.mocked(existsSync).mockImplementation((p) => {
-			if (p === path.join(testDir, ".tff")) return true;
-			if (p === path.join(testDir, ".tff", "settings.yaml")) return true;
+			if (p === path.join(testDir, ".tff-cc")) return true;
+			if (p === path.join(testDir, ".tff-cc", "settings.yaml")) return true;
 			return false;
 		});
 		vi.mocked(readFileSync).mockReturnValue("workflow:\n  reminders: false");
@@ -194,8 +194,8 @@ describe("session-remind integration", () => {
 	it("handles project without workflow.reminders setting (defaults enabled)", async () => {
 		// Setup project without workflow section
 		vi.mocked(existsSync).mockImplementation((p) => {
-			if (p === path.join(testDir, ".tff")) return true;
-			if (p === path.join(testDir, ".tff", "settings.yaml")) return true;
+			if (p === path.join(testDir, ".tff-cc")) return true;
+			if (p === path.join(testDir, ".tff-cc", "settings.yaml")) return true;
 			return false;
 		});
 		vi.mocked(readFileSync).mockReturnValue("model-profiles:\n  quality:\n    model: sonnet");

@@ -17,20 +17,23 @@ type FullAdapter = ReviewStore &
 export const runReviewStoreContractTests = (name: string, createAdapter: () => FullAdapter) => {
 	describe(`ReviewStore contract [${name}]`, () => {
 		let store: FullAdapter;
+		let sliceId: string;
 
 		beforeEach(() => {
 			store = createAdapter();
 			store.init();
 			store.saveProject({ name: "Test Project" });
-			store.createMilestone({ number: 1, name: "M1" });
-			store.createSlice({ milestoneId: "M01", number: 1, title: "S01" });
+			const msResult = store.createMilestone({ number: 1, name: "M1" });
+			const milestoneId = isOk(msResult) ? msResult.data.id : "M01";
+			const slResult = store.createSlice({ milestoneId, number: 1, title: "S01" });
+			sliceId = isOk(slResult) ? slResult.data.id : "M01-S01";
 		});
 
 		// ReviewStore tests
 
 		it("recordReview + listReviews round-trip", () => {
 			const review = {
-				sliceId: "M01-S01",
+				sliceId,
 				type: "code" as const,
 				reviewer: "agent-1",
 				verdict: "approved" as const,
@@ -40,11 +43,11 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 			const recordResult = store.recordReview(review);
 			expect(isOk(recordResult)).toBe(true);
 
-			const listResult = store.listReviews("M01-S01");
+			const listResult = store.listReviews(sliceId);
 			expect(isOk(listResult)).toBe(true);
 			if (isOk(listResult)) {
 				expect(listResult.data).toHaveLength(1);
-				expect(listResult.data[0].sliceId).toBe("M01-S01");
+				expect(listResult.data[0].sliceId).toBe(sliceId);
 				expect(listResult.data[0].type).toBe("code");
 				expect(listResult.data[0].reviewer).toBe("agent-1");
 				expect(listResult.data[0].verdict).toBe("approved");
@@ -54,7 +57,7 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 
 		it("getLatestReview returns most recent by type", () => {
 			const older = {
-				sliceId: "M01-S01",
+				sliceId,
 				type: "security" as const,
 				reviewer: "agent-1",
 				verdict: "changes_requested" as const,
@@ -62,7 +65,7 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 				createdAt: "2026-01-01T00:00:00.000Z",
 			};
 			const newer = {
-				sliceId: "M01-S01",
+				sliceId,
 				type: "security" as const,
 				reviewer: "agent-2",
 				verdict: "approved" as const,
@@ -72,7 +75,7 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 			store.recordReview(older);
 			store.recordReview(newer);
 
-			const result = store.getLatestReview("M01-S01", "security");
+			const result = store.getLatestReview(sliceId, "security");
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).not.toBeNull();
@@ -82,7 +85,7 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 		});
 
 		it("getLatestReview returns null when no reviews exist", () => {
-			const result = store.getLatestReview("M01-S01", "spec");
+			const result = store.getLatestReview(sliceId, "spec");
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).toBeNull();
@@ -90,7 +93,7 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 		});
 
 		it("listReviews returns empty array for unknown slice", () => {
-			const result = store.listReviews("M99-S99");
+			const result = store.listReviews("unknown-slice-uuid");
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).toHaveLength(0);
@@ -99,7 +102,7 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 
 		it("recordReview stores optional notes field", () => {
 			const review = {
-				sliceId: "M01-S01",
+				sliceId,
 				type: "spec" as const,
 				reviewer: "agent-3",
 				verdict: "changes_requested" as const,
@@ -109,7 +112,7 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 			};
 			store.recordReview(review);
 
-			const result = store.listReviews("M01-S01");
+			const result = store.listReviews(sliceId);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data[0].notes).toBe("Please fix the edge case");
@@ -117,10 +120,15 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 		});
 
 		it("listReviews only returns reviews for the specified slice", () => {
-			store.createSlice({ milestoneId: "M01", number: 2, title: "S02" });
+			const sl2Result = store.createSlice({
+				milestoneId: store.listMilestones().data?.[0]?.id ?? "M01",
+				number: 2,
+				title: "S02",
+			});
+			const slice2Id = isOk(sl2Result) ? sl2Result.data.id : "M01-S02";
 
 			store.recordReview({
-				sliceId: "M01-S01",
+				sliceId,
 				type: "code" as const,
 				reviewer: "agent-1",
 				verdict: "approved" as const,
@@ -128,7 +136,7 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 				createdAt: "2026-01-01T00:00:00.000Z",
 			});
 			store.recordReview({
-				sliceId: "M01-S02",
+				sliceId: slice2Id,
 				type: "code" as const,
 				reviewer: "agent-1",
 				verdict: "approved" as const,
@@ -136,32 +144,35 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 				createdAt: "2026-01-01T00:00:00.000Z",
 			});
 
-			const result = store.listReviews("M01-S01");
+			const result = store.listReviews(sliceId);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).toHaveLength(1);
-				expect(result.data[0].sliceId).toBe("M01-S01");
+				expect(result.data[0].sliceId).toBe(sliceId);
 			}
 		});
 	});
 
 	describe(`TaskStore.claimTask + getExecutorsForSlice contract [${name}]`, () => {
 		let store: FullAdapter;
+		let sliceId: string;
 
 		beforeEach(() => {
 			store = createAdapter();
 			store.init();
 			store.saveProject({ name: "Test Project" });
-			store.createMilestone({ number: 1, name: "M1" });
-			store.createSlice({ milestoneId: "M01", number: 1, title: "S01" });
+			const msResult = store.createMilestone({ number: 1, name: "M1" });
+			const milestoneId = isOk(msResult) ? msResult.data.id : "M01";
+			const slResult = store.createSlice({ milestoneId, number: 1, title: "S01" });
+			sliceId = isOk(slResult) ? slResult.data.id : "M01-S01";
 		});
 
 		it("claimTask with claimedBy stores agent identity", () => {
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "Task" });
-			const claimResult = store.claimTask("M01-S01-T01", "agent-executor-1");
+			store.createTask({ sliceId, number: 1, title: "Task" });
+			const claimResult = store.claimTask(`${sliceId}-T01`, "agent-executor-1");
 			expect(isOk(claimResult)).toBe(true);
 
-			const taskResult = store.getTask("M01-S01-T01");
+			const taskResult = store.getTask(`${sliceId}-T01`);
 			expect(isOk(taskResult)).toBe(true);
 			if (isOk(taskResult)) {
 				expect(taskResult.data!.status).toBe("in_progress");
@@ -170,15 +181,15 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 		});
 
 		it("getExecutorsForSlice returns distinct agents", () => {
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "T1" });
-			store.createTask({ sliceId: "M01-S01", number: 2, title: "T2" });
-			store.createTask({ sliceId: "M01-S01", number: 3, title: "T3" });
+			store.createTask({ sliceId, number: 1, title: "T1" });
+			store.createTask({ sliceId, number: 2, title: "T2" });
+			store.createTask({ sliceId, number: 3, title: "T3" });
 
-			store.claimTask("M01-S01-T01", "agent-alpha");
-			store.claimTask("M01-S01-T02", "agent-beta");
-			store.claimTask("M01-S01-T03", "agent-alpha"); // duplicate agent
+			store.claimTask(`${sliceId}-T01`, "agent-alpha");
+			store.claimTask(`${sliceId}-T02`, "agent-beta");
+			store.claimTask(`${sliceId}-T03`, "agent-alpha"); // duplicate agent
 
-			const result = store.getExecutorsForSlice("M01-S01");
+			const result = store.getExecutorsForSlice(sliceId);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).toHaveLength(2);
@@ -188,9 +199,9 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 		});
 
 		it("getExecutorsForSlice returns empty array for unclaimed tasks", () => {
-			store.createTask({ sliceId: "M01-S01", number: 1, title: "Unclaimed Task" });
+			store.createTask({ sliceId, number: 1, title: "Unclaimed Task" });
 
-			const result = store.getExecutorsForSlice("M01-S01");
+			const result = store.getExecutorsForSlice(sliceId);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).toHaveLength(0);
@@ -198,7 +209,7 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 		});
 
 		it("getExecutorsForSlice returns empty array when no tasks exist for slice", () => {
-			const result = store.getExecutorsForSlice("M99-S99");
+			const result = store.getExecutorsForSlice("unknown-slice-uuid");
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).toHaveLength(0);

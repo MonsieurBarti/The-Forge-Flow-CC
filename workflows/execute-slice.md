@@ -4,10 +4,10 @@ LOAD @skills/verification-before-completion/SKILL.md
 
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
-**Autonomy**: check `.tff/settings.yaml` → `autonomy.mode` before pausing.
+**Autonomy**: check `.tff-cc/settings.yaml` → `autonomy.mode` before pausing.
 
 ## Prerequisites
-status = executing ∧ worktree ∃ at `.tff/worktrees/<slice-id>/`
+status = executing ∧ worktree ∃ at `.tff-cc/worktrees/<slice-id>/`
 
 ## Pre-Execute Validation
 1. READ slice classification from SPEC.md → tier ∈ {S-tier, F-lite, F-full}
@@ -37,7 +37,7 @@ status = executing ∧ worktree ∃ at `.tff/worktrees/<slice-id>/`
     
     ## Model Selection (Difficulty-Based)
     READ task.difficulty → IF undefined SET difficulty = "medium" (default)
-    RESOLVE difficulty → profile → model via .tff/settings.yaml "model-profiles"
+    RESOLVE difficulty → profile → model via .tff-cc/settings.yaml "model-profiles"
     - low → budget
     - medium → balanced
     - high → quality
@@ -65,7 +65,7 @@ Read task file paths from PLAN.md to decide which domain skills to load:
 
 ## Auto-Transition
 After completing all steps above:
-1. READ `.tff/settings.yaml` → check `autonomy.mode`
+1. READ `.tff-cc/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
    - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask user
    - Human gates (plan approval, spec approval, completion): pause ∧ ask

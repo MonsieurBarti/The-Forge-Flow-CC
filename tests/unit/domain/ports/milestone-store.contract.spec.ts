@@ -17,14 +17,19 @@ export const runMilestoneStoreContractTests = (
 			store.saveProject({ name: "Test Project" });
 		});
 
-		it("createMilestone returns milestone with generated id", () => {
+		it("createMilestone returns milestone with UUID id and branch", () => {
 			const result = store.createMilestone({ number: 1, name: "MVP" });
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
-				expect(result.data.id).toBe("M01");
+				// ID should be a UUID
+				expect(result.data.id).toMatch(
+					/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+				);
 				expect(result.data.name).toBe("MVP");
 				expect(result.data.number).toBe(1);
 				expect(result.data.status).toBe("open");
+				// Branch should be milestone/<8-char-uuid-prefix>
+				expect(result.data.branch).toMatch(/^milestone\/[0-9a-f]{8}$/);
 			}
 		});
 
@@ -35,8 +40,9 @@ export const runMilestoneStoreContractTests = (
 		});
 
 		it("getMilestone returns saved milestone", () => {
-			store.createMilestone({ number: 1, name: "MVP" });
-			const result = store.getMilestone("M01");
+			const createResult = store.createMilestone({ number: 1, name: "MVP" });
+			const milestoneId = isOk(createResult) ? createResult.data.id : "M01";
+			const result = store.getMilestone(milestoneId);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				expect(result.data).not.toBeNull();
@@ -53,18 +59,20 @@ export const runMilestoneStoreContractTests = (
 		});
 
 		it("updateMilestone updates name", () => {
-			store.createMilestone({ number: 1, name: "Old" });
-			store.updateMilestone("M01", { name: "New" });
-			const result = store.getMilestone("M01");
+			const createResult = store.createMilestone({ number: 1, name: "Old" });
+			const milestoneId = isOk(createResult) ? createResult.data.id : "M01";
+			store.updateMilestone(milestoneId, { name: "New" });
+			const result = store.getMilestone(milestoneId);
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) expect(result.data!.name).toBe("New");
 		});
 
 		it("closeMilestone sets status and reason", () => {
-			store.createMilestone({ number: 1, name: "Test" });
-			const closeResult = store.closeMilestone("M01", "Completed");
+			const createResult = store.createMilestone({ number: 1, name: "Test" });
+			const milestoneId = isOk(createResult) ? createResult.data.id : "M01";
+			const closeResult = store.closeMilestone(milestoneId, "Completed");
 			expect(isOk(closeResult)).toBe(true);
-			const result = store.getMilestone("M01");
+			const result = store.getMilestone(milestoneId);
 			if (isOk(result)) {
 				expect(result.data!.status).toBe("closed");
 				expect(result.data!.closeReason).toBe("Completed");
@@ -72,15 +80,17 @@ export const runMilestoneStoreContractTests = (
 		});
 
 		it("closeMilestone with no open slices succeeds", () => {
-			store.createMilestone({ number: 1, name: "Test" });
-			const result = store.closeMilestone("M01");
+			const createResult = store.createMilestone({ number: 1, name: "Test" });
+			const milestoneId = isOk(createResult) ? createResult.data.id : "M01";
+			const result = store.closeMilestone(milestoneId);
 			expect(isOk(result)).toBe(true);
 		});
 
 		it("closeMilestone with open slices returns HAS_OPEN_CHILDREN", () => {
-			store.createMilestone({ number: 1, name: "Test" });
-			store.createSlice({ milestoneId: "M01", number: 1, title: "Open Slice" });
-			const result = store.closeMilestone("M01");
+			const createResult = store.createMilestone({ number: 1, name: "Test" });
+			const milestoneId = isOk(createResult) ? createResult.data.id : "M01";
+			store.createSlice({ milestoneId, number: 1, title: "Open Slice" });
+			const result = store.closeMilestone(milestoneId);
 			expect(isErr(result)).toBe(true);
 			if (isErr(result)) {
 				expect(result.error.code).toBe("HAS_OPEN_CHILDREN");

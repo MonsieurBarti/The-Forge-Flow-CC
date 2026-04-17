@@ -26,12 +26,12 @@ import {
  * Check if .tff/ exists as a real directory (not symlink) - indicates legacy pattern.
  */
 export function detectLegacyPattern(repoRoot: string): boolean {
-	const tffPath = join(repoRoot, ".tff");
+	const tffPath = join(repoRoot, ".tff-cc");
 	if (!existsSync(tffPath)) {
 		return false;
 	}
 	const stats = lstatSync(tffPath);
-	// Legacy pattern: .tff/ is a real directory
+	// Legacy pattern: .tff-cc/ is a real directory (not symlink)
 	return stats.isDirectory();
 }
 
@@ -67,7 +67,7 @@ function deleteDir(dir: string): void {
  * Restore .tff/ directory from home directory after failed migration.
  * Used for rollback when symlink creation fails after deletion.
  */
-function restoreTffDir(projectHome: string, tffPath: string): void {
+function restoreTffCcDir(projectHome: string, tffPath: string): void {
 	if (existsSync(projectHome)) {
 		copyDir(projectHome, tffPath);
 	}
@@ -97,8 +97,9 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 		return;
 	}
 
-	// Migration needed
-	const tffPath = join(repoRoot, ".tff");
+	// Legacy .tff-cc/ directory detected - this shouldn't happen in normal flow
+	// since new projects get symlink, but handle it anyway
+	const tffPath = join(repoRoot, ".tff-cc");
 
 	// Step 1: Read or generate project ID
 	let projectId = readProjectIdFile(repoRoot);
@@ -122,13 +123,13 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 	// Step 5: Delete legacy .tff/ directory
 	deleteDir(tffPath);
 
-	// Step 6: Create symlink .tff → home directory (with rollback on failure)
+	// Step 6: Create symlink .tff-cc → home directory (with rollback on failure)
 	try {
 		symlinkSync(projectHome, tffPath);
 	} catch (symlinkError) {
-		// Rollback: restore .tff/ directory from home directory
+		// Rollback: restore .tff-cc/ directory from home directory
 		console.error(`Symlink creation failed, rolling back migration: ${symlinkError}`);
-		restoreTffDir(projectHome, tffPath);
+		restoreTffCcDir(projectHome, tffPath);
 		throw symlinkError;
 	}
 }

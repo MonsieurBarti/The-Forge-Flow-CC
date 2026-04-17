@@ -1,10 +1,9 @@
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import type { Milestone } from "../../../domain/entities/milestone.js";
-import { formatMilestoneNumber } from "../../../domain/entities/milestone.js";
 import type { Project } from "../../../domain/entities/project.js";
 import type { Slice } from "../../../domain/entities/slice.js";
-import { formatSliceId, transitionSlice } from "../../../domain/entities/slice.js";
+import { transitionSlice } from "../../../domain/entities/slice.js";
 import type { Task } from "../../../domain/entities/task.js";
 import { alreadyClaimedError } from "../../../domain/errors/already-claimed.error.js";
 import type { DomainError } from "../../../domain/errors/domain-error.js";
@@ -12,6 +11,7 @@ import { createDomainError } from "../../../domain/errors/domain-error.js";
 import { hasOpenChildrenError } from "../../../domain/errors/has-open-children.error.js";
 import { versionMismatchError } from "../../../domain/errors/version-mismatch.error.js";
 import type { DomainEvent } from "../../../domain/events/domain-event.js";
+import { milestoneBranchName } from "../../../domain/helpers/branch-naming.js";
 import type { DatabaseInit } from "../../../domain/ports/database-init.port.js";
 import type { DependencyStore } from "../../../domain/ports/dependency-store.port.js";
 import type { MilestoneStore } from "../../../domain/ports/milestone-store.port.js";
@@ -145,20 +145,24 @@ export class SQLiteStateAdapter
 	// MilestoneStore
 	createMilestone(props: MilestoneProps): Result<Milestone, DomainError> {
 		try {
-			const id = formatMilestoneNumber(props.number);
+			// Use provided id or generate a new UUID
+			const id = props.id ?? crypto.randomUUID();
+			// Use provided branch or compute from UUID
+			const branch = props.branch ?? milestoneBranchName(id);
 			const now = new Date().toISOString();
 			this.db
 				.prepare(
-					`INSERT INTO milestone (id, project_id, number, name, status, created_at, updated_at)
-           VALUES (?, 'singleton', ?, ?, 'open', ?, ?)`,
+					`INSERT INTO milestone (id, project_id, number, name, status, branch, created_at, updated_at)
+           VALUES (?, 'singleton', ?, ?, 'open', ?, ?, ?)`,
 				)
-				.run(id, props.number, props.name, now, now);
+				.run(id, props.number, props.name, branch, now, now);
 			return Ok({
 				id,
 				projectId: "singleton",
 				number: props.number,
 				name: props.name,
 				status: "open" as const,
+				branch,
 				createdAt: new Date(now),
 			});
 		} catch (e) {
@@ -175,6 +179,7 @@ export class SQLiteStateAdapter
 						number: number;
 						name: string;
 						status: string;
+						branch: string;
 						close_reason: string | null;
 						created_at: string;
 				  }
@@ -194,6 +199,7 @@ export class SQLiteStateAdapter
 				number: number;
 				name: string;
 				status: string;
+				branch: string;
 				close_reason: string | null;
 				created_at: string;
 			}>;
@@ -249,13 +255,8 @@ export class SQLiteStateAdapter
 	// SliceStore
 	createSlice(props: SliceProps): Result<Slice, DomainError> {
 		try {
-			const milestone = this.db
-				.prepare("SELECT number FROM milestone WHERE id = ?")
-				.get(props.milestoneId) as { number: number } | undefined;
-			if (!milestone) {
-				return Err(createDomainError("NOT_FOUND", `Milestone "${props.milestoneId}" not found`));
-			}
-			const id = formatSliceId(milestone.number, props.number);
+			// Use provided id or generate a new UUID
+			const id = props.id ?? crypto.randomUUID();
 			const now = new Date().toISOString();
 			this.db
 				.prepare(
@@ -791,6 +792,7 @@ export class SQLiteStateAdapter
 		number: number;
 		name: string;
 		status: string;
+		branch: string;
 		close_reason: string | null;
 		created_at: string;
 	}): Milestone {
@@ -800,6 +802,7 @@ export class SQLiteStateAdapter
 			number: row.number,
 			name: row.name,
 			status: row.status as Milestone["status"],
+			branch: row.branch,
 			closeReason: row.close_reason ?? undefined,
 			createdAt: new Date(row.created_at),
 		};
