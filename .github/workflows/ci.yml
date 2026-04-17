@@ -33,6 +33,15 @@ jobs:
       - name: Build
         run: bun run build
 
+      # The committed native/better_sqlite3.linux-x64.node is prebuilt against
+      # one specific Node ABI. CI's system `node` may differ, so the CLI would
+      # fail to load it. Overwrite with the binding `bun install` just compiled
+      # for the running Node version.
+      - name: Align native sqlite binding with CI node abi
+        run: |
+          install -D node_modules/better-sqlite3/build/Release/better_sqlite3.node \
+            dist/infrastructure/adapters/sqlite/better_sqlite3.linux-x64.node
+
       - name: Run tests
         run: bun run test
 
