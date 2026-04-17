@@ -2,17 +2,17 @@
 
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
-**Autonomy**: check `.tff/settings.yaml` → `autonomy.mode` before pausing.
+**Autonomy**: check `.tff-cc/settings.yaml` → `autonomy.mode` before pausing.
 
 ## Prerequisites
 status = planning
-SPEC.md ∃ at `.tff/milestones/<milestone>/slices/<id>/SPEC.md`
+SPEC.md ∃ at `.tff-cc/milestones/<milestone>/slices/<id>/SPEC.md`
 
 ## Steps
 
 ### 1. Load Spec
-READ `.tff/milestones/<milestone>/slices/<id>/SPEC.md`
-READ `.tff/milestones/<milestone>/slices/<id>/RESEARCH.md` (if ∃)
+READ `.tff-cc/milestones/<milestone>/slices/<id>/SPEC.md`
+READ `.tff-cc/milestones/<milestone>/slices/<id>/RESEARCH.md` (if ∃)
 LOAD @skills/writing-plans/SKILL.md
 
 ### 2. File Structure
@@ -34,7 +34,7 @@ DECOMPOSE spec → tasks:
 - Code snippets, ¬ "implement validation"
 
 ### 4. Write PLAN.md
-WRITE `.tff/milestones/<milestone>/slices/<id>/PLAN.md`:
+WRITE `.tff-cc/milestones/<milestone>/slices/<id>/PLAN.md`:
 
 ```
 # [Slice] Implementation Plan
@@ -74,7 +74,7 @@ DISPATCH anonymous reviewer via Agent tool (prompt: @skills/brainstorming/SKILL.
 Issues → fix, re-dispatch (max 3)
 
 ### 8. Plannotator Review
-invoke Skill `plannotator-annotate` with arg `.tff/milestones/<milestone>/slices/<id>/PLAN.md`
+invoke Skill `plannotator-annotate` with arg `.tff-cc/milestones/<milestone>/slices/<id>/PLAN.md`
 feedback → revise ∨ approved → continue
 
 ### 9. Worktree + Transition
@@ -87,7 +87,7 @@ CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ ab
 
 ## Auto-Transition
 After completing all steps above:
-1. READ `.tff/settings.yaml` → check `autonomy.mode`
+1. READ `.tff-cc/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
    - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask user
    - Human gates (plan approval, spec approval, completion): pause ∧ ask

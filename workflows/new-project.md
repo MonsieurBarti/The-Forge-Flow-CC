@@ -3,7 +3,7 @@
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
-∄ `.tff/PROJECT.md` — if ∃ → "Use `/tff:new-milestone`" ∧ stop
+∄ `.tff-cc/PROJECT.md` — if ∃ → "Use `/tff:new-milestone`" ∧ stop
 
 ## Steps
 1. DETECT existing codebase: scan for files matching common source extensions
@@ -15,8 +15,8 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 2. ONBOARD existing codebase:
    a. ASK: "This repo has existing code. I'd like to analyze it first to understand your project. Proceed?"
       - If ¬ → skip to step 3 (user provides everything manually)
-   b. INIT minimal: `mkdir -p .tff/docs` (map-codebase needs output dir, ¬ a full project)
-   c. RUN: execute map-codebase workflow (3 parallel doc-writer agents → .tff/docs/)
+   b. INIT minimal: `mkdir -p .tff-cc/docs` (map-codebase needs output dir, ¬ a full project)
+   c. RUN: execute map-codebase workflow (3 parallel doc-writer agents → .tff-cc/docs/)
       - If map-codebase fails → warn user, fall back to step 3 (manual input)
    d. SYNTHESIZE: read STACK.md, ARCHITECTURE.md, CONCERNS.md, CONVENTIONS.md
       - Propose: project name, vision statement, initial requirements
@@ -27,7 +27,7 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 3. ASK user: project name (required), vision statement
    - Pre-filled from step 2 if onboarding occurred
 4. INIT: `tff-tools project:init --name "<name>" --vision "<vision>"`
-5. SETTINGS: generate `.tff/settings.yaml` from @references/settings-template.md
+5. SETTINGS: generate `.tff-cc/settings.yaml` from @references/settings-template.md
 6. SUMMARY: show created files (PROJECT.md, settings.yaml)
    - suggest `/tff:new-milestone` to create first milestone
 

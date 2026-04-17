@@ -2,7 +2,7 @@
 
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
-**Autonomy**: check `.tff/settings.yaml` → `autonomy.mode` before pausing.
+**Autonomy**: check `.tff-cc/settings.yaml` → `autonomy.mode` before pausing.
 
 ## Prerequisites
 status = reviewing
@@ -37,7 +37,7 @@ LOAD @skills/finishing-work/SKILL.md
 
 ## Auto-Transition
 After completing all steps above:
-1. READ `.tff/settings.yaml` → check `autonomy.mode`
+1. READ `.tff-cc/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
    - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask user
    - Human gates (plan approval, spec approval, merge gate): pause ∧ ask

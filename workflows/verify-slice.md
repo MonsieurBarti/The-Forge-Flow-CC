@@ -9,7 +9,7 @@ LOAD @skills/verification-before-completion/SKILL.md
 ## Steps
 1. LOAD @skills/acceptance-criteria-validation/SKILL.md → SPAWN subagent: {acceptance_criteria from PLAN.md}
    - Verify each criterion against implementation
-2. FINDINGS → invoke Skill `plannotator-annotate` with arg `.tff/milestones/<milestone>/slices/<slice-id>/VERIFICATION.md`
+2. FINDINGS → invoke Skill `plannotator-annotate` with arg `.tff-cc/milestones/<milestone>/slices/<slice-id>/VERIFICATION.md`
 3. VERDICT:
    - PASS → `tff-tools slice:transition --slice-id <id> --status reviewing`
      CHECK: `ok` = true → suggest `/tff:ship` | `ok` = false → warn user, offer retry ∨ abort
@@ -17,7 +17,7 @@ LOAD @skills/verification-before-completion/SKILL.md
 4. NEXT: @references/next-steps.md
 
 ## Auto-Transition
-Read `.tff/settings.yaml` → `autonomy.mode`.
+Read `.tff-cc/settings.yaml` → `autonomy.mode`.
 `plan-to-pr` ∧ ¬HUMAN_GATE → auto-invoke next workflow via `tff-tools workflow:next --status <status>`.
 `guided` → suggest next step, wait for user.
 Progress: `[tff] <slice-id>: verifying → reviewing`
