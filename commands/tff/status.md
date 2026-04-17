@@ -9,7 +9,7 @@ Lightweight status check — show where you are ∈ tff lifecycle ∧ suggest ne
 </objective>
 
 <execution_context>
-1. Read .tff/STATE.md if ∃ (don't regenerate)
+1. Read .tff-cc/STATE.md if ∃ (don't regenerate)
 2. Check state for any ∈-progress slices
 3. Show current position:
    - Active milestone

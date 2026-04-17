@@ -19,6 +19,7 @@ MATCHES=$(grep -rnE '\.tff/' \
   | grep -v 'src/infrastructure/migration\.ts:' \
   | grep -v 'tests/unit/infrastructure/migration\.spec\.ts:' \
   | grep -v 'tests/integration/path-contract\.spec\.ts:' \
+  | grep -v '\.original\.md:' \
   || true)
 
 if [ -n "$MATCHES" ]; then

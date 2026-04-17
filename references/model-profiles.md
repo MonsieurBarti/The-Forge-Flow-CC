@@ -1,6 +1,6 @@
 # Model Profiles
 
-Agent model assignments configured per-project ∈ `.tff/settings.yaml`.
+Agent model assignments configured per-project ∈ `.tff-cc/settings.yaml`.
 
 ## Default Profiles
 
@@ -18,7 +18,7 @@ Default model: sonnet
 
 ## Configuration
 
-∈ `.tff/settings.yaml`:
+∈ `.tff-cc/settings.yaml`:
 
 ```yaml
 model-profiles:
