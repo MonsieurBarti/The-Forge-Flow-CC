@@ -37,8 +37,16 @@ if [[ -f "$DEAD_LETTER" && -s "$DEAD_LETTER" ]]; then
   fi
 fi
 
-# Append current observation; fall back to dead-letter on failure
-LINE="{\"ts\":\"$TS\",\"session\":\"$SESSION\",\"tool\":\"$TOOL\",\"args\":\"$ARGS\",\"project\":\"$(pwd)\"}"
+# Append current observation; fall back to dead-letter on failure.
+# Build JSONL via jq to safely escape quotes, backslashes, newlines, etc.
+# in $ARGS (arbitrary shell command / file path) and $(pwd).
+LINE=$(jq -cn \
+  --arg ts "$TS" \
+  --arg session "$SESSION" \
+  --arg tool "$TOOL" \
+  --arg args "$ARGS" \
+  --arg project "$(pwd)" \
+  '{ts:$ts, session:$session, tool:$tool, args:$args, project:$project}')
 if ! echo "$LINE" >> "$SESSIONS_FILE" 2>/dev/null; then
   echo "$LINE" >> "$DEAD_LETTER" 2>/dev/null
 fi

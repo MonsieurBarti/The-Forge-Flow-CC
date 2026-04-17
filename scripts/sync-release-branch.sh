@@ -67,13 +67,28 @@ cp plugin/.claude-plugin/plugin.json "$RELEASE_DIR/.claude-plugin/plugin.json"
 
 # --- 2. Plugin content dirs (resolve symlinks: plugin/X -> real ./X) ---------
 
-echo "Copying plugin content dirs (resolving symlinks)..."
+echo "Copying plugin content dirs (resolving top-level symlinks only)..."
+# plugin/<sub> is a committed symlink to ../<sub>. We intentionally resolve
+# that top-level hop, but any *nested* symlinks must NOT be dereferenced —
+# `rsync -a --safe-links` drops links that escape the source tree so a
+# hypothetical plugin/agents/evil -> /etc/passwd cannot leak into consumers.
 for sub in agents commands hooks references skills tools workflows; do
-  if [ -e "plugin/$sub" ]; then
-    cp -rL "plugin/$sub" "$RELEASE_DIR/$sub"
-  else
-    echo "  warn: plugin/$sub not found, skipping" >&2
+  plugin_entry="plugin/$sub"
+  if [ ! -e "$plugin_entry" ]; then
+    echo "  warn: $plugin_entry not found, skipping" >&2
+    continue
   fi
+  if [ -L "$plugin_entry" ]; then
+    # Resolve the top-level symlink (always points to ../$sub in this repo).
+    src=$(cd "plugin" && readlink -f "$sub")
+  else
+    src=$(cd "$(dirname "$plugin_entry")" && pwd)/$sub
+  fi
+  if [ ! -d "$src" ]; then
+    echo "  warn: $src is not a directory after resolving, skipping" >&2
+    continue
+  fi
+  rsync -a --safe-links "$src/" "$RELEASE_DIR/$sub/"
 done
 
 # --- 3. Built dist/ ----------------------------------------------------------
