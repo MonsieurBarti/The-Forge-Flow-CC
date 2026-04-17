@@ -30,8 +30,17 @@ jobs:
           echo "enabled: true" > .tff-cc/settings.yaml
           export CLAUDE_TOOL_NAME=Read
           export CLAUDE_SESSION_ID=test-session
-          bash hooks/tff-observe.sh < /dev/null || true
-          test -d .tff-cc/observations || echo "note: hook did not create observations (may require stdin data)"
+          # Hook reads PostToolUse JSON from stdin; feed a minimal envelope.
+          # Hook must exit 0 — crashes or syntax errors here fail the job.
+          echo '{"tool_name":"Read","session_id":"test-session","timestamp":"2025-01-01T00:00:00Z"}' \
+            | bash hooks/tff-observe.sh
+          # Informational: log whether observations were written (schema may evolve).
+          if [ -d .tff-cc/observations ]; then
+            echo "ok: hook created observations directory"
+            ls -la .tff-cc/observations/
+          else
+            echo "info: hook exited cleanly without creating observations"
+          fi
 
       - name: Assert no legacy .tff/ artifacts
         run: |

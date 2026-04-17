@@ -23,6 +23,16 @@
 
 set -e
 
+# --- CI-only guard -----------------------------------------------------------
+# This script force-pushes to origin/release. Refuse to run outside GitHub
+# Actions unless the caller opts in with TFF_RELEASE_SYNC_CONFIRM=yes
+# (used for the SAFE LOCAL TEST flow documented above).
+if [ -z "$GITHUB_ACTIONS" ] && [ "$TFF_RELEASE_SYNC_CONFIRM" != "yes" ]; then
+  echo "error: refusing force-push from non-CI context." >&2
+  echo "  set TFF_RELEASE_SYNC_CONFIRM=yes to opt in (see SAFE LOCAL TEST block)." >&2
+  exit 1
+fi
+
 # --- Preconditions -----------------------------------------------------------
 
 if [ ! -f dist/cli/index.js ]; then
