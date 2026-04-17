@@ -11,7 +11,6 @@ echo '{"ts":"old","session":"s0","tool":"Read","args":null,"project":"test"}' > 
 touch .tff-cc/observations/.initialized
 
 # The hook requires settings.yaml with enabled: true
-mkdir -p .tff
 echo "enabled: true" > .tff-cc/settings.yaml
 
 SESSIONS_FILE=".tff-cc/observations/sessions.jsonl"

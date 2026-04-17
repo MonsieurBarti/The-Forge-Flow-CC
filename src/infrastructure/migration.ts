@@ -37,6 +37,11 @@ export function detectLegacyPattern(repoRoot: string): boolean {
 
 /**
  * Recursively copy directory contents.
+ *
+ * Symlinks are intentionally skipped — migrating user state should not preserve
+ * symlinks that could escape the source tree (e.g. a symlink to /etc/passwd).
+ * Other non-regular dirent types (sockets, fifos, devices) are also silently
+ * skipped; they are never expected inside .tff/.
  */
 function copyDir(src: string, dest: string): void {
 	mkdirSync(dest, { recursive: true });
@@ -46,11 +51,18 @@ function copyDir(src: string, dest: string): void {
 		const srcPath = join(src, entry.name);
 		const destPath = join(dest, entry.name);
 
+		if (entry.isSymbolicLink()) {
+			console.error(
+				`[tff] Skipping symlink during migration: ${srcPath} (symlinks are not preserved)`,
+			);
+			continue;
+		}
 		if (entry.isDirectory()) {
 			copyDir(srcPath, destPath);
-		} else {
+		} else if (entry.isFile()) {
 			copyFileSync(srcPath, destPath);
 		}
+		// Other dirent types (sockets, fifos, devices) are silently skipped — never expected in .tff/.
 	}
 }
 
@@ -66,10 +78,15 @@ function deleteDir(dir: string): void {
 /**
  * Restore .tff/ directory from home directory after failed migration.
  * Used for rollback when symlink creation fails after deletion.
+ *
+ * After restoring, the now-redundant contents under projectHome are removed so
+ * a subsequent migration attempt starts from a clean state. The home directory
+ * itself is recreated by ensureProjectHomeDir on the next run.
  */
 function restoreLegacyTffDir(projectHome: string, tffPath: string): void {
 	if (existsSync(projectHome)) {
 		copyDir(projectHome, tffPath);
+		rmSync(projectHome, { recursive: true, force: true });
 	}
 }
 

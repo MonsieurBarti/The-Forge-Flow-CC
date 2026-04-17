@@ -10,7 +10,7 @@ set -e
 # grep -rn output format is `path:line:content`, so anchoring whitelist entries
 # with a trailing `:` prevents substring collisions (e.g., a file named
 # `migration.ts.bak` would otherwise be whitelisted by `migration\.ts`).
-MATCHES=$(grep -rnE '\.tff/' \
+MATCHES=$(grep -rnE '\.tff($|[^-c])' \
   --include='*.ts' --include='*.js' --include='*.sh' \
   --include='*.md' --include='*.yaml' --include='*.yml' \
   --include='*.json' \

@@ -207,6 +207,8 @@ Update README/marketplace docs: consumers install from the `release` branch.
 
 This must be resolved before Phase F merges. Research step is cheap (docs check + smoke test); defer the code in Phase F only if the install model is workable.
 
+**Decision recorded:** We chose option (2) — `marketplace.json`'s per-plugin `source` object with `source: "github"`, `repo: "MonsieurBarti/The-Forge-Flow-CC"`, `ref: "release"`. This pins the marketplace to the `release` branch without changing GitHub's default branch and keeps `main` as the working branch for PRs. See the official Anthropic docs on "Create and distribute a plugin marketplace" (<https://code.claude.com/docs/en/plugin-marketplaces>). This is why `.claude-plugin/marketplace.json` was updated in commit `352941e`.
+
 ### Test assertions to update
 
 Update `.tff/` → `.tff-cc/` in:
