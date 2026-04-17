@@ -152,7 +152,7 @@ export class JournalEntryBuilder {
 			sliceId: this._sliceId,
 			timestamp: this._timestamp,
 			correlationId: this._correlationId,
-			artifactPath: overrides?.artifactPath ?? ".tff/milestones/M01/slices/M01-S04/SPEC.md",
+			artifactPath: overrides?.artifactPath ?? ".tff-cc/milestones/M01/slices/M01-S04/SPEC.md",
 			artifactType: overrides?.artifactType ?? "spec",
 		};
 	}

@@ -26,7 +26,7 @@ export const createWorktreeUseCase = async (
 
 	// Worktree path uses human-readable label format
 	const label = sliceLabel(input.milestoneNumber, input.slice.number);
-	const worktreePath = `.tff/worktrees/${label}`;
+	const worktreePath = `.tff-cc/worktrees/${label}`;
 
 	const result = await deps.gitOps.createWorktree(worktreePath, branchName, input.startPoint);
 	if (!isOk(result)) return result;

@@ -13,6 +13,6 @@ export const deleteWorktreeUseCase = async (
 	input: DeleteWorktreeInput,
 	deps: DeleteWorktreeDeps,
 ): Promise<Result<void, DomainError>> => {
-	const worktreePath = `.tff/worktrees/${input.sliceId}`;
+	const worktreePath = `.tff-cc/worktrees/${input.sliceId}`;
 	return deps.gitOps.deleteWorktree(worktreePath);
 };

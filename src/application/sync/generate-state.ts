@@ -74,6 +74,6 @@ export const generateState = async (
 		}
 	}
 	lines.push("");
-	await deps.artifactStore.write(".tff/STATE.md", lines.join("\n"));
+	await deps.artifactStore.write(".tff-cc/STATE.md", lines.join("\n"));
 	return Ok(undefined);
 };

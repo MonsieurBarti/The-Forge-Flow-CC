@@ -42,7 +42,7 @@ export const createMilestoneUseCase = async (
 
 	// Create milestone directory with REQUIREMENTS.md using label format
 	const label = milestoneLabel(input.number);
-	const milestoneDir = `.tff/milestones/${label}`;
+	const milestoneDir = `.tff-cc/milestones/${label}`;
 	await deps.artifactStore.mkdir(`${milestoneDir}/slices`);
 	await deps.artifactStore.write(
 		`${milestoneDir}/REQUIREMENTS.md`,

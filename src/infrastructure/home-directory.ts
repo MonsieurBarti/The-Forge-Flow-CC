@@ -129,16 +129,16 @@ export function ensureProjectHomeDir(projectId: string): string {
 }
 
 /**
- * Create symlink from .tff in repo root to project home directory.
- * Throws if .tff/ exists as a real directory (migration needed).
+ * Create symlink from .tff-cc in repo root to project home directory.
+ * Throws if .tff-cc/ exists as a real directory (migration needed).
  * @param repoRoot - The repository root directory
  * @param projectId - The project's unique identifier
  */
-export function createTffSymlink(repoRoot: string, projectId: string): void {
+export function createTffCcSymlink(repoRoot: string, projectId: string): void {
 	const symlinkPath = join(repoRoot, ".tff-cc");
 	const targetPath = getProjectHome(projectId);
 
-	// Check if .tff exists
+	// Check if .tff-cc exists
 	if (existsSync(symlinkPath)) {
 		// Check if it's a symlink
 		const stats = lstatSync(symlinkPath);

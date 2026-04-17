@@ -31,7 +31,7 @@ export const saveCheckpoint = async (
 		"",
 	];
 	const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-	const dir = `.tff/milestones/${milestoneId}/slices/${data.sliceId}`;
+	const dir = `.tff-cc/milestones/${milestoneId}/slices/${data.sliceId}`;
 	const path = `${dir}/CHECKPOINT.md`;
 
 	const mkdirResult = await deps.artifactStore.mkdir(dir);

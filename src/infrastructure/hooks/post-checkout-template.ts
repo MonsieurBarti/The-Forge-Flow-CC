@@ -1,7 +1,7 @@
 export const TFF_HOOK_MARKER = "# tff post-checkout hook";
 
 export const postCheckoutHookScript = `#!/bin/sh
-# tff post-checkout hook — restores .tff/ state on branch switch
+# tff post-checkout hook — restores .tff-cc/ state on branch switch
 # $1=prev HEAD, $2=new HEAD, $3=1 if branch checkout (0 if file checkout)
 
 [ "$3" = "1" ] || exit 0
@@ -25,9 +25,9 @@ TFF_TOOLS="$REPO_ROOT/dist/cli/index.js"
 [ -f "$TFF_TOOLS" ] || exit 0
 
 CWD_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-mkdir -p "$CWD_ROOT/.tff"
+mkdir -p "$CWD_ROOT/.tff-cc"
 
-node "$TFF_TOOLS" hook:post-checkout "$BRANCH" >> "$CWD_ROOT/.tff/hook.log" 2>&1
+node "$TFF_TOOLS" hook:post-checkout "$BRANCH" >> "$CWD_ROOT/.tff-cc/hook.log" 2>&1
 
 if [ -x "$(dirname "$0")/post-checkout.pre-tff" ]; then
   "$(dirname "$0")/post-checkout.pre-tff" "$@" || true

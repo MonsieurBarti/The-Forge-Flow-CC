@@ -53,7 +53,7 @@ export const observeRecordCmd = async (args: string[]): Promise<string> => {
 			args: parsed.data.args,
 			project: parsed.data.project,
 		});
-		const store = new JsonlStoreAdapter(".tff/observations");
+		const store = new JsonlStoreAdapter(".tff-cc/observations");
 		const result = await store.appendObservation(obs);
 		if (isOk(result)) return JSON.stringify({ ok: true, data: null });
 		return JSON.stringify({ ok: false, error: result.error });

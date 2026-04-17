@@ -2,7 +2,7 @@ import { createWorktreeUseCase } from "../../application/worktree/create-worktre
 import { isOk } from "../../domain/result.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { createTffSymlink, getProjectId } from "../../infrastructure/home-directory.js";
+import { createTffCcSymlink, getProjectId } from "../../infrastructure/home-directory.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const worktreeCreateSchema: CommandSchema = {
@@ -65,7 +65,7 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
 		// Create .tff-cc symlink in the worktree pointing to the project home directory
 		const projectId = getProjectId(cwd);
 		const worktreePath = result.data.worktreePath;
-		createTffSymlink(worktreePath, projectId);
+		createTffCcSymlink(worktreePath, projectId);
 
 		return JSON.stringify({ ok: true, data: result.data });
 	}

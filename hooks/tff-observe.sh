@@ -3,7 +3,7 @@
 # Exit 0 always. Never block. Never fail visibly.
 
 # Check if observation is enabled (fast path: skip if no settings or disabled)
-SETTINGS=".tff/settings.yaml"
+SETTINGS=".tff-cc/settings.yaml"
 if [ ! -f "$SETTINGS" ] || ! grep -q "enabled: true" "$SETTINGS" 2>/dev/null; then
   exit 0
 fi
@@ -20,7 +20,7 @@ ARGS=$(echo "$INPUT" | jq -r '.tool_input.command // .tool_input.file_path // em
 SESSION=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
 TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-OBS_DIR=".tff/observations"
+OBS_DIR=".tff-cc/observations"
 SESSIONS_FILE="$OBS_DIR/sessions.jsonl"
 DEAD_LETTER="$OBS_DIR/dead-letter.jsonl"
 

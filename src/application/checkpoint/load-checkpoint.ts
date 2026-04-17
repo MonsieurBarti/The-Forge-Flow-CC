@@ -12,7 +12,7 @@ export const loadCheckpoint = async (
 	deps: LoadCheckpointDeps,
 ): Promise<Result<CheckpointData, DomainError>> => {
 	const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-	const path = `.tff/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
+	const path = `.tff-cc/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
 	const contentResult = await deps.artifactStore.read(path);
 	if (!isOk(contentResult))
 		return Err(

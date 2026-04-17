@@ -27,7 +27,7 @@ export const patternsExtractCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 
-	const store = new JsonlStoreAdapter(".tff/observations");
+	const store = new JsonlStoreAdapter(".tff-cc/observations");
 	const obsResult = await store.readObservations();
 	if (!isOk(obsResult)) return JSON.stringify({ ok: false, error: obsResult.error });
 	const bigrams = extractNgrams(obsResult.data, 2);

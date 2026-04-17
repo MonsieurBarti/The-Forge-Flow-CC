@@ -25,7 +25,7 @@ export const patternsRankCmd = async (args: string[]): Promise<string> => {
 
 	const threshold = (parsed.data.threshold as number | undefined) ?? 0.5;
 
-	const store = new JsonlStoreAdapter(".tff/observations");
+	const store = new JsonlStoreAdapter(".tff-cc/observations");
 	const patternsResult = await store.readPatterns();
 	if (!isOk(patternsResult)) return JSON.stringify({ ok: false, error: patternsResult.error });
 	const obsResult = await store.readObservations();

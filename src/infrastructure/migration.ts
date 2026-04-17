@@ -26,12 +26,12 @@ import {
  * Check if .tff/ exists as a real directory (not symlink) - indicates legacy pattern.
  */
 export function detectLegacyPattern(repoRoot: string): boolean {
-	const tffPath = join(repoRoot, ".tff-cc");
+	const tffPath = join(repoRoot, ".tff");
 	if (!existsSync(tffPath)) {
 		return false;
 	}
 	const stats = lstatSync(tffPath);
-	// Legacy pattern: .tff-cc/ is a real directory (not symlink)
+	// Legacy pattern: .tff/ is a real directory (not symlink)
 	return stats.isDirectory();
 }
 
@@ -97,9 +97,8 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 		return;
 	}
 
-	// Legacy .tff-cc/ directory detected - this shouldn't happen in normal flow
-	// since new projects get symlink, but handle it anyway
-	const tffPath = join(repoRoot, ".tff-cc");
+	// Legacy .tff/ directory detected - migrating to home directory pattern
+	const tffPath = join(repoRoot, ".tff");
 
 	// Step 1: Read or generate project ID
 	let projectId = readProjectIdFile(repoRoot);
@@ -113,6 +112,7 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 
 	// Step 3: Copy .tff/ contents to home directory
 	// We copy instead of move to be safer (can rollback)
+	console.error(`[tff] Migrating legacy .tff/ to ${projectHome}`);
 	copyDir(tffPath, projectHome);
 
 	// Step 4: Write project ID file (if not already present)
@@ -124,10 +124,11 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 	deleteDir(tffPath);
 
 	// Step 6: Create symlink .tff-cc → home directory (with rollback on failure)
+	const symlinkTarget = join(repoRoot, ".tff-cc");
 	try {
-		symlinkSync(projectHome, tffPath);
+		symlinkSync(projectHome, symlinkTarget);
 	} catch (symlinkError) {
-		// Rollback: restore .tff-cc/ directory from home directory
+		// Rollback: restore .tff/ directory from home directory
 		console.error(`Symlink creation failed, rolling back migration: ${symlinkError}`);
 		restoreTffCcDir(projectHome, tffPath);
 		throw symlinkError;

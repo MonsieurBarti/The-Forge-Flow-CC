@@ -25,7 +25,7 @@ export const patternsAggregateCmd = async (args: string[]): Promise<string> => {
 
 	const minCount = (parsed.data["min-count"] as number | undefined) ?? 3;
 
-	const store = new JsonlStoreAdapter(".tff/observations");
+	const store = new JsonlStoreAdapter(".tff-cc/observations");
 	const patternsResult = await store.readPatterns();
 	if (!isOk(patternsResult)) return JSON.stringify({ ok: false, error: patternsResult.error });
 	const result = aggregatePatterns(patternsResult.data, { minCount });

@@ -37,7 +37,7 @@ export const initProject = async (
 	await deps.artifactStore.mkdir(".tff-cc");
 	await deps.artifactStore.mkdir(".tff-cc/milestones");
 
-	// Ensure .tff/ and build/ are in .gitignore so artifacts never land on code branches
+	// Ensure .tff-cc/ and build/ are in .gitignore so artifacts never land on code branches
 	await ensureGitignored(deps.artifactStore);
 
 	const projectMd = `# ${project.name}\n\n## Vision\n\n${project.vision}\n`;

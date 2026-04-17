@@ -48,7 +48,7 @@ export const createSliceUseCase = async (
 	// Create slice directory with stub PLAN.md using label format
 	const msLabel = milestoneLabel(milestone.number);
 	const slLabel = sliceLabel(milestone.number, slice.number);
-	const milestoneDir = `.tff/milestones/${msLabel}`;
+	const milestoneDir = `.tff-cc/milestones/${msLabel}`;
 	const sliceDir = `${milestoneDir}/slices/${slLabel}`;
 	await deps.artifactStore.mkdir(sliceDir);
 	await deps.artifactStore.write(
