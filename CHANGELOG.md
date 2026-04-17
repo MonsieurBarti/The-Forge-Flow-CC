@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.8.3...tff-cc-v0.8.4) (2026-04-17)
+
+
+### Features
+
+* **M01-S01:** Simplify tool usage and improve AI instructions ([dac4eef](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/dac4eef57eeb3d3dc581e1d5bf46822ca90ca2d2))
+* **M01-S01:** T01 — Define flag naming conventions ([59e4854](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/59e4854b6b5ed332582195915f83ead763754bed))
+* **M01-S01:** T02, T03 — Create shared flag parser utility and command schema types ([1bba0dd](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/1bba0ddc9940445464bafe1c8b6a336b033866ca))
+* **M01-S01:** T04-T19 — Implement CLI introspection and refactor all commands to flags-only syntax ([1e1f985](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/1e1f98526e0104b1edd02eb47ec3ff0831989a5f))
+* **M01-S01:** T06, T20 — Implement --help --json combo and create consolidated reference file ([45994f7](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/45994f7ffbde1574b33dd053c4a14eef1e5733ab))
+* **M01-S01:** T21 — Update all workflow files to use new flags-only CLI syntax ([d3b0a96](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/d3b0a96da1d1e92c7061d987664983b7573be55f))
+* **M01-S01:** T24 — Create AI validation test for command construction correctness ([358ae60](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/358ae60d80d7c754e07e9341db22622419aacfea))
+* **M01-S02:** Clean up unused code and commands ([75ebbab](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/75ebbab89cee4ecfc670ef677e95e4cac7fed591))
+* **M01-S02:** T01 — delete escalate.ts and its test ([6af5b26](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/6af5b263035a953f538449c85ee1618cd2a2261c))
+* **M01-S02:** T02 — delete resume-slice, journal files and their tests ([7242665](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/7242665eb1f50ded2257ccf4631ee49cc6e1c8ff))
+* **M01-S02:** T03 — delete slice-planned.event.ts ([30bcbfe](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/30bcbfe5439577bffea010cda1abab55aaf27640))
+* **M01-S02:** T04 — delete orphaned repair-branches.md ([8f6b528](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/8f6b528ef9c354a0c79b895b1b8d66078fc05b90))
+* **M01-S02:** T05, T06 — prune exports and remove SLICE_PLANNED enum ([3e3e330](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/3e3e3301ffb2a9cc1ea89d4b3db2084074d6671c))
+* **M01-S03/T01-T03:** compress 85 markdown files to symbolic level ([42fbe4c](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/42fbe4c8b34280db7ded4717e396369e00488b1d))
+* **M01-S03:** Compress markdown documentation files ([15a49d3](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/15a49d3668f8c153d54921c3f75dd46a768df05b))
+* **m01-s03:** t01 — create compress-markdown.sh script with validation tests ([9c89f81](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/9c89f8100722107a4f45ac9fb1144ef286e25396))
+* **m01-s03:** t02 — run compression script with node.js implementation ([608e720](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/608e720400310e2b6c4805c6bce274b4c183fc8b))
+* **m01-s03:** t03 — fix test to exclude .original.md backup files ([dce29b0](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/dce29b00f4802668fad1b4a41ad4f94fc872a8e1))
+* **M01-S04:** Add task difficulty to model mapping ([8c138cc](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/8c138cc340c98d73c76acce44770efe700f2b541))
+* **M01-S04:** t01 — create difficulty value object ([82c8540](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/82c85402f38874f81d8e1baf1fef84e283670ec8))
+* **M01-S04:** t02 — add difficulty field to task schemas ([9622f34](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/9622f34155fa686a4fcd1db0ccac20abe503f493))
+* **M01-S04:** t03 — implement difficulty classifier module ([3f08cee](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/3f08cee56105397d5c7dd66d84469960d6dc7987))
+* **M01-S04:** t04 — enhance waves:detect command with difficulty classification ([bfb85bd](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/bfb85bd3e0926f702b611bcb06d3e568bf910ed7))
+* **M01-S04:** t05 — add plan-time difficulty computation and override parsing ([b6c0857](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/b6c08573a811f92216512485dc4e3836920691a5))
+* **M01-S04:** t06,t08 — add model selection to execute workflow and integration tests ([c3c3663](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/c3c3663bb9c0c7cebb1409f116f3b581e97bb24a))
+* **M02-S01:** Remove AskUserQuestion, use inline questions ([#76](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/76)) ([c415489](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/c4154893540de842fdf3f375e896c1b6b3a79d50))
+* **M02-S02:** Adopt agent/protocol patterns from superpowers and GSD ([#77](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/77)) ([bf67c4a](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/bf67c4abb12898bceed88b5001d53ecd42cb8261))
+* migrate to .tff-cc state directory with UUID-based branches ([#87](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/87)) ([0e08481](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/0e084819c217f60102dc99e98093ffd0fae38e69))
+
+
+### Bug Fixes
+
+* increase timeout for cascading-imports test ([236ff94](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/236ff94a8237b4b593b15c30d8f48faf0c513df1))
+* **M01-S02:** apply review feedback ([ef17f2b](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/ef17f2b68de68ab78523bcf0c94f1057762f6b09))
+* remove --force references, fix lint issues ([ba5b05c](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/ba5b05c405f7d52704d8c08fb20727869fd85d2f))
+* remove one-time compression scripts and validation tests ([056ae9b](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/056ae9b175f47d265f47b80e4d997ff454174d24))
+* remove redundant typecheck test - typecheck is already a ci step ([d942fff](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/d942fff7e441f5cef2bfe1dd79cd0ceac1b3fb1b))
+* resolve lint issues in test files ([b61f80a](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/b61f80ad46944825f5123e674161b7d979dab842))
+* resolve lint warnings - remove unused param, sort imports ([7b40d66](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/7b40d66a758a1f31043526bdb29abe4714a8bcc1))
+* use bun run test instead of bun test for vitest compatibility ([9d15e54](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/9d15e54d25cbb525d86c05378cee9e17805d7b90))
+* use claude code default model when profile not configured ([d3f8927](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/d3f8927cd9356c74a8af5a0575d1f91dc3de2ed0))
+
 ## [0.9.0] - 2026-04-16
 
 ### Added
