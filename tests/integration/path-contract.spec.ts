@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 import { existsSync, lstatSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 describe("path contract: artifacts under .tff-cc/, nothing at .tff/", () => {
 	let tmpRepo: string;
