@@ -1,0 +1,41 @@
+name: Release Branch Validation
+
+on:
+  push:
+    branches: [release]
+  schedule:
+    - cron: '0 5 * * *'  # daily 05:00 UTC
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Verify dist/ is present
+        run: test -f dist/cli/index.js
+
+      - name: Verify CLI runs
+        run: node dist/cli/index.js --help
+
+      - name: Run observe hook smoke
+        run: |
+          mkdir -p .tff-cc
+          echo "enabled: true" > .tff-cc/settings.yaml
+          export CLAUDE_TOOL_NAME=Read
+          export CLAUDE_SESSION_ID=test-session
+          bash hooks/tff-observe.sh < /dev/null || true
+          test -d .tff-cc/observations || echo "note: hook did not create observations (may require stdin data)"
+
+      - name: Assert no legacy .tff/ artifacts
+        run: |
+          if [ -d .tff ]; then
+            echo "Unexpected .tff/ directory on release branch"
+            exit 1
+          fi

@@ -43,3 +43,9 @@ jobs:
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: bun publish --access public
+
+      - name: Sync release branch
+        if: ${{ steps.release.outputs.release_created }}
+        run: bash scripts/sync-release-branch.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
