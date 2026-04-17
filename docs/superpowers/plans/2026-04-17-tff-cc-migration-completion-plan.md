@@ -64,9 +64,11 @@ All test-assertion updates. The suite will go red at the end of Wave 0 and stay 
 
 ### T07: Flip assertions in `detect-spec-edit.spec.ts`
 - **File**: `tests/unit/application/guard/detect-spec-edit.spec.ts`
-- **Change**: `sed -i '' 's|\.tff/milestones|.tff-cc/milestones|g' <file>` (verify lines 127, 204, 205, 221, 229); also flip `.tff\\milestones` → `.tff-cc\\milestones` on line 229
+- **Changes** (two-pass — sed + manual Edit for backslash variant):
+  1. `sed -i '' 's|\.tff/milestones|.tff-cc/milestones|g' <file>` — covers lines 127, 204, 205, 221.
+  2. Use Edit tool to replace on line 229: `".tff\\milestones\\M001\\SPEC.md"` → `".tff-cc\\milestones\\M001\\SPEC.md"`. (Sed on backslashes inside single-quoted JS strings is error-prone; Edit is safer.)
 - **Run**: `bun run test tests/unit/application/guard/detect-spec-edit.spec.ts`
-- **Expect**: PASS (this test matches any path ending in `SPEC.md`; the path prefix is irrelevant). No behavior change expected — verify the test is documentation-style only.
+- **Expect**: PASS — `detectSpecEdit` checks only the basename (`SPEC.md` case-insensitive); the path prefix is opaque. These tests are path-documentation, not path-gating. Confirm by reading `src/application/guard/detect-spec-edit.ts:40–54` (`isSpecFile` uses `split("/").pop()` after normalizing backslashes).
 - **AC**: AC2
 
 ### T08: Flip default `artifactPath` in `journal-entry.spec.ts`
@@ -87,12 +89,27 @@ All test-assertion updates. The suite will go red at the end of Wave 0 and stay 
 - **File**: `tests/unit/infrastructure/hooks/post-checkout-template.spec.ts`
 - **Change**: `sed -i '' 's|\.tff/hook\.log|.tff-cc/hook.log|g' <file>` (verify lines 24, 25). Also rename test label "logs to `.tff/hook.log`" → "logs to `.tff-cc/hook.log`".
 - **Run**: `bun run test tests/unit/infrastructure/hooks/post-checkout-template.spec.ts`
-- **Expect**: FAIL — hook template string still contains `.tff/hook.log`
+- **Expect**: FAIL (remains FAIL until T27 in Wave 1 updates the production template) — hook template string still contains `.tff/hook.log`
+- **AC**: AC2
+
+### T10a: Flip fixtures in `migration.spec.ts` (legacy path now really is `.tff/`)
+- **File**: `tests/unit/infrastructure/migration.spec.ts`
+- **Rationale**: Current fixtures create `.tff-cc/` as the legacy dir because the buggy detector checks `.tff-cc/`. Once T28 fixes the detector to check `.tff/`, these fixtures must use `.tff/` too. This is the one file where the post-fix code still legitimately references `.tff/` — matches the whitelist in the spec.
+- **Changes** (exact):
+  - Line 45: `mkdirSync(join(tempDir, ".tff-cc"), { recursive: true });` → `mkdirSync(join(tempDir, ".tff"), { recursive: true });`
+  - Line 46: `writeFileSync(join(tempDir, ".tff-cc", "state.db"), "fake db");` → `writeFileSync(join(tempDir, ".tff", "state.db"), "fake db");`
+  - Lines 78–82 (runMigrationIfNeeded happy path): replace all `.tff-cc` inside `join(tempDir, …)` with `.tff`.
+  - Lines 136–138 (rollback test fixture): same substitution.
+  - Test labels/describe titles: update "should detect .tff-cc/ as real directory (legacy)" → "should detect .tff/ as real directory (legacy)", "should NOT detect .tff-cc/ as legacy if it's a symlink" → "should NOT detect .tff-cc/ symlink as legacy" (keep second assertion — symlink is `.tff-cc/` post-migration, verify still false), "should migrate .tff-cc/ contents…" → "should migrate .tff/ contents…".
+  - Keep the post-migration assertions (lines 97–99, 150–151) checking `.tff-cc/` is a symlink — that is the new name and correct.
+  - Leave lines 52–70 (`should NOT detect .tff-cc/ as legacy if it's a symlink` and `should NOT detect legacy if .tff-cc/ doesn't exist`) intact — they assert non-legacy states involving `.tff-cc/` symlink/absence, both still correct.
+- **Run**: `bun run test tests/unit/infrastructure/migration.spec.ts`
+- **Expect**: FAIL — `detectLegacyPattern` still checks `.tff-cc/`, so the new `.tff/` fixtures won't trigger it; tests for legacy detection will fail. Stays FAIL until T28/T29 update the detector.
 - **AC**: AC2
 
 ### T11: Commit Wave 0
-- **Files**: 10 test files above
-- **Run**: `git add tests/ && git commit -m "test: flip path assertions to .tff-cc/"`
+- **Files**: 11 test files above (T01–T10 plus T10a)
+- **Run**: `git add tests/ && git commit -m "test: flip path assertions to .tff-cc/ and migration fixtures to .tff/"`
 - **Expect**: one commit containing only test changes. Do not run the full suite yet; expect many failures until Wave 1 completes.
 
 ---
@@ -220,35 +237,37 @@ All writers/readers flipped. After this wave the full suite returns to green.
 - **File**: `src/infrastructure/migration.ts`
 - **Change**: line 29, `const tffPath = join(repoRoot, ".tff-cc");` → `const tffPath = join(repoRoot, ".tff");`
 - **Run**: `bun run test tests/unit/infrastructure/migration.spec.ts`
-- **Expect**: PASS — test already sets up legacy `.tff/` fixtures
+- **Expect**: partial PASS — the legacy-detection fixtures from T10a now trigger the function correctly; fixtures asserting "NOT legacy" still require T29 (full flow)
 - **AC**: AC2
 
 ### T29: Fix real-directory detection in `runMigrationIfNeeded` in `migration.ts`
 - **File**: `src/infrastructure/migration.ts`
 - **Change**: line 102, `const tffPath = join(repoRoot, ".tff-cc");` → `const tffPath = join(repoRoot, ".tff");`
 - **Run**: `bun run test tests/unit/infrastructure/migration.spec.ts`
-- **Expect**: PASS
+- **Expect**: PASS (full suite: detect + migrate + rollback all green against the T10a `.tff/` fixtures)
 - **AC**: AC2
 
 ### T30: Add user-visible migration log line
 - **File**: `src/infrastructure/migration.ts`
-- **Change**: in `runMigrationIfNeeded` between steps 2 and 3 (after `ensureProjectHomeDir`, before `copyDir`), insert `console.info(\`[tff] Migrating legacy .tff/ to ${projectHome}\`);`
+- **Change**: in `runMigrationIfNeeded` between steps 2 and 3 (after `ensureProjectHomeDir`, before `copyDir`), insert `console.error(\`[tff] Migrating legacy .tff/ to ${projectHome}\`);`
+  - Note: use `console.error` (stderr), NOT `console.info` (stdout) — avoids polluting any CLI command whose stdout is parsed as JSON.
 - **Run**: `bun run test tests/unit/infrastructure/migration.spec.ts`
 - **Expect**: PASS
 - **AC**: AC2
 
-### T31: Update gitignore comment in `init-project.ts`
+### T31: Update gitignore comment in `init-project.ts` and verify entries
 - **File**: `src/application/project/init-project.ts`
 - **Change**: line 40 comment `// Ensure .tff/ and build/ are in .gitignore so artifacts never land on code branches` → `// Ensure .tff-cc/ and build/ are in .gitignore so artifacts never land on code branches`
+- **Verify**: `grep -A 2 REQUIRED_GITIGNORE_ENTRIES src/application/project/init-project.ts` shows `[".tff-cc/", "build/"]` exactly. If not, fix the constant.
 - **Run**: `bun run typecheck`
-- **Expect**: no TS errors
+- **Expect**: no TS errors; constant matches expected value
 - **AC**: AC1
 
 ### T32: Rename `createTffSymlink` → `createTffCcSymlink` in `home-directory.ts`
 - **File**: `src/infrastructure/home-directory.ts`
 - **Change**: `sed -i '' 's|createTffSymlink|createTffCcSymlink|g' src/infrastructure/home-directory.ts`. Update doc comments on lines 131-135 to reference `.tff-cc` consistently. Update `// Check if .tff exists` on line 141 → `// Check if .tff-cc exists`.
 - **Run**: `bun run typecheck`
-- **Expect**: TS errors at caller sites (T33, T34 fix these)
+- **Expect**: TS errors at caller sites (T33, T34, T34a fix these)
 - **AC**: AC1
 
 ### T33: Update caller in `create-state-stores.ts`
@@ -262,8 +281,15 @@ All writers/readers flipped. After this wave the full suite returns to green.
 - **File**: `src/cli/commands/worktree-create.cmd.ts`
 - **Change**: `sed -i '' 's|createTffSymlink|createTffCcSymlink|g' <file>` (lines 5, 68)
 - **Run**: `bun run typecheck`
-- **Expect**: no TS errors anywhere
+- **Expect**: no TS errors in this file
 - **AC**: AC1
+
+### T34a: Update caller in `home-directory.spec.ts`
+- **File**: `tests/unit/infrastructure/home-directory.spec.ts`
+- **Change**: `sed -i '' 's|createTffSymlink|createTffCcSymlink|g' tests/unit/infrastructure/home-directory.spec.ts` — covers line 103 (describe title), 109 (import), 113 (call), 125 (import), 127 (call).
+- **Run**: `bun run test tests/unit/infrastructure/home-directory.spec.ts`
+- **Expect**: PASS — tests re-attach to the renamed export
+- **AC**: AC1, AC2
 
 ### T35: Run full suite — green
 - **Run**: `bun run test && bun run lint && bun run typecheck`
@@ -374,8 +400,8 @@ All writers/readers flipped. After this wave the full suite returns to green.
         - name: Guard against legacy .tff/ paths
           run: bash scripts/check-no-legacy-tff-paths.sh
   ```
-- **Run**: `yamllint .github/workflows/ci.yml` (if installed; else skip)
-- **Expect**: valid YAML
+- **Run**: inspect the edited file with `cat .github/workflows/ci.yml` and confirm valid indentation visually; push the branch and observe the step appears in GitHub Actions UI
+- **Expect**: step shows green after Wave 1 completes
 - **AC**: AC1
 
 ### T40: Commit Wave 2
@@ -417,10 +443,11 @@ All writers/readers flipped. After this wave the full suite returns to green.
 - **AC**: #92 P2
 
 ### T42: Implement label→UUID resolver in `slice-create.cmd.ts`
-- **File**: `src/cli/commands/slice-create.cmd.ts`
-- **Change**: add `resolveMilestoneId(store, input): Result<string>` — if input matches `/^M\d+$/`, look up by label via `store.listMilestones()` and return UUID; otherwise validate as UUID v4 and return. Call this at the start of the command handler before `store.getMilestone(mid)`.
-- **Run**: `bun run test tests/unit/cli/commands/slice-create.cmd.spec.ts`
-- **Expect**: PASS
+- **Pre-step**: confirm the milestone-store interface supports label lookup. `grep -n "listMilestones\|getMilestoneByLabel\|findMilestone" src/` to identify the right method. If only `listMilestones()` (returning all) exists, iterate in-memory — acceptable for the expected small milestone count. If a `getMilestoneByLabel` helper is missing and justified, extend the store interface in this task; the milestone-store file(s) must be included in T44's commit.
+- **File**: `src/cli/commands/slice-create.cmd.ts` (and possibly `src/infrastructure/adapters/sqlite/milestone-store.*.ts` if a new helper is added)
+- **Change**: add `resolveMilestoneId(store, input): Result<string>` — if input matches `/^M\d+$/`, look up by label (via existing `listMilestones` filtered in-memory, or a new store helper); otherwise validate as UUID v4 and return. Call this at the start of the command handler before `store.getMilestone(mid)`. Return an `Err` with a clear message when the label resolves to no milestone.
+- **Run**: `bun run test tests/unit/cli/commands/slice-create.cmd.spec.ts && bun run typecheck`
+- **Expect**: PASS and no TS errors across the store interface boundary
 - **AC**: #92 P2
 
 ### T43: Update `--help` text for `slice-create.cmd.ts`
@@ -431,13 +458,14 @@ All writers/readers flipped. After this wave the full suite returns to green.
 - **AC**: #92 P2
 
 ### T44: Commit Wave 3
-- **Run**: `git add src/cli/commands/slice-create.cmd.ts tests/unit/cli/commands/slice-create.cmd.spec.ts && git commit -m "fix(slice-create): accept milestone label (M01) in addition to UUID"`
+- **Run**: `git add src/cli/commands/slice-create.cmd.ts src/infrastructure/adapters/sqlite/milestone-store*.ts src/domain/*/milestone-store*.ts tests/unit/cli/commands/slice-create.cmd.spec.ts && git commit -m "fix(slice-create): accept milestone label (M01) in addition to UUID"`
+  - Adjust glob set to match the actual touched files from T42. If T42 only edited `slice-create.cmd.ts`, reduce the `git add` accordingly.
 
 ---
 
-## Wave 4 — Docs & workflow fixes (parallel, independent of code waves)
+## Wave 4 — Docs & workflow fixes (depends on Wave 1 for T53 guard)
 
-Could run alongside Wave 1. Listed here for commit isolation.
+Tasks T45–T52 (content edits) have no code dependency and could physically execute alongside Wave 1. T53 (grep-guard run) requires Wave 1 complete, because the guard fails if any code file still has `.tff/`. If running T45–T52 in parallel with Wave 1, hold T53 until Wave 1 merge.
 
 ### T45: Update `commands/tff/map-codebase.md`
 - **File**: `commands/tff/map-codebase.md`
@@ -466,9 +494,16 @@ Could run alongside Wave 1. Listed here for commit isolation.
 - **AC**: AC1
 
 ### T50: Add symlink clarification to `references/conventions.md`
+- **Pre-step**: `grep -n "\.tff" references/conventions.md` — identify exact line where `.tff-cc/` is first introduced in the conventions doc. That line is the insertion anchor.
 - **File**: `references/conventions.md`
-- **Change**: add a note (after the existing `.tff-cc/` description) stating: "Note: `.tff-cc/` in the repo is a symlink to `~/.tff-cc/{projectId}/`, created by `project:init`. Direct `mkdir -p .tff-cc/...` before init is unsafe and will break symlink creation."
-- **Expect**: conventions doc explicitly warns against the #91 item 3 foot-gun
+- **Change**: immediately after the first line introducing `.tff-cc/`, insert a new paragraph:
+  ```
+  Note: `.tff-cc/` in the repo is a symlink to `~/.tff-cc/{projectId}/`, created by `project:init`. Direct `mkdir -p .tff-cc/…` before init is unsafe and will cause symlink creation to fail with "`.tff-cc/` exists as a real directory."
+  ```
+- **Also**: scan the rest of the file with `grep -nE '\.tff($|[^-c])' references/conventions.md`. Any lingering `.tff/` references (other than those describing the migration from legacy) must be flipped to `.tff-cc/`.
+- **Run**: `grep -nE '\.tff($|[^-c])' references/conventions.md | grep -v 'legacy\|legitimate'`
+- **Expect**: no output — no undocumented `.tff/` references remain
+- **AC**: AC1
 
 ### T51: Fix `workflows/new-project.md` ordering
 - **File**: `workflows/new-project.md`
@@ -577,20 +612,38 @@ Could run alongside Wave 1. Listed here for commit isolation.
 
   # Build release-branch snapshot from current repo state.
   # Requires: dist/ already built (via `bun run build`).
+  # Force-pushes to origin/release (branch is a build artifact, no preserved history).
 
   if [ ! -f dist/cli/index.js ]; then
     echo "dist/cli/index.js missing — run 'bun run build' first"
     exit 1
   fi
 
+  # Capture source metadata before we change directories
+  SOURCE_SHA=$(git rev-parse --short HEAD)
+  ORIGIN_URL=$(git config --get remote.origin.url)
+  if [ -z "$ORIGIN_URL" ]; then
+    echo "remote 'origin' not configured"
+    exit 1
+  fi
+
   RELEASE_DIR=$(mktemp -d -t tff-release-XXXXXX)
   trap "rm -rf $RELEASE_DIR" EXIT
 
-  # Seed the worktree with main's tree (no history)
-  git archive HEAD | tar -x -C "$RELEASE_DIR"
+  # Explicitly whitelist what goes into the release branch — do NOT archive the entire HEAD tree,
+  # which would ship src/, tests/, node_modules/, docs/, etc. to consumers.
+  # Release snapshot contents:
+  #   - plugin/              (with symlinks resolved to real files)
+  #   - dist/                (built CLI)
+  #   - native/              (for SQLite adapter)
+  #   - .claude-plugin/      (marketplace manifest)
+  #   - package.json
+  #   - README.md
+  #   - LICENSE
+  #   - CHANGELOG.md
+  #   - .gitignore           (minimal; does NOT ignore dist/)
 
-  # Resolve plugin/ symlinks into real copies
-  rm -rf "$RELEASE_DIR/plugin"
+  # 1. plugin/ with symlinks resolved
   mkdir -p "$RELEASE_DIR/plugin/.claude-plugin"
   cp plugin/.claude-plugin/plugin.json "$RELEASE_DIR/plugin/.claude-plugin/"
   for sub in agents commands hooks references skills tools workflows; do
@@ -599,35 +652,43 @@ Could run alongside Wave 1. Listed here for commit isolation.
     fi
   done
 
-  # Copy built dist/
+  # 2. dist/
   cp -r dist "$RELEASE_DIR/dist"
 
-  # Copy native binaries into sqlite adapter path (matches build script)
+  # 3. native/*.node → into dist/…/sqlite (match build script output layout)
   if [ -d native ]; then
     mkdir -p "$RELEASE_DIR/dist/infrastructure/adapters/sqlite"
     cp native/*.node "$RELEASE_DIR/dist/infrastructure/adapters/sqlite/" 2>/dev/null || true
   fi
 
-  # Minimal .gitignore that does NOT ignore dist/
+  # 4. Top-level files consumers need
+  cp .claude-plugin/marketplace.json "$RELEASE_DIR/.claude-plugin/marketplace.json" 2>/dev/null || {
+    mkdir -p "$RELEASE_DIR/.claude-plugin"
+    cp .claude-plugin/marketplace.json "$RELEASE_DIR/.claude-plugin/marketplace.json"
+  }
+  cp package.json README.md CHANGELOG.md "$RELEASE_DIR/"
+  [ -f LICENSE ] && cp LICENSE "$RELEASE_DIR/"
+
+  # 5. Minimal .gitignore (does NOT ignore dist/)
   cat > "$RELEASE_DIR/.gitignore" <<'EOF'
   node_modules/
   *.log
   .DS_Store
   EOF
 
-  # Stage and commit to release branch (force-push — branch is a build artifact)
+  # 6. Init fresh git and force-push to origin/release
   cd "$RELEASE_DIR"
   git init -q
+  git remote add origin "$ORIGIN_URL"
   git checkout -q -b release
   git add -A
-  git -c user.name="tff-release-bot" -c user.email="release@tff-cc.invalid" commit -q -m "release: snapshot built from $(cd - > /dev/null && git rev-parse --short HEAD)"
-  cd - > /dev/null
-
-  # Push force to origin release branch
-  git -C "$RELEASE_DIR" push --force origin release
+  git -c user.name="tff-release-bot" -c user.email="release@tff-cc.invalid" \
+    commit -q -m "release: snapshot built from $SOURCE_SHA"
+  git push --force origin release
   ```
-- **Run**: `chmod +x scripts/sync-release-branch.sh && bun run build && bash scripts/sync-release-branch.sh` (locally, against a test remote)
-- **Expect**: `release` branch on test remote contains `plugin/` (real files) + `dist/` + `native` content in sqlite adapter dir
+- **Run**: `chmod +x scripts/sync-release-branch.sh && bun run build && bash scripts/sync-release-branch.sh` (locally, pointed at a test fork first — NOT the real origin — to verify the output shape before wiring to CI)
+- **Expect**: `release` branch on test remote contains only the whitelisted files; no `src/`, no `tests/`, no `docs/`; `dist/cli/index.js` executable; `native/*.node` present under sqlite adapter path
+- **Risk note**: the `git push --force origin release` is the point of no return. First dry-run against `git push --dry-run --force origin release` locally to inspect the diff before the real push.
 
 ### T64: Add sync step to `release.yml`
 - **File**: `.github/workflows/release.yml`
@@ -703,6 +764,17 @@ Could run alongside Wave 1. Listed here for commit isolation.
 ### T67: Commit Wave 6
 - **Run**: `git add scripts/sync-release-branch.sh .github/workflows/ README.md && git commit -m "feat(release): publish built plugin artifacts to release branch"`
 
+### T67a: Manual pre-merge smoke test of release branch
+- **Goal**: prove AC4 before the PR merges, not after.
+- **Steps**:
+  1. Push PR branch.
+  2. Run the release sync script manually against a **test fork** (not real origin): `git remote add fork <fork-url> && ORIGIN=$(git config --get remote.origin.url) git -c remote.origin.url=<fork-url> bash scripts/sync-release-branch.sh`. (Or temporarily swap the remote URL; restore afterward.)
+  3. In a scratch directory, run `claude /plugin install <fork-url>` (or the branch-qualified equivalent from T62 outcome).
+  4. Verify `dist/cli/index.js` present in the plugin install location, executable, returns `--version`.
+  5. Trigger `hooks/tff-observe.sh` in a throwaway project; verify observation writes to `.tff-cc/observations/`.
+- **Expect**: consumer install works end-to-end
+- **AC**: AC4
+
 ### T68: Post-merge verification
 - **Not part of PR** — runs after merge to main triggers release-please.
 - **Steps**:
@@ -721,11 +793,40 @@ Could run alongside Wave 1. Listed here for commit isolation.
 - **Expect**: all green
 
 ### T70: Create PR
+- **Pre-step**: write a dedicated PR body to `/tmp/pr-body.md`:
+  ```markdown
+  ## Summary
+
+  Completes the `.tff/` → `.tff-cc/` migration left partial by #87. Resolves #91 and #92.
+
+  ### What changed
+
+  - All artifact writers, hooks, CLI commands, and docs now use `.tff-cc/`.
+  - Migration detector (`migration.ts`) now correctly detects legacy `.tff/` and migrates to `~/.tff-cc/<projectId>/`.
+  - New `tests/integration/path-contract.spec.ts` prevents path-drift regression.
+  - New `scripts/check-no-legacy-tff-paths.sh` CI guard enforces the whitelist.
+  - `slice:create --milestone-id` accepts `M01` labels in addition to UUIDs.
+  - 71 `.original.md` backups moved to `scripts/backups/` so Claude Code loads each command once.
+  - Built `dist/` now ships via `release` branch so `claude /plugin install` works without manual `bun install`.
+
+  ### Verification
+
+  - [ ] `bun run test` green (incl. new integration test)
+  - [ ] Grep guard green on CI
+  - [ ] Manual smoke test from T67a: `claude /plugin install` from test fork → working `dist/cli/index.js`
+  - [ ] Release-branch validation workflow green after merge
+
+  See spec: `docs/superpowers/specs/2026-04-17-tff-cc-migration-completion-design.md`.
+  See plan: `docs/superpowers/plans/2026-04-17-tff-cc-migration-completion-plan.md`.
+
+  Closes #91
+  Closes #92
+  ```
 - **Run**:
   ```sh
   git push -u origin fix/complete-tff-cc-migration
   gh pr create --title "fix: complete .tff/ → .tff-cc/ migration (resolves #91, #92)" \
-    --body "$(cat docs/superpowers/specs/2026-04-17-tff-cc-migration-completion-design.md | head -50)"
+    --body-file /tmp/pr-body.md
   ```
 - **Expect**: PR URL returned; link in #91 and #92
 
