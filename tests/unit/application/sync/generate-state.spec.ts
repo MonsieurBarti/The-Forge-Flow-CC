@@ -24,7 +24,7 @@ describe("generateState", () => {
 		slice1Id = isOk(sl1Result) ? sl1Result.data.id : "M01-S01";
 		const sl2Result = adapter.createSlice({ milestoneId, number: 2, title: "Billing" });
 		slice2Id = isOk(sl2Result) ? sl2Result.data.id : "M01-S02";
-		
+
 		adapter.transitionSlice(slice1Id, "researching");
 		adapter.transitionSlice(slice1Id, "planning");
 		adapter.transitionSlice(slice1Id, "executing");

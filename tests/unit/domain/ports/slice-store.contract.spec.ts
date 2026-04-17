@@ -29,7 +29,9 @@ export const runSliceStoreContractTests = (
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				// ID should be a UUID
-				expect(result.data.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+				expect(result.data.id).toMatch(
+					/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+				);
 				expect(result.data.title).toBe("First Slice");
 				expect(result.data.milestoneId).toBe(milestoneId);
 				expect(result.data.number).toBe(1);

@@ -120,7 +120,11 @@ export const runReviewStoreContractTests = (name: string, createAdapter: () => F
 		});
 
 		it("listReviews only returns reviews for the specified slice", () => {
-			const sl2Result = store.createSlice({ milestoneId: store.listMilestones().data?.[0]?.id ?? "M01", number: 2, title: "S02" });
+			const sl2Result = store.createSlice({
+				milestoneId: store.listMilestones().data?.[0]?.id ?? "M01",
+				number: 2,
+				title: "S02",
+			});
 			const slice2Id = isOk(sl2Result) ? sl2Result.data.id : "M01-S02";
 
 			store.recordReview({
