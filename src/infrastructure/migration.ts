@@ -81,7 +81,7 @@ function restoreTffCcDir(projectHome: string, tffPath: string): void {
  * 3. Create home directory
  * 4. Move .tff/ contents to home directory
  * 5. Delete .tff/
- * 6. Create symlink .tff → home directory
+ * 6. Create symlink .tff-cc → home directory
  *
  * Atomic: if any step fails, we don't leave partial state.
  */
