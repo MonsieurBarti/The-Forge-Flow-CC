@@ -8,7 +8,7 @@ View ∧ modify all project settings.
 tff project ∃
 
 ## Steps
-1. READ `.tff/settings.yaml` (if ∃)
+1. READ `.tff-cc/settings.yaml` (if ∃)
    - If missing → offer to create from @references/settings-template.md
 2. DETECT missing fields: compare against template, list any absent sections
    - If missing fields found → offer to add them with defaults (preserve existing values + comments)
@@ -22,5 +22,5 @@ tff project ∃
    - Model profiles: quality/balanced/budget model selection
    - Autonomy: mode selection with explanation of guided vs plan-to-pr
    - Auto-learn: weights, guardrails, clustering values
-6. WRITE updated `.tff/settings.yaml` (preserve comments where possible)
+6. WRITE updated `.tff-cc/settings.yaml` (preserve comments where possible)
 7. NEXT: @references/next-steps.md

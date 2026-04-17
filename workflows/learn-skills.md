@@ -8,8 +8,8 @@ Detect corrections to existing skills → propose refinements.
 observation enabled ∧ skills exist ∈ `skills/` ∧ ≥3 corrections observed
 
 ## Settings
-Read `.tff/settings.yaml` → `auto-learn.guardrails`.
-Check cooldown: read `.tff/drafts/metadata.jsonl`, verify canRefine().
+Read `.tff-cc/settings.yaml` → `auto-learn.guardrails`.
+Check cooldown: read `.tff-cc/drafts/metadata.jsonl`, verify canRefine().
 Pass maxDrift: `tff-tools skills:drift --max-drift 0.2`
 
 ## Steps
@@ -17,11 +17,11 @@ Pass maxDrift: `tff-tools skills:drift --max-drift 0.2`
 2. COMPARE actual sequences (sessions.jsonl) vs skill's documented steps → flag consistent deviations (≥3 occurrences)
 3. divergences found → LOAD @skills/skill-authoring/SKILL.md → SPAWN subagent ("Refine Existing Skill" mode):
    - provide original + divergence evidence → bounded diff (max 20% change)
-   - draft → `.tff/drafts/<skill-name>.md`
+   - draft → `.tff-cc/drafts/<skill-name>.md`
 4. CONSTRAINTS: max 20% per refinement, max 60% cumulative drift, 7-day cooldown
    - violated → warn user, suggest new skill instead
-5. REVIEW: invoke Skill `plannotator-annotate` with arg `.tff/drafts/<skill-name>.md`
+5. REVIEW: invoke Skill `plannotator-annotate` with arg `.tff-cc/drafts/<skill-name>.md`
 6. HANDLE:
-   - approved → archive to `.tff/observations/skill-history/<name>.v<N>.md`, update `skills/<name>.md`
+   - approved → archive to `.tff-cc/observations/skill-history/<name>.v<N>.md`, update `skills/<name>.md`
    - rejected → record as intentional divergence (suppress future suggestions)
 7. NEXT: @references/next-steps.md

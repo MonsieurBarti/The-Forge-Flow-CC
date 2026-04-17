@@ -2,7 +2,7 @@
 
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
-**Autonomy**: check `.tff/settings.yaml` → `autonomy.mode` before pausing.
+**Autonomy**: check `.tff-cc/settings.yaml` → `autonomy.mode` before pausing.
 
 ## Prerequisites
 status = discussing
@@ -32,7 +32,7 @@ LOAD @skills/brainstorming/SKILL.md
 - Revise until approved, then next section
 
 ### 3. Write Spec
-WRITE `.tff/milestones/<milestone>/slices/<id>/SPEC.md` w/ validated design
+WRITE `.tff-cc/milestones/<milestone>/slices/<id>/SPEC.md` w/ validated design
 
 ### 4. Challenge Spec (F-full only — determined ∈ step 8)
 LOAD @skills/stress-testing-specs/SKILL.md → SPAWN subagent: {spec_content}
@@ -48,7 +48,7 @@ DISPATCH anonymous reviewer via Agent tool (prompt: @skills/brainstorming/SKILL.
 Issues → fix, re-dispatch (max 3)
 
 ### 7. User Gate
-Ask user: "Spec at `.tff/milestones/<milestone>/slices/<id>/SPEC.md`. Approve?"
+Ask user: "Spec at `.tff-cc/milestones/<milestone>/slices/<id>/SPEC.md`. Approve?"
 
 ### 8. Classify Complexity
 Based on what was learned during discuss, build `ComplexitySignals`:
@@ -74,7 +74,7 @@ CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ ab
 
 ## Auto-Transition
 After completing all steps above:
-1. READ `.tff/settings.yaml` → check `autonomy.mode`
+1. READ `.tff-cc/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
    - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask user
    - Human gates (plan approval, spec approval, completion): pause ∧ ask
