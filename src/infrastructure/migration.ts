@@ -67,7 +67,7 @@ function deleteDir(dir: string): void {
  * Restore .tff/ directory from home directory after failed migration.
  * Used for rollback when symlink creation fails after deletion.
  */
-function restoreTffCcDir(projectHome: string, tffPath: string): void {
+function restoreLegacyTffDir(projectHome: string, tffPath: string): void {
 	if (existsSync(projectHome)) {
 		copyDir(projectHome, tffPath);
 	}
@@ -130,7 +130,7 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 	} catch (symlinkError) {
 		// Rollback: restore .tff/ directory from home directory
 		console.error(`Symlink creation failed, rolling back migration: ${symlinkError}`);
-		restoreTffCcDir(projectHome, tffPath);
+		restoreLegacyTffDir(projectHome, tffPath);
 		throw symlinkError;
 	}
 }
