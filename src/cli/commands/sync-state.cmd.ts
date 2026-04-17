@@ -1,3 +1,4 @@
+import { resolveMilestoneId } from "../../application/milestone/resolve-milestone-id.js";
 import { generateState } from "../../application/sync/generate-state.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
@@ -12,12 +13,11 @@ export const syncStateSchema: CommandSchema = {
 		{
 			name: "milestone-id",
 			type: "string",
-			description: "Milestone ID to sync",
-			pattern: "^M\\d+$",
+			description: "Milestone UUID or M-label (e.g., M01) to sync",
 		},
 	],
 	optionalFlags: [],
-	examples: ["sync:state --milestone-id M01"],
+	examples: ["sync:state --milestone-id M01", "sync:state --milestone-id <uuid>"],
 };
 
 export const syncStateCmd = async (args: string[]): Promise<string> => {
@@ -26,13 +26,19 @@ export const syncStateCmd = async (args: string[]): Promise<string> => {
 		return JSON.stringify(parsed);
 	}
 
-	const { "milestone-id": milestoneId } = parsed.data as { "milestone-id": string };
+	const { "milestone-id": rawMilestoneId } = parsed.data as { "milestone-id": string };
 
 	const result = await withSyncLock(async () => {
 		const { milestoneStore, sliceStore, taskStore } = createClosableStateStoresUnchecked();
+
+		const resolved = resolveMilestoneId(milestoneStore, rawMilestoneId);
+		if (!isOk(resolved)) {
+			return JSON.stringify({ ok: false, error: resolved.error });
+		}
+
 		const artifactStore = new MarkdownArtifactAdapter(process.cwd());
 		const result = await generateState(
-			{ milestoneId },
+			{ milestoneId: resolved.data },
 			{ milestoneStore, sliceStore, taskStore, artifactStore },
 		);
 		if (isOk(result)) return JSON.stringify({ ok: true, data: null });
