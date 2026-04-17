@@ -1,6 +1,7 @@
 import { createDomainError, type DomainError } from "../../domain/errors/domain-error.js";
 import type { ArtifactStore } from "../../domain/ports/artifact-store.port.js";
 import { Err, isOk, Ok, type Result } from "../../domain/result.js";
+import { sliceDir } from "../../shared/paths.js";
 import type { CheckpointData } from "./save-checkpoint.js";
 
 interface LoadCheckpointDeps {
@@ -12,7 +13,7 @@ export const loadCheckpoint = async (
 	deps: LoadCheckpointDeps,
 ): Promise<Result<CheckpointData, DomainError>> => {
 	const milestoneId = sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-	const path = `.tff-cc/milestones/${milestoneId}/slices/${sliceId}/CHECKPOINT.md`;
+	const path = `${sliceDir(milestoneId, sliceId)}/CHECKPOINT.md`;
 	const contentResult = await deps.artifactStore.read(path);
 	if (!isOk(contentResult))
 		return Err(

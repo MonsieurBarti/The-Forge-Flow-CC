@@ -1,6 +1,7 @@
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import type { GitOps } from "../../domain/ports/git-ops.port.js";
 import type { Result } from "../../domain/result.js";
+import { worktreeDir } from "../../shared/paths.js";
 
 interface DeleteWorktreeInput {
 	sliceId: string;
@@ -13,6 +14,6 @@ export const deleteWorktreeUseCase = async (
 	input: DeleteWorktreeInput,
 	deps: DeleteWorktreeDeps,
 ): Promise<Result<void, DomainError>> => {
-	const worktreePath = `.tff-cc/worktrees/${input.sliceId}`;
+	const worktreePath = worktreeDir(input.sliceId);
 	return deps.gitOps.deleteWorktree(worktreePath);
 };

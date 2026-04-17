@@ -6,6 +6,7 @@ import type { MilestoneStore } from "../../domain/ports/milestone-store.port.js"
 import type { SliceStore } from "../../domain/ports/slice-store.port.js";
 
 import { Err, isOk, Ok, type Result } from "../../domain/result.js";
+import { sliceDir as sliceDirPath } from "../../shared/paths.js";
 
 interface CreateSliceInput {
 	milestoneId: string;
@@ -48,11 +49,10 @@ export const createSliceUseCase = async (
 	// Create slice directory with stub PLAN.md using label format
 	const msLabel = milestoneLabel(milestone.number);
 	const slLabel = sliceLabel(milestone.number, slice.number);
-	const milestoneDir = `.tff-cc/milestones/${msLabel}`;
-	const sliceDir = `${milestoneDir}/slices/${slLabel}`;
-	await deps.artifactStore.mkdir(sliceDir);
+	const dir = sliceDirPath(msLabel, slLabel);
+	await deps.artifactStore.mkdir(dir);
 	await deps.artifactStore.write(
-		`${sliceDir}/PLAN.md`,
+		`${dir}/PLAN.md`,
 		`# Plan — ${slLabel}: ${input.title}\n\n_Plan will be defined during /tff:plan._\n`,
 	);
 

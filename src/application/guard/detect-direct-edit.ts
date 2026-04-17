@@ -3,6 +3,7 @@ import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { SessionStore } from "../../domain/ports/session-store.port.js";
 import type { TaskStore } from "../../domain/ports/task-store.port.js";
+import { SETTINGS_FILE, TFF_CC_DIR } from "../../shared/paths.js";
 
 export interface DetectDirectEditDeps {
 	sessionStore: SessionStore;
@@ -30,7 +31,7 @@ export interface DirectEditResult {
  * Returns true if workflow.guards is explicitly false.
  */
 function areGuardsDisabled(): boolean {
-	const settingsPath = path.join(process.cwd(), ".tff-cc", "settings.yaml");
+	const settingsPath = path.join(process.cwd(), SETTINGS_FILE);
 	if (!existsSync(settingsPath)) {
 		return false; // Default to enabled if no settings file
 	}
@@ -48,7 +49,7 @@ function areGuardsDisabled(): boolean {
  * Check if the project is initialized (has .tff-cc directory).
  */
 function isProjectInitialized(): boolean {
-	const tffDir = path.join(process.cwd(), ".tff-cc");
+	const tffDir = path.join(process.cwd(), TFF_CC_DIR);
 	return existsSync(tffDir);
 }
 

@@ -5,6 +5,7 @@ import type { MilestoneStore } from "../../domain/ports/milestone-store.port.js"
 import type { SliceStore } from "../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../domain/ports/task-store.port.js";
 import { Err, isOk, Ok, type Result } from "../../domain/result.js";
+import { STATE_FILE } from "../../shared/paths.js";
 
 interface GenerateStateInput {
 	milestoneId: string;
@@ -74,6 +75,6 @@ export const generateState = async (
 		}
 	}
 	lines.push("");
-	await deps.artifactStore.write(".tff-cc/STATE.md", lines.join("\n"));
+	await deps.artifactStore.write(STATE_FILE, lines.join("\n"));
 	return Ok(undefined);
 };

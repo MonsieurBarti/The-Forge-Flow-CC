@@ -1,6 +1,7 @@
 #!/bin/sh
 # Fail if any .tff/ path reference exists outside the migration whitelist.
 # Whitelist:
+#   - src/shared/paths.ts (defines LEGACY_TFF_DIR for migration)
 #   - migration.ts (migrates FROM legacy)
 #   - migration.spec.ts (tests it)
 #   - path-contract.spec.ts (tests that .tff/ does NOT exist — must mention it)
@@ -16,6 +17,7 @@ MATCHES=$(grep -rnE '\.tff($|[^-c])' \
   --include='*.json' \
   src/ hooks/ workflows/ commands/ skills/ references/ tests/ \
   2>/dev/null \
+  | grep -v 'src/shared/paths\.ts:' \
   | grep -v 'src/infrastructure/migration\.ts:' \
   | grep -v 'tests/unit/infrastructure/migration\.spec\.ts:' \
   | grep -v 'tests/integration/path-contract\.spec\.ts:' \

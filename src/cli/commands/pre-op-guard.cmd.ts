@@ -8,6 +8,7 @@ import {
 import { isValidOperation } from "../../application/index.js";
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { SETTINGS_FILE, TFF_CC_DIR } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { withSyncLock } from "../with-sync-lock.js";
 
@@ -16,7 +17,7 @@ import { withSyncLock } from "../with-sync-lock.js";
  * Returns true if workflow.guards is explicitly false.
  */
 function areGuardsDisabled(): boolean {
-	const settingsPath = path.join(process.cwd(), ".tff-cc", "settings.yaml");
+	const settingsPath = path.join(process.cwd(), SETTINGS_FILE);
 	if (!existsSync(settingsPath)) {
 		return false; // Default to enabled if no settings file
 	}
@@ -34,7 +35,7 @@ function areGuardsDisabled(): boolean {
  * Check if the project is initialized (has .tff-cc directory).
  */
 function isProjectInitialized(): boolean {
-	const tffDir = path.join(process.cwd(), ".tff-cc");
+	const tffDir = path.join(process.cwd(), TFF_CC_DIR);
 	return existsSync(tffDir);
 }
 

@@ -15,6 +15,7 @@ import {
 	symlinkSync,
 } from "node:fs";
 import { join } from "node:path";
+import { LEGACY_TFF_DIR, TFF_CC_DIR } from "../shared/paths.js";
 import {
 	ensureProjectHomeDir,
 	getProjectId,
@@ -26,7 +27,7 @@ import {
  * Check if .tff/ exists as a real directory (not symlink) - indicates legacy pattern.
  */
 export function detectLegacyPattern(repoRoot: string): boolean {
-	const tffPath = join(repoRoot, ".tff");
+	const tffPath = join(repoRoot, LEGACY_TFF_DIR);
 	if (!existsSync(tffPath)) {
 		return false;
 	}
@@ -115,7 +116,7 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 	}
 
 	// Legacy .tff/ directory detected - migrating to home directory pattern
-	const tffPath = join(repoRoot, ".tff");
+	const tffPath = join(repoRoot, LEGACY_TFF_DIR);
 
 	// Step 1: Read or generate project ID
 	let projectId = readProjectIdFile(repoRoot);
@@ -141,7 +142,7 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 	deleteDir(tffPath);
 
 	// Step 6: Create symlink .tff-cc → home directory (with rollback on failure)
-	const symlinkTarget = join(repoRoot, ".tff-cc");
+	const symlinkTarget = join(repoRoot, TFF_CC_DIR);
 	try {
 		symlinkSync(projectHome, symlinkTarget);
 	} catch (symlinkError) {

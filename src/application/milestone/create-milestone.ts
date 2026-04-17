@@ -6,6 +6,7 @@ import type { GitOps } from "../../domain/ports/git-ops.port.js";
 import type { MilestoneStore } from "../../domain/ports/milestone-store.port.js";
 
 import { isOk, Ok, type Result } from "../../domain/result.js";
+import { milestoneDir as milestoneDirPath } from "../../shared/paths.js";
 
 interface CreateMilestoneInput {
 	name: string;
@@ -42,10 +43,10 @@ export const createMilestoneUseCase = async (
 
 	// Create milestone directory with REQUIREMENTS.md using label format
 	const label = milestoneLabel(input.number);
-	const milestoneDir = `.tff-cc/milestones/${label}`;
-	await deps.artifactStore.mkdir(`${milestoneDir}/slices`);
+	const dir = milestoneDirPath(label);
+	await deps.artifactStore.mkdir(`${dir}/slices`);
 	await deps.artifactStore.write(
-		`${milestoneDir}/REQUIREMENTS.md`,
+		`${dir}/REQUIREMENTS.md`,
 		`# Requirements — ${input.name}\n\n_Define your requirements here._\n`,
 	);
 
