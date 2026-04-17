@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { JournalEntryBuilder } from "../../../../src/domain/value-objects/journal-entry.builder.js";
 import { JournalEntrySchema } from "../../../../src/domain/value-objects/journal-entry.js";
+import { JournalEntryBuilder } from "../../../fixtures/journal-entry.builder.js";
 
 describe("JournalEntryBuilder", () => {
 	const builder = new JournalEntryBuilder().withSliceId("M01-S04");

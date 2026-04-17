@@ -1,4 +1,3 @@
-import { sliceDir } from "../../shared/paths.js";
 import type {
 	ArtifactWrittenEntry,
 	CheckpointSavedEntry,
@@ -10,7 +9,8 @@ import type {
 	TaskCompletedEntry,
 	TaskFailedEntry,
 	TaskStartedEntry,
-} from "./journal-entry.js";
+} from "../../src/domain/value-objects/journal-entry.js";
+import { sliceDir } from "../../src/shared/paths.js";
 
 export class JournalEntryBuilder {
 	private _sliceId: string = crypto.randomUUID();

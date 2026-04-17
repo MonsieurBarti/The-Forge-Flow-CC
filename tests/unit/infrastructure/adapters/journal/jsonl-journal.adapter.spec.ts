@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { isOk } from "../../../../../src/domain/result.js";
-import { JournalEntryBuilder } from "../../../../../src/domain/value-objects/journal-entry.builder.js";
 import { JsonlJournalAdapter } from "../../../../../src/infrastructure/adapters/journal/jsonl-journal.adapter.js";
+import { JournalEntryBuilder } from "../../../../fixtures/journal-entry.builder.js";
 
 let basePath: string;
 
