@@ -40,7 +40,7 @@ describe("createWorktreeUseCase", () => {
 		expect(isOk(result)).toBe(true);
 		if (isOk(result)) {
 			// Worktree path uses M##-S## format
-			expect(result.data.worktreePath).toBe(".tff/worktrees/M02-S05");
+			expect(result.data.worktreePath).toBe(".tff-cc/worktrees/M02-S05");
 		}
 	});
 
@@ -51,7 +51,7 @@ describe("createWorktreeUseCase", () => {
 		expect(isOk(result)).toBe(true);
 		if (isOk(result)) {
 			expect(result.data.branchName).toBe("slice/12345678");
-			expect(result.data.worktreePath).toBe(".tff/worktrees/M03-S10");
+			expect(result.data.worktreePath).toBe(".tff-cc/worktrees/M03-S10");
 		}
 	});
 });

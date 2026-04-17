@@ -76,7 +76,7 @@ describe("JournalEntrySchema", () => {
 		const entry = {
 			...base,
 			type: "artifact-written",
-			artifactPath: ".tff/milestones/M01/slices/M01-S04/SPEC.md",
+			artifactPath: ".tff-cc/milestones/M01/slices/M01-S04/SPEC.md",
 			artifactType: "spec",
 		};
 		expect(JournalEntrySchema.safeParse(entry).success).toBe(true);

@@ -40,10 +40,10 @@ describe("T17: Auto-migration logic", () => {
 	});
 
 	describe("detectLegacyPattern", () => {
-		it("should detect .tff-cc/ as real directory (legacy)", async () => {
+		it("should detect .tff/ as real directory (legacy)", async () => {
 			process.env.TFF_CC_HOME = homeDir;
-			mkdirSync(join(tempDir, ".tff-cc"), { recursive: true });
-			writeFileSync(join(tempDir, ".tff-cc", "state.db"), "fake db");
+			mkdirSync(join(tempDir, ".tff"), { recursive: true });
+			writeFileSync(join(tempDir, ".tff", "state.db"), "fake db");
 
 			const { detectLegacyPattern } = await import("../../../src/infrastructure/migration.js");
 			expect(detectLegacyPattern(tempDir)).toBe(true);
@@ -71,15 +71,15 @@ describe("T17: Auto-migration logic", () => {
 	});
 
 	describe("runMigrationIfNeeded", () => {
-		it("should migrate .tff-cc/ contents to home directory", async () => {
+		it("should migrate .tff/ contents to home directory", async () => {
 			process.env.TFF_CC_HOME = homeDir;
 
 			// Create legacy structure
-			mkdirSync(join(tempDir, ".tff-cc", "milestones", "M01"), { recursive: true });
-			mkdirSync(join(tempDir, ".tff-cc", "journal"), { recursive: true });
-			writeFileSync(join(tempDir, ".tff-cc", "state.db"), "fake db");
-			writeFileSync(join(tempDir, ".tff-cc", "PROJECT.md"), "# Test Project");
-			writeFileSync(join(tempDir, ".tff-cc", "journal", "M01-S01.jsonl"), '{"type":"test"}\n');
+			mkdirSync(join(tempDir, ".tff", "milestones", "M01"), { recursive: true });
+			mkdirSync(join(tempDir, ".tff", "journal"), { recursive: true });
+			writeFileSync(join(tempDir, ".tff", "state.db"), "fake db");
+			writeFileSync(join(tempDir, ".tff", "PROJECT.md"), "# Test Project");
+			writeFileSync(join(tempDir, ".tff", "journal", "M01-S01.jsonl"), '{"type":"test"}\n');
 
 			const { runMigrationIfNeeded } = await import("../../../src/infrastructure/migration.js");
 			runMigrationIfNeeded(tempDir);
@@ -133,9 +133,9 @@ describe("T17: Auto-migration logic", () => {
 			process.env.TFF_CC_HOME = homeDir;
 
 			// Create legacy structure
-			mkdirSync(join(tempDir, ".tff-cc", "milestones"), { recursive: true });
-			writeFileSync(join(tempDir, ".tff-cc", "state.db"), "fake db");
-			writeFileSync(join(tempDir, ".tff-cc", "PROJECT.md"), "# Test");
+			mkdirSync(join(tempDir, ".tff", "milestones"), { recursive: true });
+			writeFileSync(join(tempDir, ".tff", "state.db"), "fake db");
+			writeFileSync(join(tempDir, ".tff", "PROJECT.md"), "# Test");
 
 			// Create a blocker that will prevent symlink creation
 			// We can't easily force symlinkSync to fail, so we skip this test

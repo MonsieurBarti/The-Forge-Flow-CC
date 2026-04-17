@@ -47,7 +47,7 @@ describe("generateState", () => {
 			{ milestoneStore: adapter, sliceStore: adapter, taskStore: adapter, artifactStore },
 		);
 		expect(isOk(result)).toBe(true);
-		const content = await artifactStore.read(".tff/STATE.md");
+		const content = await artifactStore.read(".tff-cc/STATE.md");
 		expect(isOk(content)).toBe(true);
 		if (isOk(content)) {
 			expect(content.data).toContain("# State — MVP");

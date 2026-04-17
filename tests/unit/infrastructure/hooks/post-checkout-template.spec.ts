@@ -21,8 +21,8 @@ describe("postCheckoutHookScript", () => {
 		expect(postCheckoutHookScript).toContain('[ -z "$BRANCH" ] && exit 0');
 	});
 
-	it("logs to .tff/hook.log", () => {
-		expect(postCheckoutHookScript).toContain(".tff/hook.log");
+	it("logs to .tff-cc/hook.log", () => {
+		expect(postCheckoutHookScript).toContain(".tff-cc/hook.log");
 	});
 
 	it("chains pre-existing hook without exec", () => {

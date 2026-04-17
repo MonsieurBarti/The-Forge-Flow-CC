@@ -124,7 +124,7 @@ describe("detect-spec-edit", () => {
 		});
 
 		it("should return NOT_SPEC_FILE for nested TASK.md path", () => {
-			const result = detectSpecEdit(".tff/milestones/M001/slices/S01/TASK.md");
+			const result = detectSpecEdit(".tff-cc/milestones/M001/slices/S01/TASK.md");
 
 			expect(result.warning).toBeNull();
 			expect(result.reason).toBe("NOT_SPEC_FILE");
@@ -201,8 +201,8 @@ describe("detect-spec-edit", () => {
 			expect(result.reason).toBe("SPEC_EDIT_DETECTED");
 		});
 
-		it("should detect SPEC.md in .tff/milestones/M001/", () => {
-			const result = detectSpecEdit(".tff/milestones/M001/SPEC.md");
+		it("should detect SPEC.md in .tff-cc/milestones/M001/", () => {
+			const result = detectSpecEdit(".tff-cc/milestones/M001/SPEC.md");
 
 			expect(result.warning).not.toBeNull();
 			expect(result.warning?.code).toBe("SPEC_EDIT_DETECTED");
@@ -218,7 +218,7 @@ describe("detect-spec-edit", () => {
 		});
 
 		it("should detect lowercase spec.md in nested path", () => {
-			const result = detectSpecEdit(".tff/milestones/M001/slices/S01/spec.md");
+			const result = detectSpecEdit(".tff-cc/milestones/M001/slices/S01/spec.md");
 
 			expect(result.warning).not.toBeNull();
 			expect(result.warning?.code).toBe("SPEC_EDIT_DETECTED");
@@ -226,7 +226,7 @@ describe("detect-spec-edit", () => {
 		});
 
 		it("should detect with backslash path separators (Windows-style)", () => {
-			const result = detectSpecEdit(".tff\\milestones\\M001\\SPEC.md");
+			const result = detectSpecEdit(".tff-cc\\milestones\\M001\\SPEC.md");
 
 			expect(result.warning).not.toBeNull();
 			expect(result.warning?.code).toBe("SPEC_EDIT_DETECTED");

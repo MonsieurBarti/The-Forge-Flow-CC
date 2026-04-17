@@ -10,8 +10,8 @@ describe("listWorktreesUseCase", () => {
 	});
 
 	it("should list all worktrees", async () => {
-		await gitOps.createWorktree(".tff/worktrees/M01-S01", "slice/M01-S01");
-		await gitOps.createWorktree(".tff/worktrees/M01-S02", "slice/M01-S02");
+		await gitOps.createWorktree(".tff-cc/worktrees/M01-S01", "slice/M01-S01");
+		await gitOps.createWorktree(".tff-cc/worktrees/M01-S02", "slice/M01-S02");
 
 		const result = await listWorktreesUseCase({ gitOps });
 		expect(isOk(result)).toBe(true);
