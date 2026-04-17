@@ -18,7 +18,7 @@ export interface DetectSpecEditResult {
  * Returns true if workflow.guards is explicitly false.
  */
 function areGuardsDisabled(): boolean {
-	const settingsPath = path.join(process.cwd(), ".tff", "settings.yaml");
+	const settingsPath = path.join(process.cwd(), ".tff-cc", "settings.yaml");
 	if (!existsSync(settingsPath)) {
 		return false; // Default to enabled if no settings file
 	}

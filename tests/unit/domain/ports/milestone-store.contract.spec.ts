@@ -22,7 +22,9 @@ export const runMilestoneStoreContractTests = (
 			expect(isOk(result)).toBe(true);
 			if (isOk(result)) {
 				// ID should be a UUID
-				expect(result.data.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+				expect(result.data.id).toMatch(
+					/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+				);
 				expect(result.data.name).toBe("MVP");
 				expect(result.data.number).toBe(1);
 				expect(result.data.status).toBe("open");

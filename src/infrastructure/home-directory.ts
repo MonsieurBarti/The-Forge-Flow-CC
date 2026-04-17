@@ -135,7 +135,7 @@ export function ensureProjectHomeDir(projectId: string): string {
  * @param projectId - The project's unique identifier
  */
 export function createTffSymlink(repoRoot: string, projectId: string): void {
-	const symlinkPath = join(repoRoot, ".tff");
+	const symlinkPath = join(repoRoot, ".tff-cc");
 	const targetPath = getProjectHome(projectId);
 
 	// Check if .tff exists
@@ -149,7 +149,7 @@ export function createTffSymlink(repoRoot: string, projectId: string): void {
 		} else {
 			// Real directory exists - migration needed
 			throw new Error(
-				`.tff/ exists as a real directory. Run migration first to move contents to ~/.tff-cc/${projectId}/`,
+				`.tff-cc/ exists as a real directory. Remove or rename it before proceeding.`,
 			);
 		}
 	}

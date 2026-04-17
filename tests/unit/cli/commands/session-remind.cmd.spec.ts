@@ -100,8 +100,8 @@ describe("sessionRemindCmd", () => {
 
 	it("should return null reminder when workflow.reminders is false in settings", async () => {
 		vi.mocked(existsSync).mockImplementation((p) => {
-			if (p === path.join(mockCwd, ".tff")) return true;
-			if (p === path.join(mockCwd, ".tff", "settings.yaml")) return true;
+			if (p === path.join(mockCwd, ".tff-cc")) return true;
+			if (p === path.join(mockCwd, ".tff-cc", "settings.yaml")) return true;
 			return false;
 		});
 		vi.mocked(readFileSync).mockReturnValue("workflow:\n  reminders: false");
@@ -117,8 +117,8 @@ describe("sessionRemindCmd", () => {
 
 	it("should proceed with reminder generation when settings has reminders enabled", async () => {
 		vi.mocked(existsSync).mockImplementation((p) => {
-			if (p === path.join(mockCwd, ".tff")) return true;
-			if (p === path.join(mockCwd, ".tff", "settings.yaml")) return true;
+			if (p === path.join(mockCwd, ".tff-cc")) return true;
+			if (p === path.join(mockCwd, ".tff-cc", "settings.yaml")) return true;
 			return false;
 		});
 		vi.mocked(readFileSync).mockReturnValue("workflow:\n  reminders: true");
@@ -141,7 +141,7 @@ describe("sessionRemindCmd", () => {
 	});
 
 	it("should return reminder string from generateReminder when session exists", async () => {
-		vi.mocked(existsSync).mockImplementation((p) => p === path.join(mockCwd, ".tff"));
+		vi.mocked(existsSync).mockImplementation((p) => p === path.join(mockCwd, ".tff-cc"));
 
 		const mockStores = createMockStoresForRemind(
 			{ getSession: vi.fn() },
@@ -163,7 +163,7 @@ describe("sessionRemindCmd", () => {
 	});
 
 	it("should return null reminder when generateReminder returns null", async () => {
-		vi.mocked(existsSync).mockImplementation((p) => p === path.join(mockCwd, ".tff"));
+		vi.mocked(existsSync).mockImplementation((p) => p === path.join(mockCwd, ".tff-cc"));
 
 		const mockStores = createMockStoresForRemind(
 			{ getSession: vi.fn() },
@@ -182,8 +182,8 @@ describe("sessionRemindCmd", () => {
 
 	it("should handle settings.yaml parse errors gracefully", async () => {
 		vi.mocked(existsSync).mockImplementation((p) => {
-			if (p === path.join(mockCwd, ".tff")) return true;
-			if (p === path.join(mockCwd, ".tff", "settings.yaml")) return true;
+			if (p === path.join(mockCwd, ".tff-cc")) return true;
+			if (p === path.join(mockCwd, ".tff-cc", "settings.yaml")) return true;
 			return false;
 		});
 		vi.mocked(readFileSync).mockReturnValue("invalid: yaml: content: [");
@@ -204,7 +204,7 @@ describe("sessionRemindCmd", () => {
 	});
 
 	it("should return JSON error when generateReminder throws", async () => {
-		vi.mocked(existsSync).mockImplementation((p) => p === path.join(mockCwd, ".tff"));
+		vi.mocked(existsSync).mockImplementation((p) => p === path.join(mockCwd, ".tff-cc"));
 
 		const mockStores = createMockStoresForRemind(
 			{ getSession: vi.fn() },
@@ -225,7 +225,7 @@ describe("sessionRemindCmd", () => {
 	});
 
 	it("should return JSON with ok/data structure", async () => {
-		vi.mocked(existsSync).mockImplementation((p) => p === path.join(mockCwd, ".tff"));
+		vi.mocked(existsSync).mockImplementation((p) => p === path.join(mockCwd, ".tff-cc"));
 
 		const mockStores = createMockStoresForRemind(
 			{ getSession: vi.fn() },

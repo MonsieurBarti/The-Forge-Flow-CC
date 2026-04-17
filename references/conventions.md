@@ -71,7 +71,7 @@ Special formats:
 ## Project Directory
 
 ```
-.tff/
+.tff-cc/
   PROJECT.md              ← project vision (markdown-authoritative)
   STATE.md                ← DERIVED, never edit manually
   settings.yaml           ← model profiles, quality gates
