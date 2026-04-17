@@ -27,6 +27,9 @@ jobs:
       - name: Type check
         run: bun run typecheck
 
+      - name: Guard against legacy .tff/ paths
+        run: bash scripts/check-no-legacy-tff-paths.sh
+
       - name: Run tests
         run: bun run test
 

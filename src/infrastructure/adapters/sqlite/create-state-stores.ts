@@ -33,7 +33,7 @@ export interface StateStores {
 function getDerivedPaths(): { dbPath: string; journalPath: string; projectId: string } {
 	const repoRoot = process.cwd();
 
-	// Run migration if needed (legacy .tff/ → home directory)
+	// Run migration if needed (legacy in-repo store → home directory)
 	runMigrationIfNeeded(repoRoot);
 
 	const projectId = getProjectId(repoRoot);
