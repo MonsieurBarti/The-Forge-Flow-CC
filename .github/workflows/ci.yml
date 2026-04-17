@@ -30,11 +30,11 @@ jobs:
       - name: Guard against legacy .tff/ paths
         run: bash scripts/check-no-legacy-tff-paths.sh
 
-      - name: Run tests
-        run: bun run test
-
       - name: Build
         run: bun run build
+
+      - name: Run tests
+        run: bun run test
 
       - name: Verify CLI
         run: node dist/cli/index.js --help

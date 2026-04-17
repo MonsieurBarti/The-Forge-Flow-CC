@@ -1,13 +1,23 @@
-import { mkdtempSync, rmSync, existsSync, lstatSync } from "node:fs";
+import { execSync } from "node:child_process";
+import { existsSync, lstatSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { execSync } from "node:child_process";
-import { describe, it, expect, afterEach, beforeEach } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 describe("path contract: artifacts under .tff-cc/, nothing at .tff/", () => {
 	let tmpRepo: string;
 	let tffCcHome: string;
 	const CLI = `${process.cwd()}/dist/cli/index.js`;
+
+	beforeAll(() => {
+		// Ensure the CLI has been built before running any execSync; failing here
+		// produces a clear error instead of a cryptic ENOENT from node.
+		if (!existsSync(CLI)) {
+			throw new Error(
+				`Missing built CLI at ${CLI}. Run \`bun run build\` before the integration tests.`,
+			);
+		}
+	});
 
 	beforeEach(() => {
 		tmpRepo = mkdtempSync(join(tmpdir(), "tff-path-contract-"));
@@ -23,12 +33,17 @@ describe("path contract: artifacts under .tff-cc/, nothing at .tff/", () => {
 		rmSync(tffCcHome, { recursive: true, force: true });
 	});
 
-	const cli = (cmd: string) =>
-		execSync(`node ${CLI} ${cmd}`, {
+	const cli = (cmd: string) => {
+		// stdio piped; if stderr is non-empty the command wrote warnings/errors and
+		// we want them visible in test output rather than silently swallowed.
+		const result = execSync(`node ${CLI} ${cmd}`, {
 			cwd: tmpRepo,
 			env: { ...process.env, TFF_CC_HOME: tffCcHome },
 			stdio: ["ignore", "pipe", "pipe"],
-		}).toString();
+			encoding: "utf8",
+		});
+		return result;
+	};
 
 	it("project:init creates .tff-cc/ symlink, never .tff/", () => {
 		cli('project:init --name "TestProject"');
@@ -38,10 +53,11 @@ describe("path contract: artifacts under .tff-cc/, nothing at .tff/", () => {
 		expect(existsSync(symlinkPath)).toBe(true);
 		expect(lstatSync(symlinkPath).isSymbolicLink()).toBe(true);
 
-		// .tff/ must NOT exist as a real directory
+		// .tff/ must not exist in any form (real directory or symlink).
+		// A symlinked `.tff/` would also be a regression — nothing should
+		// create that path post-migration.
 		const tffPath = join(tmpRepo, ".tff");
-		const isRealDir = existsSync(tffPath) && !lstatSync(tffPath).isSymbolicLink();
-		expect(isRealDir, ".tff/ must not exist as a real directory after project:init").toBe(false);
+		expect(existsSync(tffPath), ".tff/ must not exist after project:init").toBe(false);
 	});
 
 	it("after milestone + slice + sync, nothing lands at .tff/", () => {
@@ -62,7 +78,6 @@ describe("path contract: artifacts under .tff-cc/, nothing at .tff/", () => {
 		cli(`sync:state --milestone-id ${milestoneShortId}`);
 
 		const tffPath = join(tmpRepo, ".tff");
-		const isRealDir = existsSync(tffPath) && !lstatSync(tffPath).isSymbolicLink();
-		expect(isRealDir, ".tff/ must not exist as a real directory after project ops").toBe(false);
+		expect(existsSync(tffPath), ".tff/ must not exist after project ops").toBe(false);
 	});
 });
