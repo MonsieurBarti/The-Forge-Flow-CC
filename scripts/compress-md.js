@@ -17,6 +17,20 @@
  * ∩ (intersection) - replaces "intersection", "shared with"
  */
 
+/**
+ * BACKUP CONVENTION
+ * ==================
+ * Before running this script, back up the source files to scripts/backups/
+ * preserving their relative path. For example:
+ *   commands/tff/health.md → scripts/backups/commands/tff/health.md.original.md
+ *   skills/plannotator-usage/SKILL.md → scripts/backups/skills/plannotator-usage/SKILL.md.original.md
+ *   workflows/quick.md → scripts/backups/workflows/quick.md.original.md
+ *
+ * The live markdown files under commands/, skills/, and workflows/ are loaded
+ * by Claude Code and MUST NOT be shadowed by .original.md duplicates. Do not
+ * commit .original.md files into the load paths.
+ */
+
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join, extname, dirname } from 'path';
 
