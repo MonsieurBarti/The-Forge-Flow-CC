@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **M02 — Migration to UUID branches and .tff-cc symlink:** Completed architecture migration for improved uniqueness and merge safety
+  - **S01 — UUID-based branch naming:** Milestone and slice branches now use UUID names (`milestone/<8hex>`, `slice/<8hex>`) for global uniqueness; human-readable labels (`M01`, `M01-S01`) retained for directories and PR titles
+  - **S02 — .tff-cc symlink:** Renamed state directory from `.tff/` to `.tff-cc/` via symlink for clearer branding; legacy `.tff/` directories ignored (not migrated)
+  - **S03 — Documentation cleanup:** Updated README.md with `tff-cc` branding, `.tff-cc/` paths, and UUID branch model documentation
 - **M002-S02 — Pattern Adoption from Superpowers/GSD:** Adopted agent/protocol patterns from superpowers framework
   - **T01 — Brainstorming escalation:** Added explicit escalation rules (3+ failures → human review) and stronger HARD-GATE enforcement to brainstorming skill
   - **T02 — Subagent dispatch rules:** Added explicit when-to-spawn vs when-NOT-to-spawn tables with context isolation tables to executing-plans skill

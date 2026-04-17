@@ -21,7 +21,7 @@
 
 ## What is The Forge Flow?
 
-The Forge Flow (`tff`) is a Claude Code plugin that orchestrates AI agents through a structured software development lifecycle. It coordinates 4 lean agents and 18 skills from project initialization to shipped code.
+The Forge Flow (`tff-cc`) is a Claude Code plugin that orchestrates AI agents through a structured software development lifecycle. It coordinates 4 lean agents and 18 skills from project initialization to shipped code.
 
 **Key features:**
 - **SQLite state** — zero-dependency local state management with automatic persistence
@@ -87,7 +87,7 @@ Claude asks for your project name and vision. You provide:
 - **Name:** my-saas-app
 - **Vision:** A multi-tenant SaaS platform with team management
 
-This creates `.tff/PROJECT.md` and asks you to define requirements.
+This creates `.tff-cc/PROJECT.md` and asks you to define requirements.
 
 **Next step suggested:** `/tff:new-milestone`
 
@@ -132,7 +132,7 @@ Complexity is auto-classified as **F-lite** (5 tasks, 2 modules, no external int
 /tff:research M01-S01
 ```
 
-The agent investigates the technical approach: reads the existing codebase, checks what auth libraries are available, documents findings in `.tff/milestones/M01/slices/M01-S01/RESEARCH.md`.
+The agent investigates the technical approach: reads the existing codebase, checks what auth libraries are available, documents findings in `.tff-cc/milestones/M01/slices/M01-S01/RESEARCH.md`.
 
 **Next step suggested:** `/tff:plan M01-S01`
 
@@ -156,7 +156,7 @@ Waves detected:
 
 **Plannotator opens** in your browser. You annotate the plan, suggest changes, approve.
 
-A worktree is created at `.tff/worktrees/M01-S01/` on branch `slice/M01-S01`.
+A worktree is created at `.tff-cc/worktrees/M01-S01/` on branch `slice/M01-S01`.
 
 **Next step suggested:** `/tff:execute M01-S01`
 
@@ -379,11 +379,13 @@ Project (one per repo)
 
 ### Git Branch Model
 
+Branches use UUID-based names for uniqueness and merge safety. Human-readable labels (`M01`, `M01-S01`) are used for directories and PR titles.
+
 ```
 main
-  milestone/M01
-    slice/M01-S01  (worktree)
-    slice/M01-S02  (worktree)
+  milestone/a1b2c3d4      # M01 in PR title
+    slice/e5f6g7h8        # M01-S01 in PR title (worktree)
+    slice/i9j0k1l2        # M01-S02 in PR title (worktree)
 ```
 
 ### Complexity Tiers
@@ -396,7 +398,7 @@ main
 
 ## Configuration
 
-Project settings live in `.tff/settings.yaml`. Generated automatically by `/tff:new` with inline comments. Manage interactively with `/tff:settings`.
+Project settings live in `.tff-cc/settings.yaml`. Generated automatically by `/tff:new` with inline comments. Manage interactively with `/tff:settings`.
 
 ```yaml
 model-profiles:
