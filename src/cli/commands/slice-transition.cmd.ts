@@ -10,6 +10,7 @@ import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesyste
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
+import { resolveSliceId } from "../utils/resolve-id.js";
 
 export const sliceTransitionSchema: CommandSchema = {
 	name: "slice:transition",
@@ -18,8 +19,8 @@ export const sliceTransitionSchema: CommandSchema = {
 		{
 			name: "slice-id",
 			type: "string",
-			description: "Slice ID (e.g., M01-S01)",
-			pattern: "^M\\d+-S\\d+$",
+			description: "Slice ID (display label e.g. M01-S01 or UUID)",
+			pattern: "^(M\\d+-S\\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
 		},
 		{
 			name: "status",
@@ -47,25 +48,32 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 		return JSON.stringify(parsed);
 	}
 
-	const { "slice-id": sliceId, status: targetStatus } = parsed.data as {
+	const { "slice-id": sliceLabel, status: targetStatus } = parsed.data as {
 		"slice-id": string;
 		status: string;
 	};
 
+	const closableStores = createClosableStateStoresUnchecked();
+	const { sliceStore, milestoneStore, taskStore } = closableStores;
+
 	try {
 		SliceStatusSchema.parse(targetStatus);
 	} catch {
+		closableStores.close();
 		return JSON.stringify({
 			ok: false,
 			error: { code: "INVALID_ARGS", message: `Invalid status: ${targetStatus}` },
 		});
 	}
 
-	const closableStores = createClosableStateStoresUnchecked();
-	const { sliceStore, milestoneStore, taskStore } = closableStores;
-
 	try {
 		const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+
+		const resolvedSlice = resolveSliceId(sliceLabel, sliceStore);
+		if (!resolvedSlice.ok) {
+			return JSON.stringify({ ok: false, error: resolvedSlice.error });
+		}
+		const sliceId = resolvedSlice.data;
 
 		const result = await transitionSliceUseCase(
 			{ sliceId, targetStatus: targetStatus as SliceStatus },

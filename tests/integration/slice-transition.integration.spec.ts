@@ -20,6 +20,7 @@ const {
 		update: vi.fn(),
 		getAllByMilestoneId: vi.fn(),
 		transitionSlice: vi.fn(),
+		getSliceByNumbers: vi.fn(),
 	};
 	const mockMilestoneStore: Partial<MilestoneStore> = {
 		getById: vi.fn(),
@@ -58,9 +59,13 @@ vi.mock("../../src/application/lifecycle/transition-slice.js", () => ({
 }));
 
 // Mock isOk from domain/result
-vi.mock("../../src/domain/result.js", () => ({
-	isOk: (result: { ok: boolean }) => result.ok === true,
-}));
+vi.mock("../../src/domain/result.js", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("../../src/domain/result.js")>();
+	return {
+		...actual,
+		isOk: (result: { ok: boolean }) => result.ok === true,
+	};
+});
 
 // Mock state generation (non-critical path)
 vi.mock("../../src/application/sync/generate-state.js", () => ({
@@ -93,6 +98,10 @@ beforeEach(() => {
 			ok: true,
 			data: { id, status },
 		})),
+		getSliceByNumbers: vi.fn().mockReturnValue({
+			ok: true,
+			data: { id: "test-slice-uuid", milestoneId: "m01", number: 1, status: "discussing", title: "Test Slice", createdAt: new Date() },
+		}),
 	});
 	Object.assign(mockMilestoneStore, {
 		getById: vi.fn().mockResolvedValue({ id: "m01", number: 1, status: "open" }),
