@@ -7,7 +7,7 @@ import type {
 } from "../../../../src/domain/ports/routing-config-reader.port.js";
 import type { RoutingDecisionLogger } from "../../../../src/domain/ports/routing-decision-logger.port.js";
 import type { SignalExtractor } from "../../../../src/domain/ports/signal-extractor.port.js";
-import { Ok, isOk } from "../../../../src/domain/result.js";
+import { isOk, Ok } from "../../../../src/domain/result.js";
 import type { Signals } from "../../../../src/domain/value-objects/signals.js";
 
 const LOW_CONF_SIGNALS: Signals = {
@@ -38,12 +38,10 @@ const mkDeps = (overrides: {
 	logAppend?: RoutingDecisionLogger["append"];
 }) => {
 	const extractor: SignalExtractor = {
-		extract:
-			overrides.extract ?? vi.fn().mockResolvedValue(Ok(LOW_CONF_SIGNALS)),
+		extract: overrides.extract ?? vi.fn().mockResolvedValue(Ok(LOW_CONF_SIGNALS)),
 	};
 	const enricher: LlmEnricher = {
-		enrich:
-			overrides.enrich ?? vi.fn().mockResolvedValue(Ok(RICHER_SIGNALS)),
+		enrich: overrides.enrich ?? vi.fn().mockResolvedValue(Ok(RICHER_SIGNALS)),
 	};
 	const configReader: RoutingConfigReader = {
 		readConfig: vi.fn().mockResolvedValue(Ok(overrides.config ?? mkConfig())),
@@ -70,10 +68,7 @@ describe("extractSignalsUseCase", () => {
 		const deps = mkDeps({
 			extract: vi.fn().mockResolvedValue(Ok(HIGH_CONF)),
 		});
-		const res = await extractSignalsUseCase(
-			{ workflow_id: "tff:ship", input: INPUT },
-			deps,
-		);
+		const res = await extractSignalsUseCase({ workflow_id: "tff:ship", input: INPUT }, deps);
 		expect(isOk(res)).toBe(true);
 		if (!isOk(res)) return;
 		expect(res.data.enriched).toBe(false);
@@ -82,10 +77,7 @@ describe("extractSignalsUseCase", () => {
 
 	it("invokes enricher when deterministic signals are low-confidence (all 'low', no tags)", async () => {
 		const deps = mkDeps({});
-		const res = await extractSignalsUseCase(
-			{ workflow_id: "tff:ship", input: INPUT },
-			deps,
-		);
+		const res = await extractSignalsUseCase({ workflow_id: "tff:ship", input: INPUT }, deps);
 		expect(isOk(res)).toBe(true);
 		if (!isOk(res)) return;
 		expect(deps.enricher.enrich).toHaveBeenCalledTimes(1);
@@ -103,10 +95,7 @@ describe("extractSignalsUseCase", () => {
 				},
 			}),
 		});
-		const res = await extractSignalsUseCase(
-			{ workflow_id: "tff:ship", input: INPUT },
-			deps,
-		);
+		const res = await extractSignalsUseCase({ workflow_id: "tff:ship", input: INPUT }, deps);
 		expect(isOk(res)).toBe(true);
 		if (!isOk(res)) return;
 		expect(deps.enricher.enrich).not.toHaveBeenCalled();
@@ -117,10 +106,7 @@ describe("extractSignalsUseCase", () => {
 	it("falls back to deterministic signals if enricher throws", async () => {
 		const enrich = vi.fn().mockRejectedValue(new Error("network down"));
 		const deps = mkDeps({ enrich });
-		const res = await extractSignalsUseCase(
-			{ workflow_id: "tff:ship", input: INPUT },
-			deps,
-		);
+		const res = await extractSignalsUseCase({ workflow_id: "tff:ship", input: INPUT }, deps);
 		expect(isOk(res)).toBe(true);
 		if (!isOk(res)) return;
 		expect(res.data.enriched).toBe(false);
@@ -129,13 +115,9 @@ describe("extractSignalsUseCase", () => {
 
 	it("writes one extract log entry with deterministic + enriched signals", async () => {
 		const deps = mkDeps({});
-		await extractSignalsUseCase(
-			{ workflow_id: "tff:ship", input: INPUT },
-			deps,
-		);
+		await extractSignalsUseCase({ workflow_id: "tff:ship", input: INPUT }, deps);
 		expect(deps.logger.append).toHaveBeenCalledTimes(1);
-		const entry = (deps.logger.append as ReturnType<typeof vi.fn>).mock
-			.calls[0]?.[0];
+		const entry = (deps.logger.append as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
 		expect(entry.kind).toBe("extract");
 		expect(entry.deterministic_signals).toEqual(LOW_CONF_SIGNALS);
 		expect(entry.enriched_signals).toEqual(RICHER_SIGNALS);

@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	scoreAgents,
-	signalsToTagSet,
-} from "../../../../src/domain/helpers/routing-rubric.js";
+import { scoreAgents, signalsToTagSet } from "../../../../src/domain/helpers/routing-rubric.js";
 import type { Signals } from "../../../../src/domain/value-objects/signals.js";
 import type { WorkflowPool } from "../../../../src/domain/value-objects/workflow-pool.js";
 
@@ -20,9 +17,7 @@ describe("signalsToTagSet", () => {
 				risk: { level: "high", tags: ["auth", "migrations"] },
 			}),
 		);
-		expect(tags).toEqual(
-			new Set(["high_complexity", "high_risk", "auth", "migrations"]),
-		);
+		expect(tags).toEqual(new Set(["high_complexity", "high_risk", "auth", "migrations"]));
 	});
 });
 
@@ -68,9 +63,7 @@ describe("scoreAgents", () => {
 			risk: { level: "high", tags: ["auth"] },
 		});
 		const ranked = scoreAgents(pool, s);
-		const secAuditor = ranked.find(
-			(r) => r.agent.id === "tff-security-auditor",
-		);
+		const secAuditor = ranked.find((r) => r.agent.id === "tff-security-auditor");
 		// signals tags = {low_complexity, high_risk, auth} → |3|
 		// handles ∩ signals = {high_risk, auth} → |2|
 		// match_ratio = 2/3

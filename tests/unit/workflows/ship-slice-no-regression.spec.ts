@@ -15,10 +15,7 @@ const extractStepsOneToEight = (markdown: string): string => {
 	if (firstStepOne === -1) throw new Error("Step 1 not found");
 	const fromStepOne = afterSteps.slice(firstStepOne);
 	const nextSectionIdx = fromStepOne.findIndex((l) => l.startsWith("## "));
-	const slice =
-		nextSectionIdx === -1
-			? fromStepOne
-			: fromStepOne.slice(0, nextSectionIdx);
+	const slice = nextSectionIdx === -1 ? fromStepOne : fromStepOne.slice(0, nextSectionIdx);
 	return slice.join("\n").trimEnd();
 };
 
@@ -28,20 +25,12 @@ describe("ship-slice.md no-regression", () => {
 			join(ROOT, "tests/fixtures/workflows/ship-slice-pre-routing.md"),
 			"utf8",
 		);
-		const after = await readFile(
-			join(ROOT, "workflows/ship-slice.md"),
-			"utf8",
-		);
-		expect(extractStepsOneToEight(after)).toBe(
-			extractStepsOneToEight(before),
-		);
+		const after = await readFile(join(ROOT, "workflows/ship-slice.md"), "utf8");
+		expect(extractStepsOneToEight(after)).toBe(extractStepsOneToEight(before));
 	});
 
 	it("Step 0 is present in the current file and invokes routing:extract", async () => {
-		const after = await readFile(
-			join(ROOT, "workflows/ship-slice.md"),
-			"utf8",
-		);
+		const after = await readFile(join(ROOT, "workflows/ship-slice.md"), "utf8");
 		expect(after).toMatch(/0\..*routing:extract/);
 	});
 });

@@ -27,15 +27,12 @@ describe("FilesystemSignalExtractor", () => {
 			slice_id: "fx-risky",
 			spec_path: join(FIXTURE_ROOT, "slice-risky-migration/SPEC.md"),
 			affected_files: Array.from({ length: 25 }, (_, i) => `src/f${i}.ts`),
-			description:
-				"Performs a breaking schema migration on user auth tables.",
+			description: "Performs a breaking schema migration on user auth tables.",
 		});
 		expect(isOk(res)).toBe(true);
 		if (!isOk(res)) return;
 		expect(res.data.risk.level).toBe("high");
-		expect(res.data.risk.tags).toEqual(
-			expect.arrayContaining(["auth", "migrations", "breaking"]),
-		);
+		expect(res.data.risk.tags).toEqual(expect.arrayContaining(["auth", "migrations", "breaking"]));
 		expect(res.data.complexity).toBe("high");
 	});
 

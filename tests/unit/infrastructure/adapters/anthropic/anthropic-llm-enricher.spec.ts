@@ -15,14 +15,12 @@ const BASE = {
 describe("AnthropicLlmEnricher", () => {
 	it("returns enriched signals when the LLM responds with valid JSON", async () => {
 		const client = {
-			complete: vi
-				.fn()
-				.mockResolvedValue(
-					JSON.stringify({
-						complexity: "high",
-						risk: { level: "high", tags: ["auth"] },
-					}),
-				),
+			complete: vi.fn().mockResolvedValue(
+				JSON.stringify({
+					complexity: "high",
+					risk: { level: "high", tags: ["auth"] },
+				}),
+			),
 		};
 		const enricher = new AnthropicLlmEnricher({
 			client,
@@ -52,9 +50,7 @@ describe("AnthropicLlmEnricher", () => {
 		const client = {
 			complete: vi
 				.fn()
-				.mockResolvedValue(
-					JSON.stringify({ complexity: "extreme", risk: "bad-shape" }),
-				),
+				.mockResolvedValue(JSON.stringify({ complexity: "extreme", risk: "bad-shape" })),
 		};
 		const enricher = new AnthropicLlmEnricher({
 			client,

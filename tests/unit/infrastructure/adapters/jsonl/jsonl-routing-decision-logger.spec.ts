@@ -44,9 +44,7 @@ describe("JsonlRoutingDecisionLogger", () => {
 		});
 		expect(isOk(r2)).toBe(true);
 
-		const lines = (await readFile(path, "utf8"))
-			.split("\n")
-			.filter((l) => l.length > 0);
+		const lines = (await readFile(path, "utf8")).split("\n").filter((l) => l.length > 0);
 		expect(lines).toHaveLength(2);
 		const first = JSON.parse(lines[0] as string);
 		expect(first.kind).toBe("extract");
