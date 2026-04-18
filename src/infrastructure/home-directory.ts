@@ -76,7 +76,6 @@ export function writeProjectIdFile(repoRoot: string, projectId: string): void {
  * Get or generate the project ID.
  * If .tff-project-id exists, reads it. Otherwise generates a new UUID v4 and writes it.
  * Also ensures home directory exists.
- * Note: Does NOT create symlink - caller must do that after any migration.
  * @param repoRoot - The repository root directory
  */
 export function getProjectId(repoRoot: string): string {
@@ -131,9 +130,7 @@ export function ensureProjectHomeDir(projectId: string): string {
 
 /**
  * Create symlink from .tff-cc in repo root to project home directory.
- * Throws if .tff-cc/ exists as a real directory (migration needed).
- * @param repoRoot - The repository root directory
- * @param projectId - The project's unique identifier
+ * Throws if .tff-cc/ exists as a real directory.
  */
 export function createTffCcSymlink(repoRoot: string, projectId: string): void {
 	const symlinkPath = join(repoRoot, TFF_CC_DIR);
@@ -148,7 +145,6 @@ export function createTffCcSymlink(repoRoot: string, projectId: string): void {
 			// For now, just return - symlink is already there
 			return;
 		} else {
-			// Real directory exists - migration needed
 			throw new Error(
 				`${TFF_CC_DIR}/ exists as a real directory. Remove or rename it before proceeding.`,
 			);
