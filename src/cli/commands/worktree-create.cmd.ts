@@ -14,7 +14,8 @@ export const worktreeCreateSchema: CommandSchema = {
 			name: "slice-id",
 			type: "string",
 			description: "Slice ID to create worktree for (UUID or label format)",
-			pattern: "^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|M\\d+-S\\d+)$",
+			pattern:
+				"^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|M\\d+-S\\d+)$",
 		},
 	],
 	optionalFlags: [],
@@ -35,46 +36,49 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
 	const cwd = process.cwd();
 	const gitOps = new GitCliAdapter(cwd);
 
-	// Fetch slice and milestone from store
-	const { sliceStore, milestoneStore } = createClosableStateStoresUnchecked();
-	const resolvedSlice = resolveSliceId(sliceLabel, sliceStore);
-	if (!resolvedSlice.ok) {
-		return JSON.stringify({ ok: false, error: resolvedSlice.error });
+	const closableStores = createClosableStateStoresUnchecked();
+	const { sliceStore, milestoneStore } = closableStores;
+
+	try {
+		const resolvedSlice = resolveSliceId(sliceLabel, sliceStore);
+		if (!resolvedSlice.ok) {
+			return JSON.stringify({ ok: false, error: resolvedSlice.error });
+		}
+		const sliceId = resolvedSlice.data;
+
+		const sliceResult = sliceStore.getSlice(sliceId);
+		if (!isOk(sliceResult) || !sliceResult.data) {
+			return JSON.stringify({
+				ok: false,
+				error: { code: "NOT_FOUND", message: `Slice ${sliceId} not found` },
+			});
+		}
+		const slice = sliceResult.data;
+
+		const milestoneResult = milestoneStore.getMilestone(slice.milestoneId);
+		if (!isOk(milestoneResult) || !milestoneResult.data) {
+			return JSON.stringify({
+				ok: false,
+				error: { code: "NOT_FOUND", message: `Milestone ${slice.milestoneId} not found` },
+			});
+		}
+		const milestone = milestoneResult.data;
+
+		const startPoint = milestone.branch;
+
+		const result = await createWorktreeUseCase(
+			{ slice, milestoneNumber: milestone.number, startPoint },
+			{ gitOps },
+		);
+		if (isOk(result)) {
+			const projectId = getProjectId(cwd);
+			const worktreePath = result.data.worktreePath;
+			createTffCcSymlink(worktreePath, projectId);
+
+			return JSON.stringify({ ok: true, data: result.data });
+		}
+		return JSON.stringify({ ok: false, error: result.error });
+	} finally {
+		closableStores.close();
 	}
-	const sliceId = resolvedSlice.data;
-
-	const sliceResult = sliceStore.getSlice(sliceId);
-	if (!isOk(sliceResult) || !sliceResult.data) {
-		return JSON.stringify({
-			ok: false,
-			error: { code: "NOT_FOUND", message: `Slice ${sliceId} not found` },
-		});
-	}
-	const slice = sliceResult.data;
-
-	const milestoneResult = milestoneStore.getMilestone(slice.milestoneId);
-	if (!isOk(milestoneResult) || !milestoneResult.data) {
-		return JSON.stringify({
-			ok: false,
-			error: { code: "NOT_FOUND", message: `Milestone ${slice.milestoneId} not found` },
-		});
-	}
-	const milestone = milestoneResult.data;
-
-	// Start from the milestone branch
-	const startPoint = milestone.branch;
-
-	const result = await createWorktreeUseCase(
-		{ slice, milestoneNumber: milestone.number, startPoint },
-		{ gitOps },
-	);
-	if (isOk(result)) {
-		// Create .tff-cc symlink in the worktree pointing to the project home directory
-		const projectId = getProjectId(cwd);
-		const worktreePath = result.data.worktreePath;
-		createTffCcSymlink(worktreePath, projectId);
-
-		return JSON.stringify({ ok: true, data: result.data });
-	}
-	return JSON.stringify({ ok: false, error: result.error });
 };
