@@ -19,6 +19,8 @@ export const DomainErrorCodeSchema = z.enum([
 	"JOURNAL_WRITE_FAILED",
 	"JOURNAL_READ_FAILED",
 	"JOURNAL_REPLAY_INCONSISTENT",
+	"EMPTY_POOL",
+	"ROUTING_CONFIG",
 ]);
 
 export type DomainErrorCode = z.infer<typeof DomainErrorCodeSchema>;

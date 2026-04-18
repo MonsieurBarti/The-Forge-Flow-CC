@@ -1,0 +1,36 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const ROOT = process.cwd();
+
+const extractStepsOneToEight = (markdown: string): string => {
+	// Take everything from the first line that starts with "1. " (after "## Steps")
+	// up to (but not including) the next "## " section header.
+	const lines = markdown.split("\n");
+	const stepsHeaderIdx = lines.findIndex((l) => l.trim() === "## Steps");
+	if (stepsHeaderIdx === -1) throw new Error("## Steps not found");
+	const afterSteps = lines.slice(stepsHeaderIdx + 1);
+	const firstStepOne = afterSteps.findIndex((l) => /^1\.\s/.test(l));
+	if (firstStepOne === -1) throw new Error("Step 1 not found");
+	const fromStepOne = afterSteps.slice(firstStepOne);
+	const nextSectionIdx = fromStepOne.findIndex((l) => l.startsWith("## "));
+	const slice = nextSectionIdx === -1 ? fromStepOne : fromStepOne.slice(0, nextSectionIdx);
+	return slice.join("\n").trimEnd();
+};
+
+describe("ship-slice.md no-regression", () => {
+	it("Steps 1..8 bodies are byte-identical between the pre-routing snapshot and the current file", async () => {
+		const before = await readFile(
+			join(ROOT, "tests/fixtures/workflows/ship-slice-pre-routing.md"),
+			"utf8",
+		);
+		const after = await readFile(join(ROOT, "workflows/ship-slice.md"), "utf8");
+		expect(extractStepsOneToEight(after)).toBe(extractStepsOneToEight(before));
+	});
+
+	it("Step 0 is present in the current file and invokes routing:extract", async () => {
+		const after = await readFile(join(ROOT, "workflows/ship-slice.md"), "utf8");
+		expect(after).toMatch(/0\..*routing:extract/);
+	});
+});
