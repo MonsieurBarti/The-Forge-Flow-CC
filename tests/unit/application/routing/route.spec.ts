@@ -6,7 +6,7 @@ import type {
 	RoutingConfigReader,
 } from "../../../../src/domain/ports/routing-config-reader.port.js";
 import type { RoutingDecisionLogger } from "../../../../src/domain/ports/routing-decision-logger.port.js";
-import { Err, Ok, isOk } from "../../../../src/domain/result.js";
+import { Err, isOk, Ok } from "../../../../src/domain/result.js";
 import type { Signals } from "../../../../src/domain/value-objects/signals.js";
 import type { WorkflowPool } from "../../../../src/domain/value-objects/workflow-pool.js";
 
@@ -64,7 +64,9 @@ describe("routeUseCase", () => {
 		expect(isOk(res)).toBe(true);
 		if (!isOk(res)) return;
 		expect(res.data.agent).toBe("tff-security-auditor");
-		expect(res.data.confidence).toBeCloseTo(1);
+		// coverage-of-signals per spec: |handles ∩ signals| / |signals_tag_set|
+		// = |{high_risk, auth, migrations}| / |{high_complexity, high_risk, auth, migrations}| = 3/4
+		expect(res.data.confidence).toBeCloseTo(0.75);
 		expect(res.data.fallback_used).toBe(false);
 	});
 
@@ -85,13 +87,7 @@ describe("routeUseCase", () => {
 		deps.configReader.readPool = vi
 			.fn()
 			.mockResolvedValue(
-				Err(
-					createDomainError(
-						"ROUTING_CONFIG",
-						"pool missing",
-						{ workflow_id: "tff:ship" },
-					),
-				),
+				Err(createDomainError("ROUTING_CONFIG", "pool missing", { workflow_id: "tff:ship" })),
 			);
 		const res = await routeUseCase(
 			{ workflow_id: "tff:ship", signals: HIGH_CONF_SIGNALS, slice_id: "S1" },
@@ -107,8 +103,7 @@ describe("routeUseCase", () => {
 			deps,
 		);
 		expect(deps.logger.append).toHaveBeenCalledTimes(1);
-		const entry = (deps.logger.append as ReturnType<typeof vi.fn>).mock
-			.calls[0]?.[0];
+		const entry = (deps.logger.append as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
 		expect(entry.kind).toBe("route");
 	});
 });
