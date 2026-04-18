@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-describe("path contract: artifacts under .tff-cc/, nothing at .tff/", () => {
+describe("path contract: artifacts under .tff-cc/ only", () => {
 	let tmpRepo: string;
 	let tffCcHome: string;
 	const CLI = `${process.cwd()}/dist/cli/index.js`;
@@ -45,39 +45,27 @@ describe("path contract: artifacts under .tff-cc/, nothing at .tff/", () => {
 		return result;
 	};
 
-	it("project:init creates .tff-cc/ symlink, never .tff/", () => {
+	it("project:init creates .tff-cc/ symlink", () => {
 		cli('project:init --name "TestProject"');
 
-		// Symlink should exist as .tff-cc/
 		const symlinkPath = join(tmpRepo, ".tff-cc");
 		expect(existsSync(symlinkPath)).toBe(true);
 		expect(lstatSync(symlinkPath).isSymbolicLink()).toBe(true);
-
-		// .tff/ must not exist in any form (real directory or symlink).
-		// A symlinked `.tff/` would also be a regression — nothing should
-		// create that path post-migration.
-		const tffPath = join(tmpRepo, ".tff");
-		expect(existsSync(tffPath), ".tff/ must not exist after project:init").toBe(false);
 	});
 
-	it("after milestone + slice + sync, nothing lands at .tff/", () => {
+	it("after milestone + slice + sync, state lands under .tff-cc/", () => {
 		cli('project:init --name "TestProject"');
 
-		// Create milestone; output is two lines: "ok\n{...json...}"
-		// milestone:create requires --name (not --title); uses number field for M-style IDs
 		const miRaw = cli('milestone:create --name "M1"');
 		const miJson = JSON.parse(miRaw.trim().split("\n").pop()!);
 		const milestoneNumber: number = miJson.data.milestone.number;
-		// Build M-style ID (M01, M02, …) from number for sync:state
 		const milestoneShortId = `M${String(milestoneNumber).padStart(2, "0")}`;
 
-		// slice:create auto-detects the open milestone when --milestone-id is omitted
 		cli('slice:create --title "S1"');
-
-		// sync:state requires the M-style short ID (e.g. M01), not the UUID
 		cli(`sync:state --milestone-id ${milestoneShortId}`);
 
-		const tffPath = join(tmpRepo, ".tff");
-		expect(existsSync(tffPath), ".tff/ must not exist after project ops").toBe(false);
+		const symlinkPath = join(tmpRepo, ".tff-cc");
+		expect(existsSync(symlinkPath)).toBe(true);
+		expect(lstatSync(symlinkPath).isSymbolicLink()).toBe(true);
 	});
 });

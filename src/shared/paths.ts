@@ -13,9 +13,6 @@
  */
 export const TFF_CC_DIR = ".tff-cc";
 
-/** Legacy pre-migration name. Only used by migration code to detect and migrate. */
-export const LEGACY_TFF_DIR = ".tff";
-
 // --- Path builders ---------------------------------------------------------
 
 /** Join one or more path segments under the tff-cc state directory. */

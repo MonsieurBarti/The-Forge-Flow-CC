@@ -10,7 +10,6 @@ import type { SliceDependencyStore } from "../../../domain/ports/slice-dependenc
 import type { SliceStore } from "../../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../../domain/ports/task-store.port.js";
 import { createTffCcSymlink, getProjectHome, getProjectId } from "../../home-directory.js";
-import { runMigrationIfNeeded } from "../../migration.js";
 import { JsonlJournalAdapter } from "../journal/jsonl-journal.adapter.js";
 import { SQLiteStateAdapter } from "./sqlite-state.adapter.js";
 
@@ -27,21 +26,11 @@ export interface StateStores {
 	journalRepository: JournalRepository;
 }
 
-/**
- * Derive state store paths from home directory.
- * Uses .tff-project-id in cwd to determine project ID.
- * Also runs migration and ensures symlink exists.
- */
 function getDerivedPaths(): { dbPath: string; journalPath: string; projectId: string } {
 	const repoRoot = process.cwd();
-
-	// Run migration if needed (legacy in-repo store → home directory)
-	runMigrationIfNeeded(repoRoot);
-
 	const projectId = getProjectId(repoRoot);
 	const home = getProjectHome(projectId);
 
-	// Ensure symlink exists (for new projects or after migration)
 	createTffCcSymlink(repoRoot, projectId);
 
 	return {

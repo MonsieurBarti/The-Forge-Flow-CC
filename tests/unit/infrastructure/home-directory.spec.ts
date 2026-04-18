@@ -116,7 +116,7 @@ describe("T14: Home directory resolver module", () => {
 			expect(existsSync(symlinkPath)).toBe(true);
 		});
 
-		it("should throw if .tff-cc/ is a real directory (migration needed)", async () => {
+		it("should throw if .tff-cc/ is a real directory", async () => {
 			process.env.TFF_CC_HOME = tempDir;
 			const projectDir = join(tempDir, "project4");
 			mkdirSync(projectDir, { recursive: true });
