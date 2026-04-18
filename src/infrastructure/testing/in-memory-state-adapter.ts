@@ -15,6 +15,10 @@ import type { MilestoneStore } from "../../domain/ports/milestone-store.port.js"
 import type { ProjectStore } from "../../domain/ports/project-store.port.js";
 import type { ReviewStore } from "../../domain/ports/review-store.port.js";
 import type { SessionStore } from "../../domain/ports/session-store.port.js";
+import type {
+	SliceDependency,
+	SliceDependencyStore,
+} from "../../domain/ports/slice-dependency-store.port.js";
 import type { SliceStore } from "../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../domain/ports/task-store.port.js";
 import { Err, Ok, type Result } from "../../domain/result.js";
@@ -38,6 +42,7 @@ export class InMemoryStateAdapter
 		SliceStore,
 		TaskStore,
 		DependencyStore,
+		SliceDependencyStore,
 		SessionStore,
 		ReviewStore
 {
@@ -46,6 +51,7 @@ export class InMemoryStateAdapter
 	private slices = new Map<string, Slice>();
 	private tasks = new Map<string, Task>();
 	public dependencies: Array<{ fromId: string; toId: string; type: string }> = [];
+	private sliceDependencies: Array<{ fromId: string; toId: string }> = [];
 	private session: WorkflowSession | null = null;
 	private reviews: ReviewRecord[] = [];
 
@@ -283,6 +289,27 @@ export class InMemoryStateAdapter
 		const deps = this.dependencies
 			.filter((d) => d.fromId === taskId || d.toId === taskId)
 			.map((d) => ({ fromId: d.fromId, toId: d.toId, type: d.type as "blocks" }));
+		return Ok(deps);
+	}
+
+	// SliceDependencyStore
+	addSliceDependency(fromId: string, toId: string): Result<void, DomainError> {
+		const existing = this.sliceDependencies.find((d) => d.fromId === fromId && d.toId === toId);
+		if (!existing) {
+			this.sliceDependencies.push({ fromId, toId });
+		}
+		return Ok(undefined);
+	}
+
+	removeSliceDependency(fromId: string, toId: string): Result<void, DomainError> {
+		this.sliceDependencies = this.sliceDependencies.filter(
+			(d) => !(d.fromId === fromId && d.toId === toId),
+		);
+		return Ok(undefined);
+	}
+
+	getSliceDependencies(sliceId: string): Result<SliceDependency[], DomainError> {
+		const deps = this.sliceDependencies.filter((d) => d.fromId === sliceId || d.toId === sliceId);
 		return Ok(deps);
 	}
 
