@@ -7,6 +7,7 @@ import type { MilestoneUpdateProps } from "../value-objects/milestone-update-pro
 export interface MilestoneStore {
 	createMilestone(props: MilestoneProps): Result<Milestone, DomainError>;
 	getMilestone(id: string): Result<Milestone | null, DomainError>;
+	getMilestoneByNumber(number: number): Result<Milestone | null, DomainError>;
 	listMilestones(): Result<Milestone[], DomainError>;
 	updateMilestone(id: string, updates: MilestoneUpdateProps): Result<void, DomainError>;
 	closeMilestone(id: string, reason?: string): Result<void, DomainError>;

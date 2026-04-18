@@ -98,6 +98,11 @@ export class InMemoryStateAdapter
 		return Ok(this.milestones.get(id) ?? null);
 	}
 
+	getMilestoneByNumber(number: number): Result<Milestone | null, DomainError> {
+		const found = [...this.milestones.values()].find((m) => m.number === number) ?? null;
+		return Ok(found);
+	}
+
 	listMilestones(): Result<Milestone[], DomainError> {
 		return Ok([...this.milestones.values()]);
 	}
@@ -149,6 +154,19 @@ export class InMemoryStateAdapter
 
 	getSlice(id: string): Result<Slice | null, DomainError> {
 		return Ok(this.slices.get(id) ?? null);
+	}
+
+	getSliceByNumbers(
+		milestoneNumber: number,
+		sliceNumber: number,
+	): Result<Slice | null, DomainError> {
+		const milestone = [...this.milestones.values()].find((m) => m.number === milestoneNumber);
+		if (!milestone) return Ok(null);
+		const slice =
+			[...this.slices.values()].find(
+				(s) => s.milestoneId === milestone.id && s.number === sliceNumber,
+			) ?? null;
+		return Ok(slice);
 	}
 
 	listSlices(milestoneId?: string): Result<Slice[], DomainError> {

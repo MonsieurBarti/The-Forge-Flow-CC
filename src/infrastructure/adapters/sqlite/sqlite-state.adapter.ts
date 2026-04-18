@@ -196,6 +196,27 @@ export class SQLiteStateAdapter
 		}
 	}
 
+	getMilestoneByNumber(number: number): Result<Milestone | null, DomainError> {
+		try {
+			const row = this.db.prepare("SELECT * FROM milestone WHERE number = ?").get(number) as
+				| {
+						id: string;
+						project_id: string;
+						number: number;
+						name: string;
+						status: string;
+						branch: string;
+						close_reason: string | null;
+						created_at: string;
+				  }
+				| undefined;
+			if (!row) return Ok(null);
+			return Ok(this.rowToMilestone(row));
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to get milestone by number: ${e}`));
+		}
+	}
+
 	listMilestones(): Result<Milestone[], DomainError> {
 		try {
 			const rows = this.db.prepare("SELECT * FROM milestone ORDER BY number").all() as Array<{
@@ -300,6 +321,35 @@ export class SQLiteStateAdapter
 			return Ok(this.rowToSlice(row));
 		} catch (e) {
 			return Err(createDomainError("WRITE_FAILURE", `Failed to get slice: ${e}`));
+		}
+	}
+
+	getSliceByNumbers(
+		milestoneNumber: number,
+		sliceNumber: number,
+	): Result<Slice | null, DomainError> {
+		try {
+			const row = this.db
+				.prepare(
+					`SELECT s.* FROM slice s
+           JOIN milestone m ON s.milestone_id = m.id
+           WHERE m.number = ? AND s.number = ?`,
+				)
+				.get(milestoneNumber, sliceNumber) as
+				| {
+						id: string;
+						milestone_id: string;
+						number: number;
+						title: string;
+						status: string;
+						tier: string | null;
+						created_at: string;
+				  }
+				| undefined;
+			if (!row) return Ok(null);
+			return Ok(this.rowToSlice(row));
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to get slice by numbers: ${e}`));
 		}
 	}
 
