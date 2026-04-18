@@ -33,6 +33,7 @@ export function createMockSliceStore(): Partial<SliceStore> {
 	return {
 		createSlice: vi.fn(),
 		getSlice: vi.fn(),
+		getSliceByNumbers: vi.fn(),
 		listSlices: vi.fn(),
 		updateSlice: vi.fn(),
 		transitionSlice: vi.fn(),
@@ -46,6 +47,7 @@ export function createMockMilestoneStore(): Partial<MilestoneStore> {
 	return {
 		createMilestone: vi.fn(),
 		getMilestone: vi.fn(),
+		getMilestoneByNumber: vi.fn(),
 		listMilestones: vi.fn(),
 		updateMilestone: vi.fn(),
 		closeMilestone: vi.fn(),
