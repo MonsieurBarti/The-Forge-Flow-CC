@@ -1,10 +1,9 @@
 import { generateState } from "../../application/sync/generate-state.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
-import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { resolveMilestoneId } from "../utils/resolve-id.js";
-import { withSyncLock } from "../with-sync-lock.js";
+import { withClosableSyncLock } from "../with-sync-lock.js";
 
 export const syncStateSchema: CommandSchema = {
 	name: "sync:state",
@@ -14,7 +13,8 @@ export const syncStateSchema: CommandSchema = {
 			name: "milestone-id",
 			type: "string",
 			description: "Milestone ID (display label e.g. M01 or UUID)",
-			pattern: "^(M\\d+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
+			pattern:
+				"^(M\\d+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
 		},
 	],
 	optionalFlags: [],
@@ -29,8 +29,7 @@ export const syncStateCmd = async (args: string[]): Promise<string> => {
 
 	const { "milestone-id": milestoneLabel } = parsed.data as { "milestone-id": string };
 
-	const result = await withSyncLock(async () => {
-		const stores = createClosableStateStoresUnchecked();
+	const result = await withClosableSyncLock(async (stores) => {
 		const { milestoneStore, sliceStore, taskStore } = stores;
 
 		const resolvedId = resolveMilestoneId(milestoneLabel, milestoneStore);
