@@ -1,6 +1,6 @@
 ---
 name: plannotator-usage
-description: "Use when invoking plannotator for approval review of generated .tff milestone artifacts (plan, verification, requirements, spec)."
+description: "Use when invoking plannotator for approval review of generated .tff-cc milestone artifacts (plan, verification, requirements, spec)."
 ---
 
 # Plannotator Usage
