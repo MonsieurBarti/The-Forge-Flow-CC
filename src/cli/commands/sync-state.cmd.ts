@@ -1,9 +1,9 @@
-import { resolveMilestoneId } from "../../application/milestone/resolve-milestone-id.js";
 import { generateState } from "../../application/sync/generate-state.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
+import { resolveMilestoneId } from "../utils/resolve-id.js";
 import { withSyncLock } from "../with-sync-lock.js";
 
 export const syncStateSchema: CommandSchema = {
@@ -13,7 +13,8 @@ export const syncStateSchema: CommandSchema = {
 		{
 			name: "milestone-id",
 			type: "string",
-			description: "Milestone UUID or M-label (e.g., M01) to sync",
+			description: "Milestone ID (display label e.g. M01 or UUID)",
+			pattern: "^(M\\d+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
 		},
 	],
 	optionalFlags: [],
@@ -26,25 +27,23 @@ export const syncStateCmd = async (args: string[]): Promise<string> => {
 		return JSON.stringify(parsed);
 	}
 
-	const { "milestone-id": rawMilestoneId } = parsed.data as { "milestone-id": string };
+	const { "milestone-id": milestoneLabel } = parsed.data as { "milestone-id": string };
 
 	const result = await withSyncLock(async () => {
-		const { milestoneStore, sliceStore, taskStore } = createClosableStateStoresUnchecked();
+		const stores = createClosableStateStoresUnchecked();
+		const { milestoneStore, sliceStore, taskStore } = stores;
 
-		const resolved = resolveMilestoneId(milestoneStore, rawMilestoneId);
-		if (!isOk(resolved)) {
-			return JSON.stringify({ ok: false, error: resolved.error });
-		}
+		const resolvedId = resolveMilestoneId(milestoneLabel, milestoneStore);
+		if (!resolvedId.ok) return JSON.stringify({ ok: false, error: resolvedId.error });
 
 		const artifactStore = new MarkdownArtifactAdapter(process.cwd());
-		const result = await generateState(
-			{ milestoneId: resolved.data },
+		const syncResult = await generateState(
+			{ milestoneId: resolvedId.data },
 			{ milestoneStore, sliceStore, taskStore, artifactStore },
 		);
-		if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-		return JSON.stringify({ ok: false, error: result.error });
+		if (isOk(syncResult)) return JSON.stringify({ ok: true, data: null });
+		return JSON.stringify({ ok: false, error: syncResult.error });
 	});
-	// If result is a string, it came from the inner function; otherwise it's a SyncLockResult
 	if (typeof result === "string") return result;
 	return JSON.stringify(result);
 };
