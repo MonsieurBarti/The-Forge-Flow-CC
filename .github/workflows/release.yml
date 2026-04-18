@@ -9,6 +9,10 @@ permissions:
   pull-requests: write
   id-token: write
 
+env:
+  # Opt into Node.js 24 for JavaScript actions (see Node 20 deprecation notice).
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   release:
     runs-on: ubuntu-latest

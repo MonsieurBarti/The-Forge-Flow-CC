@@ -125,10 +125,29 @@ EOF
 
 # --- 7. Init fresh git repo and force-push release branch --------------------
 
+# The tmp git has no inherited credentials. For CI (GH Actions over HTTPS),
+# embed $GITHUB_TOKEN as x-access-token into the push URL. For non-HTTPS
+# origins (e.g. ssh:// or git@...), rely on the runner's existing credentials.
+# $GITHUB_TOKEN is masked by GH Actions in any log output, so incidental
+# echoing of PUSH_URL would not leak the token.
+case "$ORIGIN_URL" in
+  https://*)
+    if [ -n "$GITHUB_TOKEN" ]; then
+      HOST_PATH="${ORIGIN_URL#https://}"
+      PUSH_URL="https://x-access-token:${GITHUB_TOKEN}@${HOST_PATH}"
+    else
+      PUSH_URL="$ORIGIN_URL"
+    fi
+    ;;
+  *)
+    PUSH_URL="$ORIGIN_URL"
+    ;;
+esac
+
 cd "$RELEASE_DIR"
 echo "Initializing release git tree..."
 git init -q
-git remote add origin "$ORIGIN_URL"
+git remote add origin "$PUSH_URL"
 git checkout -q -b release
 git add -A
 git -c user.name="tff-release-bot" -c user.email="release@tff-cc.invalid" \
