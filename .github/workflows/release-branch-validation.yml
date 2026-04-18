@@ -6,6 +6,10 @@ on:
   schedule:
     - cron: '0 5 * * *'  # daily 05:00 UTC
 
+env:
+  # Opt into Node.js 24 for JavaScript actions (see Node 20 deprecation notice).
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
