@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.3...tff-cc-v0.9.4) (2026-04-18)
+
+
+### Bug Fixes
+
+* **cli:** label→UUID resolution, slice dependencies, plannotator coverage ([#101](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/101)) ([c04aa7c](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/c04aa7cb75acd2d23151bb687fcc250e4a29dcfa))
+
 ## [0.9.3](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.2...tff-cc-v0.9.3) (2026-04-18)
 
 
