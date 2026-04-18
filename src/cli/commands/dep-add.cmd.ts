@@ -1,24 +1,27 @@
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
+import { resolveSliceId } from "../utils/resolve-id.js";
 
 export const depAddSchema: CommandSchema = {
 	name: "dep:add",
 	purpose: "Add a dependency between two entities",
 	requiredFlags: [
+		{ name: "from-id", type: "string", description: "ID of the entity that is blocked" },
+		{ name: "to-id", type: "string", description: "ID of the blocking entity" },
+	],
+	optionalFlags: [
 		{
-			name: "from-id",
+			name: "type",
 			type: "string",
-			description: "ID of the entity that is blocked",
-		},
-		{
-			name: "to-id",
-			type: "string",
-			description: "ID of the blocking entity",
+			description: "Entity type: 'task' (default) or 'slice'",
+			enum: ["task", "slice"],
 		},
 	],
-	optionalFlags: [],
-	examples: ["dep:add --from-id T02 --to-id T01"],
+	examples: [
+		"dep:add --from-id <task-uuid> --to-id <task-uuid>",
+		"dep:add --from-id M01-S02 --to-id M01-S01 --type slice",
+	],
 };
 
 export const depAddCmd = async (args: string[]): Promise<string> => {
@@ -27,13 +30,36 @@ export const depAddCmd = async (args: string[]): Promise<string> => {
 		return JSON.stringify(parsed);
 	}
 
-	const { "from-id": fromId, "to-id": toId } = parsed.data as {
+	const {
+		"from-id": fromLabel,
+		"to-id": toLabel,
+		type,
+	} = parsed.data as {
 		"from-id": string;
 		"to-id": string;
+		type?: string;
 	};
 
-	const { dependencyStore } = createClosableStateStoresUnchecked();
-	const result = dependencyStore.addDependency(fromId, toId, "blocks");
-	if (isOk(result)) return JSON.stringify({ ok: true, data: null });
-	return JSON.stringify({ ok: false, error: result.error });
+	const stores = createClosableStateStoresUnchecked();
+	const { dependencyStore, sliceDependencyStore, sliceStore } = stores;
+
+	try {
+		if (type === "slice") {
+			const fromResult = resolveSliceId(fromLabel, sliceStore);
+			if (!fromResult.ok) return JSON.stringify({ ok: false, error: fromResult.error });
+			const toResult = resolveSliceId(toLabel, sliceStore);
+			if (!toResult.ok) return JSON.stringify({ ok: false, error: toResult.error });
+
+			const result = sliceDependencyStore.addSliceDependency(fromResult.data, toResult.data);
+			if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+			return JSON.stringify({ ok: false, error: result.error });
+		}
+
+		// Default: task dependency
+		const result = dependencyStore.addDependency(fromLabel, toLabel, "blocks");
+		if (isOk(result)) return JSON.stringify({ ok: true, data: null });
+		return JSON.stringify({ ok: false, error: result.error });
+	} finally {
+		stores.close();
+	}
 };
