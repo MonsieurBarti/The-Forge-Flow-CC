@@ -16,28 +16,24 @@ export function resolveMilestoneId(
 
 	const m = MILESTONE_LABEL_RE.exec(label);
 	if (!m) {
-		return Err(createDomainError("ENTITY_NOT_FOUND", `Cannot resolve milestone label: '${label}'`));
+		return Err(createDomainError("VALIDATION_ERROR", `Cannot resolve milestone label: '${label}'`));
 	}
 
 	const number = parseInt(m[1], 10);
 	const result = milestoneStore.getMilestoneByNumber(number);
 	if (!result.ok) return result;
 	if (!result.data) {
-		return Err(createDomainError("ENTITY_NOT_FOUND", `Milestone not found: '${label}'`));
+		return Err(createDomainError("NOT_FOUND", `Milestone not found: '${label}'`));
 	}
 	return Ok(result.data.id);
 }
 
-export function resolveSliceId(
-	label: string,
-	_milestoneStore: MilestoneStore,
-	sliceStore: SliceStore,
-): Result<string, DomainError> {
+export function resolveSliceId(label: string, sliceStore: SliceStore): Result<string, DomainError> {
 	if (UUID_RE.test(label)) return Ok(label);
 
 	const m = SLICE_LABEL_RE.exec(label);
 	if (!m) {
-		return Err(createDomainError("ENTITY_NOT_FOUND", `Cannot resolve slice label: '${label}'`));
+		return Err(createDomainError("VALIDATION_ERROR", `Cannot resolve slice label: '${label}'`));
 	}
 
 	const milestoneNumber = parseInt(m[1], 10);
@@ -45,7 +41,7 @@ export function resolveSliceId(
 	const result = sliceStore.getSliceByNumbers(milestoneNumber, sliceNumber);
 	if (!result.ok) return result;
 	if (!result.data) {
-		return Err(createDomainError("ENTITY_NOT_FOUND", `Slice not found: '${label}'`));
+		return Err(createDomainError("NOT_FOUND", `Slice not found: '${label}'`));
 	}
 	return Ok(result.data.id);
 }

@@ -6,7 +6,6 @@ export const DomainErrorCodeSchema = z.enum([
 	"GIT_CONFLICT",
 	"FRESH_REVIEWER_VIOLATION",
 	"NOT_FOUND",
-	"ENTITY_NOT_FOUND",
 	"VALIDATION_ERROR",
 	"STALE_CLAIM",
 	"WRITE_FAILURE",

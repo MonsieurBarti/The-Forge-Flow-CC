@@ -46,41 +46,52 @@ describe("resolveMilestoneId", () => {
 		expect(store.getMilestoneByNumber).toHaveBeenCalledWith(1);
 	});
 
-	it("returns ENTITY_NOT_FOUND for unknown label", () => {
+	it("returns VALIDATION_ERROR for invalid format input", () => {
+		const store = createMockMilestoneStore();
+		const result = resolveMilestoneId("FOOBAR", store as never);
+		expect(result.ok).toBe(false);
+		if (!result.ok) expect(result.error.code).toBe("VALIDATION_ERROR");
+	});
+
+	it("returns NOT_FOUND for unknown label", () => {
 		const store = createMockMilestoneStore();
 		vi.mocked(store.getMilestoneByNumber!).mockReturnValue(ok(null));
 		const result = resolveMilestoneId("M99", store as never);
 		expect(result.ok).toBe(false);
-		if (!result.ok) expect(result.error.code).toBe("ENTITY_NOT_FOUND");
+		if (!result.ok) expect(result.error.code).toBe("NOT_FOUND");
 	});
 });
 
 describe("resolveSliceId", () => {
 	it("passes UUID through unchanged", () => {
-		const mStore = createMockMilestoneStore();
 		const sStore = createMockSliceStore();
 		const uuid = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
-		const result = resolveSliceId(uuid, mStore as never, sStore as never);
+		const result = resolveSliceId(uuid, sStore as never);
 		expect(result.ok).toBe(true);
 		if (result.ok) expect(result.data).toBe(uuid);
 	});
 
 	it("resolves M01-S02 label to UUID", () => {
-		const mStore = createMockMilestoneStore();
 		const sStore = createMockSliceStore();
 		vi.mocked(sStore.getSliceByNumbers!).mockReturnValue(ok(fakeSlice("slice-uuid")));
-		const result = resolveSliceId("M01-S02", mStore as never, sStore as never);
+		const result = resolveSliceId("M01-S02", sStore as never);
 		expect(result.ok).toBe(true);
 		if (result.ok) expect(result.data).toBe("slice-uuid");
 		expect(sStore.getSliceByNumbers).toHaveBeenCalledWith(1, 2);
 	});
 
-	it("returns ENTITY_NOT_FOUND for unknown slice label", () => {
-		const mStore = createMockMilestoneStore();
+	it("returns VALIDATION_ERROR for invalid format input", () => {
+		const sStore = createMockSliceStore();
+		const result = resolveSliceId("FOOBAR", sStore as never);
+		expect(result.ok).toBe(false);
+		if (!result.ok) expect(result.error.code).toBe("VALIDATION_ERROR");
+	});
+
+	it("returns NOT_FOUND for unknown slice label", () => {
 		const sStore = createMockSliceStore();
 		vi.mocked(sStore.getSliceByNumbers!).mockReturnValue(ok(null));
-		const result = resolveSliceId("M01-S99", mStore as never, sStore as never);
+		const result = resolveSliceId("M01-S99", sStore as never);
 		expect(result.ok).toBe(false);
-		if (!result.ok) expect(result.error.code).toBe("ENTITY_NOT_FOUND");
+		if (!result.ok) expect(result.error.code).toBe("NOT_FOUND");
 	});
 });
