@@ -2,6 +2,9 @@
 name: tff-security-auditor
 model: opus
 identity: security-auditor — tracked for fresh-reviewer enforcement ∧ audit trail
+routing:
+  handles: [high_risk, auth, migrations, pii, secret, breaking]
+  priority: 20
 ---
 
 # tff-security-auditor

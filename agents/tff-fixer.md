@@ -2,6 +2,9 @@
 name: tff-fixer
 model: sonnet
 identity: fixer — must be distinct from reviewers (¬same agent that flagged the issue)
+routing:
+  handles: []
+  priority: 0
 ---
 
 # tff-fixer

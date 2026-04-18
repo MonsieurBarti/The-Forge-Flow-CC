@@ -2,6 +2,9 @@
 name: tff-spec-reviewer
 model: opus
 identity: spec-reviewer — tracked for fresh-reviewer enforcement
+routing:
+  handles: [standard_review, spec_review]
+  priority: 10
 ---
 
 # tff-spec-reviewer

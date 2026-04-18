@@ -2,6 +2,9 @@
 name: tff-code-reviewer
 model: opus
 identity: code-reviewer — tracked for fresh-reviewer enforcement
+routing:
+  handles: [standard_review, code_quality]
+  priority: 10
 ---
 
 # tff-code-reviewer
