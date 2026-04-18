@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { sliceTransitionCmd } from "../../../../src/cli/commands/slice-transition.cmd.js";
+import {
+	sliceTransitionCmd,
+	sliceTransitionSchema,
+} from "../../../../src/cli/commands/slice-transition.cmd.js";
+import { parseFlags } from "../../../../src/cli/utils/flag-parser.js";
 
 describe("slice-transition result format", () => {
 	it("should include warnings array in success result", () => {
@@ -45,5 +49,31 @@ describe("sliceTransitionCmd — S03 auto-sync", () => {
 		);
 		expect(result.ok).toBe(false);
 		expect(result.error.code).toBe("INVALID_ENUM_VALUE");
+	});
+});
+
+describe("sliceTransitionSchema — flag parsing", () => {
+	it("accepts a display label (M01-S01)", () => {
+		const result = parseFlags(
+			["--slice-id", "M01-S01", "--status", "planning"],
+			sliceTransitionSchema,
+		);
+		expect(result.ok).toBe(true);
+	});
+
+	it("accepts a UUID as slice-id", () => {
+		const result = parseFlags(
+			["--slice-id", "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "--status", "planning"],
+			sliceTransitionSchema,
+		);
+		expect(result.ok).toBe(true);
+	});
+
+	it("accepts an uppercase UUID as slice-id", () => {
+		const result = parseFlags(
+			["--slice-id", "A1B2C3D4-E5F6-7890-ABCD-EF1234567890", "--status", "planning"],
+			sliceTransitionSchema,
+		);
+		expect(result.ok).toBe(true);
 	});
 });

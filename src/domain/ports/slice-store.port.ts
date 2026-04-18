@@ -9,6 +9,10 @@ import type { SliceUpdateProps } from "../value-objects/slice-update-props.js";
 export interface SliceStore {
 	createSlice(props: SliceProps): Result<Slice, DomainError>;
 	getSlice(id: string): Result<Slice | null, DomainError>;
+	getSliceByNumbers(
+		milestoneNumber: number,
+		sliceNumber: number,
+	): Result<Slice | null, DomainError>;
 	listSlices(milestoneId?: string): Result<Slice[], DomainError>;
 	updateSlice(id: string, updates: SliceUpdateProps): Result<void, DomainError>;
 	transitionSlice(id: string, target: SliceStatus): Result<DomainEvent[], DomainError>;

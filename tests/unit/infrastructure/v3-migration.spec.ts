@@ -37,9 +37,9 @@ describe("T01: V3 Schema Migration", () => {
 		}
 	});
 
-	it("should run v3 migration and reach schema version 3", () => {
+	it("should run all migrations and reach current schema version", () => {
 		runMigrations(db);
-		expect(getCurrentVersion(db)).toBe(3);
+		expect(getCurrentVersion(db)).toBe(4);
 	});
 
 	it("should add branch column to milestone table", () => {

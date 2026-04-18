@@ -5,6 +5,7 @@ import type { MilestoneStore } from "../../src/domain/ports/milestone-store.port
 import type { ProjectStore } from "../../src/domain/ports/project-store.port.js";
 import type { ReviewStore } from "../../src/domain/ports/review-store.port.js";
 import type { SessionStore } from "../../src/domain/ports/session-store.port.js";
+import type { SliceDependencyStore } from "../../src/domain/ports/slice-dependency-store.port.js";
 import type { SliceStore } from "../../src/domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../src/domain/ports/task-store.port.js";
 import type { Result } from "../../src/domain/result.js";
@@ -32,6 +33,7 @@ export function createMockSliceStore(): Partial<SliceStore> {
 	return {
 		createSlice: vi.fn(),
 		getSlice: vi.fn(),
+		getSliceByNumbers: vi.fn(),
 		listSlices: vi.fn(),
 		updateSlice: vi.fn(),
 		transitionSlice: vi.fn(),
@@ -45,6 +47,7 @@ export function createMockMilestoneStore(): Partial<MilestoneStore> {
 	return {
 		createMilestone: vi.fn(),
 		getMilestone: vi.fn(),
+		getMilestoneByNumber: vi.fn(),
 		listMilestones: vi.fn(),
 		updateMilestone: vi.fn(),
 		closeMilestone: vi.fn(),
@@ -86,6 +89,17 @@ export function createMockDependencyStore(): Partial<DependencyStore> {
 		addDependency: vi.fn(),
 		removeDependency: vi.fn(),
 		getDependencies: vi.fn(),
+	};
+}
+
+/**
+ * Create a minimal mock SliceDependencyStore for testing.
+ */
+export function createMockSliceDependencyStore(): Partial<SliceDependencyStore> {
+	return {
+		addSliceDependency: vi.fn(),
+		removeSliceDependency: vi.fn(),
+		getSliceDependencies: vi.fn(),
 	};
 }
 
@@ -146,6 +160,7 @@ export function createMockStateStores(): StateStores {
 		sliceStore: createMockSliceStore() as SliceStore,
 		taskStore: createMockTaskStore() as TaskStore,
 		dependencyStore: createMockDependencyStore() as DependencyStore,
+		sliceDependencyStore: createMockSliceDependencyStore() as SliceDependencyStore,
 		sessionStore: createMockSessionStore() as SessionStore,
 		reviewStore: createMockReviewStore() as ReviewStore,
 		journalRepository: createMockJournalRepository() as JournalRepository,
