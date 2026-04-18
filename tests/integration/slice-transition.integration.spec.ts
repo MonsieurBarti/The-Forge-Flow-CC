@@ -100,7 +100,14 @@ beforeEach(() => {
 		})),
 		getSliceByNumbers: vi.fn().mockReturnValue({
 			ok: true,
-			data: { id: "test-slice-uuid", milestoneId: "m01", number: 1, status: "discussing", title: "Test Slice", createdAt: new Date() },
+			data: {
+				id: "test-slice-uuid",
+				milestoneId: "m01",
+				number: 1,
+				status: "discussing",
+				title: "Test Slice",
+				createdAt: new Date(),
+			},
 		}),
 	});
 	Object.assign(mockMilestoneStore, {

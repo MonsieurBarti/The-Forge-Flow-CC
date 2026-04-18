@@ -6,8 +6,8 @@ import type { ClosableStateStores } from "../../../../src/infrastructure/adapter
 vi.mock("../../../../src/cli/with-sync-lock.js");
 vi.mock("../../../../src/application/sync/generate-state.js");
 
-import { withClosableSyncLock } from "../../../../src/cli/with-sync-lock.js";
 import { generateState } from "../../../../src/application/sync/generate-state.js";
+import { withClosableSyncLock } from "../../../../src/cli/with-sync-lock.js";
 
 describe("syncStateSchema — flag parsing", () => {
 	it("accepts a display label (M01)", () => {
@@ -127,9 +127,7 @@ describe("syncStateCmd — behavior", () => {
 
 		vi.mocked(withClosableSyncLock).mockImplementation(async (fn) => {
 			const stores = makeMockStores({
-				getMilestoneByNumber: vi
-					.fn()
-					.mockReturnValue({ ok: true, data: { id: milestoneId } }),
+				getMilestoneByNumber: vi.fn().mockReturnValue({ ok: true, data: { id: milestoneId } }),
 			});
 			return fn(stores);
 		});
