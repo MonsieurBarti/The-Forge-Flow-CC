@@ -10,7 +10,6 @@ LOAD @skills/verification-before-completion/SKILL.md
 LOAD @skills/finishing-work/SKILL.md
 
 ## Steps
-0. Signal extraction (advisory; non-blocking): `tff-tools routing:extract --slice-id <slice-id> --workflow tff:ship`
 1. `∀ reviewer: tff-tools review:check-fresh --slice-id <slice-id> --agent <role>`
 2. Stage 1 (spec) — SPAWN tff-spec-reviewer: {acceptance_criteria, diff}
    FAIL → SPAWN tff-fixer → re-run | loop until PASS
