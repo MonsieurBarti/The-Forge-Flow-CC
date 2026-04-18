@@ -7,14 +7,18 @@ description: "Use when invoking plannotator for plan approval and verification r
 
 ## When to Use
 
-∀ workflows needing plannotator (plan approval, verification review).
+∀ workflows that generate a `.md` artifact under `.tff-cc/milestones/` (except STATE.md).
 
 ## Integration Points
 
-| Point | Workflow | Command | Input |
+| Artifact | Workflow | Command | Notes |
 |---|---|---|---|
-| Plan review | /tff:plan, /tff:quick, /tff:debug | invoke Skill `plannotator-annotate` with arg `.tff-cc/milestones/<milestone>/slices/<id>/PLAN.md` | PLAN.md |
-| Verification | /tff:verify | invoke Skill `plannotator-annotate` with arg `.tff-cc/milestones/<milestone>/slices/<id>/VERIFICATION.md` | VERIFICATION.md |
+| PLAN.md | /tff:plan, /tff:quick, /tff:debug | invoke Skill `plannotator-annotate` with artifact path | Required |
+| VERIFICATION.md | /tff:verify | invoke Skill `plannotator-annotate` with artifact path | Required |
+| REQUIREMENTS.md | /tff:research, /tff:discuss | invoke Skill `plannotator-annotate` with artifact path | Required |
+| SPEC.md / design docs | /tff:plan (when generated) | invoke Skill `plannotator-annotate` with artifact path | Required |
+
+**Excluded:** STATE.md — sync artifact, not a human-reviewed document.
 
 ∀ points: opens interactive UI → user annotates → feedback returns to stdout → agent processes
 
