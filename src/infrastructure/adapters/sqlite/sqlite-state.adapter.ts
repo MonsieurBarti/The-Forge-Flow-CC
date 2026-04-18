@@ -18,6 +18,10 @@ import type { MilestoneStore } from "../../../domain/ports/milestone-store.port.
 import type { ProjectStore } from "../../../domain/ports/project-store.port.js";
 import type { ReviewStore } from "../../../domain/ports/review-store.port.js";
 import type { SessionStore } from "../../../domain/ports/session-store.port.js";
+import type {
+	SliceDependency,
+	SliceDependencyStore,
+} from "../../../domain/ports/slice-dependency-store.port.js";
 import type { SliceStore } from "../../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../../domain/ports/task-store.port.js";
 import { Err, Ok, type Result } from "../../../domain/result.js";
@@ -44,6 +48,7 @@ export class SQLiteStateAdapter
 		SliceStore,
 		TaskStore,
 		DependencyStore,
+		SliceDependencyStore,
 		SessionStore,
 		ReviewStore
 {
@@ -613,6 +618,40 @@ export class SQLiteStateAdapter
 			return Ok(rows.map((r) => ({ fromId: r.from_id, toId: r.to_id, type: r.type as "blocks" })));
 		} catch (e) {
 			return Err(createDomainError("WRITE_FAILURE", `Failed to get dependencies: ${e}`));
+		}
+	}
+
+	// SliceDependencyStore
+	addSliceDependency(fromId: string, toId: string): Result<void, DomainError> {
+		try {
+			this.db
+				.prepare("INSERT OR REPLACE INTO slice_dependency (from_id, to_id) VALUES (?, ?)")
+				.run(fromId, toId);
+			return Ok(undefined);
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to add slice dependency: ${e}`));
+		}
+	}
+
+	removeSliceDependency(fromId: string, toId: string): Result<void, DomainError> {
+		try {
+			this.db
+				.prepare("DELETE FROM slice_dependency WHERE from_id = ? AND to_id = ?")
+				.run(fromId, toId);
+			return Ok(undefined);
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to remove slice dependency: ${e}`));
+		}
+	}
+
+	getSliceDependencies(sliceId: string): Result<SliceDependency[], DomainError> {
+		try {
+			const rows = this.db
+				.prepare("SELECT from_id, to_id FROM slice_dependency WHERE from_id = ? OR to_id = ?")
+				.all(sliceId, sliceId) as Array<{ from_id: string; to_id: string }>;
+			return Ok(rows.map((r) => ({ fromId: r.from_id, toId: r.to_id })));
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to get slice dependencies: ${e}`));
 		}
 	}
 
