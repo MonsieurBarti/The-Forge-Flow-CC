@@ -4,6 +4,7 @@ import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { createTffCcSymlink, getProjectId } from "../../infrastructure/home-directory.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
+import { resolveSliceId } from "../utils/resolve-id.js";
 
 export const worktreeCreateSchema: CommandSchema = {
 	name: "worktree:create",
@@ -29,13 +30,19 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
 		return JSON.stringify(parsed);
 	}
 
-	const { "slice-id": sliceId } = parsed.data as { "slice-id": string };
+	const { "slice-id": sliceLabel } = parsed.data as { "slice-id": string };
 
 	const cwd = process.cwd();
 	const gitOps = new GitCliAdapter(cwd);
 
 	// Fetch slice and milestone from store
 	const { sliceStore, milestoneStore } = createClosableStateStoresUnchecked();
+	const resolvedSlice = resolveSliceId(sliceLabel, sliceStore);
+	if (!resolvedSlice.ok) {
+		return JSON.stringify({ ok: false, error: resolvedSlice.error });
+	}
+	const sliceId = resolvedSlice.data;
+
 	const sliceResult = sliceStore.getSlice(sliceId);
 	if (!isOk(sliceResult) || !sliceResult.data) {
 		return JSON.stringify({
