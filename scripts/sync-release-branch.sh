@@ -99,11 +99,11 @@ cp -r dist "$RELEASE_DIR/dist"
 # --- 4. Native SQLite binaries ----------------------------------------------
 
 if [ -d native ]; then
-  echo "Copying native/*.node into dist/infrastructure/adapters/sqlite/..."
-  mkdir -p "$RELEASE_DIR/dist/infrastructure/adapters/sqlite"
+  echo "Copying native/*.node into dist/cli/..."
+  mkdir -p "$RELEASE_DIR/dist/cli"
   # `|| true` so an empty native/ doesn't abort; explicit log below tells us.
-  cp native/*.node "$RELEASE_DIR/dist/infrastructure/adapters/sqlite/" 2>/dev/null || true
-  COPIED=$(ls "$RELEASE_DIR/dist/infrastructure/adapters/sqlite/"*.node 2>/dev/null | wc -l | tr -d ' ')
+  cp native/*.node "$RELEASE_DIR/dist/cli/" 2>/dev/null || true
+  COPIED=$(ls "$RELEASE_DIR/dist/cli/"*.node 2>/dev/null | wc -l | tr -d ' ')
   echo "  copied $COPIED native binaries"
 fi
 
