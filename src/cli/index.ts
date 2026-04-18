@@ -178,7 +178,7 @@ const main = async () => {
 		console.log(
 			JSON.stringify({
 				ok: true,
-				data: { name: "tff-tools", version: "0.9.0", commands: Object.keys(commands) },
+				data: { name: "tff-tools", version: __TFF_VERSION__, commands: Object.keys(commands) },
 			}),
 		);
 		return;

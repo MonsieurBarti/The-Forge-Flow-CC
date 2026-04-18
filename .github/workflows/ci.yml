@@ -44,7 +44,7 @@ jobs:
       - name: Align native sqlite binding with CI node abi
         run: |
           install -D node_modules/better-sqlite3/build/Release/better_sqlite3.node \
-            dist/infrastructure/adapters/sqlite/better_sqlite3.linux-x64.node
+            dist/cli/better_sqlite3.linux-x64.node
 
       - name: Run tests
         run: bun run test
