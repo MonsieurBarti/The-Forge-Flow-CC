@@ -39,7 +39,7 @@ export const projectInitCmd = async (args: string[]): Promise<string> => {
 	const finalVision = vision || name;
 
 	const cwd = process.cwd();
-	// Note: .tff/ symlink is created by getProjectId() called from createStateStores()
+	// Note: .tff-cc/ symlink is created by getProjectId() called from createStateStores()
 	const { projectStore } = createStateStores();
 	const artifactStore = new MarkdownArtifactAdapter(cwd);
 	const _gitOps = new GitCliAdapter(cwd);

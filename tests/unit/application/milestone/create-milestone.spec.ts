@@ -49,7 +49,7 @@ describe("createMilestoneUseCase", () => {
 		);
 
 		// Directory uses label format M##, not UUID
-		expect(await artifactStore.exists(".tff/milestones/M01/REQUIREMENTS.md")).toBe(true);
+		expect(await artifactStore.exists(".tff-cc/milestones/M01/REQUIREMENTS.md")).toBe(true);
 	});
 
 	it("should create slices directory with label format", async () => {
@@ -60,6 +60,6 @@ describe("createMilestoneUseCase", () => {
 
 		// The slices directory is created by mkdir, and REQUIREMENTS.md is written
 		// We verify the directory structure by checking that the file exists
-		expect(await artifactStore.exists(".tff/milestones/M01/REQUIREMENTS.md")).toBe(true);
+		expect(await artifactStore.exists(".tff-cc/milestones/M01/REQUIREMENTS.md")).toBe(true);
 	});
 });

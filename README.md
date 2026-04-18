@@ -67,6 +67,8 @@ claude /plugin install tff-cc@the-forge-flow
 
 Verify: Run `/tff:help` in Claude Code to see the command reference.
 
+The plugin is pulled from the repo's `release` branch, which ships a pre-built `dist/` and resolved plugin tree — no manual `bun install` or `bun run build` is required on the consumer side. Contributors cloning `main` for development still need `bun install && bun run build` to produce `dist/` locally.
+
 ### Verification
 
 Run `/tff:health` to check state consistency and plannotator availability.
@@ -429,6 +431,18 @@ auto-learn:
 ```
 
 Settings are resilient: corrupted or partial files fall back to defaults per field. Run `/tff:settings` to detect and add missing fields.
+
+## Releasing (maintainers)
+
+The `release` branch is a built-artifact channel. The intended flow after a PR merges to `main`:
+
+1. PR merges to `main`.
+2. release-please opens a version-bump PR; a maintainer merges it.
+3. `.github/workflows/release.yml` runs: publishes to npm, then executes `scripts/sync-release-branch.sh` which force-pushes a fresh snapshot (plugin manifest + resolved content dirs + built `dist/` + native SQLite binaries + top-level docs) to `release`.
+4. `.github/workflows/release-branch-validation.yml` fires on the push to `release` (and daily at 05:00 UTC), asserting `dist/cli/index.js` exists, the CLI runs, and no legacy `.tff/` directory has leaked in.
+5. If validation is green, the new version is live for `claude /plugin install tff-cc@the-forge-flow`.
+
+Before trusting the sync script in production, maintainers should smoke-test it against a throwaway fork — see the comment block at the top of `scripts/sync-release-branch.sh`.
 
 ## License
 

@@ -4,7 +4,11 @@
   "plugins": [
     {
       "name": "tff-cc",
-      "source": "./plugin",
+      "source": {
+        "source": "github",
+        "repo": "MonsieurBarti/The-Forge-Flow-CC",
+        "ref": "release"
+      },
       "description": "Autonomous coding agent orchestrator with SQLite-backed state, plannotator integration, and wave-based parallel execution"
     }
   ]

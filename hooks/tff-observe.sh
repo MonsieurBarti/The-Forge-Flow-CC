@@ -3,7 +3,7 @@
 # Exit 0 always. Never block. Never fail visibly.
 
 # Check if observation is enabled (fast path: skip if no settings or disabled)
-SETTINGS=".tff/settings.yaml"
+SETTINGS=".tff-cc/settings.yaml"
 if [ ! -f "$SETTINGS" ] || ! grep -q "enabled: true" "$SETTINGS" 2>/dev/null; then
   exit 0
 fi
@@ -20,7 +20,7 @@ ARGS=$(echo "$INPUT" | jq -r '.tool_input.command // .tool_input.file_path // em
 SESSION=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
 TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-OBS_DIR=".tff/observations"
+OBS_DIR=".tff-cc/observations"
 SESSIONS_FILE="$OBS_DIR/sessions.jsonl"
 DEAD_LETTER="$OBS_DIR/dead-letter.jsonl"
 
@@ -37,8 +37,16 @@ if [[ -f "$DEAD_LETTER" && -s "$DEAD_LETTER" ]]; then
   fi
 fi
 
-# Append current observation; fall back to dead-letter on failure
-LINE="{\"ts\":\"$TS\",\"session\":\"$SESSION\",\"tool\":\"$TOOL\",\"args\":\"$ARGS\",\"project\":\"$(pwd)\"}"
+# Append current observation; fall back to dead-letter on failure.
+# Build JSONL via jq to safely escape quotes, backslashes, newlines, etc.
+# in $ARGS (arbitrary shell command / file path) and $(pwd).
+LINE=$(jq -cn \
+  --arg ts "$TS" \
+  --arg session "$SESSION" \
+  --arg tool "$TOOL" \
+  --arg args "$ARGS" \
+  --arg project "$(pwd)" \
+  '{ts:$ts, session:$session, tool:$tool, args:$args, project:$project}')
 if ! echo "$LINE" >> "$SESSIONS_FILE" 2>/dev/null; then
   echo "$LINE" >> "$DEAD_LETTER" 2>/dev/null
 fi

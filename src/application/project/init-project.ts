@@ -5,6 +5,7 @@ import type { ArtifactStore } from "../../domain/ports/artifact-store.port.js";
 import type { ProjectStore } from "../../domain/ports/project-store.port.js";
 
 import { Err, isOk, Ok, type Result } from "../../domain/result.js";
+import { MILESTONES_DIR, PROJECT_FILE, TFF_CC_DIR } from "../../shared/paths.js";
 
 interface InitProjectInput {
 	name: string;
@@ -22,8 +23,7 @@ export const initProject = async (
 	input: InitProjectInput,
 	deps: InitProjectDeps,
 ): Promise<Result<InitProjectOutput, DomainError>> => {
-	if (await deps.artifactStore.exists(".tff-cc/PROJECT.md"))
-		return Err(projectExistsError(input.name));
+	if (await deps.artifactStore.exists(PROJECT_FILE)) return Err(projectExistsError(input.name));
 
 	const existing = deps.projectStore.getProject();
 	if (!isOk(existing)) return existing;
@@ -34,19 +34,19 @@ export const initProject = async (
 	const saveResult = deps.projectStore.saveProject({ name: project.name, vision: project.vision });
 	if (!isOk(saveResult)) return saveResult;
 
-	await deps.artifactStore.mkdir(".tff-cc");
-	await deps.artifactStore.mkdir(".tff-cc/milestones");
+	await deps.artifactStore.mkdir(TFF_CC_DIR);
+	await deps.artifactStore.mkdir(MILESTONES_DIR);
 
-	// Ensure .tff/ and build/ are in .gitignore so artifacts never land on code branches
+	// Ensure .tff-cc/ and build/ are in .gitignore so artifacts never land on code branches
 	await ensureGitignored(deps.artifactStore);
 
 	const projectMd = `# ${project.name}\n\n## Vision\n\n${project.vision}\n`;
-	await deps.artifactStore.write(".tff-cc/PROJECT.md", projectMd);
+	await deps.artifactStore.write(PROJECT_FILE, projectMd);
 
 	return Ok({ project: saveResult.data });
 };
 
-const REQUIRED_GITIGNORE_ENTRIES = [".tff-cc/", "build/"];
+const REQUIRED_GITIGNORE_ENTRIES = [`${TFF_CC_DIR}/`, "build/"];
 
 async function ensureGitignored(artifactStore: ArtifactStore): Promise<void> {
 	const gitignorePath = ".gitignore";

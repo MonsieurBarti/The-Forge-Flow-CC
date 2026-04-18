@@ -1,6 +1,6 @@
 ---
 name: settings-template
-description: Canonical commented YAML template for .tff/settings.yaml — single source of truth for defaults
+description: Canonical commented YAML template for .tff-cc/settings.yaml — single source of truth for defaults
 ---
 
 ```yaml

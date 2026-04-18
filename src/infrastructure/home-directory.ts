@@ -16,6 +16,7 @@ import {
 } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { TFF_CC_DIR } from "../shared/paths.js";
 
 /** UUID v4 format validation regex */
 const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -30,7 +31,7 @@ function isValidUuidV4(id: string): boolean {
  * Returns TFF_CC_HOME env var if set, otherwise ~/.tff-cc
  */
 export function getTffCcHome(): string {
-	return process.env.TFF_CC_HOME ?? join(homedir(), ".tff-cc");
+	return process.env.TFF_CC_HOME ?? join(homedir(), TFF_CC_DIR);
 }
 
 /**
@@ -129,16 +130,16 @@ export function ensureProjectHomeDir(projectId: string): string {
 }
 
 /**
- * Create symlink from .tff in repo root to project home directory.
- * Throws if .tff/ exists as a real directory (migration needed).
+ * Create symlink from .tff-cc in repo root to project home directory.
+ * Throws if .tff-cc/ exists as a real directory (migration needed).
  * @param repoRoot - The repository root directory
  * @param projectId - The project's unique identifier
  */
-export function createTffSymlink(repoRoot: string, projectId: string): void {
-	const symlinkPath = join(repoRoot, ".tff-cc");
+export function createTffCcSymlink(repoRoot: string, projectId: string): void {
+	const symlinkPath = join(repoRoot, TFF_CC_DIR);
 	const targetPath = getProjectHome(projectId);
 
-	// Check if .tff exists
+	// Check if .tff-cc exists
 	if (existsSync(symlinkPath)) {
 		// Check if it's a symlink
 		const stats = lstatSync(symlinkPath);
@@ -149,7 +150,7 @@ export function createTffSymlink(repoRoot: string, projectId: string): void {
 		} else {
 			// Real directory exists - migration needed
 			throw new Error(
-				`.tff-cc/ exists as a real directory. Remove or rename it before proceeding.`,
+				`${TFF_CC_DIR}/ exists as a real directory. Remove or rename it before proceeding.`,
 			);
 		}
 	}

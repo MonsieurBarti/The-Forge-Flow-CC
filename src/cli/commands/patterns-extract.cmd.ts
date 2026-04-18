@@ -1,6 +1,7 @@
 import { extractNgrams } from "../../application/patterns/extract-ngrams.js";
 import { isOk } from "../../domain/result.js";
 import { JsonlStoreAdapter } from "../../infrastructure/adapters/jsonl/jsonl-store.adapter.js";
+import { OBSERVATIONS_DIR } from "../../shared/paths.js";
 import type { CommandSchema } from "../utils/flag-parser.js";
 
 export const patternsExtractSchema: CommandSchema = {
@@ -27,7 +28,7 @@ export const patternsExtractCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 
-	const store = new JsonlStoreAdapter(".tff/observations");
+	const store = new JsonlStoreAdapter(OBSERVATIONS_DIR);
 	const obsResult = await store.readObservations();
 	if (!isOk(obsResult)) return JSON.stringify({ ok: false, error: obsResult.error });
 	const bigrams = extractNgrams(obsResult.data, 2);

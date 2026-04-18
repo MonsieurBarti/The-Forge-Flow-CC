@@ -1,0 +1,50 @@
+name: Release Branch Validation
+
+on:
+  push:
+    branches: [release]
+  schedule:
+    - cron: '0 5 * * *'  # daily 05:00 UTC
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+        with:
+          ref: release
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: '22.x'
+
+      - name: Verify dist/ is present
+        run: test -f dist/cli/index.js
+
+      - name: Verify CLI runs
+        run: node dist/cli/index.js --help
+
+      - name: Run observe hook smoke
+        run: |
+          mkdir -p .tff-cc
+          echo "enabled: true" > .tff-cc/settings.yaml
+          export CLAUDE_TOOL_NAME=Read
+          export CLAUDE_SESSION_ID=test-session
+          # Hook reads PostToolUse JSON from stdin; feed a minimal envelope.
+          # Hook must exit 0 — crashes or syntax errors here fail the job.
+          echo '{"tool_name":"Read","session_id":"test-session","timestamp":"2025-01-01T00:00:00Z"}' \
+            | bash hooks/tff-observe.sh
+          # Informational: log whether observations were written (schema may evolve).
+          if [ -d .tff-cc/observations ]; then
+            echo "ok: hook created observations directory"
+            ls -la .tff-cc/observations/
+          else
+            echo "info: hook exited cleanly without creating observations"
+          fi
+
+      - name: Assert no legacy .tff/ artifacts
+        run: |
+          if [ -d .tff ]; then
+            echo "Unexpected .tff/ directory on release branch"
+            exit 1
+          fi

@@ -3,7 +3,7 @@
 # Exit 0 always. Never block. Never fail visibly.
 
 # Check if reminders are enabled (fast path: skip if no settings or disabled)
-SETTINGS=".tff/settings.yaml"
+SETTINGS=".tff-cc/settings.yaml"
 if [ ! -f "$SETTINGS" ] || ! grep -q "reminders: true" "$SETTINGS" 2>/dev/null; then
   exit 0
 fi

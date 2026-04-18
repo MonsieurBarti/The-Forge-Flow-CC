@@ -15,6 +15,7 @@ import {
 	symlinkSync,
 } from "node:fs";
 import { join } from "node:path";
+import { LEGACY_TFF_DIR, TFF_CC_DIR } from "../shared/paths.js";
 import {
 	ensureProjectHomeDir,
 	getProjectId,
@@ -26,17 +27,22 @@ import {
  * Check if .tff/ exists as a real directory (not symlink) - indicates legacy pattern.
  */
 export function detectLegacyPattern(repoRoot: string): boolean {
-	const tffPath = join(repoRoot, ".tff-cc");
+	const tffPath = join(repoRoot, LEGACY_TFF_DIR);
 	if (!existsSync(tffPath)) {
 		return false;
 	}
 	const stats = lstatSync(tffPath);
-	// Legacy pattern: .tff-cc/ is a real directory (not symlink)
+	// Legacy pattern: .tff/ is a real directory (not symlink)
 	return stats.isDirectory();
 }
 
 /**
  * Recursively copy directory contents.
+ *
+ * Symlinks are intentionally skipped — migrating user state should not preserve
+ * symlinks that could escape the source tree (e.g. a symlink to /etc/passwd).
+ * Other non-regular dirent types (sockets, fifos, devices) are also silently
+ * skipped; they are never expected inside .tff/.
  */
 function copyDir(src: string, dest: string): void {
 	mkdirSync(dest, { recursive: true });
@@ -46,11 +52,18 @@ function copyDir(src: string, dest: string): void {
 		const srcPath = join(src, entry.name);
 		const destPath = join(dest, entry.name);
 
+		if (entry.isSymbolicLink()) {
+			console.error(
+				`[tff] Skipping symlink during migration: ${srcPath} (symlinks are not preserved)`,
+			);
+			continue;
+		}
 		if (entry.isDirectory()) {
 			copyDir(srcPath, destPath);
-		} else {
+		} else if (entry.isFile()) {
 			copyFileSync(srcPath, destPath);
 		}
+		// Other dirent types (sockets, fifos, devices) are silently skipped — never expected in .tff/.
 	}
 }
 
@@ -66,10 +79,15 @@ function deleteDir(dir: string): void {
 /**
  * Restore .tff/ directory from home directory after failed migration.
  * Used for rollback when symlink creation fails after deletion.
+ *
+ * After restoring, the now-redundant contents under projectHome are removed so
+ * a subsequent migration attempt starts from a clean state. The home directory
+ * itself is recreated by ensureProjectHomeDir on the next run.
  */
-function restoreTffCcDir(projectHome: string, tffPath: string): void {
+function restoreLegacyTffDir(projectHome: string, tffPath: string): void {
 	if (existsSync(projectHome)) {
 		copyDir(projectHome, tffPath);
+		rmSync(projectHome, { recursive: true, force: true });
 	}
 }
 
@@ -81,7 +99,7 @@ function restoreTffCcDir(projectHome: string, tffPath: string): void {
  * 3. Create home directory
  * 4. Move .tff/ contents to home directory
  * 5. Delete .tff/
- * 6. Create symlink .tff → home directory
+ * 6. Create symlink .tff-cc → home directory
  *
  * Atomic: if any step fails, we don't leave partial state.
  */
@@ -97,9 +115,8 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 		return;
 	}
 
-	// Legacy .tff-cc/ directory detected - this shouldn't happen in normal flow
-	// since new projects get symlink, but handle it anyway
-	const tffPath = join(repoRoot, ".tff-cc");
+	// Legacy .tff/ directory detected - migrating to home directory pattern
+	const tffPath = join(repoRoot, LEGACY_TFF_DIR);
 
 	// Step 1: Read or generate project ID
 	let projectId = readProjectIdFile(repoRoot);
@@ -113,6 +130,7 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 
 	// Step 3: Copy .tff/ contents to home directory
 	// We copy instead of move to be safer (can rollback)
+	console.error(`[tff] Migrating legacy .tff/ to ${projectHome}`);
 	copyDir(tffPath, projectHome);
 
 	// Step 4: Write project ID file (if not already present)
@@ -124,12 +142,13 @@ export function runMigrationIfNeeded(repoRoot: string): void {
 	deleteDir(tffPath);
 
 	// Step 6: Create symlink .tff-cc → home directory (with rollback on failure)
+	const symlinkTarget = join(repoRoot, TFF_CC_DIR);
 	try {
-		symlinkSync(projectHome, tffPath);
+		symlinkSync(projectHome, symlinkTarget);
 	} catch (symlinkError) {
-		// Rollback: restore .tff-cc/ directory from home directory
+		// Rollback: restore .tff/ directory from home directory
 		console.error(`Symlink creation failed, rolling back migration: ${symlinkError}`);
-		restoreTffCcDir(projectHome, tffPath);
+		restoreLegacyTffDir(projectHome, tffPath);
 		throw symlinkError;
 	}
 }

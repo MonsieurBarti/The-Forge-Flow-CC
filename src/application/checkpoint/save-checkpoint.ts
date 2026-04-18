@@ -1,6 +1,7 @@
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import type { ArtifactStore } from "../../domain/ports/artifact-store.port.js";
 import { isOk, Ok, type Result } from "../../domain/result.js";
+import { sliceDir } from "../../shared/paths.js";
 
 export interface CheckpointData {
 	sliceId: string;
@@ -31,7 +32,7 @@ export const saveCheckpoint = async (
 		"",
 	];
 	const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-	const dir = `.tff/milestones/${milestoneId}/slices/${data.sliceId}`;
+	const dir = sliceDir(milestoneId, data.sliceId);
 	const path = `${dir}/CHECKPOINT.md`;
 
 	const mkdirResult = await deps.artifactStore.mkdir(dir);

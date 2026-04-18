@@ -1,3 +1,4 @@
+import { resolveMilestoneId } from "../../application/milestone/resolve-milestone-id.js";
 import { createSliceUseCase } from "../../application/slice/create-slice.js";
 import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
@@ -19,13 +20,13 @@ export const sliceCreateSchema: CommandSchema = {
 		{
 			name: "milestone-id",
 			type: "string",
-			description: "Milestone ID (auto-detected if not provided)",
-			pattern: "^M\\d+$",
+			description: "Milestone UUID or M-label (e.g., M01) — auto-detected if not provided",
 		},
 	],
 	examples: [
 		'slice:create --title "Implement feature X"',
 		'slice:create --title "Fix bug Y" --milestone-id M01',
+		'slice:create --title "Fix bug Y" --milestone-id <uuid>',
 	],
 };
 
@@ -48,7 +49,11 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
 	let milestoneId: string;
 
 	if (explicitMilestoneId) {
-		milestoneId = explicitMilestoneId;
+		const resolved = resolveMilestoneId(milestoneStore, explicitMilestoneId);
+		if (!isOk(resolved)) {
+			return JSON.stringify({ ok: false, error: resolved.error });
+		}
+		milestoneId = resolved.data;
 	} else {
 		// Auto-detect active milestone (most recent open one)
 		const milestonesResult = milestoneStore.listMilestones();

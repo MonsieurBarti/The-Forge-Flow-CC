@@ -88,6 +88,8 @@ Special formats:
     M01-S01/              ← git worktree (gitignored)
 ```
 
+Note: `.tff-cc/` in the repo is a symlink to `~/.tff-cc/{projectId}/`, created by `project:init`. Direct `mkdir -p .tff-cc/…` before init is unsafe and will cause symlink creation to fail with "`.tff-cc/` exists as a real directory."
+
 ## State Rules
 
 - State managed by SQLite via tff-tools

@@ -49,7 +49,9 @@ describe("createSliceUseCase", () => {
 		expect(isOk(result)).toBe(true);
 		if (isOk(result)) {
 			// Directory uses label format M##-S##, not UUID
-			expect(await artifactStore.exists(".tff/milestones/M01/slices/M01-S01/PLAN.md")).toBe(true);
+			expect(await artifactStore.exists(".tff-cc/milestones/M01/slices/M01-S01/PLAN.md")).toBe(
+				true,
+			);
 		}
 	});
 
@@ -73,8 +75,12 @@ describe("createSliceUseCase", () => {
 			expect(result1.data.slice.number).toBe(1);
 			expect(result2.data.slice.number).toBe(2);
 			// Directories should be M01-S01 and M01-S02
-			expect(await artifactStore.exists(".tff/milestones/M01/slices/M01-S01/PLAN.md")).toBe(true);
-			expect(await artifactStore.exists(".tff/milestones/M01/slices/M01-S02/PLAN.md")).toBe(true);
+			expect(await artifactStore.exists(".tff-cc/milestones/M01/slices/M01-S01/PLAN.md")).toBe(
+				true,
+			);
+			expect(await artifactStore.exists(".tff-cc/milestones/M01/slices/M01-S02/PLAN.md")).toBe(
+				true,
+			);
 		}
 	});
 });

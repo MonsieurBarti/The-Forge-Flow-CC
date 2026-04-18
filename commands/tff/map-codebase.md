@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Bash, Grep, Glob, Agent
 ---
 
 <objective>
-Spawn parallel doc-writer agents to analyze codebase ∧ produce STACK.md, ARCHITECTURE.md, CONCERNS.md, ∧ CONVENTIONS.md ∈ .tff/docs/.
+Spawn parallel doc-writer agents to analyze codebase ∧ produce STACK.md, ARCHITECTURE.md, CONCERNS.md, ∧ CONVENTIONS.md ∈ .tff-cc/docs/.
 </objective>
 
 <context>

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
+import { SETTINGS_FILE } from "../../shared/paths.js";
 
 export interface SpecEditWarning {
 	code: "SPEC_EDIT_DETECTED";
@@ -18,7 +19,7 @@ export interface DetectSpecEditResult {
  * Returns true if workflow.guards is explicitly false.
  */
 function areGuardsDisabled(): boolean {
-	const settingsPath = path.join(process.cwd(), ".tff-cc", "settings.yaml");
+	const settingsPath = path.join(process.cwd(), SETTINGS_FILE);
 	if (!existsSync(settingsPath)) {
 		return false; // Default to enabled if no settings file
 	}
@@ -35,7 +36,7 @@ function areGuardsDisabled(): boolean {
 /**
  * Check if a file path matches SPEC.md (case-insensitive).
  * Matches: SPEC.md, spec.md, Spec.md, sPeC.md, etc.
- * Also matches paths like .tff/milestones/M001/SPEC.md or slices/S01/SPEC.md
+ * Also matches paths like .tff-cc/milestones/M001/SPEC.md or slices/S01/SPEC.md
  */
 function isSpecFile(filePath: string): boolean {
 	if (!filePath || typeof filePath !== "string") {

@@ -9,7 +9,8 @@ import type {
 	TaskCompletedEntry,
 	TaskFailedEntry,
 	TaskStartedEntry,
-} from "./journal-entry.js";
+} from "../../src/domain/value-objects/journal-entry.js";
+import { sliceDir } from "../../src/shared/paths.js";
 
 export class JournalEntryBuilder {
 	private _sliceId: string = crypto.randomUUID();
@@ -152,7 +153,7 @@ export class JournalEntryBuilder {
 			sliceId: this._sliceId,
 			timestamp: this._timestamp,
 			correlationId: this._correlationId,
-			artifactPath: overrides?.artifactPath ?? ".tff/milestones/M01/slices/M01-S04/SPEC.md",
+			artifactPath: overrides?.artifactPath ?? `${sliceDir("M01", "M01-S04")}/SPEC.md`,
 			artifactType: overrides?.artifactType ?? "spec",
 		};
 	}

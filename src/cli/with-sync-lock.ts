@@ -6,6 +6,7 @@ import {
 	type StateStores,
 } from "../infrastructure/adapters/sqlite/create-state-stores.js";
 import { acquireSyncLock } from "../infrastructure/locking/tff-lock.js";
+import { STATE_DB_FILE } from "../shared/paths.js";
 
 export interface SyncLockResult {
 	ok: true;
@@ -16,7 +17,7 @@ export interface SyncLockResult {
 }
 
 function resolveLockPath(dbPath?: string): string {
-	return dbPath ?? path.join(process.cwd(), ".tff-cc", "state.db");
+	return dbPath ?? path.join(process.cwd(), STATE_DB_FILE);
 }
 
 export async function withSyncLock<T>(
