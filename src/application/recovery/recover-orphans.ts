@@ -23,6 +23,8 @@ export const recoverOrphans = async (input: RecoverInput): Promise<RecoverResult
 
 	for (const dir of input.stagingDirs) {
 		if (!existsSync(dir)) continue;
+		// `{ recursive: true }` was backported to Node 18.17 and is stable on 20.x.
+		// Our engines.node floor (>=20) covers it; keep the floor intentional.
 		for (const entry of readdirSync(dir, { recursive: true }) as string[]) {
 			if (!entry.endsWith(".tmp")) continue;
 			const p = join(dir, entry);

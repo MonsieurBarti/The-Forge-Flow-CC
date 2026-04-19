@@ -70,8 +70,9 @@ export class InMemoryStateAdapter
 	/**
 	 * Best-effort snapshot/restore transaction.
 	 * Snapshots all state fields before calling fn; restores them on throw.
-	 * Uses structuredClone for deep copies so mutations inside fn do not
-	 * corrupt the snapshot. On success the changes are kept as-is.
+	 * Uses `structuredClone` (Node >=17) for deep copies so mutations inside
+	 * fn do not corrupt the snapshot. On success the changes are kept as-is.
+	 * Our engines.node floor (>=20) covers this.
 	 */
 	transaction<T>(fn: () => T): T {
 		const snapshot = {
