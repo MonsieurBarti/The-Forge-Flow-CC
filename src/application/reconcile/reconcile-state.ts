@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { tffDebug } from "../../infrastructure/adapters/logging/warn.js";
 
 export interface ReconcileInput {
 	stateMdPath: string;
@@ -45,17 +46,31 @@ export const reconcileState = async (input: ReconcileInput): Promise<ReconcileRe
 	let rendered: string;
 	try {
 		rendered = await input.renderStateMd();
-	} catch {
+	} catch (e) {
+		tffDebug("reconcile: renderStateMd threw; leaving STATE.md unchanged", {
+			stateMdPath: input.stateMdPath,
+			error: e instanceof Error ? e.message : String(e),
+		});
 		return { action: "render-failed" };
 	}
 	if (!existsSync(input.stateMdPath)) {
-		return atomicWrite(input.stateMdPath, rendered)
-			? { action: "missing-regenerated" }
-			: { action: "render-failed" };
+		const wrote = atomicWrite(input.stateMdPath, rendered);
+		if (!wrote) {
+			tffDebug("reconcile: atomic write failed for missing STATE.md", {
+				stateMdPath: input.stateMdPath,
+			});
+			return { action: "render-failed" };
+		}
+		return { action: "missing-regenerated" };
 	}
 	const onDisk = readFileSync(input.stateMdPath, "utf8");
 	if (sha256(onDisk) === sha256(rendered)) return { action: "noop" };
-	return atomicWrite(input.stateMdPath, rendered)
-		? { action: "regenerated" }
-		: { action: "render-failed" };
+	const wrote = atomicWrite(input.stateMdPath, rendered);
+	if (!wrote) {
+		tffDebug("reconcile: atomic write failed for drifted STATE.md", {
+			stateMdPath: input.stateMdPath,
+		});
+		return { action: "render-failed" };
+	}
+	return { action: "regenerated" };
 };
