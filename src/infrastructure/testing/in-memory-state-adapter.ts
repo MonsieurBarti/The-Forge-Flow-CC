@@ -59,9 +59,36 @@ export class InMemoryStateAdapter
 		return Ok(undefined);
 	}
 
-	// T7 stub; real impl in T8
+	/**
+	 * Best-effort snapshot/restore transaction.
+	 * Snapshots all state fields before calling fn; restores them on throw.
+	 * Uses structuredClone for deep copies so mutations inside fn do not
+	 * corrupt the snapshot. On success the changes are kept as-is.
+	 */
 	transaction<T>(fn: () => T): T {
-		return fn();
+		const snapshot = {
+			project: structuredClone(this.project),
+			milestones: structuredClone(this.milestones),
+			slices: structuredClone(this.slices),
+			tasks: structuredClone(this.tasks),
+			dependencies: structuredClone(this.dependencies),
+			sliceDependencies: structuredClone(this.sliceDependencies),
+			session: structuredClone(this.session),
+			reviews: structuredClone(this.reviews),
+		};
+		try {
+			return fn();
+		} catch (e) {
+			this.project = snapshot.project;
+			this.milestones = snapshot.milestones;
+			this.slices = snapshot.slices;
+			this.tasks = snapshot.tasks;
+			this.dependencies = snapshot.dependencies;
+			this.sliceDependencies = snapshot.sliceDependencies;
+			this.session = snapshot.session;
+			this.reviews = snapshot.reviews;
+			throw e;
+		}
 	}
 
 	// ProjectStore
