@@ -13,6 +13,7 @@ export type CalibrationRule = (
 ) => CalibrationRecommendation[];
 
 const TIER_DIRECTION_THRESHOLD = 0.66;
+const AGENT_WRONG_RATE_THRESHOLD = 0.5;
 
 export const tierTooLowDominant: CalibrationRule = (cell, config) => {
 	if (cell.effective_total < config.n_min) return [];
@@ -50,7 +51,7 @@ export const agentWrongRateHigh: CalibrationRule = (cell, config) => {
 	if (cell.key.kind !== "agent") return [];
 	if (cell.effective_total < config.n_min) return [];
 	const rate = cell.effective_wrong / cell.effective_total;
-	if (rate < 0.5) return [];
+	if (rate < AGENT_WRONG_RATE_THRESHOLD) return [];
 	return [
 		{
 			rule_id: "agent-wrong-rate-high",
