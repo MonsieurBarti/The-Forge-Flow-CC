@@ -52,6 +52,17 @@ describe("DomainErrorCodeSchema S04 journal codes", () => {
 	});
 });
 
+describe("DomainErrorCodeSchema — hardening codes", () => {
+	it.each([
+		"REFUSED_ON_DEFAULT_BRANCH",
+		"PRECONDITION_VIOLATION",
+		"TRANSACTION_ROLLBACK",
+		"PARTIAL_SUCCESS",
+	])("accepts %s as a valid code", (code) => {
+		expect(() => DomainErrorCodeSchema.parse(code)).not.toThrow();
+	});
+});
+
 describe("Error factories", () => {
 	it("alreadyClaimedError creates correct error", () => {
 		const err = alreadyClaimedError("task-1");
