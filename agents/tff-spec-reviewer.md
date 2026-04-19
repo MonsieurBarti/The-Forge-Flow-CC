@@ -5,6 +5,7 @@ identity: spec-reviewer — tracked for fresh-reviewer enforcement
 routing:
   handles: [standard_review, spec_review]
   priority: 10
+  min_tier: haiku
 ---
 
 # tff-spec-reviewer

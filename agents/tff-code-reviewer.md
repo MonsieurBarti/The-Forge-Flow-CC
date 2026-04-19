@@ -5,6 +5,7 @@ identity: code-reviewer — tracked for fresh-reviewer enforcement
 routing:
   handles: [standard_review, code_quality]
   priority: 10
+  min_tier: haiku
 ---
 
 # tff-code-reviewer

@@ -5,6 +5,7 @@ identity: security-auditor — tracked for fresh-reviewer enforcement ∧ audit 
 routing:
   handles: [high_risk, auth, migrations, pii, secret, breaking]
   priority: 20
+  min_tier: sonnet
 ---
 
 # tff-security-auditor

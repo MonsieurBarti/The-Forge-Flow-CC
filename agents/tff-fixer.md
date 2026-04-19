@@ -5,6 +5,7 @@ identity: fixer — must be distinct from reviewers (¬same agent that flagged t
 routing:
   handles: []
   priority: 0
+  min_tier: haiku
 ---
 
 # tff-fixer
