@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
+import { z } from "zod";
 import type { DomainError } from "../../../domain/errors/domain-error.js";
 import {
 	DEFAULT_TIER_POLICY,
@@ -36,14 +37,24 @@ export class FilesystemTierConfigReader implements TierConfigReader {
 		} catch {
 			return Ok(DEFAULT_TIER_POLICY);
 		}
-		const policy = (parsed as { routing?: { tier_policy?: Record<string, string> } } | null)
-			?.routing?.tier_policy;
-		if (!policy) return Ok(DEFAULT_TIER_POLICY);
-		return Ok({
-			low: ModelTierSchema.catch(DEFAULT_TIER_POLICY.low).parse(policy.low),
-			medium: ModelTierSchema.catch(DEFAULT_TIER_POLICY.medium).parse(policy.medium),
-			high: ModelTierSchema.catch(DEFAULT_TIER_POLICY.high).parse(policy.high),
-		});
+		const settingsSchema = z
+			.object({
+				routing: z
+					.object({
+						tier_policy: z
+							.object({
+								low: ModelTierSchema.catch(DEFAULT_TIER_POLICY.low),
+								medium: ModelTierSchema.catch(DEFAULT_TIER_POLICY.medium),
+								high: ModelTierSchema.catch(DEFAULT_TIER_POLICY.high),
+							})
+							.optional(),
+					})
+					.optional(),
+			})
+			.passthrough();
+		const settings = settingsSchema.safeParse(parsed);
+		if (!settings.success || !settings.data.routing?.tier_policy) return Ok(DEFAULT_TIER_POLICY);
+		return Ok(settings.data.routing.tier_policy);
 	}
 
 	async readAgentMinTier(agent_id: string): Promise<Result<ModelTier, DomainError>> {
@@ -67,8 +78,17 @@ export class FilesystemTierConfigReader implements TierConfigReader {
 		} catch {
 			return Ok(DEFAULT_AGENT_MIN_TIER);
 		}
-		const minTier = (frontmatter as { routing?: { min_tier?: string } } | null)?.routing?.min_tier;
-		if (!minTier) return Ok(DEFAULT_AGENT_MIN_TIER);
-		return Ok(ModelTierSchema.catch(DEFAULT_AGENT_MIN_TIER).parse(minTier));
+		const frontmatterSchema = z
+			.object({
+				routing: z
+					.object({
+						min_tier: ModelTierSchema.optional(),
+					})
+					.optional(),
+			})
+			.passthrough();
+		const fm = frontmatterSchema.safeParse(frontmatter);
+		if (!fm.success) return Ok(DEFAULT_AGENT_MIN_TIER);
+		return Ok(fm.data.routing?.min_tier ?? DEFAULT_AGENT_MIN_TIER);
 	}
 }

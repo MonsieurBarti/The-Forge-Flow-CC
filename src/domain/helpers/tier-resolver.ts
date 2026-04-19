@@ -1,11 +1,11 @@
-import type { RiskLevel, Signals } from "../value-objects/signals.js";
+import type { ComplexityLevel, RiskLevel, Signals } from "../value-objects/signals.js";
 import { type ModelTier, TIER_ORDER } from "../value-objects/tier-decision.js";
 
 export const signalsToPolicyTier = (
 	signals: Signals,
-	policy: Record<RiskLevel, ModelTier>,
+	policy: Record<ComplexityLevel | RiskLevel, ModelTier>,
 ): ModelTier => {
-	const ct = policy[signals.complexity as RiskLevel];
+	const ct = policy[signals.complexity];
 	const rt = policy[signals.risk.level];
 	return TIER_ORDER[ct] >= TIER_ORDER[rt] ? ct : rt;
 };
