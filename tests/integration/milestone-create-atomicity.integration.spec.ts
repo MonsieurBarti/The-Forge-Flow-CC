@@ -98,9 +98,7 @@ describe("milestone-create atomicity", () => {
 			throw new Error("injected body failure");
 		});
 
-		const { milestoneCreateCmd } = await import(
-			"../../src/cli/commands/milestone-create.cmd.js"
-		);
+		const { milestoneCreateCmd } = await import("../../src/cli/commands/milestone-create.cmd.js");
 		const raw = await milestoneCreateCmd(["--name", "Atomic milestone"]);
 		const result = JSON.parse(raw);
 

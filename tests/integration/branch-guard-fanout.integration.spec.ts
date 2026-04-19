@@ -5,13 +5,21 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const writers = [
-	"milestone:create", "milestone:close",
-	"slice:create", "slice:transition", "slice:close",
-	"task:claim", "task:close",
-	"dep:add", "sync:state",
-	"worktree:create", "worktree:delete",
-	"review:record", "routing:decide",
-	"checkpoint:save", "observe:record",
+	"milestone:create",
+	"milestone:close",
+	"slice:create",
+	"slice:transition",
+	"slice:close",
+	"task:claim",
+	"task:close",
+	"dep:add",
+	"sync:state",
+	"worktree:create",
+	"worktree:delete",
+	"review:record",
+	"routing:decide",
+	"checkpoint:save",
+	"observe:record",
 ];
 
 let repo: string;
