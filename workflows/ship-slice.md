@@ -13,8 +13,8 @@ LOAD @skills/finishing-work/SKILL.md
 0. Routing (advisory extract, binding tier):
    `tff-tools routing:decide --slice-id <slice-id> --workflow tff:ship --json`
    → capture `data.decisions` as <routing-decisions-json>
-   → on error, `skipped=true`, or any per-stage `fallback_used=true`:
-     proceed without model override (silent fallback)
+   → on CLI error or `skipped=true`: all stages run without model override (silent fallback)
+   → per-stage `fallback_used=true`: that stage only runs without model override
 1. `∀ reviewer: tff-tools review:check-fresh --slice-id <slice-id> --agent <role>`
 2. Stage 1 (spec) — SPAWN tff-spec-reviewer with
      model = <routing-decisions-json>[agent=tff-spec-reviewer].tier (fallback: no model param)
