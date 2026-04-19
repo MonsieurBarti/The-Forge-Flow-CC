@@ -62,7 +62,10 @@ export class DebugJoinOutcomeSource implements OutcomeSource {
 			let event: unknown;
 			try {
 				event = JSON.parse(line);
-			} catch {
+			} catch (err) {
+				process.stderr.write(
+					`routing: skipped corrupt line in ${this.routingJsonlPath}: ${err instanceof Error ? err.message : String(err)}\n`,
+				);
 				continue;
 			}
 			if (

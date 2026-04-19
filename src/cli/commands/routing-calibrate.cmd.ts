@@ -43,7 +43,11 @@ async function loadDecisions(path: string): Promise<RoutingDecision[]> {
 		try {
 			const entry = JSON.parse(line);
 			if (entry.kind === "route" && entry.decision) out.push(entry.decision);
-		} catch {}
+		} catch (err) {
+			process.stderr.write(
+				`routing: skipped corrupt line in ${path}: ${err instanceof Error ? err.message : String(err)}\n`,
+			);
+		}
 	}
 	return out;
 }

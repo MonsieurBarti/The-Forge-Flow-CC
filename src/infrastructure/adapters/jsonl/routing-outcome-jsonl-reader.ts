@@ -30,11 +30,19 @@ export class JsonlRoutingOutcomeReader implements OutcomeSource {
 			let parsed: unknown;
 			try {
 				parsed = JSON.parse(line);
-			} catch {
+			} catch (err) {
+				process.stderr.write(
+					`routing: skipped corrupt line in ${this.path}: ${err instanceof Error ? err.message : String(err)}\n`,
+				);
 				continue;
 			}
 			const result = RoutingOutcomeSchema.safeParse(parsed);
-			if (!result.success) continue;
+			if (!result.success) {
+				process.stderr.write(
+					`routing: skipped corrupt line in ${this.path}: ${result.error.issues[0]?.message ?? "schema validation failed"}\n`,
+				);
+				continue;
+			}
 			const outcome = result.data;
 			if (filter.source && outcome.source !== filter.source) continue;
 			if (filter.decision_id && outcome.decision_id !== filter.decision_id) continue;

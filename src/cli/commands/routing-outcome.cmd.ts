@@ -65,7 +65,11 @@ async function loadKnownDecisions(path: string): Promise<KnownDecision[]> {
 					workflow_id: entry.workflow_id,
 				});
 			}
-		} catch {}
+		} catch (err) {
+			process.stderr.write(
+				`routing: skipped corrupt line in ${path}: ${err instanceof Error ? err.message : String(err)}\n`,
+			);
+		}
 	}
 	return out;
 }
