@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { renderStateMd } from "../../application/sync/generate-state.js";
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { partialSuccessWarning } from "../../domain/errors/partial-success.warning.js";
 import { milestoneLabel } from "../../domain/helpers/branch-naming.js";
@@ -9,7 +10,7 @@ import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { mkdirTracked } from "../../infrastructure/persistence/track-mkdir.js";
 import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
-import { milestoneDir as milestoneDirPath } from "../../shared/paths.js";
+import { milestoneDir as milestoneDirPath, STATE_FILE } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const milestoneCreateSchema: CommandSchema = {
@@ -36,7 +37,7 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
 
 	const cwd = process.cwd();
 	const closableStores = createClosableStateStoresUnchecked();
-	const { db, milestoneStore } = closableStores;
+	const { db, milestoneStore, sliceStore, taskStore } = closableStores;
 	const gitOps = new GitCliAdapter(cwd);
 
 	// Track tmps staged before the tx so we can clean up on body throw.
@@ -64,6 +65,16 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
 		writeFileSync(reqTmpAbs, reqContent, "utf8");
 		stagedTmps.push(reqTmpAbs);
 
+		// STATE.md staging: rendered INSIDE the tx body (after createMilestone
+		// returns) so the rendered view reflects the newly-inserted milestone
+		// via the tx scope. Staged atomically with REQUIREMENTS.md — on body
+		// throw, withTransaction unlinks both tmps. Upholds AC7 DB<->STATE.md
+		// consistency at the writer's exit boundary.
+		const stateFinalAbs = resolve(cwd, STATE_FILE);
+		const stateTmpAbs = `${stateFinalAbs}.tmp`;
+		stagedDirs.push(...mkdirTracked(resolve(cwd, ".tff-cc")));
+		stagedTmps.push(stateTmpAbs);
+
 		// Run DB insert + staged rename inside withTransaction.
 		// Pass stagedTmps so the helper can auto-clean on rollback.
 		const txResult = await withTransaction(
@@ -73,9 +84,22 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
 				if (!milestoneResult.ok) {
 					throw new Error(`${milestoneResult.error.code}: ${milestoneResult.error.message}`);
 				}
+				// Render STATE.md from within the tx: the just-inserted milestone
+				// is visible to listMilestones / getMilestone here.
+				const stateContent = renderStateMd(
+					{ milestoneId: milestoneResult.data.id },
+					{ milestoneStore, sliceStore, taskStore },
+				);
+				if (!stateContent.ok) {
+					throw new Error(`${stateContent.error.code}: ${stateContent.error.message}`);
+				}
+				writeFileSync(stateTmpAbs, stateContent.data, "utf8");
 				return {
 					data: { milestone: milestoneResult.data },
-					tmpRenames: [[reqTmpAbs, reqFinalAbs] as [string, string]],
+					tmpRenames: [
+						[reqTmpAbs, reqFinalAbs] as [string, string],
+						[stateTmpAbs, stateFinalAbs] as [string, string],
+					],
 				};
 			},
 			stagedTmps,

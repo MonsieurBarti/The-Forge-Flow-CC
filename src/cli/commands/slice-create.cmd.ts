@@ -1,13 +1,14 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { resolveMilestoneId } from "../../application/milestone/resolve-milestone-id.js";
+import { renderStateMd } from "../../application/sync/generate-state.js";
 import { milestoneLabel, sliceLabel } from "../../domain/helpers/branch-naming.js";
 import { isOk } from "../../domain/result.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { mkdirTracked } from "../../infrastructure/persistence/track-mkdir.js";
 import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
-import { sliceDir as sliceDirPath } from "../../shared/paths.js";
+import { STATE_FILE, sliceDir as sliceDirPath } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const sliceCreateSchema: CommandSchema = {
@@ -117,6 +118,17 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
 		writeFileSync(planTmpAbs, planContent, "utf8");
 		stagedTmps.push(planTmpAbs);
 
+		// STATE.md staging: we render INSIDE the tx body (after createSlice runs)
+		// so the rendered view reflects the new slice via the same SQLite tx. The
+		// resulting *.tmp is staged + renamed atomically with PLAN.md; if the
+		// body throws, withTransaction unlinks every entry in stagedTmps (see
+		// with-transaction.ts). This upholds AC7 DB<->STATE.md consistency at
+		// the writer's exit boundary.
+		const stateFinalAbs = resolve(cwd, STATE_FILE);
+		const stateTmpAbs = `${stateFinalAbs}.tmp`;
+		stagedDirs.push(...mkdirTracked(resolve(cwd, ".tff-cc")));
+		stagedTmps.push(stateTmpAbs);
+
 		// Run DB insert + staged rename inside withTransaction.
 		// Pass stagedTmps so the helper can auto-clean on rollback.
 		const txResult = await withTransaction(
@@ -130,9 +142,23 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
 				if (!sliceResult.ok) {
 					throw new Error(`${sliceResult.error.code}: ${sliceResult.error.message}`);
 				}
+				// Render STATE.md from the tx-visible store state. The slice row is
+				// already committed to the tx scope, so listSlices(milestoneId)
+				// returns it.
+				const stateContent = renderStateMd(
+					{ milestoneId },
+					{ milestoneStore, sliceStore, taskStore: closableStores.taskStore },
+				);
+				if (!stateContent.ok) {
+					throw new Error(`${stateContent.error.code}: ${stateContent.error.message}`);
+				}
+				writeFileSync(stateTmpAbs, stateContent.data, "utf8");
 				return {
 					data: { slice: sliceResult.data },
-					tmpRenames: [[planTmpAbs, planFinalAbs] as [string, string]],
+					tmpRenames: [
+						[planTmpAbs, planFinalAbs] as [string, string],
+						[stateTmpAbs, stateFinalAbs] as [string, string],
+					],
 				};
 			},
 			stagedTmps,

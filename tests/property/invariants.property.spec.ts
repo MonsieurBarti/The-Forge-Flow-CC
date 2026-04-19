@@ -164,18 +164,35 @@ describe("invariant 1: DB<->STATE.md consistency after writer exits", () => {
 		assertStateConsistentOrWarned(adapter, repo, result.warnings);
 	});
 
-	// slice:create and milestone:create intentionally do NOT update STATE.md
-	// inline; the architecture relies on reconcile-on-read to bring STATE.md
-	// current on the next reader call. The strict writer-exit invariant does
-	// not hold for these commands, and upholding it would require new
-	// production code (either stage STATE.md in the tx, or emit a
-	// PARTIAL_SUCCESS warning naming STATE.md). Flagged in the task report.
-	it.skip(
-		"slice:create — STATE.md checksum equals renderStateMd OR warning flags STATE.md (architectural gap)",
-	);
-	it.skip(
-		"milestone:create — STATE.md checksum equals renderStateMd OR warning flags STATE.md (architectural gap)",
-	);
+	// slice:create and milestone:create now stage STATE.md atomically inside
+	// their transaction alongside PLAN.md / REQUIREMENTS.md. The strict
+	// writer-exit invariant (DB↔STATE.md checksum match OR PARTIAL_SUCCESS
+	// warning naming STATE.md) holds for these writers.
+	it("slice:create — STATE.md checksum equals renderStateMd OR warning flags STATE.md", async () => {
+		const { adapter } = seedProject();
+		installStores(adapter);
+
+		const { sliceCreateCmd } = await import("../../src/cli/commands/slice-create.cmd.js");
+		const raw = await sliceCreateCmd(["--title", "Another slice", "--milestone-id", "M01"]);
+		const result = JSON.parse(raw);
+		expect(result.ok).toBe(true);
+
+		assertStateConsistentOrWarned(adapter, repo, result.warnings);
+	});
+
+	it("milestone:create — STATE.md checksum equals renderStateMd OR warning flags STATE.md", async () => {
+		const adapter = SQLiteStateAdapter.createInMemory();
+		adapter.init();
+		adapter.saveProject({ name: "P" });
+		installStores(adapter);
+
+		const { milestoneCreateCmd } = await import("../../src/cli/commands/milestone-create.cmd.js");
+		const raw = await milestoneCreateCmd(["--name", "First milestone"]);
+		const result = JSON.parse(raw);
+		expect(result.ok).toBe(true);
+
+		assertStateConsistentOrWarned(adapter, repo, result.warnings);
+	});
 
 	// Weaker but real: after a reader runs, STATE.md reconciles with DB.
 	// This demonstrates the invariant holds at the system level when reads
