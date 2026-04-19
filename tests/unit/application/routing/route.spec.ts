@@ -106,4 +106,19 @@ describe("routeUseCase", () => {
 		const entry = (deps.logger.append as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
 		expect(entry.kind).toBe("route");
 	});
+
+	it("attaches a UUID decision_id to the returned decision and log entry", async () => {
+		const deps = mkDeps();
+		const res = await routeUseCase(
+			{ workflow_id: "tff:ship", signals: HIGH_CONF_SIGNALS, slice_id: "S1" },
+			deps,
+		);
+		expect(isOk(res)).toBe(true);
+		if (!isOk(res)) return;
+		expect(res.data.decision_id).toMatch(
+			/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+		);
+		const entry = (deps.logger.append as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
+		expect(entry.decision.decision_id).toBe(res.data.decision_id);
+	});
 });

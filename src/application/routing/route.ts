@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { scoreAgents } from "../../domain/helpers/routing-rubric.js";
 import type { RoutingConfigReader } from "../../domain/ports/routing-config-reader.port.js";
@@ -52,6 +53,7 @@ export const routeUseCase = async (
 		signals: input.signals,
 		fallback_used,
 		enriched: false, // Phase A: set by caller if upstream enrichment occurred
+		decision_id: randomUUID(),
 	};
 
 	await deps.logger.append({
