@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	nextWorkflow,
 	shouldAutoTransition,
+	suggestedCommand,
 } from "../../../../src/application/lifecycle/chain-workflow.js";
 
 describe("chain-workflow", () => {
@@ -32,5 +33,25 @@ describe("chain-workflow", () => {
 	it("never auto at gates", () => {
 		expect(shouldAutoTransition("planning", "plan-to-pr")).toBe(false);
 		expect(shouldAutoTransition("completing", "plan-to-pr")).toBe(false);
+	});
+});
+
+describe("suggestedCommand", () => {
+	it.each([
+		["discussing", "/tff:discuss"],
+		["researching", "/tff:research"],
+		["planning", "/tff:plan"],
+		["executing", "/tff:execute"],
+		["verifying", "/tff:verify"],
+		["reviewing", "/tff:ship"],
+		["completing", "/tff:complete-milestone"],
+		// closed → next slice starts in `discussing`
+		["closed", "/tff:discuss"],
+	])("%s → %s", (status, expected) => {
+		expect(suggestedCommand(status)).toBe(expected);
+	});
+
+	it("returns null for unknown status", () => {
+		expect(suggestedCommand("bogus-status")).toBeNull();
 	});
 });

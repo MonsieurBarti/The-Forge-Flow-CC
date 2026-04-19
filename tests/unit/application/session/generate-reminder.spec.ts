@@ -184,7 +184,19 @@ describe("generateReminder", () => {
 		const result = generateReminder(deps);
 		expect(result).toContain("M002-S01: researching");
 		expect(result).toContain("Wave 1/1");
-		expect(result).toContain("Next: /tff:plan");
+		expect(result).toContain("Next: /tff:research");
+	});
+
+	it("suggests correct command for discussing phase", () => {
+		const session: WorkflowSession = {
+			phase: "discussing",
+			activeSliceId: "S01",
+			activeMilestoneId: "M001",
+		};
+		const tasks: Task[] = [createTask("S01-T01", "S01", "open")];
+		const deps = createMockDeps(session, tasks);
+		const result = generateReminder(deps);
+		expect(result).toContain("Next: /tff:discuss");
 	});
 
 	it("suggests correct commands for planning phase", () => {
@@ -196,7 +208,44 @@ describe("generateReminder", () => {
 		const tasks: Task[] = [createTask("S01-T01", "S01", "open")];
 		const deps = createMockDeps(session, tasks);
 		const result = generateReminder(deps);
-		expect(result).toContain("Next: /tff:research or /tff:start");
+		expect(result).toContain("Next: /tff:plan");
+	});
+
+	it("suggests correct command for verifying phase", () => {
+		const session: WorkflowSession = {
+			phase: "verifying",
+			activeSliceId: "S01",
+			activeMilestoneId: "M001",
+		};
+		const tasks: Task[] = [createTask("S01-T01", "S01", "open")];
+		const deps = createMockDeps(session, tasks);
+		const result = generateReminder(deps);
+		expect(result).toContain("Next: /tff:verify");
+	});
+
+	it("suggests correct command for completing phase", () => {
+		const session: WorkflowSession = {
+			phase: "completing",
+			activeSliceId: "S01",
+			activeMilestoneId: "M001",
+		};
+		const tasks: Task[] = [createTask("S01-T01", "S01", "open")];
+		const deps = createMockDeps(session, tasks);
+		const result = generateReminder(deps);
+		expect(result).toContain("Next: /tff:complete-milestone");
+	});
+
+	it("suggests next-slice command for closed phase", () => {
+		const session: WorkflowSession = {
+			phase: "closed",
+			activeSliceId: "S01",
+			activeMilestoneId: "M001",
+		};
+		const tasks: Task[] = [createTask("S01-T01", "S01", "closed")];
+		const deps = createMockDeps(session, tasks);
+		const result = generateReminder(deps);
+		// A fresh slice starts in `discussing`, not `executing`.
+		expect(result).toContain("Next: /tff:discuss or /tff:progress");
 	});
 
 	it("suggests correct commands for paused phase", () => {
@@ -232,7 +281,7 @@ describe("generateReminder", () => {
 		const tasks: Task[] = [createTask("S01-T01", "S01", "open")];
 		const deps = createMockDeps(session, tasks);
 		const result = generateReminder(deps);
-		expect(result).toContain("Next: /tff:complete or /tff:reject");
+		expect(result).toContain("Next: /tff:ship");
 	});
 
 	it("suggests status command for unknown phase", () => {

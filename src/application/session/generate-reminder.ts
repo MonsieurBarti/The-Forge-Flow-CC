@@ -33,22 +33,37 @@ function determineCurrentWave(
 }
 
 /**
- * Get the next recommended commands based on the current phase.
+ * Get the next recommended commands based on the current slice status / phase.
+ *
+ * Mapping aligns with @references/next-steps.md so the suggested command matches
+ * the slice's ACTUAL status rather than a hardcoded default.
+ *
+ * Lifecycle: discussing → researching → planning → executing → verifying →
+ *            reviewing → completing → closed
  */
 function getNextCommands(phase: string): string {
 	switch (phase) {
+		case "discussing":
+			return "/tff:discuss";
+		case "researching":
+			return "/tff:research";
+		case "planning":
+			return "/tff:plan";
 		case "executing":
 			return "/tff:execute or /tff:pause";
-		case "researching":
-			return "/tff:plan";
-		case "planning":
-			return "/tff:research or /tff:start";
+		case "verifying":
+			return "/tff:verify";
+		case "reviewing":
+			return "/tff:ship";
+		case "completing":
+			return "/tff:complete-milestone";
+		case "closed":
+			// Current slice done — move to next slice, which starts in `discussing`.
+			return "/tff:discuss or /tff:progress";
 		case "paused":
 			return "/tff:resume or /tff:stop";
 		case "transitioning":
 			return "/tff:next or /tff:back";
-		case "reviewing":
-			return "/tff:complete or /tff:reject";
 		default:
 			return "/tff:status";
 	}
