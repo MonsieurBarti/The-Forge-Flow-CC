@@ -53,7 +53,7 @@ claude /plugin marketplace add backnotprop/plannotator
 claude /plugin install plannotator@plannotator
 ```
 
-Verify: Run `/plannotator-review` in Claude Code -- it should open a browser window.
+Verify: Run `/plannotator-annotate README.md` in Claude Code -- it should open a browser window.
 
 ### Step 2: Install The Forge Flow
 
