@@ -63,7 +63,6 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 	}
 
 	async readPool(workflow_id: string): Promise<Result<WorkflowPool, DomainError>> {
-		// Convert "tff:ship" → "commands/tff/ship.md"
 		const parts = workflow_id.split(":");
 		if (parts.length !== 2) {
 			return Err(
@@ -72,50 +71,30 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 				}),
 			);
 		}
-		const [ns, name] = parts;
-		const commandPath = join(this.opts.projectRoot, "commands", ns, `${name}.md`);
-		let commandRaw = "";
-		try {
-			commandRaw = await readFile(commandPath, "utf8");
-		} catch {
-			return Err(
-				createDomainError("ROUTING_CONFIG", `command file not found: ${commandPath}`, {
-					workflow_id,
-				}),
-			);
+
+		// 1. Try settings override first.
+		const settingsResult = await this.readPoolFromSettings(workflow_id);
+		if (!settingsResult.ok) return settingsResult;
+
+		let agentIds: string[];
+
+		if (settingsResult.data !== undefined) {
+			agentIds = settingsResult.data;
+		} else {
+			// 2. Fall through to frontmatter.
+			const frontmatterResult = await this.readPoolFromFrontmatter(workflow_id);
+			if (!frontmatterResult.ok) return frontmatterResult;
+			if (frontmatterResult.data === undefined) {
+				return Err(
+					createDomainError("ROUTING_CONFIG", `no pool declared for workflow: ${workflow_id}`, {
+						workflow_id,
+					}),
+				);
+			}
+			agentIds = frontmatterResult.data;
 		}
 
-		const match = commandRaw.match(/^---\n([\s\S]*?)\n---/);
-		if (!match) {
-			return Err(
-				createDomainError("ROUTING_CONFIG", `no frontmatter in command file: ${commandPath}`, {
-					workflow_id,
-				}),
-			);
-		}
-		let frontmatter: unknown;
-		try {
-			frontmatter = parseYaml(match[1]);
-		} catch {
-			return Err(
-				createDomainError("ROUTING_CONFIG", `invalid frontmatter YAML in: ${commandPath}`, {
-					workflow_id,
-				}),
-			);
-		}
-
-		const CommandFrontmatterSchema = z
-			.object({
-				routing: z
-					.object({
-						pool: z.array(z.string()).min(1).optional(),
-					})
-					.optional(),
-			})
-			.passthrough();
-
-		const parsed = CommandFrontmatterSchema.safeParse(frontmatter);
-		const agentIds = parsed.success ? (parsed.data.routing?.pool ?? []) : [];
+		// 3. Validate ids.
 		if (agentIds.length === 0) {
 			return Err(
 				createDomainError("ROUTING_CONFIG", `no pool agents defined for workflow: ${workflow_id}`, {
@@ -123,56 +102,168 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 				}),
 			);
 		}
+		const idRegex = /^[a-z][a-z0-9-]*$/;
+		for (const id of agentIds) {
+			if (!idRegex.test(id)) {
+				return Err(
+					createDomainError("ROUTING_CONFIG", `invalid agent id: ${id}`, { workflow_id, id }),
+				);
+			}
+		}
+		const seen = new Set<string>();
+		for (const id of agentIds) {
+			if (seen.has(id)) {
+				return Err(
+					createDomainError("ROUTING_CONFIG", `duplicate agent id in pool: ${id}`, {
+						workflow_id,
+						id,
+					}),
+				);
+			}
+			seen.add(id);
+		}
+
+		// 4. Hydrate all agents.
+		const agents: AgentCapability[] = [];
+		for (const id of agentIds) {
+			const result = await this.hydrateAgentCapability(id);
+			if (!result.ok) return result;
+			agents.push(result.data);
+		}
+
+		// 5. Return pool.
+		return Ok({
+			workflow_id,
+			agents,
+			default_agent: agents[0].id,
+		});
+	}
+
+	private async readPoolFromSettings(
+		workflow_id: string,
+	): Promise<Result<string[] | undefined, DomainError>> {
+		const path = join(this.opts.projectRoot, ".tff-cc", "settings.yaml");
+		let raw: string;
+		try {
+			raw = await readFile(path, "utf8");
+		} catch {
+			return Ok(undefined);
+		}
+
+		let parsed: unknown;
+		try {
+			parsed = parseYaml(raw);
+		} catch {
+			return Err(createDomainError("ROUTING_CONFIG", "settings.yaml parse error", { workflow_id }));
+		}
+
+		const SettingsPoolsSchema = z
+			.object({
+				routing: z
+					.object({
+						pools: z.record(z.string(), z.array(z.string())).optional(),
+					})
+					.optional(),
+			})
+			.passthrough();
+
+		const result = SettingsPoolsSchema.safeParse(parsed);
+		if (!result.success) return Ok(undefined);
+
+		const pools = result.data.routing?.pools;
+		if (!pools || !(workflow_id in pools)) return Ok(undefined);
+
+		return Ok(pools[workflow_id]);
+	}
+
+	private async readPoolFromFrontmatter(
+		workflow_id: string,
+	): Promise<Result<string[] | undefined, DomainError>> {
+		const [ns, name] = workflow_id.split(":");
+		const commandPath = join(this.opts.projectRoot, "commands", ns, `${name}.md`);
+
+		let raw: string;
+		try {
+			raw = await readFile(commandPath, "utf8");
+		} catch {
+			return Ok(undefined);
+		}
+
+		const match = raw.match(/^---\n([\s\S]*?)\n---/);
+		if (!match) return Ok(undefined);
+
+		let frontmatter: unknown;
+		try {
+			frontmatter = parseYaml(match[1]);
+		} catch {
+			return Err(
+				createDomainError("ROUTING_CONFIG", "command frontmatter parse error", { workflow_id }),
+			);
+		}
+
+		const CommandFrontmatterSchema = z
+			.object({
+				routing: z
+					.object({
+						pool: z.array(z.string()).optional(),
+					})
+					.optional(),
+			})
+			.passthrough();
+
+		const parsed = CommandFrontmatterSchema.safeParse(frontmatter);
+		if (!parsed.success) return Ok(undefined);
+
+		const pool = parsed.data.routing?.pool;
+		if (pool === undefined) return Ok(undefined);
+
+		return Ok(pool);
+	}
+
+	private async hydrateAgentCapability(id: string): Promise<Result<AgentCapability, DomainError>> {
+		const agentPath = join(this.opts.projectRoot, "agents", `${id}.md`);
+
+		let raw: string;
+		try {
+			raw = await readFile(agentPath, "utf8");
+		} catch {
+			return Err(createDomainError("ROUTING_CONFIG", `agent file not found: ${id}`, { id }));
+		}
+
+		const match = raw.match(/^---\n([\s\S]*?)\n---/);
+		if (!match) {
+			return Err(
+				createDomainError("ROUTING_CONFIG", `no frontmatter in agent file: ${id}`, { id }),
+			);
+		}
+
+		let frontmatter: unknown;
+		try {
+			frontmatter = parseYaml(match[1]);
+		} catch {
+			return Err(createDomainError("ROUTING_CONFIG", `agent file not found: ${id}`, { id }));
+		}
 
 		const AgentFrontmatterSchema = z
 			.object({
 				routing: z
 					.object({
 						handles: z.array(z.string()).default([]),
-						priority: z.number().int().default(10),
+						priority: z.number().int().default(0),
 					})
 					.optional(),
 			})
 			.passthrough();
 
-		const agents: AgentCapability[] = [];
-		for (const agentId of agentIds) {
-			const agentPath = join(this.opts.projectRoot, "agents", `${agentId}.md`);
-			let agentRaw = "";
-			try {
-				agentRaw = await readFile(agentPath, "utf8");
-			} catch {
-				agents.push({ id: agentId, handles: [], priority: 10 });
-				continue;
-			}
-			const agentMatch = agentRaw.match(/^---\n([\s\S]*?)\n---/);
-			if (!agentMatch) {
-				agents.push({ id: agentId, handles: [], priority: 10 });
-				continue;
-			}
-			let agentFm: unknown;
-			try {
-				agentFm = parseYaml(agentMatch[1]);
-			} catch {
-				agents.push({ id: agentId, handles: [], priority: 10 });
-				continue;
-			}
-			const fm = AgentFrontmatterSchema.safeParse(agentFm);
-			if (!fm.success) {
-				agents.push({ id: agentId, handles: [], priority: 10 });
-				continue;
-			}
-			agents.push({
-				id: agentId,
-				handles: fm.data.routing?.handles ?? [],
-				priority: fm.data.routing?.priority ?? 10,
-			});
+		const parsed = AgentFrontmatterSchema.safeParse(frontmatter);
+		if (!parsed.success) {
+			return Err(createDomainError("ROUTING_CONFIG", `agent file not found: ${id}`, { id }));
 		}
 
 		return Ok({
-			workflow_id,
-			agents,
-			default_agent: agentIds[0],
+			id,
+			handles: parsed.data.routing?.handles ?? [],
+			priority: parsed.data.routing?.priority ?? 0,
 		});
 	}
 }
