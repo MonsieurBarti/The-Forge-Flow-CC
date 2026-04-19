@@ -7,10 +7,14 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Steps
 0. AUDIT GATE:
-   - The orchestrator MUST confirm an audit with verdict `ready` exists for this milestone. If no audit has been recorded, OR the latest verdict is `not_ready`:
-     > Milestone not audited (or audit did not pass). Run `/tff:audit-milestone` first.
-   - In that case, abort this workflow — do NOT proceed to step 1.
-   - Implementation note: callers using `tff-tools` should prefer invoking `milestone:get` + reading the latest audit row, or build a thin wrapper around `checkAuditPassed` (`src/application/milestone/check-audit-passed.ts`). A dedicated `milestone:audit-status` CLI command is out of scope for this quickfix bundle.
+   - Run `tff-tools milestone:audit-status --milestone-id <id>` to confirm a passing audit.
+     - On `{"ok": true, "data": {"verdict": "ready"}}` → proceed to step 1.
+     - On `{"ok": false, "error": {"code": "AUDIT_REQUIRED"}}` → tell the user:
+       > Milestone not audited. Run `/tff:audit-milestone` first.
+       Abort this workflow.
+     - On `{"ok": false, "error": {"code": "AUDIT_NOT_READY"}}` → tell the user:
+       > Last audit verdict was `not_ready`. Re-run `/tff:audit-milestone` to produce a passing verdict.
+       Abort this workflow.
 1. CLOSE SLICES: `tff-tools slice:list` → filter for non-closed slices under this milestone:
    - verify its PR is merged: `gh pr list --state merged --head slice/<slice-id>`
    - if merged → `tff-tools slice:close --slice-id <id> --reason "Slice PR merged"`

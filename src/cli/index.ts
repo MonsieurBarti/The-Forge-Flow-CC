@@ -7,6 +7,7 @@ import { claimCheckStaleCmd } from "./commands/claim-check-stale.cmd.js";
 import { composeDetectCmd } from "./commands/compose-detect.cmd.js";
 import { depAddCmd } from "./commands/dep-add.cmd.js";
 import { directEditGuardCmd } from "./commands/direct-edit-guard.cmd.js";
+import { milestoneAuditStatusCmd } from "./commands/milestone-audit-status.cmd.js";
 import { milestoneCloseCmd } from "./commands/milestone-close.cmd.js";
 import { milestoneCreateCmd } from "./commands/milestone-create.cmd.js";
 import { milestoneListCmd } from "./commands/milestone-list.cmd.js";
@@ -59,6 +60,7 @@ const commands: Record<string, CommandFn> = {
 	"milestone:list": milestoneListCmd,
 	"milestone:close": withBranchGuard("milestone:close", milestoneCloseCmd),
 	"milestone:record-audit": withBranchGuard("milestone:record-audit", milestoneRecordAuditCmd),
+	"milestone:audit-status": withBranchGuard("milestone:audit-status", milestoneAuditStatusCmd),
 	"slice:create": withBranchGuard("slice:create", sliceCreateCmd),
 	"slice:list": sliceListCmd,
 	"slice:transition": withBranchGuards("slice:transition", sliceTransitionCmd),
