@@ -22,10 +22,13 @@ describe("path contract: artifacts under .tff-cc/ only", () => {
 	beforeEach(() => {
 		tmpRepo = mkdtempSync(join(tmpdir(), "tff-path-contract-"));
 		tffCcHome = mkdtempSync(join(tmpdir(), "tff-cc-home-"));
-		execSync("git init -q", { cwd: tmpRepo });
-		execSync("git -c user.email=t@t -c user.name=t commit --allow-empty -m init -q", {
-			cwd: tmpRepo,
-		});
+		execSync("git init -q -b main", { cwd: tmpRepo });
+		execSync("git config user.email t@t", { cwd: tmpRepo });
+		execSync("git config user.name t", { cwd: tmpRepo });
+		execSync("git commit --allow-empty -m init -q", { cwd: tmpRepo });
+		// Writer commands (milestone:create, slice:create, sync:state) refuse to run on the
+		// default branch. Checkout a feature branch so the path-contract test can exercise them.
+		execSync("git checkout -b feature/path-contract-test -q", { cwd: tmpRepo });
 	});
 
 	afterEach(() => {
