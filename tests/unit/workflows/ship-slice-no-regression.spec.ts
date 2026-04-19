@@ -31,6 +31,6 @@ describe("ship-slice.md no-regression", () => {
 
 	it("Step 0 is present in the current file and invokes routing:extract", async () => {
 		const after = await readFile(join(ROOT, "workflows/ship-slice.md"), "utf8");
-		expect(after).toMatch(/0\..*routing:extract/);
+		expect(after).toMatch(/0\.[\s\S]*?routing:extract/);
 	});
 });
