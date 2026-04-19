@@ -1,14 +1,19 @@
-import { transitionSliceUseCase } from "../../application/lifecycle/transition-slice.js";
-import { generateState } from "../../application/sync/generate-state.js";
-import { isOk } from "../../domain/result.js";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { renderCheckpoint } from "../../application/checkpoint/save-checkpoint.js";
+import { renderStateMd } from "../../application/sync/generate-state.js";
+import { transitionSlice as transitionSliceDomain } from "../../domain/entities/slice.js";
+import type { DomainError } from "../../domain/errors/domain-error.js";
+import { createDomainError } from "../../domain/errors/domain-error.js";
 import {
 	type SliceStatus,
 	SliceStatusSchema,
 	validTransitionsFrom,
 } from "../../domain/value-objects/slice-status.js";
-import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { cleanupTmps, withTransaction } from "../../infrastructure/persistence/with-transaction.js";
+import { STATE_FILE } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { resolveSliceId } from "../utils/resolve-id.js";
 
@@ -34,6 +39,15 @@ export const sliceTransitionSchema: CommandSchema = {
 	examples: ["slice:transition --slice-id M01-S01 --status planning"],
 };
 
+const sliceLabelFromSlice = (
+	slice: { number: number; milestoneId: string },
+	milestoneNumber: number,
+): string => {
+	const ms = String(milestoneNumber).padStart(2, "0");
+	const sn = String(slice.number).padStart(2, "0");
+	return `M${ms}-S${sn}`;
+};
+
 export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 	const parsed = parseFlags(args, sliceTransitionSchema);
 	if (!parsed.ok) {
@@ -46,7 +60,7 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 	};
 
 	const closableStores = createClosableStateStoresUnchecked();
-	const { sliceStore, milestoneStore, taskStore } = closableStores;
+	const { db, sliceStore, milestoneStore, taskStore } = closableStores;
 
 	try {
 		SliceStatusSchema.parse(targetStatus);
@@ -58,93 +72,146 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 
-	try {
-		const artifactStore = new MarkdownArtifactAdapter(process.cwd());
+	// Track tmps staged before the tx so we can clean up on body throw.
+	const stagedTmps: string[] = [];
 
+	try {
 		const resolvedSlice = resolveSliceId(sliceLabel, sliceStore);
 		if (!resolvedSlice.ok) {
 			return JSON.stringify({ ok: false, error: resolvedSlice.error });
 		}
 		const sliceId = resolvedSlice.data;
 
-		const result = await transitionSliceUseCase(
-			{ sliceId, targetStatus: targetStatus as SliceStatus },
-			{ sliceStore },
-		);
+		// Read current slice and milestone (outside tx).
+		const currentResult = sliceStore.getSlice(sliceId);
+		if (!currentResult.ok) {
+			return JSON.stringify({ ok: false, error: currentResult.error });
+		}
+		if (!currentResult.data) {
+			return JSON.stringify({
+				ok: false,
+				error: { code: "NOT_FOUND", message: `Slice "${sliceId}" not found` },
+			});
+		}
+		const currentSlice = currentResult.data;
 
-		if (isOk(result)) {
-			const warnings: string[] = [];
-			const { slice } = result.data;
-
-			// Auto-regenerate STATE.md (non-critical)
-			try {
-				await generateState(
-					{ milestoneId: slice.milestoneId },
-					{ milestoneStore, sliceStore, taskStore, artifactStore },
-				);
-			} catch (e) {
-				const msg = `state sync failed: ${String(e)}`;
-				tffWarn(msg);
-				warnings.push(msg);
-			}
-
-			// Auto-checkpoint database
-			try {
-				closableStores.checkpoint();
-			} catch (e) {
-				const msg = `checkpoint failed: ${String(e)}`;
-				tffWarn(msg);
-				warnings.push(msg);
-			}
-
-			// Auto-save CHECKPOINT.md (CRITICAL — blocks transition)
-			try {
-				const { checkpointSaveCmd } = await import("./checkpoint-save.cmd.js");
-				const checkpointArgs = [
-					"--slice-id",
-					sliceId,
-					"--base-commit",
-					"",
-					"--current-wave",
-					"0",
-					"--completed-waves",
-					"[]",
-					"--completed-tasks",
-					"[]",
-					"--executor-log",
-					"[]",
-				];
-				await checkpointSaveCmd(checkpointArgs);
-			} catch (e) {
+		// Pre-validate transition (pure domain) so we surface INVALID_TRANSITION
+		// with a recovery hint without entering the tx.
+		const validation = transitionSliceDomain(currentSlice, targetStatus as SliceStatus);
+		if (!validation.ok) {
+			if (validation.error.code === "INVALID_TRANSITION") {
+				const validNext = validTransitionsFrom(currentSlice.status);
+				const recoveryHint =
+					validNext.length > 0
+						? `Valid next: ${validNext.join(", ")}`
+						: "No valid transitions available from this status";
 				return JSON.stringify({
 					ok: false,
-					error: { code: "CHECKPOINT_FAILED", message: `Checkpoint save failed: ${String(e)}` },
-					warnings,
+					error: {
+						code: validation.error.code,
+						message: validation.error.message,
+						recoveryHint,
+					},
 				});
 			}
-
-			return JSON.stringify({ ok: true, data: { status: slice.status }, warnings });
+			return JSON.stringify({ ok: false, error: validation.error });
 		}
 
-		// Enhance INVALID_TRANSITION errors with valid next steps
-		if (result.error.code === "INVALID_TRANSITION" && result.error.context?.from) {
-			const fromStatus = result.error.context.from as SliceStatus;
-			const validNext = validTransitionsFrom(fromStatus);
-			const recoveryHint =
-				validNext.length > 0
-					? `Valid next: ${validNext.join(", ")}`
-					: "No valid transitions available from this status";
+		const milestoneResult = milestoneStore.getMilestone(currentSlice.milestoneId);
+		if (!milestoneResult.ok) {
+			return JSON.stringify({ ok: false, error: milestoneResult.error });
+		}
+		if (!milestoneResult.data) {
 			return JSON.stringify({
 				ok: false,
 				error: {
-					code: result.error.code,
-					message: result.error.message,
-					recoveryHint,
+					code: "NOT_FOUND",
+					message: `Milestone "${currentSlice.milestoneId}" not found`,
 				},
 			});
 		}
+		const milestoneNumber = milestoneResult.data.number;
+		const displaySliceLabel = sliceLabelFromSlice(currentSlice, milestoneNumber);
 
-		return JSON.stringify({ ok: false, error: result.error });
+		// Render STATE.md content (reflecting the post-transition state).
+		// We patch the slice status in-memory to simulate post-commit state; the
+		// renderer is pure so this is safe.
+		const projectedSlice = { ...currentSlice, status: targetStatus as SliceStatus };
+		const stateContent = renderStateMd(
+			{ milestoneId: currentSlice.milestoneId },
+			{
+				milestoneStore,
+				sliceStore: {
+					...sliceStore,
+					listSlices: (mid?: string) => {
+						const base = sliceStore.listSlices(mid);
+						if (!base.ok) return base;
+						const swapped = base.data.map((s) => (s.id === projectedSlice.id ? projectedSlice : s));
+						return { ok: true as const, data: swapped };
+					},
+				},
+				taskStore,
+			},
+		);
+		if (!stateContent.ok) {
+			return JSON.stringify({ ok: false, error: stateContent.error });
+		}
+
+		// Stage STATE.md to .tff-cc/STATE.md.tmp.
+		const stateFinalAbs = resolve(process.cwd(), STATE_FILE);
+		const stateTmpAbs = `${stateFinalAbs}.tmp`;
+		mkdirSync(resolve(process.cwd(), ".tff-cc"), { recursive: true });
+		writeFileSync(stateTmpAbs, stateContent.data, "utf8");
+		stagedTmps.push(stateTmpAbs);
+
+		// Render checkpoint content (empty / baseline checkpoint on transition).
+		const checkpoint = renderCheckpoint({
+			sliceId: displaySliceLabel,
+			baseCommit: "",
+			currentWave: 0,
+			completedWaves: [],
+			completedTasks: [],
+			executorLog: [],
+		});
+		const ckptDirAbs = resolve(process.cwd(), checkpoint.dir);
+		const ckptFinalAbs = resolve(process.cwd(), checkpoint.path);
+		const ckptTmpAbs = `${ckptFinalAbs}.tmp`;
+		mkdirSync(ckptDirAbs, { recursive: true });
+		writeFileSync(ckptTmpAbs, checkpoint.content, "utf8");
+		stagedTmps.push(ckptTmpAbs);
+
+		// Run DB mutation + staged renames inside withTransaction.
+		const txResult = await withTransaction(db, () => {
+			const transitionResult = sliceStore.transitionSlice(sliceId, targetStatus as SliceStatus);
+			if (!transitionResult.ok) {
+				throw new Error(`${transitionResult.error.code}: ${transitionResult.error.message}`);
+			}
+			return {
+				data: { status: targetStatus },
+				tmpRenames: [
+					[stateTmpAbs, stateFinalAbs] as [string, string],
+					[ckptTmpAbs, ckptFinalAbs] as [string, string],
+				],
+			};
+		});
+
+		if (!txResult.ok) {
+			// Tx rolled back. Clean up whatever tmps we staged pre-tx.
+			cleanupTmps(stagedTmps);
+			return JSON.stringify({ ok: false, error: txResult.error });
+		}
+
+		// Best-effort WAL checkpoint (non-critical).
+		const warnings: DomainError[] = [...txResult.warnings];
+		try {
+			closableStores.checkpoint();
+		} catch (e) {
+			const msg = `checkpoint failed: ${String(e)}`;
+			tffWarn(msg);
+			warnings.push(createDomainError("PARTIAL_SUCCESS", msg, { pendingEffect: "wal_checkpoint" }));
+		}
+
+		return JSON.stringify({ ok: true, data: { status: txResult.data.status }, warnings });
 	} finally {
 		closableStores.close();
 	}
