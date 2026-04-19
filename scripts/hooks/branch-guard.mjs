@@ -1,46 +1,28 @@
 #!/usr/bin/env node
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
-import Database from "better-sqlite3";
 
 if (process.env.TFF_ALLOW_MILESTONE_COMMIT === "1") process.exit(0);
 
 const cwd = process.cwd();
-const idFile = join(cwd, ".tff-project-id");
-if (!existsSync(idFile)) process.exit(0);
+if (!existsSync(join(cwd, ".tff-project-id"))) process.exit(0);
 
-let branch;
+const cliPath = join(cwd, "dist/cli/index.js");
+if (!existsSync(cliPath)) process.exit(0); // build not produced yet — cannot verify; don't block
+
+let out;
 try {
-  branch = execSync("git symbolic-ref --short HEAD", { cwd, encoding: "utf8" }).trim();
-} catch {
+  out = execSync(`node ${cliPath} branch-guard:check`, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+} catch (e) {
+  // CLI failed (not a refusal — an actual failure) — don't block the commit, print stderr
+  process.stderr.write(`branch-guard:check crashed: ${e}\n`);
   process.exit(0);
 }
-if (!/^milestone\/[0-9a-f]{8}$/.test(branch)) process.exit(0);
 
-const prefix = branch.split("/")[1];
-const projectId = readFileSync(idFile, "utf8").trim();
-const home = process.env.TFF_CC_HOME ?? join(homedir(), ".tff-cc");
-const dbPath = join(home, projectId, "state.db");
-if (!existsSync(dbPath)) process.exit(0);
-
-const db = new Database(dbPath, { readonly: true });
-try {
-  const row = db
-    .prepare(
-      `SELECT COUNT(*) AS n FROM slice s
-       WHERE s.milestone_id LIKE ? AND s.status != 'closed'`,
-    )
-    .get(`${prefix}%`);
-  if (row && row.n > 0) {
-    process.stderr.write(
-      `BRANCH_GUARD_VIOLATION: Working directly on milestone branch '${branch}' while ${row.n} slice(s) are open. Switch to the slice worktree at .tff-cc/worktrees/<slice-id>/. Override with TFF_ALLOW_MILESTONE_COMMIT=1.\n`,
-    );
-    process.exit(1);
-  }
-} finally {
-  db.close();
+const parsed = JSON.parse(out.trim().split("\n").pop());
+if (!parsed.ok && parsed.error.code === "REFUSED_ON_MILESTONE_BRANCH") {
+  process.stderr.write(`${parsed.error.message}\n`);
+  process.exit(1);
 }
-
 process.exit(0);
