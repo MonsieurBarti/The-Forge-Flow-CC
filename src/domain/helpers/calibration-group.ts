@@ -6,10 +6,7 @@ import type {
 import type { RoutingDecision } from "../value-objects/routing-decision.js";
 import type { OutcomeSourceKind, RoutingOutcome } from "../value-objects/routing-outcome.js";
 
-export interface GroupWeights {
-	manual: number;
-	"debug-join": number;
-}
+export type GroupWeights = Record<OutcomeSourceKind, number>;
 
 export interface GroupOutcomesInput {
 	decisions: RoutingDecision[];
