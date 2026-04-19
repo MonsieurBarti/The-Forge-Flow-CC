@@ -1,3 +1,11 @@
+/**
+ * Thin wrappers around the canonical edge table in
+ * `../value-objects/slice-status.ts`. `validate` delegates to
+ * {@link canTransition}; `SLICE_EDGES` is derived from
+ * {@link validTransitionsFrom}; `isTerminal` and `getValidNext` are convenience
+ * helpers over the same primitives. Never encode new transitions here — add
+ * them to the `transitions` record in `slice-status.ts`.
+ */
 import {
 	canTransition,
 	type SliceStatus,

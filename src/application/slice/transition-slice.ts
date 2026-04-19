@@ -10,9 +10,9 @@ import { checkSliceStatus } from "../../domain/state-machine/preconditions.js";
 import { type SliceStatus, validTransitionsFrom } from "../../domain/value-objects/slice-status.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import type { ClosableStateStores } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { stageStateMdTmp } from "../../infrastructure/persistence/stage-state-md.js";
 import { mkdirTracked } from "../../infrastructure/persistence/track-mkdir.js";
 import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
-import { STATE_FILE } from "../../shared/paths.js";
 import { renderCheckpoint } from "../checkpoint/save-checkpoint.js";
 import { renderStateMd } from "../sync/generate-state.js";
 
@@ -140,11 +140,8 @@ export const transitionSliceOrchestrator = async (
 	const stagedTmps: string[] = [];
 	const stagedDirs: string[] = [];
 
-	const stateFinalAbs = resolve(cwd, STATE_FILE);
-	const stateTmpAbs = `${stateFinalAbs}.tmp`;
-	stagedDirs.push(...mkdirTracked(resolve(cwd, ".tff-cc")));
+	const { stateFinalAbs, stateTmpAbs } = stageStateMdTmp(cwd, stagedTmps, stagedDirs);
 	writeFileSync(stateTmpAbs, stateContent.data, "utf8");
-	stagedTmps.push(stateTmpAbs);
 
 	const checkpoint = renderCheckpoint({
 		sliceId: displaySliceLabel,

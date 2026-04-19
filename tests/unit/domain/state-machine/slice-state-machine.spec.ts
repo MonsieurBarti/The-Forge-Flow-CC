@@ -33,4 +33,16 @@ describe("slice state machine", () => {
 	it("getValidNext matches the domain's validTransitionsFrom", () => {
 		expect(getValidNext("planning")).toEqual(["planning", "executing"]);
 	});
+
+	it("every edge in SLICE_EDGES validates as legal (shape proof for public exports)", () => {
+		// Iterating SLICE_EDGES + feeding through validate() ensures the exported
+		// edge table and the validate() predicate stay consistent. If a future
+		// edit adds an edge to validTransitionsFrom but validate() refuses it
+		// (or vice versa), this test catches the drift.
+		expect(SLICE_EDGES.length).toBeGreaterThan(0);
+		for (const [from, to] of SLICE_EDGES) {
+			const r = validate(from, to);
+			expect(r.ok, `expected ${from}->${to} to be legal`).toBe(true);
+		}
+	});
 });

@@ -8,9 +8,10 @@ import { isOk } from "../../domain/result.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { stageStateMdTmp } from "../../infrastructure/persistence/stage-state-md.js";
 import { mkdirTracked } from "../../infrastructure/persistence/track-mkdir.js";
 import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
-import { milestoneDir as milestoneDirPath, STATE_FILE } from "../../shared/paths.js";
+import { milestoneDir as milestoneDirPath } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const milestoneCreateSchema: CommandSchema = {
@@ -70,10 +71,7 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
 		// via the tx scope. Staged atomically with REQUIREMENTS.md — on body
 		// throw, withTransaction unlinks both tmps. Upholds AC7 DB<->STATE.md
 		// consistency at the writer's exit boundary.
-		const stateFinalAbs = resolve(cwd, STATE_FILE);
-		const stateTmpAbs = `${stateFinalAbs}.tmp`;
-		stagedDirs.push(...mkdirTracked(resolve(cwd, ".tff-cc")));
-		stagedTmps.push(stateTmpAbs);
+		const { stateFinalAbs, stateTmpAbs } = stageStateMdTmp(cwd, stagedTmps, stagedDirs);
 
 		// Run DB insert + staged rename inside withTransaction.
 		// Pass stagedTmps so the helper can auto-clean on rollback.

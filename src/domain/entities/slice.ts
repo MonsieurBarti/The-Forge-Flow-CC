@@ -56,6 +56,13 @@ export const sliceLabel = (milestoneNumber: number, sliceNumber: number): string
 	return sliceLabelHelper(milestoneNumber, sliceNumber);
 };
 
+/**
+ * Apply a transition on a Slice aggregate. Delegates the legality check to
+ * {@link canTransition} from `../value-objects/slice-status.ts` — the
+ * canonical edge table lives there. This function's job is the aggregate-level
+ * wiring: emit a domain event on success, return the invalid-transition error
+ * on refusal.
+ */
 export const transitionSlice = (
 	slice: Slice,
 	to: SliceStatus,

@@ -1,3 +1,11 @@
+/**
+ * Canonical slice transition table. This file is the single source of truth
+ * for which `SliceStatus` transitions are legal. Both
+ * `src/domain/state-machine/slice-state-machine.ts` (validate/SLICE_EDGES) and
+ * `src/domain/entities/slice.ts` (`transitionSlice`) delegate to
+ * {@link canTransition} / {@link validTransitionsFrom} below — do not fork the
+ * edge map in those files.
+ */
 import { z } from "zod";
 
 export const SliceStatusSchema = z.enum([

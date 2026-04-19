@@ -61,6 +61,12 @@ describe("DomainErrorCodeSchema — hardening codes", () => {
 	])("accepts %s as a valid code", (code) => {
 		expect(() => DomainErrorCodeSchema.parse(code)).not.toThrow();
 	});
+
+	it("throws on a code outside the enum (negative case)", () => {
+		// Guard-rail: ensure the zod enum is strict so an adapter can't smuggle
+		// an ad-hoc error code into the public shape without a schema bump.
+		expect(() => DomainErrorCodeSchema.parse("NOT_A_REAL_CODE")).toThrow();
+	});
 });
 
 describe("Error factories", () => {
