@@ -25,12 +25,11 @@ export const selectTierUseCase = async (
 ): Promise<Result<TierDecision, DomainError>> => {
 	const policyRes = await deps.tierConfigReader.readTierPolicy();
 	if (!isOk(policyRes)) return policyRes;
-	// TODO(phase-b+): pass policyRes.data into signalsToPolicyTier for configurable mapping
 
 	const minTierRes = await deps.tierConfigReader.readAgentMinTier(input.agent_id);
 	if (!isOk(minTierRes)) return minTierRes;
 
-	const policyTier = signalsToPolicyTier(input.signals);
+	const policyTier = signalsToPolicyTier(input.signals, policyRes.data);
 	const { tier, min_tier_applied } = resolveEffectiveTier(policyTier, minTierRes.data);
 
 	const decision: TierDecision = {
