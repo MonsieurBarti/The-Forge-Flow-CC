@@ -1,24 +1,7 @@
-import { writeFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { renderCheckpoint } from "../../application/checkpoint/save-checkpoint.js";
-import { renderStateMd } from "../../application/sync/generate-state.js";
-import { transitionSlice as transitionSliceDomain } from "../../domain/entities/slice.js";
-import type { DomainError } from "../../domain/errors/domain-error.js";
-import { createDomainError } from "../../domain/errors/domain-error.js";
-import { preconditionViolationError } from "../../domain/errors/precondition-violation.error.js";
-import { checkSliceStatus } from "../../domain/state-machine/preconditions.js";
-import {
-	type SliceStatus,
-	SliceStatusSchema,
-	validTransitionsFrom,
-} from "../../domain/value-objects/slice-status.js";
-import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
+import { transitionSliceOrchestrator } from "../../application/slice/transition-slice.js";
+import { SliceStatusSchema } from "../../domain/value-objects/slice-status.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { mkdirTracked } from "../../infrastructure/persistence/track-mkdir.js";
-import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
-import { STATE_FILE } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
-import { resolveSliceId } from "../utils/resolve-id.js";
 
 export const sliceTransitionSchema: CommandSchema = {
 	name: "slice:transition",
@@ -42,209 +25,40 @@ export const sliceTransitionSchema: CommandSchema = {
 	examples: ["slice:transition --slice-id M01-S01 --status planning"],
 };
 
-const sliceLabelFromSlice = (
-	slice: { number: number; milestoneId: string },
-	milestoneNumber: number,
-): string => {
-	const ms = String(milestoneNumber).padStart(2, "0");
-	const sn = String(slice.number).padStart(2, "0");
-	return `M${ms}-S${sn}`;
-};
-
+/**
+ * Thin CLI adapter: parse flags, open stores, delegate to the orchestrator,
+ * serialize the response. All orchestration logic lives in
+ * `application/slice/transition-slice.ts`.
+ */
 export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 	const parsed = parseFlags(args, sliceTransitionSchema);
 	if (!parsed.ok) {
 		return JSON.stringify(parsed);
 	}
 
-	const { "slice-id": sliceLabel, status: targetStatus } = parsed.data as {
+	const { "slice-id": sliceLabel, status: rawStatus } = parsed.data as {
 		"slice-id": string;
 		status: string;
 	};
 
-	const closableStores = createClosableStateStoresUnchecked();
-	const { db, sliceStore, milestoneStore, taskStore } = closableStores;
-
-	try {
-		SliceStatusSchema.parse(targetStatus);
-	} catch {
-		closableStores.close();
+	// Validate status shape (flag-parser already enforces enum, but preserve the
+	// historical INVALID_ARGS contract as a belt-and-braces check).
+	const parsedStatus = SliceStatusSchema.safeParse(rawStatus);
+	if (!parsedStatus.success) {
 		return JSON.stringify({
 			ok: false,
-			error: { code: "INVALID_ARGS", message: `Invalid status: ${targetStatus}` },
+			error: { code: "INVALID_ARGS", message: `Invalid status: ${rawStatus}` },
 		});
 	}
 
-	// Track tmps staged before the tx so we can clean up on body throw.
-	const stagedTmps: string[] = [];
-	// Track dirs we just created (leaf-first) so we can rmSync them on rollback.
-	const stagedDirs: string[] = [];
-
+	const stores = createClosableStateStoresUnchecked();
 	try {
-		const resolvedSlice = resolveSliceId(sliceLabel, sliceStore);
-		if (!resolvedSlice.ok) {
-			return JSON.stringify({ ok: false, error: resolvedSlice.error });
-		}
-		const sliceId = resolvedSlice.data;
-
-		// Read current slice and milestone (outside tx).
-		const currentResult = sliceStore.getSlice(sliceId);
-		if (!currentResult.ok) {
-			return JSON.stringify({ ok: false, error: currentResult.error });
-		}
-		if (!currentResult.data) {
-			return JSON.stringify({
-				ok: false,
-				error: { code: "NOT_FOUND", message: `Slice "${sliceId}" not found` },
-			});
-		}
-		const currentSlice = currentResult.data;
-
-		// Pre-validate transition (pure domain) so we surface INVALID_TRANSITION
-		// with a recovery hint without entering the tx.
-		const validation = transitionSliceDomain(currentSlice, targetStatus as SliceStatus);
-		if (!validation.ok) {
-			if (validation.error.code === "INVALID_TRANSITION") {
-				const validNext = validTransitionsFrom(currentSlice.status);
-				const recoveryHint =
-					validNext.length > 0
-						? `Valid next: ${validNext.join(", ")}`
-						: "No valid transitions available from this status";
-				return JSON.stringify({
-					ok: false,
-					error: {
-						code: validation.error.code,
-						message: validation.error.message,
-						recoveryHint,
-					},
-				});
-			}
-			return JSON.stringify({ ok: false, error: validation.error });
-		}
-
-		const milestoneResult = milestoneStore.getMilestone(currentSlice.milestoneId);
-		if (!milestoneResult.ok) {
-			return JSON.stringify({ ok: false, error: milestoneResult.error });
-		}
-		if (!milestoneResult.data) {
-			return JSON.stringify({
-				ok: false,
-				error: {
-					code: "NOT_FOUND",
-					message: `Milestone "${currentSlice.milestoneId}" not found`,
-				},
-			});
-		}
-		const milestoneNumber = milestoneResult.data.number;
-		const displaySliceLabel = sliceLabelFromSlice(currentSlice, milestoneNumber);
-
-		// Render STATE.md content (reflecting the post-transition state).
-		// We patch the slice status in-memory to simulate post-commit state; the
-		// renderer is pure so this is safe.
-		const projectedSlice = { ...currentSlice, status: targetStatus as SliceStatus };
-		const stateContent = renderStateMd(
-			{ milestoneId: currentSlice.milestoneId },
-			{
-				milestoneStore,
-				sliceStore: {
-					...sliceStore,
-					listSlices: (mid?: string) => {
-						const base = sliceStore.listSlices(mid);
-						if (!base.ok) return base;
-						const swapped = base.data.map((s) => (s.id === projectedSlice.id ? projectedSlice : s));
-						return { ok: true as const, data: swapped };
-					},
-				},
-				taskStore,
-			},
+		const response = await transitionSliceOrchestrator(
+			{ sliceLabel, targetStatus: parsedStatus.data, cwd: process.cwd() },
+			{ stores },
 		);
-		if (!stateContent.ok) {
-			return JSON.stringify({ ok: false, error: stateContent.error });
-		}
-
-		// Stage STATE.md to .tff-cc/STATE.md.tmp.
-		const stateFinalAbs = resolve(process.cwd(), STATE_FILE);
-		const stateTmpAbs = `${stateFinalAbs}.tmp`;
-		stagedDirs.push(...mkdirTracked(resolve(process.cwd(), ".tff-cc")));
-		writeFileSync(stateTmpAbs, stateContent.data, "utf8");
-		stagedTmps.push(stateTmpAbs);
-
-		// Render checkpoint content (empty / baseline checkpoint on transition).
-		const checkpoint = renderCheckpoint({
-			sliceId: displaySliceLabel,
-			baseCommit: "",
-			currentWave: 0,
-			completedWaves: [],
-			completedTasks: [],
-			executorLog: [],
-		});
-		const ckptDirAbs = resolve(process.cwd(), checkpoint.dir);
-		const ckptFinalAbs = resolve(process.cwd(), checkpoint.path);
-		const ckptTmpAbs = `${ckptFinalAbs}.tmp`;
-		stagedDirs.push(...mkdirTracked(ckptDirAbs));
-		writeFileSync(ckptTmpAbs, checkpoint.content, "utf8");
-		stagedTmps.push(ckptTmpAbs);
-
-		// Closure-capture pattern (see with-transaction.ts JSDoc): if the TOCTOU
-		// precondition re-check fails we capture the DomainError and throw a
-		// generic Error to trigger rollback. The outer handler re-surfaces the
-		// captured error instead of the generic TRANSACTION_ROLLBACK wrapper so
-		// the public error code stays PRECONDITION_VIOLATION.
-		let preconditionRollbackError: DomainError | undefined;
-
-		// Run DB mutation + staged renames inside withTransaction.
-		// Pass stagedTmps + stagedDirs so the helper can auto-clean on rollback.
-		const txResult = await withTransaction(
-			db,
-			() => {
-				// TOCTOU re-check: verify the slice is still in the expected status.
-				// This defends against a writer racing between the outer read and the
-				// tx opening. If the status changed, throw so the tx rolls back.
-				const recheck = checkSliceStatus(sliceStore, sliceId, currentSlice.status);
-				if (!recheck.ok) {
-					preconditionRollbackError = preconditionViolationError(recheck.violations);
-					throw new Error(preconditionRollbackError.message);
-				}
-
-				const transitionResult = sliceStore.transitionSlice(sliceId, targetStatus as SliceStatus);
-				if (!transitionResult.ok) {
-					throw new Error(`${transitionResult.error.code}: ${transitionResult.error.message}`);
-				}
-				return {
-					data: { status: targetStatus },
-					tmpRenames: [
-						[stateTmpAbs, stateFinalAbs] as [string, string],
-						[ckptTmpAbs, ckptFinalAbs] as [string, string],
-					],
-				};
-			},
-			stagedTmps,
-			stagedDirs,
-		);
-
-		if (!txResult.ok) {
-			// Tx rolled back; withTransaction already unlinked stagedTmps + dirs.
-			// If the rollback was triggered by a TOCTOU precondition re-check,
-			// re-surface the original PRECONDITION_VIOLATION error directly rather
-			// than the generic TRANSACTION_ROLLBACK wrapper.
-			if (preconditionRollbackError !== undefined) {
-				return JSON.stringify({ ok: false, error: preconditionRollbackError });
-			}
-			return JSON.stringify({ ok: false, error: txResult.error });
-		}
-
-		// Best-effort WAL checkpoint (non-critical).
-		const warnings: DomainError[] = [...txResult.warnings];
-		try {
-			closableStores.checkpoint();
-		} catch (e) {
-			const msg = `checkpoint failed: ${String(e)}`;
-			tffWarn(msg);
-			warnings.push(createDomainError("PARTIAL_SUCCESS", msg, { pendingEffect: "wal_checkpoint" }));
-		}
-
-		return JSON.stringify({ ok: true, data: { status: txResult.data.status }, warnings });
+		return JSON.stringify(response);
 	} finally {
-		closableStores.close();
+		stores.close();
 	}
 };
