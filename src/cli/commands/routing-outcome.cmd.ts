@@ -12,6 +12,14 @@ import { resolveRoutingPaths } from "../utils/routing-paths.js";
 
 export type { KnownDecision };
 
+export const sanitizeReason = (input: string | undefined): string | undefined => {
+	if (input === undefined) return undefined;
+	// strip ASCII control chars (including newlines, tabs, DEL) and trim.
+	// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — this regex IS the control-char filter
+	const stripped = input.replace(/[\x00-\x1F\x7F]/g, " ").trim();
+	return stripped.length === 0 ? undefined : stripped;
+};
+
 export const routingOutcomeSchema: CommandSchema = {
 	name: "routing:outcome",
 	purpose: "Record a manual outcome for a routing decision (Phase D feedback loop)",
@@ -68,7 +76,7 @@ export const routingOutcomeCmd = async (args: string[]): Promise<string> => {
 	const writer = new JsonlRoutingOutcomeWriter(outcomesPath);
 
 	const res = await recordOutcomeUseCase(
-		{ decision_id: decision, dimension, verdict, reason },
+		{ decision_id: decision, dimension, verdict, reason: sanitizeReason(reason) },
 		{
 			writer,
 			knownDecisions,
