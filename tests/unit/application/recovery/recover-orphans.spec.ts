@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, mkdirSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -80,6 +80,22 @@ describe("recoverOrphans", () => {
 
 		expect(result.cleanedTmps).toBe(0);
 		expect(result.cleanedLocks).toBe(0);
+	});
+
+	it("removes stale .tmp files in subdirectories", async () => {
+		const subDir = join(stagingDir, "milestones", "M01", "slices", "M01-S01");
+		mkdirSync(subDir, { recursive: true });
+		const staleTmp = join(subDir, "PLAN.md.tmp");
+		writeFileSync(staleTmp, "stale");
+		makeStale(staleTmp);
+
+		const result = await recoverOrphans({
+			stagingDirs: [stagingDir],
+			lockPaths: [],
+		});
+
+		expect(result.cleanedTmps).toBe(1);
+		expect(existsSync(staleTmp)).toBe(false);
 	});
 
 	it("is idempotent: second run yields zero cleanups", async () => {

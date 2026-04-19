@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { recoverOrphans } from "../application/recovery/recover-orphans.js";
 import { checkpointLoadCmd } from "./commands/checkpoint-load.cmd.js";
 import { checkpointSaveCmd } from "./commands/checkpoint-save.cmd.js";
@@ -177,7 +178,10 @@ const main = async () => {
 	const [command, ...args] = process.argv.slice(2);
 
 	try {
-		const result = await recoverOrphans({ stagingDirs: [process.cwd()], lockPaths: [] });
+		const result = await recoverOrphans({
+			stagingDirs: [join(process.cwd(), ".tff-cc")],
+			lockPaths: [],
+		});
 		if (result.cleanedTmps + result.cleanedLocks > 0) {
 			console.error(
 				`recovered ${result.cleanedTmps} stale tmp files, ${result.cleanedLocks} stale locks`,

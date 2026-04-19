@@ -23,7 +23,7 @@ export const recoverOrphans = async (input: RecoverInput): Promise<RecoverResult
 
 	for (const dir of input.stagingDirs) {
 		if (!existsSync(dir)) continue;
-		for (const entry of readdirSync(dir)) {
+		for (const entry of readdirSync(dir, { recursive: true }) as string[]) {
 			if (!entry.endsWith(".tmp")) continue;
 			const p = join(dir, entry);
 			try {
