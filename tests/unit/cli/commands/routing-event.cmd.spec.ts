@@ -64,4 +64,22 @@ describe("routing:event CLI", () => {
 		expect(parsed2.data.skipped).toBe(true);
 		expect(parsed2.data.reason).toBe("debounced");
 	});
+
+	it("returns reason=routing_disabled when routing is off", async () => {
+		const { writeFile, mkdir } = await import("node:fs/promises");
+		await mkdir(join(dir, ".tff-cc"), { recursive: true });
+		await writeFile(
+			join(dir, ".tff-cc", "settings.yaml"),
+			"routing:\n  enabled: false\n  logging:\n    path: .tff-cc/logs/routing.jsonl\n",
+			"utf8",
+		);
+
+		const out = await routingEventCmd(["--kind", "debug", "--slice", "M01-S01"]);
+		const parsed = JSON.parse(out);
+		expect(parsed.ok).toBe(true);
+		expect(parsed.data.kind).toBe("debug");
+		expect(parsed.data.slice_id).toBe("M01-S01");
+		expect(parsed.data.skipped).toBe(true);
+		expect(parsed.data.reason).toBe("routing_disabled");
+	});
 });

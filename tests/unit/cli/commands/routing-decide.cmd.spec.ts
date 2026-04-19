@@ -13,6 +13,7 @@ describe("routing:decide", () => {
 		const parsed = JSON.parse(out);
 		expect(parsed.ok).toBe(true);
 		expect(parsed.data.skipped).toBe(true);
+		expect(parsed.data.reason).toBe("routing_disabled");
 	});
 
 	it("returns error for missing required flags", async () => {

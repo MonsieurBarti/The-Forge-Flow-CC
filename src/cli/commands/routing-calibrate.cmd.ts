@@ -39,6 +39,13 @@ export const routingCalibrateCmd = async (args: string[]): Promise<string> => {
 	const configRes = await configReader.readConfig();
 	if (!isOk(configRes)) return JSON.stringify({ ok: false, error: configRes.error });
 
+	if (!configRes.data.enabled) {
+		return JSON.stringify({
+			ok: true,
+			data: { skipped: true, reason: "routing_disabled" },
+		});
+	}
+
 	const { routingPath, outcomesPath, reportPath } = resolveRoutingPaths(
 		projectRoot,
 		configRes.data.logging.path,
