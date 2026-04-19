@@ -1,4 +1,5 @@
 import type { CommandSchema } from "../utils/flag-parser.js";
+import { branchGuardCheckSchema } from "./branch-guard-check.cmd.js";
 import { checkpointLoadSchema } from "./checkpoint-load.cmd.js";
 import { checkpointSaveSchema } from "./checkpoint-save.cmd.js";
 import { claimCheckStaleSchema } from "./claim-check-stale.cmd.js";
@@ -91,6 +92,7 @@ schemaRegistry.set("workflow:next", workflowNextSchema);
 schemaRegistry.set("workflow:should-auto", workflowShouldAutoSchema);
 schemaRegistry.set("claim:check-stale", claimCheckStaleSchema);
 schemaRegistry.set("session:remind", sessionRemindSchema);
+schemaRegistry.set("branch-guard:check", branchGuardCheckSchema);
 
 /**
  * Get a command schema by name
