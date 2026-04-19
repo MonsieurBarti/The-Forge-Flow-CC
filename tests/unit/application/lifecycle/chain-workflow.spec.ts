@@ -3,6 +3,7 @@ import {
 	nextWorkflow,
 	shouldAutoTransition,
 	suggestedCommand,
+	suggestedMilestoneCommand,
 } from "../../../../src/application/lifecycle/chain-workflow.js";
 
 describe("chain-workflow", () => {
@@ -53,5 +54,30 @@ describe("suggestedCommand", () => {
 
 	it("returns null for unknown status", () => {
 		expect(suggestedCommand("bogus-status")).toBeNull();
+	});
+});
+
+describe("suggestedMilestoneCommand", () => {
+	it("returns null while slices are still open", () => {
+		expect(suggestedMilestoneCommand({ allSlicesClosed: false, auditVerdict: null })).toBeNull();
+		expect(suggestedMilestoneCommand({ allSlicesClosed: false, auditVerdict: "ready" })).toBeNull();
+	});
+
+	it("returns /tff:audit-milestone when no audit exists", () => {
+		expect(suggestedMilestoneCommand({ allSlicesClosed: true, auditVerdict: null })).toBe(
+			"/tff:audit-milestone",
+		);
+	});
+
+	it("returns /tff:audit-milestone when last audit was not_ready", () => {
+		expect(suggestedMilestoneCommand({ allSlicesClosed: true, auditVerdict: "not_ready" })).toBe(
+			"/tff:audit-milestone",
+		);
+	});
+
+	it("returns /tff:complete-milestone when audit is ready", () => {
+		expect(suggestedMilestoneCommand({ allSlicesClosed: true, auditVerdict: "ready" })).toBe(
+			"/tff:complete-milestone",
+		);
 	});
 });
