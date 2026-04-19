@@ -10,7 +10,12 @@ LOAD @skills/verification-before-completion/SKILL.md
 LOAD @skills/finishing-work/SKILL.md
 
 ## Steps
-0. Signal extraction (advisory; non-blocking): `tff-tools routing:extract --slice-id <slice-id> --workflow tff:ship`
+0. Signal extraction and tier selection (advisory; non-blocking; Phase B logs only — model override wired in Phase C):
+   a. `tff-tools routing:extract --slice-id <slice-id> --workflow tff:ship --json` → capture `data.signals` from JSON output as `<signals-json>`
+   b. `tff-tools routing:select-tier --slice-id <slice-id> --agent tff-spec-reviewer --signals '<signals-json>'` → logs tier decision to routing.jsonl (advisory only)
+   c. `tff-tools routing:select-tier --slice-id <slice-id> --agent tff-code-reviewer --signals '<signals-json>'` → logs tier decision to routing.jsonl (advisory only)
+   d. `tff-tools routing:select-tier --slice-id <slice-id> --agent tff-security-auditor --signals '<signals-json>'` → logs tier decision to routing.jsonl (advisory only)
+   All commands self-gate on `routing.enabled`; failures are non-blocking.
 1. `∀ reviewer: tff-tools review:check-fresh --slice-id <slice-id> --agent <role>`
 2. Stage 1 (spec) — SPAWN tff-spec-reviewer: {acceptance_criteria, diff}
    FAIL → SPAWN tff-fixer → re-run | loop until PASS

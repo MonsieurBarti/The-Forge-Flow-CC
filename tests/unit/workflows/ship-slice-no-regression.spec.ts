@@ -29,8 +29,19 @@ describe("ship-slice.md no-regression", () => {
 		expect(extractStepsOneToEight(after)).toBe(extractStepsOneToEight(before));
 	});
 
-	it("Step 0 is present in the current file and invokes routing:extract", async () => {
+	it("Step 0 invokes routing:extract with --json and routing:select-tier for all three agents", async () => {
 		const after = await readFile(join(ROOT, "workflows/ship-slice.md"), "utf8");
-		expect(after).toMatch(/0\..*routing:extract/);
+		expect(after).toContain(
+			"tff-tools routing:extract --slice-id <slice-id> --workflow tff:ship --json",
+		);
+		expect(after).toContain(
+			"tff-tools routing:select-tier --slice-id <slice-id> --agent tff-spec-reviewer --signals '<signals-json>'",
+		);
+		expect(after).toContain(
+			"tff-tools routing:select-tier --slice-id <slice-id> --agent tff-code-reviewer --signals '<signals-json>'",
+		);
+		expect(after).toContain(
+			"tff-tools routing:select-tier --slice-id <slice-id> --agent tff-security-auditor --signals '<signals-json>'",
+		);
 	});
 });
