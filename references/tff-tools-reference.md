@@ -217,7 +217,7 @@ slice:list --milestone-id M01
 | Flag | Type | Description | Pattern |
 |------|------|-------------|---------|
 | `--slice-id` | string | Slice ID | `^M\d+-S\d+$` |
-| `--status` | string | Target status | Enum: `discussing`, `researching`, `planning`, `executing`, `verifying`, `reviewing`, `shipping`, `closed` |
+| `--status` | string | Target status | Enum: `discussing`, `researching`, `planning`, `executing`, `verifying`, `reviewing`, `completing`, `closed` |
 
 **Optional Flags:** none
 
@@ -444,7 +444,7 @@ Output:
     "syntax": "slice:transition --slice-id <string> --status <string>",
     "requiredFlags": [
       { "name": "--slice-id", "type": "string", "description": "Slice ID (e.g., M01-S01)", "pattern": "^M\\d+-S\\d+$" },
-      { "name": "--status", "type": "string", "description": "Target status", "enum": ["discussing", "researching", "planning", "executing", "verifying", "reviewing", "shipping", "closed"] }
+      { "name": "--status", "type": "string", "description": "Target status", "enum": ["discussing", "researching", "planning", "executing", "verifying", "reviewing", "completing", "closed"] }
     ],
     "optionalFlags": [],
     "examples": ["slice:transition --slice-id M01-S01 --status planning"]
@@ -471,7 +471,7 @@ Output:
       "required": ["slice-id", "status"],
       "properties": {
         "slice-id": { "type": "string", "description": "Slice ID (e.g., M01-S01)", "pattern": "^M\\d+-S\\d+$" },
-        "status": { "type": "string", "description": "Target status", "enum": ["discussing", "researching", "planning", "executing", "verifying", "reviewing", "shipping", "closed"] }
+        "status": { "type": "string", "description": "Target status", "enum": ["discussing", "researching", "planning", "executing", "verifying", "reviewing", "completing", "closed"] }
       }
     }
   }
@@ -524,10 +524,10 @@ All error messages are structured JSON with helpful information:
   "ok": false,
   "error": {
     "code": "INVALID_ENUM_VALUE",
-    "message": "Invalid value for --status: 'invalid'. Must be one of: discussing, researching, planning, executing, verifying, reviewing, shipping, closed",
+    "message": "Invalid value for --status: 'invalid'. Must be one of: discussing, researching, planning, executing, verifying, reviewing, completing, closed",
     "flag": "status",
     "provided": "invalid",
-    "validValues": ["discussing", "researching", "planning", "executing", "verifying", "reviewing", "shipping", "closed"]
+    "validValues": ["discussing", "researching", "planning", "executing", "verifying", "reviewing", "completing", "closed"]
   }
 }
 ```

@@ -299,7 +299,6 @@ describe("validate-operation", () => {
 		});
 
 		it("should validate ship operation requires reviewing status", () => {
-			// Ship is special - it requires reviewing, not shipping
 			const valid = validateOperation("ship", "reviewing");
 			expect(valid.allowed).toBe(true);
 

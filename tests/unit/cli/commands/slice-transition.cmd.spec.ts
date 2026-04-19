@@ -61,6 +61,22 @@ describe("sliceTransitionSchema — flag parsing", () => {
 		expect(result.ok).toBe(true);
 	});
 
+	it("accepts 'completing' as a valid status (reviewing → completing path)", () => {
+		const result = parseFlags(
+			["--slice-id", "M01-S01", "--status", "completing"],
+			sliceTransitionSchema,
+		);
+		expect(result.ok).toBe(true);
+	});
+
+	it("rejects 'shipping' — renamed to 'completing' in the domain enum", () => {
+		const result = parseFlags(
+			["--slice-id", "M01-S01", "--status", "shipping"],
+			sliceTransitionSchema,
+		);
+		expect(result.ok).toBe(false);
+	});
+
 	it("accepts a UUID as slice-id", () => {
 		const result = parseFlags(
 			["--slice-id", "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "--status", "planning"],
