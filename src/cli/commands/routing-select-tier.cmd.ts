@@ -93,9 +93,9 @@ export const routingSelectTierCmd = async (args: string[]): Promise<string> => {
 
 	const res = await selectTierUseCase(
 		{
-			workflow_id: "tff:routing",
-			slice_id: sliceId as string,
-			agent_id: agent as string,
+			workflow_id: "tff:ship",
+			slice_id: sliceId,
+			agent_id: agent,
 			signals,
 		},
 		{ tierConfigReader, logger },
