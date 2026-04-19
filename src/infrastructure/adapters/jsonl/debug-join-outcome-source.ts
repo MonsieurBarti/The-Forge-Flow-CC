@@ -11,27 +11,38 @@ import type { RoutingOutcome } from "../../../domain/value-objects/routing-outco
 interface ShipEvent {
 	timestamp: string;
 	slice_id: string;
+	workflow_id: string;
 	decision_ids: string[];
 }
 
 type Clock = () => string;
 
-const OUTCOME_NAMESPACE = "routing-outcome-debug-join:v1";
+const NAMESPACE_UUID = "c8a7d91c-7f50-4a7f-9b4e-6b6b0c2a7f42";
 
-const deterministicOutcomeId = (decisionId: string, debugTimestamp: string): string => {
-	const hash = createHash("sha1");
-	hash.update(OUTCOME_NAMESPACE);
-	hash.update("|");
-	hash.update(decisionId);
-	hash.update("|");
-	hash.update(debugTimestamp);
-	const hex = hash.digest("hex");
-	// Format as UUIDv4-shaped string (deterministic but valid uuid shape).
-	return (
-		`${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-` +
-		`8${hex.slice(17, 20)}-${hex.slice(20, 32)}`
-	);
+const parseUuidToBytes = (uuid: string): Buffer => {
+	const hex = uuid.replace(/-/g, "");
+	return Buffer.from(hex, "hex");
 };
+
+const formatBytesAsUuid = (bytes: Buffer): string => {
+	const hex = bytes.toString("hex");
+	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+};
+
+const uuidV5 = (name: string, namespaceUuid: string): string => {
+	const nsBytes = parseUuidToBytes(namespaceUuid);
+	const nameBytes = Buffer.from(name, "utf8");
+	const hash = createHash("sha1");
+	hash.update(nsBytes);
+	hash.update(nameBytes);
+	const bytes = hash.digest().subarray(0, 16);
+	bytes[6] = (bytes[6] & 0x0f) | 0x50; // version 5
+	bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10
+	return formatBytesAsUuid(bytes);
+};
+
+const deterministicOutcomeId = (decisionId: string, debugTimestamp: string): string =>
+	uuidV5(`${decisionId}|${debugTimestamp}`, NAMESPACE_UUID);
 
 export class DebugJoinOutcomeSource implements OutcomeSource {
 	constructor(
@@ -39,7 +50,8 @@ export class DebugJoinOutcomeSource implements OutcomeSource {
 		private readonly clock: Clock = () => new Date().toISOString(),
 	) {}
 
-	async *readOutcomes(_filter: OutcomeReadFilter): AsyncIterable<RoutingOutcome> {
+	async *readOutcomes(filter: OutcomeReadFilter): AsyncIterable<RoutingOutcome> {
+		if (filter.source && filter.source !== "debug-join") return;
 		try {
 			await access(this.routingJsonlPath);
 		} catch {
@@ -91,6 +103,7 @@ export class DebugJoinOutcomeSource implements OutcomeSource {
 					currentShipBySlice.set(e.slice_id, {
 						timestamp: e.timestamp,
 						slice_id: e.slice_id,
+						workflow_id: e.workflow_id ?? "tff:ship",
 						decision_ids: [e.decision.decision_id],
 					});
 					emittedShipBySlice.delete(e.slice_id);
@@ -105,6 +118,9 @@ export class DebugJoinOutcomeSource implements OutcomeSource {
 				emittedShipBySlice.set(e.slice_id, ship);
 
 				for (const decision_id of ship.decision_ids) {
+					if (filter.decision_id && decision_id !== filter.decision_id) continue;
+					const emitted_at = this.clock();
+					if (filter.since && emitted_at < filter.since) continue;
 					yield {
 						outcome_id: deterministicOutcomeId(decision_id, e.timestamp),
 						decision_id,
@@ -112,8 +128,8 @@ export class DebugJoinOutcomeSource implements OutcomeSource {
 						verdict: "wrong",
 						source: "debug-join",
 						slice_id: e.slice_id,
-						workflow_id: "tff:ship",
-						emitted_at: this.clock(),
+						workflow_id: ship.workflow_id,
+						emitted_at,
 					};
 				}
 			}
