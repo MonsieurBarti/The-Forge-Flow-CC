@@ -9,6 +9,7 @@ import { directEditGuardCmd } from "./commands/direct-edit-guard.cmd.js";
 import { milestoneCloseCmd } from "./commands/milestone-close.cmd.js";
 import { milestoneCreateCmd } from "./commands/milestone-create.cmd.js";
 import { milestoneListCmd } from "./commands/milestone-list.cmd.js";
+import { milestoneRecordAuditCmd } from "./commands/milestone-record-audit.cmd.js";
 import { observeRecordCmd } from "./commands/observe-record.cmd.js";
 import { patternsAggregateCmd } from "./commands/patterns-aggregate.cmd.js";
 import { patternsExtractCmd } from "./commands/patterns-extract.cmd.js";
@@ -55,6 +56,7 @@ const commands: Record<string, CommandFn> = {
 	"milestone:create": withBranchGuard("milestone:create", milestoneCreateCmd),
 	"milestone:list": milestoneListCmd,
 	"milestone:close": withBranchGuard("milestone:close", milestoneCloseCmd),
+	"milestone:record-audit": withBranchGuard("milestone:record-audit", milestoneRecordAuditCmd),
 	"slice:create": withBranchGuard("slice:create", sliceCreateCmd),
 	"slice:list": sliceListCmd,
 	"slice:transition": withBranchGuard(
