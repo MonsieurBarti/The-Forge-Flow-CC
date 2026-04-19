@@ -61,11 +61,8 @@ export const decideUseCase = async (
 		},
 	);
 	if (!isOk(extractRes)) return extractRes;
-	const { signals, enriched } = extractRes.data;
-
-	const configRes = await deps.configReader.readConfig();
-	if (!isOk(configRes)) return configRes;
-	const { confidence_threshold } = configRes.data;
+	const { signals, enriched, config } = extractRes.data;
+	const { confidence_threshold } = config;
 
 	const poolRes = await deps.configReader.readPool(input.workflow_id);
 	if (!isOk(poolRes)) return poolRes;
