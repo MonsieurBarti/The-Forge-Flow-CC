@@ -43,4 +43,25 @@ describe("routing:event CLI", () => {
 		const parsed = JSON.parse(out);
 		expect(parsed.ok).toBe(false);
 	});
+
+	it("debounces a second debug event for the same slice within 60s", async () => {
+		const { writeFile, mkdir } = await import("node:fs/promises");
+		await mkdir(join(dir, ".tff-cc"), { recursive: true });
+		await writeFile(
+			join(dir, ".tff-cc", "settings.yaml"),
+			"routing:\n  enabled: true\n  logging:\n    path: .tff-cc/logs/routing.jsonl\n",
+			"utf8",
+		);
+
+		const out1 = await routingEventCmd(["--kind", "debug", "--slice", "M01-S01"]);
+		const parsed1 = JSON.parse(out1);
+		expect(parsed1.ok).toBe(true);
+		expect(parsed1.data.skipped).toBeUndefined();
+
+		const out2 = await routingEventCmd(["--kind", "debug", "--slice", "M01-S01"]);
+		const parsed2 = JSON.parse(out2);
+		expect(parsed2.ok).toBe(true);
+		expect(parsed2.data.skipped).toBe(true);
+		expect(parsed2.data.reason).toBe("debounced");
+	});
 });

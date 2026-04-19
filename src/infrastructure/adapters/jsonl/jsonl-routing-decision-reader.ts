@@ -2,6 +2,7 @@ import { createReadStream } from "node:fs";
 import { access } from "node:fs/promises";
 import { createInterface } from "node:readline";
 import type {
+	DebugEventRecord,
 	KnownDecision,
 	RoutingDecisionReader,
 } from "../../../domain/ports/routing-decision-reader.port.js";
@@ -27,6 +28,17 @@ export class JsonlRoutingDecisionReader implements RoutingDecisionReader {
 		return this.read((entry: Record<string, unknown>) => {
 			if (entry.kind !== "route" || !entry.decision) return null;
 			return entry.decision as RoutingDecision;
+		});
+	}
+
+	async readDebugEvents(): Promise<DebugEventRecord[]> {
+		return this.read((entry) => {
+			if (entry.kind !== "debug") return null;
+			return {
+				timestamp: entry.timestamp as string,
+				slice_id: entry.slice_id as string,
+				workflow_id: entry.workflow_id as string,
+			};
 		});
 	}
 
