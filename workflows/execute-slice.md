@@ -10,11 +10,11 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 status = executing ∧ worktree ∃ at `.tff-cc/worktrees/<slice-id>/`
 
 ## Pre-Execute Validation
-1. READ slice classification from SPEC.md → tier ∈ {S-tier, F-lite, F-full}
-2. IF tier ∈ {F-lite, F-full}:
+1. READ slice classification from SPEC.md → tier ∈ {S-tier, SS, SSS}
+2. IF tier ∈ {SS, SSS}:
    - CHECK: `tff-tools worktree:list` → verify worktree ∃ for `<slice-id>`
    - IF worktree MISSING:
-     ❌ BLOCKED: Worktree required for F-lite/F-full execution but ¬ found.
+     ❌ BLOCKED: Worktree required for SS/SSS execution but ¬ found.
      Recovery: `tff-tools worktree:create --slice-id <slice-id>`
      → STOP execution. Do NOT proceed.
 3. IF tier = S-tier:
@@ -30,7 +30,7 @@ status = executing ∧ worktree ∃ at `.tff-cc/worktrees/<slice-id>/`
 ∀ wave ∈ waves (sequential):
   STALE-CHECK: `tff-tools claim:check-stale` → if count > 0: warn user, list stale tasks, offer to continue or abort
   tff-tools checkpoint:save --slice-id <slice-id> --base-commit <sha> --current-wave <wave> --completed-waves '<json-array>' --completed-tasks '<json-array>' --executor-log '<json-array>'
-  tier ∈ {F-lite, F-full} → LOAD @skills/test-driven-development/SKILL.md → SPAWN subagent: {task.criteria, task.files}
+  tier ∈ {SS, SSS} → LOAD @skills/test-driven-development/SKILL.md → SPAWN subagent: {task.criteria, task.files}
     tester writes failing .spec.ts + commits in worktree
   ∀ task ∈ wave (parallel):
     IF task.ref ∈ checkpoint.completedTasks → SKIP

@@ -107,8 +107,8 @@ All tiers follow same pipeline. Tiers control **depth**, ¬ which steps run.
 | Tier | Discuss | Research | Plan Review | Execute | Code Review |
 |---|---|---|---|---|---|
 | S (single-file fix) | Lightweight | Skip | Plannotator | No TDD | Agent-only |
-| F-lite (default) | Full | Optional | Plannotator | TDD | Agent-only |
-| F-full (complex) | Full + brainstormer | Required | Plannotator | TDD | Agent-only, multi-reviewer |
+| SS (default) | Full | Optional | Plannotator | TDD | Agent-only |
+| SSS (complex) | Full + brainstormer | Required | Plannotator | TDD | Agent-only, multi-reviewer |
 
 ## tff-tools Patterns
 

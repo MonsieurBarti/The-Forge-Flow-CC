@@ -274,7 +274,7 @@ slice:close --slice-id M01-S01 --reason "Completed"
 slice:classify --signals '{"taskCount":5,"estimatedFilesAffected":3,"newFilesCreated":0,"modulesAffected":2,"hasExternalIntegrations":false,"requiresInvestigation":true,"architectureImpact":false,"unknownsSurfaced":1,"riskLevel":"low"}'
 ```
 
-**Output:** `{ "ok": true, "data": { "tier": "F-lite" } }`
+**Output:** `{ "ok": true, "data": { "tier": "SS" } }`
 
 ---
 
