@@ -11,5 +11,9 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
    Completion: X/Y slices | Requirements: X/Y validated
    Deferred: [list] | Assessment: READY | NOT_READY
    ```
-4. ROUTE: READY → suggest `/tff:complete-milestone` | NOT_READY → show gaps + actions
-5. NEXT: @references/next-steps.md
+4. PERSIST: `tff-tools milestone:record-audit --milestone-id <id> --verdict ready|not_ready [--notes "<summary>"]`
+   - Check `ok:true` before proceeding. If `ok:false`, warn the user and stop.
+5. ROUTE:
+   - READY → suggest `/tff:complete-milestone`
+   - NOT_READY → show gaps + remediation actions (do NOT suggest `complete-milestone`)
+6. NEXT: @references/next-steps.md
