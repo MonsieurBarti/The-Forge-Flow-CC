@@ -1,6 +1,7 @@
 node_modules/
 *.tsbuildinfo
 .tff/
+.tff-cc/
 .claude/
 docs/
 *.db
