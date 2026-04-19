@@ -68,6 +68,20 @@ Special formats:
 - Artifact: `docs(S01): <summary>`
 - Rollback: `revert(S01/T03): <summary>`
 
+## Branch Discipline
+
+Agents and humans work on **slice branches only** while a milestone has open slices. Two guards enforce this:
+
+1. **Default-branch guard** — every mutating `tff-tools` command refuses to run when the current branch equals the repo's default branch (usually `main`). Error code: `REFUSED_ON_DEFAULT_BRANCH`. Remedy: create a milestone branch or slice worktree before proceeding.
+2. **Milestone-branch guard** — `slice:transition`, `task:claim`, `task:close`, and `review:record` refuse to run on a `milestone/<8hex>` branch while any slice in that milestone is not `closed`. Error code: `REFUSED_ON_MILESTONE_BRANCH`. Remedy: switch to the slice worktree at `.tff-cc/worktrees/<slice-id>/`.
+
+A pre-commit hook (`scripts/hooks/branch-guard.mjs`, registered in `lefthook.yml`) mirrors the milestone-branch guard at the git level: it blocks commits on a milestone branch while slices are open.
+
+Once **all slices are closed**, small follow-up commits may go directly to the milestone branch. Two options:
+
+- Close all slices first (normal flow), then commit on the milestone branch — no override needed.
+- For one-off exceptions (e.g., hotfixes), set `TFF_ALLOW_MILESTONE_COMMIT=1` to bypass the pre-commit hook. The CLI guard always applies; the env var affects only the git hook.
+
 ## Project Directory
 
 ```
