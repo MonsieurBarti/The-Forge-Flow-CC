@@ -1,10 +1,13 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import type { DomainError } from "../../domain/errors/domain-error.js";
+import { partialSuccessWarning } from "../../domain/errors/partial-success.warning.js";
 import { milestoneLabel } from "../../domain/helpers/branch-naming.js";
 import { isOk } from "../../domain/result.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { mkdirTracked } from "../../infrastructure/persistence/track-mkdir.js";
 import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
 import { milestoneDir as milestoneDirPath } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
@@ -38,6 +41,8 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
 
 	// Track tmps staged before the tx so we can clean up on body throw.
 	const stagedTmps: string[] = [];
+	// Track dirs we just created (leaf-first) so we can rmSync them on rollback.
+	const stagedDirs: string[] = [];
 
 	try {
 		// Auto-number: count existing milestones and increment.
@@ -55,7 +60,7 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
 		const reqTmpAbs = `${reqFinalAbs}.tmp`;
 		const reqContent = `# Requirements — ${name}\n\n_Define your requirements here._\n`;
 
-		mkdirSync(slicesDirAbs, { recursive: true });
+		stagedDirs.push(...mkdirTracked(slicesDirAbs));
 		writeFileSync(reqTmpAbs, reqContent, "utf8");
 		stagedTmps.push(reqTmpAbs);
 
@@ -74,6 +79,7 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
 				};
 			},
 			stagedTmps,
+			stagedDirs,
 		);
 
 		if (!txResult.ok) {
@@ -84,25 +90,23 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
 		const milestone = txResult.data.milestone;
 		const branchName = milestone.branch;
 
+		// Collect warnings from the tx and from any best-effort post-commit hooks.
+		const warnings: DomainError[] = [...txResult.warnings];
+
 		// Create git branch outside the tx — git is a non-rollbackable external
-		// effect. If this fails the DB+FS state is already committed; surface
-		// the error but keep the commit durable (the user can re-run and the
-		// branch creation is idempotent / diagnosable).
+		// effect. If this fails, the DB+FS state is already committed; per AC6
+		// we surface a PartialSuccessWarning naming the pending effect rather
+		// than returning ok:false (the command succeeded; the branch creation
+		// is retryable / idempotent).
 		try {
 			await gitOps.createBranch(branchName, "main");
 		} catch (e) {
-			tffWarn(`git branch creation failed: ${String(e)}`);
-			return JSON.stringify({
-				ok: false,
-				error: {
-					code: "WRITE_FAILURE",
-					message: `Milestone persisted but git branch creation failed: ${String(e)}`,
-				},
-			});
+			const msg = `git branch creation failed: ${String(e)}`;
+			tffWarn(msg);
+			warnings.push(partialSuccessWarning(msg, `git-branch:${branchName}`));
 		}
 
 		// Best-effort WAL checkpoint.
-		const warnings = [...txResult.warnings];
 		try {
 			closableStores.checkpoint();
 		} catch (e) {

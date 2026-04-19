@@ -1,10 +1,11 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { resolveMilestoneId } from "../../application/milestone/resolve-milestone-id.js";
 import { milestoneLabel, sliceLabel } from "../../domain/helpers/branch-naming.js";
 import { isOk } from "../../domain/result.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { mkdirTracked } from "../../infrastructure/persistence/track-mkdir.js";
 import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
 import { sliceDir as sliceDirPath } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
@@ -50,6 +51,8 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
 
 	// Track tmps staged before the tx so we can clean up on body throw.
 	const stagedTmps: string[] = [];
+	// Track dirs we just created (leaf-first) so we can rmSync them on rollback.
+	const stagedDirs: string[] = [];
 
 	try {
 		let milestoneId: string;
@@ -110,7 +113,7 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
 		const dirAbs = resolve(cwd, dir);
 		const planFinalAbs = resolve(cwd, `${dir}/PLAN.md`);
 		const planTmpAbs = `${planFinalAbs}.tmp`;
-		mkdirSync(dirAbs, { recursive: true });
+		stagedDirs.push(...mkdirTracked(dirAbs));
 		writeFileSync(planTmpAbs, planContent, "utf8");
 		stagedTmps.push(planTmpAbs);
 
@@ -133,6 +136,7 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
 				};
 			},
 			stagedTmps,
+			stagedDirs,
 		);
 
 		if (!txResult.ok) {

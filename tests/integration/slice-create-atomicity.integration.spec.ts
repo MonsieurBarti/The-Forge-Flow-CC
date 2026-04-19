@@ -106,4 +106,29 @@ describe("slice-create atomicity", () => {
 		// No *.tmp leftovers.
 		expect(listTmps(repo)).toEqual([]);
 	});
+
+	it("removes just-created slice dir on rollback (no orphan dir on disk)", async () => {
+		const { adapter } = await setupAdapter();
+		installStores(adapter);
+
+		// Ensure the slice dir does NOT pre-exist — the writer must create it.
+		const sliceDirAbs = join(repo, ".tff-cc", "milestones", "M01", "slices", "M01-S01");
+		expect(existsSync(sliceDirAbs)).toBe(false);
+
+		const spy = vi.spyOn(adapter, "createSlice").mockImplementation(() => {
+			throw new Error("injected body failure");
+		});
+
+		const { sliceCreateCmd } = await import("../../src/cli/commands/slice-create.cmd.js");
+		const raw = await sliceCreateCmd(["--title", "Atomic slice", "--milestone-id", "M01"]);
+		const result = JSON.parse(raw);
+
+		expect(result.ok).toBe(false);
+		spy.mockRestore();
+
+		// The slice dir and its parent-chain we created must be gone.
+		expect(existsSync(sliceDirAbs)).toBe(false);
+		// The milestone-level slices dir we also created must be gone.
+		expect(existsSync(join(repo, ".tff-cc", "milestones", "M01", "slices"))).toBe(false);
+	});
 });

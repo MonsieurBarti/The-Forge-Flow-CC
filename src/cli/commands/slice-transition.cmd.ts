@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { renderCheckpoint } from "../../application/checkpoint/save-checkpoint.js";
 import { renderStateMd } from "../../application/sync/generate-state.js";
@@ -14,24 +14,11 @@ import {
 } from "../../domain/value-objects/slice-status.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { mkdirTracked } from "../../infrastructure/persistence/track-mkdir.js";
 import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
 import { STATE_FILE } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { resolveSliceId } from "../utils/resolve-id.js";
-
-/**
- * Sentinel error thrown inside the tx body when a TOCTOU precondition re-check
- * fails. Carrying the DomainError allows the outer handler to re-surface it
- * as PRECONDITION_VIOLATION instead of the generic TRANSACTION_ROLLBACK wrapper.
- */
-class PreconditionViolationTxError extends Error {
-	readonly domainError: DomainError;
-	constructor(domainError: DomainError) {
-		super(domainError.message);
-		this.name = "PreconditionViolationTxError";
-		this.domainError = domainError;
-	}
-}
 
 export const sliceTransitionSchema: CommandSchema = {
 	name: "slice:transition",
@@ -90,6 +77,8 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 
 	// Track tmps staged before the tx so we can clean up on body throw.
 	const stagedTmps: string[] = [];
+	// Track dirs we just created (leaf-first) so we can rmSync them on rollback.
+	const stagedDirs: string[] = [];
 
 	try {
 		const resolvedSlice = resolveSliceId(sliceLabel, sliceStore);
@@ -176,7 +165,7 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 		// Stage STATE.md to .tff-cc/STATE.md.tmp.
 		const stateFinalAbs = resolve(process.cwd(), STATE_FILE);
 		const stateTmpAbs = `${stateFinalAbs}.tmp`;
-		mkdirSync(resolve(process.cwd(), ".tff-cc"), { recursive: true });
+		stagedDirs.push(...mkdirTracked(resolve(process.cwd(), ".tff-cc")));
 		writeFileSync(stateTmpAbs, stateContent.data, "utf8");
 		stagedTmps.push(stateTmpAbs);
 
@@ -192,18 +181,19 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 		const ckptDirAbs = resolve(process.cwd(), checkpoint.dir);
 		const ckptFinalAbs = resolve(process.cwd(), checkpoint.path);
 		const ckptTmpAbs = `${ckptFinalAbs}.tmp`;
-		mkdirSync(ckptDirAbs, { recursive: true });
+		stagedDirs.push(...mkdirTracked(ckptDirAbs));
 		writeFileSync(ckptTmpAbs, checkpoint.content, "utf8");
 		stagedTmps.push(ckptTmpAbs);
 
-		// Closure variable: if the tx body throws due to a TOCTOU precondition
-		// re-check failure, we store the DomainError here so the outer handler
-		// can re-surface PRECONDITION_VIOLATION cleanly instead of the generic
-		// TRANSACTION_ROLLBACK wrapper.
+		// Closure-capture pattern (see with-transaction.ts JSDoc): if the TOCTOU
+		// precondition re-check fails we capture the DomainError and throw a
+		// generic Error to trigger rollback. The outer handler re-surfaces the
+		// captured error instead of the generic TRANSACTION_ROLLBACK wrapper so
+		// the public error code stays PRECONDITION_VIOLATION.
 		let preconditionRollbackError: DomainError | undefined;
 
 		// Run DB mutation + staged renames inside withTransaction.
-		// Pass stagedTmps so the helper can auto-clean on rollback.
+		// Pass stagedTmps + stagedDirs so the helper can auto-clean on rollback.
 		const txResult = await withTransaction(
 			db,
 			() => {
@@ -212,9 +202,8 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 				// tx opening. If the status changed, throw so the tx rolls back.
 				const recheck = checkSliceStatus(sliceStore, sliceId, currentSlice.status);
 				if (!recheck.ok) {
-					const err = preconditionViolationError(recheck.violations);
-					preconditionRollbackError = err;
-					throw new PreconditionViolationTxError(err);
+					preconditionRollbackError = preconditionViolationError(recheck.violations);
+					throw new Error(preconditionRollbackError.message);
 				}
 
 				const transitionResult = sliceStore.transitionSlice(sliceId, targetStatus as SliceStatus);
@@ -230,10 +219,11 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 				};
 			},
 			stagedTmps,
+			stagedDirs,
 		);
 
 		if (!txResult.ok) {
-			// Tx rolled back; withTransaction already unlinked stagedTmps.
+			// Tx rolled back; withTransaction already unlinked stagedTmps + dirs.
 			// If the rollback was triggered by a TOCTOU precondition re-check,
 			// re-surface the original PRECONDITION_VIOLATION error directly rather
 			// than the generic TRANSACTION_ROLLBACK wrapper.

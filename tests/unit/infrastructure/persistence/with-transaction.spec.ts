@@ -1,8 +1,16 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SQLiteStateAdapter } from "../../../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js";
+import { mkdirTracked } from "../../../../src/infrastructure/persistence/track-mkdir.js";
 import { withTransaction } from "../../../../src/infrastructure/persistence/with-transaction.js";
 
 let tmp: string;
@@ -80,6 +88,66 @@ describe("withTransaction", () => {
 			throw new Error("boom");
 		});
 		expect(result.ok).toBe(false);
+		adapter.close();
+	});
+
+	it("rmSyncs just-created dirs on rollback but spares pre-existing dirs", async () => {
+		const adapter = setupAdapter();
+
+		// Pre-existing shared dir (must NOT be removed on rollback).
+		const shared = join(tmp, "shared");
+		mkdirSync(shared);
+
+		// Writer creates: shared/a/b/c — only a, a/b, a/b/c are NEW.
+		const deep = join(shared, "a", "b", "c");
+		const created = mkdirTracked(deep);
+		// Sanity: leaf-first, and does not include `shared` (pre-existing).
+		expect(created[0]).toBe(deep);
+		expect(created).not.toContain(shared);
+		expect(existsSync(deep)).toBe(true);
+
+		const result = await withTransaction(
+			adapter,
+			() => {
+				throw new Error("boom");
+			},
+			[],
+			created,
+		);
+
+		expect(result.ok).toBe(false);
+		// All the dirs we just created should be gone.
+		for (const d of created) expect(existsSync(d)).toBe(false);
+		// The pre-existing shared dir should still be there.
+		expect(existsSync(shared)).toBe(true);
+
+		adapter.close();
+	});
+
+	it("leaves pre-existing non-empty dir alone on rollback (rmSync refuses)", async () => {
+		const adapter = setupAdapter();
+
+		// Pretend the caller thinks they "created" this dir, but it's actually
+		// shared with unrelated state. rmSync (non-recursive) should refuse to
+		// remove it because it's non-empty — the key safety property.
+		const dir = join(tmp, "shared-busy");
+		mkdirSync(dir);
+		writeFileSync(join(dir, "sibling.txt"), "unrelated");
+
+		const result = await withTransaction(
+			adapter,
+			() => {
+				throw new Error("boom");
+			},
+			[],
+			[dir],
+		);
+
+		expect(result.ok).toBe(false);
+		// Must still exist: non-recursive rmSync refuses non-empty dirs.
+		expect(existsSync(dir)).toBe(true);
+		expect(existsSync(join(dir, "sibling.txt"))).toBe(true);
+
 		adapter.close();
 	});
 
