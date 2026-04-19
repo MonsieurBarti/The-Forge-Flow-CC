@@ -32,4 +32,17 @@ describe("ship-slice.md phase C structure", () => {
     expect(content).toContain("tff-tools worktree:delete --slice-id <slice-id>");
     expect(content).toContain("tff-tools slice:close --slice-id <slice-id>");
   });
+
+  it("pool in commands/tff/ship.md is a subset of stage agents in ship-slice.md", () => {
+    const shipCmd = readFileSync(join(process.cwd(), "commands", "tff", "ship.md"), "utf8");
+    const poolMatch = shipCmd.match(/routing:\s*\n\s*pool:\s*\n((?:\s*-\s*\S+\s*\n?)+)/);
+    expect(poolMatch).not.toBeNull();
+    const poolAgents = (poolMatch![1].match(/-\s*(\S+)/g) || [])
+      .map((l) => l.replace(/^-\s*/, ""))
+      .filter((id) => /^[a-z]/.test(id)); // exclude YAML fence markers like ---
+    expect(poolAgents.length).toBeGreaterThan(0);
+    for (const agent of poolAgents) {
+      expect(content).toContain(`SPAWN ${agent} with`);
+    }
+  });
 });
