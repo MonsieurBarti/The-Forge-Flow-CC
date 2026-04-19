@@ -1,4 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { DatabaseInit } from "../../src/domain/ports/database-init.port.js";
+import type { JournalRepository } from "../../src/domain/ports/journal-repository.port.js";
+import type { TransactionRunner } from "../../src/domain/ports/transaction-runner.port.js";
 import type { ClosableStateStores } from "../../src/infrastructure/adapters/sqlite/create-state-stores.js";
 import { SQLiteStateAdapter } from "../../src/infrastructure/adapters/sqlite/sqlite-state.adapter.js";
 
@@ -17,7 +20,7 @@ vi.mock("../../src/infrastructure/adapters/sqlite/create-state-stores.js", () =>
 	createClosableStateStoresUnchecked: vi.fn((): ClosableStateStores => {
 		const adapter = getAdapter()!;
 		return {
-			db: adapter as any,
+			db: adapter as unknown as DatabaseInit & TransactionRunner,
 			projectStore: adapter,
 			milestoneStore: adapter,
 			sliceStore: adapter,
@@ -26,7 +29,7 @@ vi.mock("../../src/infrastructure/adapters/sqlite/create-state-stores.js", () =>
 			sliceDependencyStore: adapter,
 			sessionStore: adapter,
 			reviewStore: adapter,
-			journalRepository: { append: vi.fn(), read: vi.fn() } as any,
+			journalRepository: { append: vi.fn(), read: vi.fn() } as unknown as JournalRepository,
 			close: () => {},
 			checkpoint: () => {},
 		};
@@ -52,9 +55,7 @@ beforeEach(() => {
 describe("review:record label resolution", () => {
 	it("(a) records a review when given a valid label M01-S01", async () => {
 		// Import after mock is in place
-		const { reviewRecordCmd } = await import(
-			"../../src/cli/commands/review-record.cmd.js"
-		);
+		const { reviewRecordCmd } = await import("../../src/cli/commands/review-record.cmd.js");
 		const result = JSON.parse(
 			await reviewRecordCmd([
 				"--slice-id",
@@ -73,9 +74,7 @@ describe("review:record label resolution", () => {
 	});
 
 	it("(b) returns NOT_FOUND for unknown label M99-S99", async () => {
-		const { reviewRecordCmd } = await import(
-			"../../src/cli/commands/review-record.cmd.js"
-		);
+		const { reviewRecordCmd } = await import("../../src/cli/commands/review-record.cmd.js");
 		const result = JSON.parse(
 			await reviewRecordCmd([
 				"--slice-id",
