@@ -1,4 +1,5 @@
 import { resolveMilestoneId } from "../../application/milestone/resolve-milestone-id.js";
+import { reconcileOnRead } from "../../application/reconcile/reconcile-on-read.js";
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
@@ -25,7 +26,7 @@ export const sliceListCmd = async (args: string[]): Promise<string> => {
 
 	const { "milestone-id": rawMilestoneId } = parsed.data as { "milestone-id"?: string };
 
-	const { milestoneStore, sliceStore } = createClosableStateStoresUnchecked();
+	const { milestoneStore, sliceStore, taskStore } = createClosableStateStoresUnchecked();
 
 	let milestoneId: string | undefined;
 	if (rawMilestoneId) {
@@ -37,6 +38,9 @@ export const sliceListCmd = async (args: string[]): Promise<string> => {
 	}
 
 	const result = sliceStore.listSlices(milestoneId);
+
+	await reconcileOnRead(process.cwd(), { milestoneStore, sliceStore, taskStore });
+
 	if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
 	return JSON.stringify({ ok: false, error: result.error });
 };

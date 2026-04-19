@@ -398,6 +398,43 @@ main
 | F-lite (feature) | Yes | Optional | Yes | Always |
 | F-full (complex) | Yes | Required | Yes | Always |
 
+## Branch Isolation
+
+tff-cc writer commands refuse to run on the repository's **default branch** (usually `main` or `master`) to prevent accidental commits to shared branches during slice execution.
+
+### How it works
+
+On every writer command, `tff-tools` compares `git rev-parse --abbrev-ref HEAD` against `git symbolic-ref refs/remotes/origin/HEAD` (fallback: `main`). If they match, the command exits with:
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "REFUSED_ON_DEFAULT_BRANCH",
+    "message": "Refusing to run \"<command>\" on default branch \"<branch>\". Create a worktree before proceeding.",
+    "context": { "command": "<command>", "branch": "<branch>" }
+  }
+}
+```
+
+### Remediation
+
+Create a worktree for your slice:
+
+```bash
+tff-tools worktree:create --slice-id M01-S01
+cd .worktrees/M01-S01
+# now run writer commands from here
+```
+
+### Exempt commands
+
+Only `project:init` is exempt — it bootstraps the first project on `main` before any feature branch exists.
+
+### Unaffected commands
+
+Read-only and advisory commands (listers, getters, guards, workflows, patterns, skills, classifiers, session reminders, schema) are unaffected.
+
 ## Configuration
 
 Project settings live in `.tff-cc/settings.yaml`. Generated automatically by `/tff:new` with inline comments. Manage interactively with `/tff:settings`.

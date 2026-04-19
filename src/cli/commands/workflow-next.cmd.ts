@@ -1,9 +1,9 @@
-import { nextWorkflow } from "../../application/lifecycle/chain-workflow.js";
+import { nextWorkflow, suggestedCommand } from "../../application/lifecycle/chain-workflow.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const workflowNextSchema: CommandSchema = {
 	name: "workflow:next",
-	purpose: "Get the next workflow status from current status",
+	purpose: "Get the next workflow status and suggested /tff command from current status",
 	requiredFlags: [
 		{
 			name: "status",
@@ -23,5 +23,11 @@ export const workflowNextCmd = async (args: string[]): Promise<string> => {
 
 	const { status } = parsed.data as { status: string };
 
-	return JSON.stringify({ ok: true, data: { next: nextWorkflow(status) } });
+	return JSON.stringify({
+		ok: true,
+		data: {
+			next: nextWorkflow(status),
+			suggested: suggestedCommand(status),
+		},
+	});
 };

@@ -1,5 +1,7 @@
 import { resolveMilestoneId } from "../../application/milestone/resolve-milestone-id.js";
+import { preconditionViolationError } from "../../domain/errors/precondition-violation.error.js";
 import { isOk } from "../../domain/result.js";
+import { checkMilestoneActive } from "../../domain/state-machine/preconditions.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
@@ -38,14 +40,28 @@ export const milestoneCloseCmd = async (args: string[]): Promise<string> => {
 		reason?: string;
 	};
 
-	const { milestoneStore } = createClosableStateStoresUnchecked();
+	const closableStores = createClosableStateStoresUnchecked();
+	const { milestoneStore } = closableStores;
 
-	const resolved = resolveMilestoneId(milestoneStore, rawMilestoneId);
-	if (!isOk(resolved)) {
-		return JSON.stringify({ ok: false, error: resolved.error });
+	try {
+		const resolved = resolveMilestoneId(milestoneStore, rawMilestoneId);
+		if (!isOk(resolved)) {
+			return JSON.stringify({ ok: false, error: resolved.error });
+		}
+
+		// Precondition: milestone must not already be closed.
+		const precheck = checkMilestoneActive(milestoneStore, resolved.data);
+		if (!precheck.ok) {
+			return JSON.stringify({
+				ok: false,
+				error: preconditionViolationError(precheck.violations),
+			});
+		}
+
+		const result = milestoneStore.closeMilestone(resolved.data, reason);
+		if (isOk(result)) return JSON.stringify({ ok: true, data: { status: "closed", reason } });
+		return JSON.stringify({ ok: false, error: result.error });
+	} finally {
+		closableStores.close();
 	}
-
-	const result = milestoneStore.closeMilestone(resolved.data, reason);
-	if (isOk(result)) return JSON.stringify({ ok: true, data: { status: "closed", reason } });
-	return JSON.stringify({ ok: false, error: result.error });
 };

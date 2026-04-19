@@ -44,6 +44,7 @@ export type { ReviewStore } from "./ports/review-store.port.js";
 export type { SessionStore } from "./ports/session-store.port.js";
 export type { SliceStore } from "./ports/slice-store.port.js";
 export type { TaskStore } from "./ports/task-store.port.js";
+export type { TransactionRunner } from "./ports/transaction-runner.port.js";
 export type { ErrResult, OkResult, Result } from "./result.js";
 export { Err, isErr, isOk, match, Ok } from "./result.js";
 export type { Candidate, CandidateEvidence } from "./value-objects/candidate.js";

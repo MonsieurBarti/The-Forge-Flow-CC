@@ -21,6 +21,7 @@ import type {
 } from "../../domain/ports/slice-dependency-store.port.js";
 import type { SliceStore } from "../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../domain/ports/task-store.port.js";
+import type { TransactionRunner } from "../../domain/ports/transaction-runner.port.js";
 import { Err, Ok, type Result } from "../../domain/result.js";
 import type { Dependency } from "../../domain/value-objects/dependency.js";
 import type { MilestoneProps } from "../../domain/value-objects/milestone-props.js";
@@ -34,9 +35,16 @@ import type { TaskProps } from "../../domain/value-objects/task-props.js";
 import type { TaskUpdateProps } from "../../domain/value-objects/task-update-props.js";
 import type { WorkflowSession } from "../../domain/value-objects/workflow-session.js";
 
+/**
+ * Test-only in-memory implementation of the state ports. NOT intended for
+ * production: `transaction()` uses `structuredClone` to snapshot every
+ * top-level field on each call, which is fine for tests but quadratic for
+ * real workloads. Use `SQLiteStateAdapter` for any persistent use.
+ */
 export class InMemoryStateAdapter
 	implements
 		DatabaseInit,
+		TransactionRunner,
 		ProjectStore,
 		MilestoneStore,
 		SliceStore,
@@ -57,6 +65,39 @@ export class InMemoryStateAdapter
 
 	init(): Result<void, DomainError> {
 		return Ok(undefined);
+	}
+
+	/**
+	 * Best-effort snapshot/restore transaction.
+	 * Snapshots all state fields before calling fn; restores them on throw.
+	 * Uses `structuredClone` (Node >=17) for deep copies so mutations inside
+	 * fn do not corrupt the snapshot. On success the changes are kept as-is.
+	 * Our engines.node floor (>=20) covers this.
+	 */
+	transaction<T>(fn: () => T): T {
+		const snapshot = {
+			project: structuredClone(this.project),
+			milestones: structuredClone(this.milestones),
+			slices: structuredClone(this.slices),
+			tasks: structuredClone(this.tasks),
+			dependencies: structuredClone(this.dependencies),
+			sliceDependencies: structuredClone(this.sliceDependencies),
+			session: structuredClone(this.session),
+			reviews: structuredClone(this.reviews),
+		};
+		try {
+			return fn();
+		} catch (e) {
+			this.project = snapshot.project;
+			this.milestones = snapshot.milestones;
+			this.slices = snapshot.slices;
+			this.tasks = snapshot.tasks;
+			this.dependencies = snapshot.dependencies;
+			this.sliceDependencies = snapshot.sliceDependencies;
+			this.session = snapshot.session;
+			this.reviews = snapshot.reviews;
+			throw e;
+		}
 	}
 
 	// ProjectStore

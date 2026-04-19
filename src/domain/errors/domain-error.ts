@@ -22,6 +22,10 @@ export const DomainErrorCodeSchema = z.enum([
 	"EMPTY_POOL",
 	"ROUTING_CONFIG",
 	"SIGNAL_EXTRACTION",
+	"REFUSED_ON_DEFAULT_BRANCH",
+	"PRECONDITION_VIOLATION",
+	"TRANSACTION_ROLLBACK",
+	"PARTIAL_SUCCESS",
 ]);
 
 export type DomainErrorCode = z.infer<typeof DomainErrorCodeSchema>;

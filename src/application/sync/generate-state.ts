@@ -10,17 +10,24 @@ import { STATE_FILE } from "../../shared/paths.js";
 interface GenerateStateInput {
 	milestoneId: string;
 }
-interface GenerateStateDeps {
+interface RenderStateDeps {
 	milestoneStore: MilestoneStore;
 	sliceStore: SliceStore;
 	taskStore: TaskStore;
+}
+interface GenerateStateDeps extends RenderStateDeps {
 	artifactStore: ArtifactStore;
 }
 
-export const generateState = async (
+/**
+ * Render STATE.md content synchronously from the stores. Pure: does not touch
+ * the filesystem. Used by withTransaction-based callers that must stage writes
+ * to *.tmp before the transaction opens.
+ */
+export const renderStateMd = (
 	input: GenerateStateInput,
-	deps: GenerateStateDeps,
-): Promise<Result<void, DomainError>> => {
+	deps: RenderStateDeps,
+): Result<string, DomainError> => {
 	const milestoneResult = deps.milestoneStore.getMilestone(input.milestoneId);
 	if (!isOk(milestoneResult)) return milestoneResult;
 	if (!milestoneResult.data) {
@@ -75,6 +82,16 @@ export const generateState = async (
 		}
 	}
 	lines.push("");
-	await deps.artifactStore.write(STATE_FILE, lines.join("\n"));
+	return Ok(lines.join("\n"));
+};
+
+export const generateState = async (
+	input: GenerateStateInput,
+	deps: GenerateStateDeps,
+): Promise<Result<void, DomainError>> => {
+	const rendered = renderStateMd(input, deps);
+	if (!isOk(rendered)) return rendered;
+	const writeResult = await deps.artifactStore.write(STATE_FILE, rendered.data);
+	if (!isOk(writeResult)) return writeResult;
 	return Ok(undefined);
 };

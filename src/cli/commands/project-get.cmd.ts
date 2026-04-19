@@ -1,4 +1,5 @@
 import { getProject } from "../../application/project/get-project.js";
+import { reconcileOnRead } from "../../application/reconcile/reconcile-on-read.js";
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import type { CommandSchema } from "../utils/flag-parser.js";
@@ -28,8 +29,12 @@ export const projectGetCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 
-	const { projectStore } = createClosableStateStoresUnchecked();
+	const { projectStore, milestoneStore, sliceStore, taskStore } =
+		createClosableStateStoresUnchecked();
 	const result = await getProject({ projectStore });
+
+	await reconcileOnRead(process.cwd(), { milestoneStore, sliceStore, taskStore });
+
 	if (isOk(result)) {
 		if (result.data === null) {
 			return JSON.stringify({

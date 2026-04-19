@@ -1,4 +1,5 @@
 import { listMilestones } from "../../application/milestone/list-milestones.js";
+import { reconcileOnRead } from "../../application/reconcile/reconcile-on-read.js";
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import type { CommandSchema } from "../utils/flag-parser.js";
@@ -27,8 +28,11 @@ export const milestoneListCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 
-	const { milestoneStore } = createClosableStateStoresUnchecked();
+	const { milestoneStore, sliceStore, taskStore } = createClosableStateStoresUnchecked();
 	const result = await listMilestones({ milestoneStore });
+
+	await reconcileOnRead(process.cwd(), { milestoneStore, sliceStore, taskStore });
+
 	if (isOk(result)) return JSON.stringify({ ok: true, data: result.data });
 	return JSON.stringify({ ok: false, error: result.error });
 };

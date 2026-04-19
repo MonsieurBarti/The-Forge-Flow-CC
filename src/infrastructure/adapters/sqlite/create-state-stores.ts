@@ -9,12 +9,13 @@ import type { SessionStore } from "../../../domain/ports/session-store.port.js";
 import type { SliceDependencyStore } from "../../../domain/ports/slice-dependency-store.port.js";
 import type { SliceStore } from "../../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../../domain/ports/task-store.port.js";
+import type { TransactionRunner } from "../../../domain/ports/transaction-runner.port.js";
 import { createTffCcSymlink, getProjectHome, getProjectId } from "../../home-directory.js";
 import { JsonlJournalAdapter } from "../journal/jsonl-journal.adapter.js";
 import { SQLiteStateAdapter } from "./sqlite-state.adapter.js";
 
 export interface StateStores {
-	db: DatabaseInit;
+	db: DatabaseInit & TransactionRunner;
 	projectStore: ProjectStore;
 	milestoneStore: MilestoneStore;
 	sliceStore: SliceStore;

@@ -24,6 +24,7 @@ import type {
 } from "../../../domain/ports/slice-dependency-store.port.js";
 import type { SliceStore } from "../../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../../domain/ports/task-store.port.js";
+import type { TransactionRunner } from "../../../domain/ports/transaction-runner.port.js";
 import { Err, Ok, type Result } from "../../../domain/result.js";
 import type { Dependency } from "../../../domain/value-objects/dependency.js";
 import type { MilestoneProps } from "../../../domain/value-objects/milestone-props.js";
@@ -43,6 +44,7 @@ import { runMigrations } from "./schema.js";
 export class SQLiteStateAdapter
 	implements
 		DatabaseInit,
+		TransactionRunner,
 		ProjectStore,
 		MilestoneStore,
 		SliceStore,
@@ -95,6 +97,10 @@ export class SQLiteStateAdapter
 			}
 			return Err(createDomainError("WRITE_FAILURE", `Migration failed: ${msg}`));
 		}
+	}
+
+	transaction<T>(fn: () => T): T {
+		return this.db.transaction(fn)();
 	}
 
 	close(): void {
