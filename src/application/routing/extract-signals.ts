@@ -1,6 +1,9 @@
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import type { LlmEnricher } from "../../domain/ports/llm-enricher.port.js";
-import type { RoutingConfigReader } from "../../domain/ports/routing-config-reader.port.js";
+import type {
+	RoutingConfig,
+	RoutingConfigReader,
+} from "../../domain/ports/routing-config-reader.port.js";
 import type { RoutingDecisionLogger } from "../../domain/ports/routing-decision-logger.port.js";
 import type { ExtractInput, SignalExtractor } from "../../domain/ports/signal-extractor.port.js";
 import { isOk, Ok, type Result } from "../../domain/result.js";
@@ -21,6 +24,7 @@ interface ExtractSignalsDeps {
 export interface ExtractSignalsOutcome {
 	signals: Signals;
 	enriched: boolean;
+	config: RoutingConfig;
 }
 
 /**
@@ -79,5 +83,5 @@ export const extractSignalsUseCase = async (
 		duration_ms: Date.now() - started,
 	});
 
-	return Ok({ signals: finalSignals, enriched });
+	return Ok({ signals: finalSignals, enriched, config });
 };

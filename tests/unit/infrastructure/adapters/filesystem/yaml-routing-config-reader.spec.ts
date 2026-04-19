@@ -56,9 +56,173 @@ describe("YamlRoutingConfigReader", () => {
 		if (!isOk(res)) return;
 		expect(res.data.enabled).toBe(false);
 	});
+});
 
-	it("readPool returns a domain error (not implemented in Phase A)", async () => {
-		const reader = new YamlRoutingConfigReader({ projectRoot: dir });
+describe("YamlRoutingConfigReader.readPool", () => {
+	let tmp: string;
+
+	const mkProject = async (): Promise<string> => {
+		const dir = await mkdtemp(join(tmpdir(), "yaml-routing-pool-"));
+		await mkdir(join(dir, ".tff-cc"), { recursive: true });
+		await mkdir(join(dir, "agents"), { recursive: true });
+		await mkdir(join(dir, "commands", "tff"), { recursive: true });
+		return dir;
+	};
+
+	const writeAgent = async (dir: string, id: string, handles: string[], priority = 10) => {
+		await writeFile(
+			join(dir, "agents", `${id}.md`),
+			`---\nname: ${id}\nmodel: opus\nrouting:\n  handles: [${handles.join(", ")}]\n  priority: ${priority}\n  min_tier: haiku\n---\n\n# ${id}\n`,
+		);
+	};
+
+	const writeShipFrontmatter = async (dir: string, poolLines: string[]) => {
+		await writeFile(
+			join(dir, "commands", "tff", "ship.md"),
+			`---\nname: tff:ship\nrouting:\n  pool:\n${poolLines.map((l) => "    - " + l).join("\n")}\n---\n\nbody\n`,
+		);
+	};
+
+	beforeEach(async () => {
+		tmp = await mkProject();
+	});
+	afterEach(async () => {
+		await rm(tmp, { recursive: true, force: true });
+	});
+
+	it("loads a pool from command frontmatter and hydrates AgentCapability", async () => {
+		await writeAgent(tmp, "tff-spec-reviewer", ["standard_review"], 10);
+		await writeAgent(tmp, "tff-code-reviewer", ["standard_review", "code_quality"], 10);
+		await writeShipFrontmatter(tmp, ["tff-spec-reviewer", "tff-code-reviewer"]);
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("tff:ship");
+		expect(isOk(res)).toBe(true);
+		if (!isOk(res)) return;
+		expect(res.data.workflow_id).toBe("tff:ship");
+		expect(res.data.default_agent).toBe("tff-spec-reviewer");
+		expect(res.data.agents.map((a) => a.id)).toEqual(["tff-spec-reviewer", "tff-code-reviewer"]);
+		expect(res.data.agents[1].handles).toEqual(["standard_review", "code_quality"]);
+	});
+
+	it("settings.yaml routing.pools.<workflow> overrides frontmatter wholesale", async () => {
+		await writeAgent(tmp, "tff-spec-reviewer", ["a"]);
+		await writeAgent(tmp, "tff-code-reviewer", ["b"]);
+		await writeAgent(tmp, "tff-security-auditor", ["c"]);
+		await writeShipFrontmatter(tmp, ["tff-spec-reviewer"]);
+		await writeFile(
+			join(tmp, ".tff-cc", "settings.yaml"),
+			`routing:\n  enabled: true\n  pools:\n    tff:ship:\n      - tff-code-reviewer\n      - tff-security-auditor\n`,
+		);
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("tff:ship");
+		expect(isOk(res)).toBe(true);
+		if (!isOk(res)) return;
+		expect(res.data.agents.map((a) => a.id)).toEqual(["tff-code-reviewer", "tff-security-auditor"]);
+	});
+
+	it("returns ROUTING_CONFIG error for unknown agent id", async () => {
+		await writeShipFrontmatter(tmp, ["tff-ghost"]);
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("tff:ship");
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/agent file not found/);
+	});
+
+	it("returns error for duplicate ids", async () => {
+		await writeAgent(tmp, "tff-spec-reviewer", ["x"]);
+		await writeShipFrontmatter(tmp, ["tff-spec-reviewer", "tff-spec-reviewer"]);
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("tff:ship");
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/duplicate agent id/);
+	});
+
+	it("returns error for empty pool", async () => {
+		await writeFile(
+			join(tmp, "commands", "tff", "ship.md"),
+			`---\nname: tff:ship\nrouting:\n  pool: []\n---\n\n`,
+		);
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("tff:ship");
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/no pool agents defined/);
+	});
+
+	it("returns error for invalid agent id regex", async () => {
+		await writeShipFrontmatter(tmp, ["BAD_NAME"]);
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("tff:ship");
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/invalid agent id/);
+	});
+
+	it("returns error when neither frontmatter nor settings declares a pool", async () => {
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("tff:ship");
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/no pool declared/);
+	});
+
+	it("rejects workflow_id containing path traversal segments (..:etc)", async () => {
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("..:etc");
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/invalid workflow_id/);
+	});
+
+	it("rejects workflow_id with 3+ colon-separated parts (a:b:c)", async () => {
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("a:b:c");
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/invalid workflow_id/);
+	});
+
+	it("surfaces a settings routing.pools schema error when shape is wrong", async () => {
+		await writeAgent(tmp, "tff-spec-reviewer", ["x"]);
+		await writeShipFrontmatter(tmp, ["tff-spec-reviewer"]);
+		await writeFile(
+			join(tmp, ".tff-cc", "settings.yaml"),
+			"routing:\n  pools:\n    - not-a-map-but-array\n",
+		);
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("tff:ship");
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.message).toMatch(/schema error/);
+	});
+
+	it("surfaces a settings.yaml parse error rather than falling through", async () => {
+		await writeAgent(tmp, "tff-spec-reviewer", ["x"]);
+		await writeShipFrontmatter(tmp, ["tff-spec-reviewer"]);
+		await writeFile(
+			join(tmp, ".tff-cc", "settings.yaml"),
+			"routing:\n  pools:\n    tff:ship: [oops\n",
+		);
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("tff:ship");
+		expect(isOk(res)).toBe(false);
+	});
+
+	it("surfaces a command frontmatter parse error rather than falling through", async () => {
+		await writeFile(
+			join(tmp, "commands", "tff", "ship.md"),
+			"---\nrouting:\n  pool: [oops\n---\n\nbody\n",
+		);
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
 		const res = await reader.readPool("tff:ship");
 		expect(isOk(res)).toBe(false);
 	});

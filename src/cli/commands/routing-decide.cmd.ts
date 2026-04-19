@@ -1,14 +1,17 @@
-import { extractSignalsUseCase } from "../../application/routing/extract-signals.js";
+import { join } from "node:path";
+import { decideUseCase } from "../../application/routing/decide.js";
 import { isOk } from "../../domain/result.js";
 import { AnthropicLlmEnricher } from "../../infrastructure/adapters/anthropic/anthropic-llm-enricher.js";
 import { FilesystemSignalExtractor } from "../../infrastructure/adapters/filesystem/filesystem-signal-extractor.js";
+import { FilesystemTierConfigReader } from "../../infrastructure/adapters/filesystem/filesystem-tier-config-reader.js";
 import { YamlRoutingConfigReader } from "../../infrastructure/adapters/filesystem/yaml-routing-config-reader.js";
 import { JsonlRoutingDecisionLogger } from "../../infrastructure/adapters/jsonl/jsonl-routing-decision-logger.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
-export const routingExtractSchema: CommandSchema = {
-	name: "routing:extract",
-	purpose: "Extract routing signals for a slice (advisory; no-ops when routing disabled)",
+export const routingDecideSchema: CommandSchema = {
+	name: "routing:decide",
+	purpose:
+		"Extract signals and produce per-agent tier decisions for a workflow (unified Phase C routing)",
 	requiredFlags: [
 		{
 			name: "slice-id",
@@ -30,8 +33,8 @@ export const routingExtractSchema: CommandSchema = {
 		},
 	],
 	examples: [
-		"routing:extract --slice-id M01-S01 --workflow tff:ship",
-		"routing:extract --slice-id M01-S01 --workflow tff:ship --json",
+		"routing:decide --slice-id M01-S01 --workflow tff:ship",
+		"routing:decide --slice-id M01-S01 --workflow tff:ship --json",
 	],
 };
 
@@ -42,19 +45,19 @@ const makeClient = () => ({
 	},
 });
 
-export const routingExtractCmd = async (args: string[]): Promise<string> => {
-	const parsed = parseFlags(args, routingExtractSchema);
+export const routingDecideCmd = async (args: string[]): Promise<string> => {
+	const parsed = parseFlags(args, routingDecideSchema);
 	if (!parsed.ok) {
 		return JSON.stringify(parsed);
 	}
 	const {
 		"slice-id": sliceId,
 		workflow,
-		json,
+		_json: json,
 	} = parsed.data as {
 		"slice-id": string;
 		workflow: string;
-		json?: boolean;
+		_json?: boolean;
 	};
 
 	const projectRoot = process.cwd();
@@ -64,41 +67,42 @@ export const routingExtractCmd = async (args: string[]): Promise<string> => {
 		process.stderr.write(`routing: config error — ${JSON.stringify(configRes.error)}\n`);
 		return JSON.stringify({ ok: false, error: configRes.error });
 	}
-	const config = configRes.data;
-
-	// Gating rule: CLI self-gates; markdown has no conditional.
-	if (!config.enabled) {
-		process.stderr.write("routing: disabled; skipping extraction\n");
+	if (!configRes.data.enabled) {
+		process.stderr.write("routing: disabled; skipping decide\n");
 		return JSON.stringify({ ok: true, data: { skipped: true } });
 	}
 
 	const extractor = new FilesystemSignalExtractor();
 	const enricher = new AnthropicLlmEnricher({
 		client: makeClient(),
-		model: config.llm_enrichment.model,
-		timeout_ms: config.llm_enrichment.timeout_ms,
+		model: configRes.data.llm_enrichment.model,
+		timeout_ms: configRes.data.llm_enrichment.timeout_ms,
 	});
-	const logger = new JsonlRoutingDecisionLogger(config.logging.path);
+	const tierConfigReader = new FilesystemTierConfigReader({
+		projectRoot,
+		agentsDir: join(projectRoot, "agents"),
+	});
+	const logger = new JsonlRoutingDecisionLogger(configRes.data.logging.path);
 
-	// Minimal slice info: a follow-up will integrate slice-store + git-ops ports
-	// to populate spec_path and affected_files. For Phase A the description is
-	// enough to produce a signal record in the log.
-	const input = {
-		slice_id: sliceId,
-		description: `slice ${sliceId}`,
-		affected_files: [] as string[],
-	};
-
-	const res = await extractSignalsUseCase(
-		{ workflow_id: workflow, input },
-		{ extractor, enricher, configReader, logger },
+	const res = await decideUseCase(
+		{
+			workflow_id: workflow,
+			slice_id: sliceId,
+			extract_input: {
+				slice_id: sliceId,
+				description: `slice ${sliceId}`,
+				affected_files: [],
+			},
+		},
+		{ configReader, tierConfigReader, extractor, enricher, logger },
 	);
+
 	if (!isOk(res)) {
-		process.stderr.write(`routing: extraction error — ${JSON.stringify(res.error)}\n`);
+		process.stderr.write(`routing: decide error — ${JSON.stringify(res.error)}\n`);
 		return JSON.stringify({ ok: false, error: res.error });
 	}
 	if (json) {
 		return JSON.stringify({ ok: true, data: res.data });
 	}
-	return `routing: signals=${JSON.stringify(res.data.signals)} enriched=${res.data.enriched}`;
+	return res.data.decisions.map((d) => `${d.agent}  ${d.tier}`).join("\n");
 };

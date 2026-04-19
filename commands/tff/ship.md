@@ -3,6 +3,11 @@ name: tff:ship
 description: Slice PR with code review, security audit, and plannotator review
 argument-hint: "[slice-id]"
 allowed-tools: Read, Write, Bash, Grep, Glob, Agent, Bash(plannotator:*)
+routing:
+  pool:
+    - tff-spec-reviewer
+    - tff-code-reviewer
+    - tff-security-auditor
 ---
 
 <objective>
