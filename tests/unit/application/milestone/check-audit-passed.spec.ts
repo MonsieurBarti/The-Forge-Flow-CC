@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { checkAuditPassed } from "../../../../src/application/milestone/check-audit-passed.js";
-import type { MilestoneAuditRecord, MilestoneAuditStore } from "../../../../src/domain/ports/milestone-audit-store.port.js";
+import type {
+	MilestoneAuditRecord,
+	MilestoneAuditStore,
+} from "../../../../src/domain/ports/milestone-audit-store.port.js";
 
 const makeStore = (record: MilestoneAuditRecord | null): MilestoneAuditStore =>
 	({ getLatestAudit: () => ({ ok: true, data: record }) }) as unknown as MilestoneAuditStore;
