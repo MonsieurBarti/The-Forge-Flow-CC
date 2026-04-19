@@ -5,7 +5,7 @@ import { isOk } from "../../domain/result.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { cleanupTmps, withTransaction } from "../../infrastructure/persistence/with-transaction.js";
+import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
 import { milestoneDir as milestoneDirPath } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
@@ -60,19 +60,24 @@ export const milestoneCreateCmd = async (args: string[]): Promise<string> => {
 		stagedTmps.push(reqTmpAbs);
 
 		// Run DB insert + staged rename inside withTransaction.
-		const txResult = await withTransaction(db, () => {
-			const milestoneResult = milestoneStore.createMilestone({ number, name });
-			if (!milestoneResult.ok) {
-				throw new Error(`${milestoneResult.error.code}: ${milestoneResult.error.message}`);
-			}
-			return {
-				data: { milestone: milestoneResult.data },
-				tmpRenames: [[reqTmpAbs, reqFinalAbs] as [string, string]],
-			};
-		});
+		// Pass stagedTmps so the helper can auto-clean on rollback.
+		const txResult = await withTransaction(
+			db,
+			() => {
+				const milestoneResult = milestoneStore.createMilestone({ number, name });
+				if (!milestoneResult.ok) {
+					throw new Error(`${milestoneResult.error.code}: ${milestoneResult.error.message}`);
+				}
+				return {
+					data: { milestone: milestoneResult.data },
+					tmpRenames: [[reqTmpAbs, reqFinalAbs] as [string, string]],
+				};
+			},
+			stagedTmps,
+		);
 
 		if (!txResult.ok) {
-			cleanupTmps(stagedTmps);
+			// withTransaction already unlinked stagedTmps.
 			return JSON.stringify({ ok: false, error: txResult.error });
 		}
 

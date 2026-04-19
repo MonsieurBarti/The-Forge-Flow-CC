@@ -39,7 +39,7 @@ describe("withTransaction", () => {
 		adapter.close();
 	});
 
-	it("rolls back DB + unlinks staged tmps when body throws", async () => {
+	it("rolls back DB + auto-unlinks preStagedTmps when body throws", async () => {
 		const adapter = setupAdapter();
 		adapter.saveProject({ name: "before", vision: "v" });
 		const tmpPath = join(tmp, "bar.txt.tmp");
@@ -49,19 +49,38 @@ describe("withTransaction", () => {
 		const result = await withTransaction(adapter, () => {
 			adapter.saveProject({ name: "during", vision: "v" });
 			throw new Error("boom");
-		});
+		}, [tmpPath]);
 
 		expect(result.ok).toBe(false);
 		if (!result.ok) expect(result.error.code).toBe("TRANSACTION_ROLLBACK");
-		// Note: helper's own cleanup is best-effort on throw; the tmp may still exist
-		// if the body threw before returning tmpRenames. The REQUIRED invariant is
-		// that the final path does NOT exist.
+		// Helper now auto-unlinks preStagedTmps on throw.
+		expect(existsSync(tmpPath)).toBe(false);
 		expect(existsSync(finalPath)).toBe(false);
 		const p = adapter.getProject();
 		if (p.ok && p.data) expect(p.data.name).toBe("before");
 		adapter.close();
-		// Caller-level cleanup of the staged tmp:
-		if (existsSync(tmpPath)) rmSync(tmpPath);
+	});
+
+	it("tolerates missing preStagedTmps during rollback cleanup", async () => {
+		const adapter = setupAdapter();
+		const nonexistent = join(tmp, "ghost.tmp");
+
+		const result = await withTransaction(adapter, () => {
+			throw new Error("boom");
+		}, [nonexistent]);
+
+		expect(result.ok).toBe(false);
+		if (!result.ok) expect(result.error.code).toBe("TRANSACTION_ROLLBACK");
+		adapter.close();
+	});
+
+	it("defaults preStagedTmps to empty array (backward compatible)", async () => {
+		const adapter = setupAdapter();
+		const result = await withTransaction(adapter, () => {
+			throw new Error("boom");
+		});
+		expect(result.ok).toBe(false);
+		adapter.close();
 	});
 
 	it("emits PartialSuccessWarning + keeps DB committed when rename fails", async () => {

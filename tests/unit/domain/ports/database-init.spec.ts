@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { DatabaseInit } from "../../../../src/domain/ports/database-init.port.js";
+import { Ok } from "../../../../src/domain/result.js";
 
 describe("DatabaseInit port", () => {
-	it("includes a transaction method in the interface", () => {
-		const stub: Pick<DatabaseInit, "transaction"> = {
-			transaction: <T>(fn: () => T): T => fn(),
+	it("exposes init() returning a Result", () => {
+		const stub: DatabaseInit = {
+			init: () => Ok(undefined),
 		};
-		expect(stub.transaction(() => 42)).toBe(42);
+		const r = stub.init();
+		expect(r.ok).toBe(true);
 	});
 });

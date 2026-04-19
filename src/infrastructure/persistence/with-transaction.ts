@@ -2,7 +2,7 @@ import { renameSync, unlinkSync } from "node:fs";
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { partialSuccessWarning } from "../../domain/errors/partial-success.warning.js";
 import { transactionRollbackError } from "../../domain/errors/transaction-rollback.error.js";
-import type { DatabaseInit } from "../../domain/ports/database-init.port.js";
+import type { TransactionRunner } from "../../domain/ports/transaction-runner.port.js";
 
 export interface TxOutcome<T> {
 	data: T;
@@ -26,24 +26,29 @@ export type WithTxResult<T> = WithTxSuccess<T> | WithTxFailure;
  * Runs `body` inside a SQLite transaction. The body must be synchronous.
  * Stage FS writes to *.tmp paths BEFORE calling this helper; return their
  * [tmp, final] rename pairs from the body. On commit, the helper renames
- * each pair. On throw, the DB rolls back and the helper unlinks the tmps.
+ * each pair. On throw, the DB rolls back and the helper unlinks any tmps
+ * listed in `preStagedTmps` (best-effort) so callers don't leak artifacts.
+ *
+ * `preStagedTmps` lets callers hand off cleanup responsibility: list every
+ * *.tmp path created before entering the tx, and the helper will unlink them
+ * on the error path (the body threw before returning a tmpRenames outcome).
  *
  * Post-commit rename failures produce a PartialSuccessWarning in `warnings`;
  * the DB tx is already durable.
  */
 export const withTransaction = async <T>(
-	db: DatabaseInit,
+	runner: TransactionRunner,
 	body: () => TxOutcome<T>,
+	preStagedTmps: string[] = [],
 ): Promise<WithTxResult<T>> => {
 	let outcome: TxOutcome<T>;
 	try {
-		outcome = db.transaction(body);
+		outcome = runner.transaction(body);
 	} catch (e) {
-		// On throw, the DB transaction rolled back. We must unlink any *.tmp
-		// paths the body staged before crashing. Since the body threw before
-		// returning tmpRenames, the caller is responsible for tracking tmps
-		// staged pre-tx and cleaning them on this error path. The helper can
-		// only report the rollback.
+		// On throw, the DB transaction rolled back. Unlink any *.tmp paths the
+		// caller told us about (they were staged before entering the tx and are
+		// now orphaned). Best-effort: we swallow unlink errors.
+		cleanupTmps(preStagedTmps);
 		return { ok: false, error: transactionRollbackError(e) };
 	}
 

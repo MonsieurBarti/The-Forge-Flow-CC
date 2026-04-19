@@ -21,6 +21,7 @@ import type {
 } from "../../domain/ports/slice-dependency-store.port.js";
 import type { SliceStore } from "../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../domain/ports/task-store.port.js";
+import type { TransactionRunner } from "../../domain/ports/transaction-runner.port.js";
 import { Err, Ok, type Result } from "../../domain/result.js";
 import type { Dependency } from "../../domain/value-objects/dependency.js";
 import type { MilestoneProps } from "../../domain/value-objects/milestone-props.js";
@@ -34,9 +35,16 @@ import type { TaskProps } from "../../domain/value-objects/task-props.js";
 import type { TaskUpdateProps } from "../../domain/value-objects/task-update-props.js";
 import type { WorkflowSession } from "../../domain/value-objects/workflow-session.js";
 
+/**
+ * Test-only in-memory implementation of the state ports. NOT intended for
+ * production: `transaction()` uses `structuredClone` to snapshot every
+ * top-level field on each call, which is fine for tests but quadratic for
+ * real workloads. Use `SQLiteStateAdapter` for any persistent use.
+ */
 export class InMemoryStateAdapter
 	implements
 		DatabaseInit,
+		TransactionRunner,
 		ProjectStore,
 		MilestoneStore,
 		SliceStore,

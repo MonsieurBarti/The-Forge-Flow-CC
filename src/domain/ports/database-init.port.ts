@@ -1,14 +1,12 @@
 import type { DomainError } from "../errors/domain-error.js";
 import type { Result } from "../result.js";
 
+/**
+ * Database initialization port. Narrow by design: only `init()`.
+ * Transaction semantics live on a separate `TransactionRunner` port so that
+ * consumers who only need a unit-of-work do not also get the initialization
+ * surface (interface segregation).
+ */
 export interface DatabaseInit {
 	init(): Result<void, DomainError>;
-
-	/**
-	 * Run `fn` inside a synchronous SQLite transaction. Auto-commits on return,
-	 * auto-rolls back if `fn` throws (better-sqlite3 semantics).
-	 * The function body must be synchronous; async FS work must be staged before
-	 * the transaction and finalized after (see withTransaction helper).
-	 */
-	transaction<T>(fn: () => T): T;
 }

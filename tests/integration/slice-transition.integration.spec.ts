@@ -5,6 +5,7 @@ import type { MilestoneStore } from "../../src/domain/ports/milestone-store.port
 import type { ProjectStore } from "../../src/domain/ports/project-store.port.js";
 import type { SliceStore } from "../../src/domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../src/domain/ports/task-store.port.js";
+import type { TransactionRunner } from "../../src/domain/ports/transaction-runner.port.js";
 
 // All mock variables must be defined in vi.hoisted to be available during vi.mock hoisting
 const {
@@ -32,12 +33,12 @@ const {
 		getProject: vi.fn(),
 	};
 
-	const mockDb: Partial<DatabaseInit> = {
+	const mockDb: Partial<DatabaseInit> & TransactionRunner = {
 		transaction: vi.fn(),
 	};
 
 	const mockClosableStateStores = {
-		db: mockDb as DatabaseInit,
+		db: mockDb as DatabaseInit & TransactionRunner,
 		sliceStore: mockSliceStore as SliceStore,
 		milestoneStore: mockMilestoneStore as MilestoneStore,
 		taskStore: mockTaskStore as TaskStore,

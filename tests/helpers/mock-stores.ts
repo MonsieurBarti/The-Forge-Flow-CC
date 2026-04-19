@@ -8,6 +8,7 @@ import type { SessionStore } from "../../src/domain/ports/session-store.port.js"
 import type { SliceDependencyStore } from "../../src/domain/ports/slice-dependency-store.port.js";
 import type { SliceStore } from "../../src/domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../src/domain/ports/task-store.port.js";
+import type { TransactionRunner } from "../../src/domain/ports/transaction-runner.port.js";
 import type { Result } from "../../src/domain/result.js";
 
 /**
@@ -137,11 +138,13 @@ export function createMockJournalRepository(): Partial<JournalRepository> {
 }
 
 /**
- * Create a minimal mock DatabaseInit for testing.
+ * Create a minimal mock DatabaseInit + TransactionRunner for testing.
+ * Includes a pass-through transaction() so withTransaction() works against it.
  */
-export function createMockDatabaseInit(): Partial<DatabaseInit> {
+export function createMockDatabaseInit(): Partial<DatabaseInit> & TransactionRunner {
 	return {
 		init: vi.fn(),
+		transaction: <T>(fn: () => T): T => fn(),
 	};
 }
 
@@ -154,7 +157,7 @@ import type { StateStores } from "../../src/infrastructure/adapters/sqlite/creat
  */
 export function createMockStateStores(): StateStores {
 	return {
-		db: createMockDatabaseInit() as DatabaseInit,
+		db: createMockDatabaseInit() as DatabaseInit & TransactionRunner,
 		projectStore: createMockProjectStore() as ProjectStore,
 		milestoneStore: createMockMilestoneStore() as MilestoneStore,
 		sliceStore: createMockSliceStore() as SliceStore,

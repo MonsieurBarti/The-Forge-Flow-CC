@@ -5,7 +5,7 @@ import { milestoneLabel, sliceLabel } from "../../domain/helpers/branch-naming.j
 import { isOk } from "../../domain/result.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { cleanupTmps, withTransaction } from "../../infrastructure/persistence/with-transaction.js";
+import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
 import { sliceDir as sliceDirPath } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
@@ -115,23 +115,28 @@ export const sliceCreateCmd = async (args: string[]): Promise<string> => {
 		stagedTmps.push(planTmpAbs);
 
 		// Run DB insert + staged rename inside withTransaction.
-		const txResult = await withTransaction(db, () => {
-			const sliceResult = sliceStore.createSlice({
-				milestoneId,
-				number: sliceNumber,
-				title,
-			});
-			if (!sliceResult.ok) {
-				throw new Error(`${sliceResult.error.code}: ${sliceResult.error.message}`);
-			}
-			return {
-				data: { slice: sliceResult.data },
-				tmpRenames: [[planTmpAbs, planFinalAbs] as [string, string]],
-			};
-		});
+		// Pass stagedTmps so the helper can auto-clean on rollback.
+		const txResult = await withTransaction(
+			db,
+			() => {
+				const sliceResult = sliceStore.createSlice({
+					milestoneId,
+					number: sliceNumber,
+					title,
+				});
+				if (!sliceResult.ok) {
+					throw new Error(`${sliceResult.error.code}: ${sliceResult.error.message}`);
+				}
+				return {
+					data: { slice: sliceResult.data },
+					tmpRenames: [[planTmpAbs, planFinalAbs] as [string, string]],
+				};
+			},
+			stagedTmps,
+		);
 
 		if (!txResult.ok) {
-			cleanupTmps(stagedTmps);
+			// withTransaction already unlinked stagedTmps.
 			return JSON.stringify({ ok: false, error: txResult.error });
 		}
 

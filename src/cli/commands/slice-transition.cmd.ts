@@ -14,7 +14,7 @@ import {
 } from "../../domain/value-objects/slice-status.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { cleanupTmps, withTransaction } from "../../infrastructure/persistence/with-transaction.js";
+import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
 import { STATE_FILE } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { resolveSliceId } from "../utils/resolve-id.js";
@@ -203,33 +203,37 @@ export const sliceTransitionCmd = async (args: string[]): Promise<string> => {
 		let preconditionRollbackError: DomainError | undefined;
 
 		// Run DB mutation + staged renames inside withTransaction.
-		const txResult = await withTransaction(db, () => {
-			// TOCTOU re-check: verify the slice is still in the expected status.
-			// This defends against a writer racing between the outer read and the
-			// tx opening. If the status changed, throw so the tx rolls back.
-			const recheck = checkSliceStatus(sliceStore, sliceId, currentSlice.status);
-			if (!recheck.ok) {
-				const err = preconditionViolationError(recheck.violations);
-				preconditionRollbackError = err;
-				throw new PreconditionViolationTxError(err);
-			}
+		// Pass stagedTmps so the helper can auto-clean on rollback.
+		const txResult = await withTransaction(
+			db,
+			() => {
+				// TOCTOU re-check: verify the slice is still in the expected status.
+				// This defends against a writer racing between the outer read and the
+				// tx opening. If the status changed, throw so the tx rolls back.
+				const recheck = checkSliceStatus(sliceStore, sliceId, currentSlice.status);
+				if (!recheck.ok) {
+					const err = preconditionViolationError(recheck.violations);
+					preconditionRollbackError = err;
+					throw new PreconditionViolationTxError(err);
+				}
 
-			const transitionResult = sliceStore.transitionSlice(sliceId, targetStatus as SliceStatus);
-			if (!transitionResult.ok) {
-				throw new Error(`${transitionResult.error.code}: ${transitionResult.error.message}`);
-			}
-			return {
-				data: { status: targetStatus },
-				tmpRenames: [
-					[stateTmpAbs, stateFinalAbs] as [string, string],
-					[ckptTmpAbs, ckptFinalAbs] as [string, string],
-				],
-			};
-		});
+				const transitionResult = sliceStore.transitionSlice(sliceId, targetStatus as SliceStatus);
+				if (!transitionResult.ok) {
+					throw new Error(`${transitionResult.error.code}: ${transitionResult.error.message}`);
+				}
+				return {
+					data: { status: targetStatus },
+					tmpRenames: [
+						[stateTmpAbs, stateFinalAbs] as [string, string],
+						[ckptTmpAbs, ckptFinalAbs] as [string, string],
+					],
+				};
+			},
+			stagedTmps,
+		);
 
 		if (!txResult.ok) {
-			// Tx rolled back. Clean up whatever tmps we staged pre-tx.
-			cleanupTmps(stagedTmps);
+			// Tx rolled back; withTransaction already unlinked stagedTmps.
 			// If the rollback was triggered by a TOCTOU precondition re-check,
 			// re-surface the original PRECONDITION_VIOLATION error directly rather
 			// than the generic TRANSACTION_ROLLBACK wrapper.
