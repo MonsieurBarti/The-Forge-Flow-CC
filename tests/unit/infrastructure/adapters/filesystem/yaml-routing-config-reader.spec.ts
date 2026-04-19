@@ -56,7 +56,6 @@ describe("YamlRoutingConfigReader", () => {
 		if (!isOk(res)) return;
 		expect(res.data.enabled).toBe(false);
 	});
-
 });
 
 describe("YamlRoutingConfigReader.readPool", () => {
@@ -101,10 +100,7 @@ describe("YamlRoutingConfigReader.readPool", () => {
 		if (!isOk(res)) return;
 		expect(res.data.workflow_id).toBe("tff:ship");
 		expect(res.data.default_agent).toBe("tff-spec-reviewer");
-		expect(res.data.agents.map((a) => a.id)).toEqual([
-			"tff-spec-reviewer",
-			"tff-code-reviewer",
-		]);
+		expect(res.data.agents.map((a) => a.id)).toEqual(["tff-spec-reviewer", "tff-code-reviewer"]);
 		expect(res.data.agents[1].handles).toEqual(["standard_review", "code_quality"]);
 	});
 
@@ -121,10 +117,7 @@ describe("YamlRoutingConfigReader.readPool", () => {
 		const res = await reader.readPool("tff:ship");
 		expect(isOk(res)).toBe(true);
 		if (!isOk(res)) return;
-		expect(res.data.agents.map((a) => a.id)).toEqual([
-			"tff-code-reviewer",
-			"tff-security-auditor",
-		]);
+		expect(res.data.agents.map((a) => a.id)).toEqual(["tff-code-reviewer", "tff-security-auditor"]);
 	});
 
 	it("returns ROUTING_CONFIG error for unknown agent id", async () => {
