@@ -2,8 +2,8 @@ import { appendFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { DebugJoinOutcomeSource } from "../../../../../src/infrastructure/adapters/jsonl/debug-join-outcome-source.js";
 import { RoutingOutcomeSchema } from "../../../../../src/domain/value-objects/routing-outcome.js";
+import { DebugJoinOutcomeSource } from "../../../../../src/infrastructure/adapters/jsonl/debug-join-outcome-source.js";
 
 const writeLine = async (path: string, obj: unknown) => {
 	await appendFile(path, `${JSON.stringify(obj)}\n`, "utf8");
