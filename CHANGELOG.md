@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.7](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.6...tff-cc-v0.9.7) (2026-04-19)
+
+
+### Features
+
+* **routing:** Phase B — model tier selection ([#112](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/112)) ([edc1277](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/edc1277b98c12afb08516a946d0449b0fb4438c3))
+
+
+### Bug Fixes
+
+* **cli:** accept 'completing' status in slice:transition ([#115](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/115)) ([d62187b](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/d62187b29c269fbc6ce3c1da2fdbe1cdac31e30f))
+* **tests:** isolate TFF_CC_HOME per worker to stop real-home leaks ([#114](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/114)) ([a6c7fc4](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/a6c7fc4f14b48428915b74d5c63e1d3a37613842))
+
 ## [0.9.6](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.5...tff-cc-v0.9.6) (2026-04-18)
 
 
