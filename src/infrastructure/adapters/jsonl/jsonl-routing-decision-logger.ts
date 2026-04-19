@@ -7,6 +7,7 @@ import type {
 	RoutingLogEntry,
 } from "../../../domain/ports/routing-decision-logger.port.js";
 import { Err, Ok, type Result } from "../../../domain/result.js";
+import { warnIfOversize } from "./warn-if-oversize.js";
 import { withAppendLock } from "./with-append-lock.js";
 
 export class JsonlRoutingDecisionLogger implements RoutingDecisionLogger {
@@ -18,6 +19,7 @@ export class JsonlRoutingDecisionLogger implements RoutingDecisionLogger {
 			await withAppendLock(this.path, async () => {
 				await appendFile(this.path, `${JSON.stringify(entry)}\n`, "utf8");
 			});
+			await warnIfOversize(this.path);
 			return Ok(undefined);
 		} catch (err) {
 			return Err(
