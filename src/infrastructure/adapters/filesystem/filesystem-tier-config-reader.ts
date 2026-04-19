@@ -15,6 +15,8 @@ interface FilesystemTierConfigReaderOpts {
 	agentsDir: string;
 }
 
+const DEFAULT_AGENT_MIN_TIER: ModelTier = "haiku";
+
 export class FilesystemTierConfigReader implements TierConfigReader {
 	constructor(private readonly opts: FilesystemTierConfigReaderOpts) {}
 
@@ -36,9 +38,9 @@ export class FilesystemTierConfigReader implements TierConfigReader {
 			?.routing?.tier_policy;
 		if (!policy) return Ok(DEFAULT_TIER_POLICY);
 		return Ok({
-			low: ModelTierSchema.catch("haiku").parse(policy.low),
-			medium: ModelTierSchema.catch("sonnet").parse(policy.medium),
-			high: ModelTierSchema.catch("opus").parse(policy.high),
+			low: ModelTierSchema.catch(DEFAULT_TIER_POLICY.low).parse(policy.low),
+			medium: ModelTierSchema.catch(DEFAULT_TIER_POLICY.medium).parse(policy.medium),
+			high: ModelTierSchema.catch(DEFAULT_TIER_POLICY.high).parse(policy.high),
 		});
 	}
 
@@ -48,18 +50,18 @@ export class FilesystemTierConfigReader implements TierConfigReader {
 		try {
 			raw = await readFile(path, "utf8");
 		} catch {
-			return Ok("haiku");
+			return Ok(DEFAULT_AGENT_MIN_TIER);
 		}
 		const match = raw.match(/^---\n([\s\S]*?)\n---/);
-		if (!match) return Ok("haiku");
+		if (!match) return Ok(DEFAULT_AGENT_MIN_TIER);
 		let frontmatter: unknown;
 		try {
 			frontmatter = parseYaml(match[1]);
 		} catch {
-			return Ok("haiku");
+			return Ok(DEFAULT_AGENT_MIN_TIER);
 		}
 		const minTier = (frontmatter as { routing?: { min_tier?: string } } | null)?.routing?.min_tier;
-		if (!minTier) return Ok("haiku");
-		return Ok(ModelTierSchema.catch("haiku").parse(minTier));
+		if (!minTier) return Ok(DEFAULT_AGENT_MIN_TIER);
+		return Ok(ModelTierSchema.catch(DEFAULT_AGENT_MIN_TIER).parse(minTier));
 	}
 }
