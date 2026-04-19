@@ -1,16 +1,15 @@
-import { createReadStream } from "node:fs";
-import { access, mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { createInterface } from "node:readline";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import { calibrateUseCase } from "../../application/routing/calibrate.js";
 import { isOk } from "../../domain/result.js";
-import type { RoutingDecision } from "../../domain/value-objects/routing-decision.js";
 import { YamlRoutingConfigReader } from "../../infrastructure/adapters/filesystem/yaml-routing-config-reader.js";
 import { DebugJoinOutcomeSource } from "../../infrastructure/adapters/jsonl/debug-join-outcome-source.js";
+import { JsonlRoutingDecisionReader } from "../../infrastructure/adapters/jsonl/jsonl-routing-decision-reader.js";
 import { JsonlRoutingOutcomeReader } from "../../infrastructure/adapters/jsonl/routing-outcome-jsonl-reader.js";
 import { JsonlRoutingOutcomeWriter } from "../../infrastructure/adapters/jsonl/routing-outcome-jsonl-writer.js";
 import { renderCalibrationReport } from "../../infrastructure/adapters/markdown/calibration-report-renderer.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
+import { resolveRoutingPaths } from "../utils/routing-paths.js";
 
 export const routingCalibrateSchema: CommandSchema = {
 	name: "routing:calibrate",
@@ -27,31 +26,6 @@ export const routingCalibrateSchema: CommandSchema = {
 	examples: ["routing:calibrate", "routing:calibrate --n-min 3 --implicit-weight 0.3"],
 };
 
-async function loadDecisions(path: string): Promise<RoutingDecision[]> {
-	try {
-		await access(path);
-	} catch {
-		return [];
-	}
-	const out: RoutingDecision[] = [];
-	const rl = createInterface({
-		input: createReadStream(path, { encoding: "utf8" }),
-		crlfDelay: Number.POSITIVE_INFINITY,
-	});
-	for await (const line of rl) {
-		if (!line.trim()) continue;
-		try {
-			const entry = JSON.parse(line);
-			if (entry.kind === "route" && entry.decision) out.push(entry.decision);
-		} catch (err) {
-			process.stderr.write(
-				`routing: skipped corrupt line in ${path}: ${err instanceof Error ? err.message : String(err)}\n`,
-			);
-		}
-	}
-	return out;
-}
-
 export const routingCalibrateCmd = async (args: string[]): Promise<string> => {
 	const parsed = parseFlags(args, routingCalibrateSchema);
 	if (!parsed.ok) return JSON.stringify(parsed);
@@ -65,16 +39,16 @@ export const routingCalibrateCmd = async (args: string[]): Promise<string> => {
 	const configRes = await configReader.readConfig();
 	if (!isOk(configRes)) return JSON.stringify({ ok: false, error: configRes.error });
 
-	const routingPath = configRes.data.logging.path.startsWith("/")
-		? configRes.data.logging.path
-		: join(projectRoot, configRes.data.logging.path);
-	const outcomesPath = join(dirname(routingPath), "routing-outcomes.jsonl");
-	const reportPath = join(dirname(routingPath), "routing-calibration.md");
+	const { routingPath, outcomesPath, reportPath } = resolveRoutingPaths(
+		projectRoot,
+		configRes.data.logging.path,
+	);
 
 	const n_min = nMinFlag ?? configRes.data.calibration?.n_min ?? 5;
 	const implicit_weight = weightFlag ?? configRes.data.calibration?.implicit_weight ?? 0.5;
 
-	const decisions = await loadDecisions(routingPath);
+	const decisionReader = new JsonlRoutingDecisionReader(routingPath);
+	const decisions = await decisionReader.readDecisions();
 	const implicitSource = new DebugJoinOutcomeSource(routingPath);
 	const outcomesSource = new JsonlRoutingOutcomeReader(outcomesPath);
 	const writer = new JsonlRoutingOutcomeWriter(outcomesPath);

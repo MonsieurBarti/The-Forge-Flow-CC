@@ -1,6 +1,7 @@
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { preconditionViolationError } from "../../domain/errors/precondition-violation.error.js";
 import type { OutcomeWriter } from "../../domain/ports/outcome-writer.port.js";
+import type { KnownDecision } from "../../domain/ports/routing-decision-reader.port.js";
 import { Err, Ok, type Result } from "../../domain/result.js";
 import {
 	type OutcomeDimension,
@@ -8,11 +9,7 @@ import {
 	RoutingOutcomeSchema,
 } from "../../domain/value-objects/routing-outcome.js";
 
-export interface KnownDecision {
-	decision_id: string;
-	slice_id: string;
-	workflow_id: string;
-}
+export type { KnownDecision };
 
 export interface RecordOutcomeInput {
 	decision_id: string;

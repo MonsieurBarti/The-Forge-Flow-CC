@@ -1,16 +1,16 @@
 import { randomUUID } from "node:crypto";
-import { createReadStream } from "node:fs";
-import { access } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { createInterface } from "node:readline";
 import {
 	type KnownDecision,
 	recordOutcomeUseCase,
 } from "../../application/routing/record-outcome.js";
 import { isOk } from "../../domain/result.js";
 import { YamlRoutingConfigReader } from "../../infrastructure/adapters/filesystem/yaml-routing-config-reader.js";
+import { JsonlRoutingDecisionReader } from "../../infrastructure/adapters/jsonl/jsonl-routing-decision-reader.js";
 import { JsonlRoutingOutcomeWriter } from "../../infrastructure/adapters/jsonl/routing-outcome-jsonl-writer.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
+import { resolveRoutingPaths } from "../utils/routing-paths.js";
+
+export type { KnownDecision };
 
 export const routingOutcomeSchema: CommandSchema = {
 	name: "routing:outcome",
@@ -43,37 +43,6 @@ export const routingOutcomeSchema: CommandSchema = {
 	],
 };
 
-async function loadKnownDecisions(path: string): Promise<KnownDecision[]> {
-	try {
-		await access(path);
-	} catch {
-		return [];
-	}
-	const out: KnownDecision[] = [];
-	const rl = createInterface({
-		input: createReadStream(path, { encoding: "utf8" }),
-		crlfDelay: Number.POSITIVE_INFINITY,
-	});
-	for await (const line of rl) {
-		if (!line.trim()) continue;
-		try {
-			const entry = JSON.parse(line);
-			if (entry.kind === "route" && entry.decision?.decision_id) {
-				out.push({
-					decision_id: entry.decision.decision_id,
-					slice_id: entry.slice_id,
-					workflow_id: entry.workflow_id,
-				});
-			}
-		} catch (err) {
-			process.stderr.write(
-				`routing: skipped corrupt line in ${path}: ${err instanceof Error ? err.message : String(err)}\n`,
-			);
-		}
-	}
-	return out;
-}
-
 export const routingOutcomeCmd = async (args: string[]): Promise<string> => {
 	const parsed = parseFlags(args, routingOutcomeSchema);
 	if (!parsed.ok) return JSON.stringify(parsed);
@@ -89,12 +58,13 @@ export const routingOutcomeCmd = async (args: string[]): Promise<string> => {
 	const configRes = await configReader.readConfig();
 	if (!isOk(configRes)) return JSON.stringify({ ok: false, error: configRes.error });
 
-	const routingPath = configRes.data.logging.path.startsWith("/")
-		? configRes.data.logging.path
-		: join(projectRoot, configRes.data.logging.path);
-	const outcomesPath = join(dirname(routingPath), "routing-outcomes.jsonl");
+	const { routingPath, outcomesPath } = resolveRoutingPaths(
+		projectRoot,
+		configRes.data.logging.path,
+	);
 
-	const knownDecisions = await loadKnownDecisions(routingPath);
+	const decisionReader = new JsonlRoutingDecisionReader(routingPath);
+	const knownDecisions = await decisionReader.readKnownDecisions();
 	const writer = new JsonlRoutingOutcomeWriter(outcomesPath);
 
 	const res = await recordOutcomeUseCase(

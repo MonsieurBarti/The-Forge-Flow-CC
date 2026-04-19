@@ -1,0 +1,58 @@
+import { createReadStream } from "node:fs";
+import { access } from "node:fs/promises";
+import { createInterface } from "node:readline";
+import type {
+	KnownDecision,
+	RoutingDecisionReader,
+} from "../../../domain/ports/routing-decision-reader.port.js";
+import type { RoutingDecision } from "../../../domain/value-objects/routing-decision.js";
+
+export class JsonlRoutingDecisionReader implements RoutingDecisionReader {
+	constructor(private readonly path: string) {}
+
+	async readKnownDecisions(): Promise<KnownDecision[]> {
+		return this.read((entry: Record<string, unknown>) => {
+			if (entry.kind !== "route") return null;
+			const decision = entry.decision as Record<string, unknown> | undefined;
+			if (!decision?.decision_id) return null;
+			return {
+				decision_id: decision.decision_id as string,
+				slice_id: entry.slice_id as string,
+				workflow_id: entry.workflow_id as string,
+			};
+		});
+	}
+
+	async readDecisions(): Promise<RoutingDecision[]> {
+		return this.read((entry: Record<string, unknown>) => {
+			if (entry.kind !== "route" || !entry.decision) return null;
+			return entry.decision as RoutingDecision;
+		});
+	}
+
+	private async read<T>(project: (entry: Record<string, unknown>) => T | null): Promise<T[]> {
+		try {
+			await access(this.path);
+		} catch {
+			return [];
+		}
+		const out: T[] = [];
+		const rl = createInterface({
+			input: createReadStream(this.path, { encoding: "utf8" }),
+			crlfDelay: Number.POSITIVE_INFINITY,
+		});
+		for await (const line of rl) {
+			if (!line.trim()) continue;
+			try {
+				const entry = JSON.parse(line) as Record<string, unknown>;
+				const projected = project(entry);
+				if (projected !== null) out.push(projected);
+			} catch (err) {
+				process.stderr.write(
+					`routing: skipped corrupt line in ${this.path}: ${err instanceof Error ? err.message : String(err)}\n`,
+				);
+			}
+		}
+		return out;
+	}
+}
