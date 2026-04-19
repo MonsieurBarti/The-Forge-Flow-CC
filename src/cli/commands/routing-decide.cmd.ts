@@ -69,7 +69,7 @@ export const routingDecideCmd = async (args: string[]): Promise<string> => {
 	}
 	if (!configRes.data.enabled) {
 		process.stderr.write("routing: disabled; skipping decide\n");
-		return JSON.stringify({ ok: true, data: { skipped: true } });
+		return JSON.stringify({ ok: true, data: { skipped: true, reason: "routing_disabled" } });
 	}
 
 	const extractor = new FilesystemSignalExtractor();

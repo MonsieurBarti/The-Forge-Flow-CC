@@ -3,6 +3,7 @@ import { isOk } from "../../domain/result.js";
 import { ReviewTypeSchema } from "../../domain/value-objects/review-record.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
+import { resolveSliceId } from "../utils/resolve-id.js";
 
 export const reviewRecordSchema: CommandSchema = {
 	name: "review:record",
@@ -74,10 +75,13 @@ export const reviewRecordCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 
-	const { reviewStore } = createClosableStateStoresUnchecked();
+	const { reviewStore, sliceStore } = createClosableStateStoresUnchecked();
+	const resolved = resolveSliceId(sliceId, sliceStore);
+	if (!resolved.ok) return JSON.stringify({ ok: false, error: resolved.error });
+
 	const result = await recordReviewUseCase(
 		{
-			sliceId,
+			sliceId: resolved.data,
 			reviewer: agent,
 			verdict: verdict as "approved" | "changes_requested",
 			type: parsedType.data,

@@ -1,14 +1,17 @@
 import { join } from "node:path";
 import { recoverOrphans } from "../application/recovery/recover-orphans.js";
+import { branchGuardCheckCmd } from "./commands/branch-guard-check.cmd.js";
 import { checkpointLoadCmd } from "./commands/checkpoint-load.cmd.js";
 import { checkpointSaveCmd } from "./commands/checkpoint-save.cmd.js";
 import { claimCheckStaleCmd } from "./commands/claim-check-stale.cmd.js";
 import { composeDetectCmd } from "./commands/compose-detect.cmd.js";
 import { depAddCmd } from "./commands/dep-add.cmd.js";
 import { directEditGuardCmd } from "./commands/direct-edit-guard.cmd.js";
+import { milestoneAuditStatusCmd } from "./commands/milestone-audit-status.cmd.js";
 import { milestoneCloseCmd } from "./commands/milestone-close.cmd.js";
 import { milestoneCreateCmd } from "./commands/milestone-create.cmd.js";
 import { milestoneListCmd } from "./commands/milestone-list.cmd.js";
+import { milestoneRecordAuditCmd } from "./commands/milestone-record-audit.cmd.js";
 import { observeRecordCmd } from "./commands/observe-record.cmd.js";
 import { patternsAggregateCmd } from "./commands/patterns-aggregate.cmd.js";
 import { patternsExtractCmd } from "./commands/patterns-extract.cmd.js";
@@ -45,22 +48,26 @@ import { worktreeDeleteCmd } from "./commands/worktree-delete.cmd.js";
 import { worktreeListCmd } from "./commands/worktree-list.cmd.js";
 import type { CommandSchema } from "./utils/flag-parser.js";
 import { withBranchGuard } from "./utils/with-branch-guard.js";
+import { withBranchGuards } from "./utils/with-branch-guards.js";
 
 type CommandFn = (args: string[]) => Promise<string>;
 
 const commands: Record<string, CommandFn> = {
+	"branch-guard:check": branchGuardCheckCmd(),
 	"project:init": projectInitCmd,
 	"project:get": projectGetCmd,
 	"milestone:create": withBranchGuard("milestone:create", milestoneCreateCmd),
 	"milestone:list": milestoneListCmd,
 	"milestone:close": withBranchGuard("milestone:close", milestoneCloseCmd),
+	"milestone:record-audit": withBranchGuard("milestone:record-audit", milestoneRecordAuditCmd),
+	"milestone:audit-status": withBranchGuard("milestone:audit-status", milestoneAuditStatusCmd),
 	"slice:create": withBranchGuard("slice:create", sliceCreateCmd),
 	"slice:list": sliceListCmd,
-	"slice:transition": withBranchGuard("slice:transition", sliceTransitionCmd),
+	"slice:transition": withBranchGuards("slice:transition", sliceTransitionCmd),
 	"slice:close": withBranchGuard("slice:close", sliceCloseCmd),
 	"slice:classify": sliceClassifyCmd,
-	"task:claim": withBranchGuard("task:claim", taskClaimCmd),
-	"task:close": withBranchGuard("task:close", taskCloseCmd),
+	"task:claim": withBranchGuards("task:claim", taskClaimCmd),
+	"task:close": withBranchGuards("task:close", taskCloseCmd),
 	"task:ready": taskReadyCmd,
 	"dep:add": withBranchGuard("dep:add", depAddCmd),
 	"direct-edit:guard": directEditGuardCmd,
@@ -72,7 +79,7 @@ const commands: Record<string, CommandFn> = {
 	"worktree:delete": withBranchGuard("worktree:delete", worktreeDeleteCmd),
 	"worktree:list": worktreeListCmd,
 	"review:check-fresh": reviewCheckFreshCmd,
-	"review:record": withBranchGuard("review:record", reviewRecordCmd),
+	"review:record": withBranchGuards("review:record", reviewRecordCmd),
 	"routing:decide": withBranchGuard("routing:decide", routingDecideCmd),
 	"routing:event": withBranchGuard("routing:event", routingEventCmd),
 	"routing:outcome": withBranchGuard("routing:outcome", routingOutcomeCmd),

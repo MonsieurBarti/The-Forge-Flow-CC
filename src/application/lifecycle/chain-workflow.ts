@@ -51,3 +51,20 @@ export function shouldAutoTransition(
 	if (HUMAN_GATES.has(currentStatus)) return false;
 	return WORKFLOW_CHAIN[currentStatus] !== null;
 }
+
+/**
+ * Milestone-level next-step suggestion.
+ *
+ * When all slices are closed, the next step depends on whether an audit has
+ * recorded a passing verdict. Without one, the user (or orchestrator) should
+ * run `/tff:audit-milestone` first; only after a `ready` verdict should
+ * `/tff:complete-milestone` be suggested.
+ */
+export function suggestedMilestoneCommand(opts: {
+	allSlicesClosed: boolean;
+	auditVerdict: "ready" | "not_ready" | null;
+}): string | null {
+	if (!opts.allSlicesClosed) return null;
+	if (opts.auditVerdict !== "ready") return "/tff:audit-milestone";
+	return "/tff:complete-milestone";
+}

@@ -56,8 +56,7 @@ describe("SliceProps", () => {
 	});
 	it("tier is optional", () => {
 		expect(
-			SlicePropsSchema.safeParse({ milestoneId: "M01", number: 1, title: "S", tier: "F-lite" })
-				.success,
+			SlicePropsSchema.safeParse({ milestoneId: "M01", number: 1, title: "S", tier: "SS" }).success,
 		).toBe(true);
 	});
 });

@@ -66,6 +66,13 @@ export const routingOutcomeCmd = async (args: string[]): Promise<string> => {
 	const configRes = await configReader.readConfig();
 	if (!isOk(configRes)) return JSON.stringify({ ok: false, error: configRes.error });
 
+	if (!configRes.data.enabled) {
+		return JSON.stringify({
+			ok: true,
+			data: { decision, dimension, verdict, skipped: true, reason: "routing_disabled" },
+		});
+	}
+
 	const { routingPath, outcomesPath } = resolveRoutingPaths(
 		projectRoot,
 		configRes.data.logging.path,

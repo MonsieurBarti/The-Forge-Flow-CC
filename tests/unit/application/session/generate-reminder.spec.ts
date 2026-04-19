@@ -27,47 +27,47 @@ function createMockDeps(
 	const mockTaskStore: TaskStore = {
 		createTask: () => ({
 			ok: false,
-			error: { code: "NOT_IMPLEMENTED", message: "Mock" } as DomainError,
+			error: { code: "WRITE_FAILURE", message: "Mock" } satisfies DomainError,
 		}),
 		getTask: () => ({
 			ok: false,
-			error: { code: "NOT_IMPLEMENTED", message: "Mock" } as DomainError,
+			error: { code: "WRITE_FAILURE", message: "Mock" } satisfies DomainError,
 		}),
 		listTasks: () => Ok(tasks) as MockResult<Task[]>,
 		updateTask: () => ({
 			ok: false,
-			error: { code: "NOT_IMPLEMENTED", message: "Mock" } as DomainError,
+			error: { code: "WRITE_FAILURE", message: "Mock" } satisfies DomainError,
 		}),
 		claimTask: () => ({
 			ok: false,
-			error: { code: "NOT_IMPLEMENTED", message: "Mock" } as DomainError,
+			error: { code: "WRITE_FAILURE", message: "Mock" } satisfies DomainError,
 		}),
 		closeTask: () => ({
 			ok: false,
-			error: { code: "NOT_IMPLEMENTED", message: "Mock" } as DomainError,
+			error: { code: "WRITE_FAILURE", message: "Mock" } satisfies DomainError,
 		}),
 		listReadyTasks: () => ({
 			ok: false,
-			error: { code: "NOT_IMPLEMENTED", message: "Mock" } as DomainError,
+			error: { code: "WRITE_FAILURE", message: "Mock" } satisfies DomainError,
 		}),
 		listStaleClaims: () => ({
 			ok: false,
-			error: { code: "NOT_IMPLEMENTED", message: "Mock" } as DomainError,
+			error: { code: "WRITE_FAILURE", message: "Mock" } satisfies DomainError,
 		}),
 		getExecutorsForSlice: () => ({
 			ok: false,
-			error: { code: "NOT_IMPLEMENTED", message: "Mock" } as DomainError,
+			error: { code: "WRITE_FAILURE", message: "Mock" } satisfies DomainError,
 		}),
 	};
 
 	const mockDependencyStore: DependencyStore = {
 		addDependency: () => ({
 			ok: false,
-			error: { code: "NOT_IMPLEMENTED", message: "Mock" } as DomainError,
+			error: { code: "WRITE_FAILURE", message: "Mock" } satisfies DomainError,
 		}),
 		removeDependency: () => ({
 			ok: false,
-			error: { code: "NOT_IMPLEMENTED", message: "Mock" } as DomainError,
+			error: { code: "WRITE_FAILURE", message: "Mock" } satisfies DomainError,
 		}),
 		getDependencies: (taskId: string) => {
 			// Return only dependencies where fromId matches the taskId (outbound dependencies)
@@ -130,7 +130,7 @@ describe("generateReminder", () => {
 	it("returns null when session store returns error", () => {
 		const deps: GenerateReminderDeps = {
 			sessionStore: {
-				getSession: () => Err({ code: "STORAGE_ERROR", message: "Failed" } as DomainError),
+				getSession: () => Err({ code: "WRITE_FAILURE", message: "Failed" } satisfies DomainError),
 				saveSession: () => Ok(undefined),
 			},
 			taskStore: {
@@ -308,7 +308,7 @@ describe("generateReminder", () => {
 				saveSession: () => Ok(undefined),
 			},
 			taskStore: {
-				listTasks: () => Err({ code: "STORAGE_ERROR", message: "Failed" } as DomainError),
+				listTasks: () => Err({ code: "WRITE_FAILURE", message: "Failed" } satisfies DomainError),
 			} as unknown as TaskStore,
 			dependencyStore: {
 				getDependencies: () => Ok([]),

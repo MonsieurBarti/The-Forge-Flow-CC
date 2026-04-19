@@ -34,7 +34,7 @@ LOAD @skills/brainstorming/SKILL.md
 ### 3. Write Spec
 WRITE `.tff-cc/milestones/<milestone>/slices/<id>/SPEC.md` w/ validated design
 
-### 4. Challenge Spec (F-full only — determined ∈ step 8)
+### 4. Challenge Spec (SSS only — determined ∈ step 8)
 LOAD @skills/stress-testing-specs/SKILL.md → SPAWN subagent: {spec_content}
 REVISE → critical issues → loop Phase 3 (max 2) ∨ escalate
 APPROVE → note concerns ∈ spec, proceed
@@ -59,15 +59,15 @@ Based on what was learned during discuss, build `ComplexitySignals`:
 RUN: `tff-tools slice:classify --signals '<signals-json>'`
 
 PRESENT result to user, asking inline:
-- "Based on scope: **<tier>** (S / F-lite / F-full). Confirm ∨ override?"
-- Options: S (single-file fix), F-lite (standard), F-full (complex)
+- "Based on scope: **<tier>** (S / SS / SSS). Confirm ∨ override?"
+- Options: S (single-file fix), SS (standard), SSS (complex)
 
 User confirms → `tff-tools slice:classify` records tier.
-If F-full confirmed → run step 4 (Challenge Spec) now if ¬ already done.
+If SSS confirmed → run step 4 (Challenge Spec) now if ¬ already done.
 
 ### 9. Transition
 tier = S → `tff-tools slice:transition --slice-id <id> --status planning` (skip research)
-tier = F-lite ∨ F-full → `tff-tools slice:transition --slice-id <id> --status researching`
+tier = SS ∨ SSS → `tff-tools slice:transition --slice-id <id> --status researching`
 CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ abort
   IF `ok` = true ∧ `warnings.length > 0`:
     ∀ warning ∈ warnings: display `⚠ <warning>` to user

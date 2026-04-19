@@ -67,7 +67,7 @@ describe("waves-detect command", () => {
 				'[{"id":"T01","dependsOn":[],"files":3,"keywords":["update"],"hasDeps":false,"isDep":true,"waveDepth":1}]',
 				"--classify",
 				"--slice-tier",
-				"F-lite",
+				"SS",
 			]);
 			const parsed = JSON.parse(result);
 			expect(parsed.ok).toBe(true);
@@ -81,7 +81,7 @@ describe("waves-detect command", () => {
 				'[{"id":"T01","dependsOn":[],"files":10,"keywords":["refactor"],"hasDeps":true,"isDep":true,"waveDepth":2}]',
 				"--classify",
 				"--slice-tier",
-				"F-full",
+				"SSS",
 			]);
 			const parsed = JSON.parse(result);
 			expect(parsed.ok).toBe(true);

@@ -125,4 +125,32 @@ describe("slice-transition integration", () => {
 		expect(result.ok).toBe(false);
 		expect(result.error.code).toBe("INVALID_TRANSITION");
 	});
+
+	it("includes validPredecessors in INVALID_TRANSITION error when jumping to reviewing from executing", async () => {
+		// Seed slice at executing status.
+		const executingSlice = {
+			id: "test-slice-uuid",
+			milestoneId: "m01",
+			number: 1,
+			status: "executing" as const,
+			title: "Test Slice",
+			createdAt: new Date(),
+		};
+		Object.assign(mockSliceStore, {
+			getSlice: vi.fn().mockReturnValue({ ok: true, data: executingSlice }),
+			listSlices: vi.fn().mockReturnValue({ ok: true, data: [executingSlice] }),
+			transitionSlice: vi.fn().mockImplementation(() => ({ ok: true, data: [] })),
+			getSliceByNumbers: vi.fn().mockReturnValue({ ok: true, data: executingSlice }),
+		});
+
+		// executing -> reviewing is invalid (must go executing -> verifying -> reviewing).
+		const result = JSON.parse(
+			await sliceTransitionCmd(["--slice-id", "M01-S01", "--status", "reviewing"]),
+		);
+
+		expect(result.ok).toBe(false);
+		expect(result.error.code).toBe("INVALID_TRANSITION");
+		expect(result.error.validPredecessors).toEqual(["verifying"]);
+		expect(result.error.recoveryHint).toContain("verifying");
+	});
 });

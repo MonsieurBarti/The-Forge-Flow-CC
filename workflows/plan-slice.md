@@ -65,7 +65,7 @@ WRITE `.tff-cc/milestones/<milestone>/slices/<id>/PLAN.md`:
 CREATE tasks: `tff-tools` ∀ task w/ deps
 DETECT: `tff-tools waves:detect --tasks '[{"id":"T01","dependsOn":[]},{"id":"T02","dependsOn":["T01"]}]'` → show user
 
-### 6. Architecture Review (F-lite ∧ F-full)
+### 6. Architecture Review (SS ∧ SSS)
 LOAD @skills/architecture-review/SKILL.md + @skills/writing-plans/SKILL.md → SPAWN subagent: {plan_content, spec_content}
 Issues → revise plan
 
@@ -79,7 +79,7 @@ feedback → revise ∨ approved → continue
 
 ### 9. Worktree + Transition
 `tff-tools worktree:create --slice-id <id>`
-CHECK: `ok` = true → continue | `ok` = false → warn (worktree failure is non-blocking at plan time; execute-slice will block F-lite/F-full if worktree still missing)
+CHECK: `ok` = true → continue | `ok` = false → warn (worktree failure is non-blocking at plan time; execute-slice will block SS/SSS if worktree still missing)
 `tff-tools slice:transition --slice-id <id> --status executing`
 CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ abort
   IF `ok` = true ∧ `warnings.length > 0`:

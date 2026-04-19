@@ -9,7 +9,7 @@ status = researching
 LOAD @skills/architecture-review/SKILL.md
 
 ## Steps
-1. ROUTE: F-full → spawn researcher | F-lite → ask user | S → skip
+1. ROUTE: SSS → spawn researcher | SS → ask user | S → skip
 2. RESEARCH (if needed):
    - Read relevant codebase areas
    - Check dependencies + integration points

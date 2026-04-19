@@ -16,8 +16,8 @@ Every tff command MUST end with next-step suggestion based on current state.
 | Slice ∈ `reviewing` | `/tff:ship` | "Ready for review. Run `/tff:ship` to create slice PR ∧ run reviews." |
 | Slice ∈ `completing` | (auto) | "Slice being finalized. Closes automatically after merge." |
 | Slice `closed`, more slices open | `/tff:discuss` ∨ `/tff:progress` | "Slice shipped! Run `/tff:progress` for status, ∨ `/tff:discuss` for next slice." |
-| All slices `closed` | `/tff:audit-milestone` | "All slices complete. Run `/tff:audit-milestone` to verify milestone readiness." |
-| Milestone audited | `/tff:complete-milestone` | "Audit passed. Run `/tff:complete-milestone` to create milestone PR." |
+| All slices `closed`, no passing audit | `/tff:audit-milestone` | "All slices complete. Run `/tff:audit-milestone` to record readiness." |
+| All slices `closed`, audit `ready`    | `/tff:complete-milestone` | "Audit passed. Run `/tff:complete-milestone` to create milestone PR." |
 | Milestone `closed` | `/tff:new-milestone` | "Milestone shipped! Start next with `/tff:new-milestone`." |
 
 ## Usage

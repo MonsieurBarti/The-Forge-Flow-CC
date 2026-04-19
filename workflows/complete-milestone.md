@@ -3,9 +3,18 @@
 Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 
 ## Prerequisites
-milestone audit passed
+- milestone audit passed (recorded via `tff-tools milestone:record-audit --verdict ready`)
 
 ## Steps
+0. AUDIT GATE:
+   - Run `tff-tools milestone:audit-status --milestone-id <id>` to confirm a passing audit.
+     - On `{"ok": true, "data": {"verdict": "ready"}}` → proceed to step 1.
+     - On `{"ok": false, "error": {"code": "AUDIT_REQUIRED"}}` → tell the user:
+       > Milestone not audited. Run `/tff:audit-milestone` first.
+       Abort this workflow.
+     - On `{"ok": false, "error": {"code": "AUDIT_NOT_READY"}}` → tell the user:
+       > Last audit verdict was `not_ready`. Re-run `/tff:audit-milestone` to produce a passing verdict.
+       Abort this workflow.
 1. CLOSE SLICES: `tff-tools slice:list` → filter for non-closed slices under this milestone:
    - verify its PR is merged: `gh pr list --state merged --head slice/<slice-id>`
    - if merged → `tff-tools slice:close --slice-id <id> --reason "Slice PR merged"`

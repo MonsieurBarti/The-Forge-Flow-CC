@@ -14,6 +14,11 @@ import type { DomainEvent } from "../../../domain/events/domain-event.js";
 import { milestoneBranchName } from "../../../domain/helpers/branch-naming.js";
 import type { DatabaseInit } from "../../../domain/ports/database-init.port.js";
 import type { DependencyStore } from "../../../domain/ports/dependency-store.port.js";
+import type {
+	AuditVerdict,
+	MilestoneAuditRecord,
+	MilestoneAuditStore,
+} from "../../../domain/ports/milestone-audit-store.port.js";
 import type { MilestoneStore } from "../../../domain/ports/milestone-store.port.js";
 import type { ProjectStore } from "../../../domain/ports/project-store.port.js";
 import type { ReviewStore } from "../../../domain/ports/review-store.port.js";
@@ -52,7 +57,8 @@ export class SQLiteStateAdapter
 		DependencyStore,
 		SliceDependencyStore,
 		SessionStore,
-		ReviewStore
+		ReviewStore,
+		MilestoneAuditStore
 {
 	constructor(private db: Database.Database) {}
 
@@ -829,6 +835,47 @@ export class SQLiteStateAdapter
 			return Ok(rows.map((r) => this.rowToReview(r)));
 		} catch (e) {
 			return Err(createDomainError("WRITE_FAILURE", `Failed to list reviews: ${e}`));
+		}
+	}
+
+	// MilestoneAuditStore
+	upsertAudit(r: MilestoneAuditRecord): Result<void, DomainError> {
+		try {
+			this.db
+				.prepare(
+					`INSERT INTO milestone_audit(milestone_id, verdict, audited_at, notes)
+           VALUES (?, ?, ?, ?)
+           ON CONFLICT(milestone_id) DO UPDATE SET
+             verdict = excluded.verdict,
+             audited_at = excluded.audited_at,
+             notes = excluded.notes`,
+				)
+				.run(r.milestoneId, r.verdict, r.auditedAt, r.notes ?? null);
+			return Ok(undefined);
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to upsert audit: ${e}`));
+		}
+	}
+
+	getAudit(milestoneId: string): Result<MilestoneAuditRecord | null, DomainError> {
+		try {
+			const row = this.db
+				.prepare(
+					`SELECT milestone_id as milestoneId, verdict, audited_at as auditedAt, notes
+           FROM milestone_audit WHERE milestone_id = ?`,
+				)
+				.get(milestoneId) as
+				| { milestoneId: string; verdict: string; auditedAt: string; notes: string | null }
+				| undefined;
+			if (!row) return Ok(null);
+			return Ok({
+				milestoneId: row.milestoneId,
+				verdict: row.verdict as AuditVerdict,
+				auditedAt: row.auditedAt,
+				notes: row.notes ?? undefined,
+			});
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to load audit: ${e}`));
 		}
 	}
 

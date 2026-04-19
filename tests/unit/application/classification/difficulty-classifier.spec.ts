@@ -84,12 +84,12 @@ describe("difficulty-classifier", () => {
 			expect(computeTierScore("S" as ComplexityTier)).toBe(0);
 		});
 
-		it("returns 0.5 for F-lite tier", () => {
-			expect(computeTierScore("F-lite" as ComplexityTier)).toBe(0.5);
+		it("returns 0.5 for SS tier", () => {
+			expect(computeTierScore("SS" as ComplexityTier)).toBe(0.5);
 		});
 
-		it("returns 1 for F-full tier", () => {
-			expect(computeTierScore("F-full" as ComplexityTier)).toBe(1);
+		it("returns 1 for SSS tier", () => {
+			expect(computeTierScore("SSS" as ComplexityTier)).toBe(1);
 		});
 	});
 
@@ -117,7 +117,7 @@ describe("difficulty-classifier", () => {
 				isDep: true,
 				waveDepth: 2,
 				maxWave: 2,
-				sliceTier: "F-full" as ComplexityTier,
+				sliceTier: "SSS" as ComplexityTier,
 			};
 			expect(classifyDifficulty(signals)).toBe("high");
 		});
@@ -131,7 +131,7 @@ describe("difficulty-classifier", () => {
 				isDep: false,
 				waveDepth: 1,
 				maxWave: 2,
-				sliceTier: "F-lite" as ComplexityTier,
+				sliceTier: "SS" as ComplexityTier,
 			};
 			expect(classifyDifficulty(signals)).toBe("medium");
 		});

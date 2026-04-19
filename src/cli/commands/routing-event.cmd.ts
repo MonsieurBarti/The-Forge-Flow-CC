@@ -50,6 +50,13 @@ export const routingEventCmd = async (args: string[]): Promise<string> => {
 		return JSON.stringify({ ok: false, error: configRes.error });
 	}
 
+	if (!configRes.data.enabled) {
+		return JSON.stringify({
+			ok: true,
+			data: { kind, slice_id: slice, skipped: true, reason: "routing_disabled" },
+		});
+	}
+
 	const { routingPath } = resolveRoutingPaths(projectRoot, configRes.data.logging.path);
 
 	if (kind === "debug") {

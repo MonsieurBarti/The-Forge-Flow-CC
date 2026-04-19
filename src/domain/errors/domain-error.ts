@@ -23,6 +23,9 @@ export const DomainErrorCodeSchema = z.enum([
 	"ROUTING_CONFIG",
 	"SIGNAL_EXTRACTION",
 	"REFUSED_ON_DEFAULT_BRANCH",
+	"REFUSED_ON_MILESTONE_BRANCH",
+	"AUDIT_REQUIRED",
+	"AUDIT_NOT_READY",
 	"PRECONDITION_VIOLATION",
 	"TRANSACTION_ROLLBACK",
 	"PARTIAL_SUCCESS",
@@ -34,6 +37,9 @@ export const DomainErrorSchema = z.object({
 	code: DomainErrorCodeSchema,
 	message: z.string(),
 	context: z.record(z.string(), z.unknown()).optional(),
+	recoveryHint: z.string().optional(),
+	validPredecessors: z.array(z.string()).readonly().optional(),
+	validNext: z.array(z.string()).readonly().optional(),
 });
 
 export type DomainError = z.infer<typeof DomainErrorSchema>;

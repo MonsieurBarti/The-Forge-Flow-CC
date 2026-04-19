@@ -5,6 +5,8 @@ pre-commit:
       glob: "src/**/*.ts"
       run: bun run biome check --fix --staged {staged_files}
       stage_fixed: true
+    branch-guard:
+      run: node scripts/hooks/branch-guard.mjs
 
 commit-msg:
   commands:

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const ROOT = join(import.meta.dirname, "..", "..");
 const WORKFLOWS_DIR = join(ROOT, "workflows");
 
-describe("F-lite integration: workflow skill loading", () => {
+describe("SS integration: workflow skill loading", () => {
 	it("discuss-slice loads brainstorming and acceptance-criteria-validation", () => {
 		const content = readFileSync(join(WORKFLOWS_DIR, "discuss-slice.md"), "utf-8");
 		expect(content).toContain("@skills/brainstorming/SKILL.md");

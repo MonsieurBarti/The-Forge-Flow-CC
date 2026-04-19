@@ -28,7 +28,7 @@ The Forge Flow (`tff-cc`) is a Claude Code plugin that orchestrates AI agents th
 - **Wave-based execution** -- tasks are topologically sorted into waves, independent tasks run in parallel
 - **Fresh reviewer enforcement** -- code reviewers are never the same agent that wrote the code
 - **Plannotator integration** -- all plan reviews, verification, and code reviews go through plannotator's interactive UI
-- **Complexity tiers** -- S (quick fix), F-lite (feature), F-full (complex) determine which phases are required
+- **Complexity tiers** -- S (quick fix), SS (feature), SSS (complex) determine which phases are required
 - **Checkpoint/resumability** -- pause and resume execution across sessions
 - **Skill library** -- 18 reusable methodology skills that agents load for consistent practices
 - **Autonomous flow** -- `plan-to-pr` mode auto-runs from plan approval through PR creation, with escalation on failure
@@ -124,11 +124,11 @@ The **brainstormer** agent (opus) challenges your assumptions:
 
 The **product-lead** agent validates requirements and defines acceptance criteria.
 
-Complexity is auto-classified as **F-lite** (5 tasks, 2 modules, no external integrations).
+Complexity is auto-classified as **SS** (5 tasks, 2 modules, no external integrations).
 
 **Next step suggested:** `/tff:research M01-S01`
 
-### 4. Research (optional for F-lite)
+### 4. Research (optional for SS)
 
 ```
 /tff:research M01-S01
@@ -395,8 +395,8 @@ main
 | Tier | Brainstormer | Research | TDD | Fresh Reviewer |
 |---|---|---|---|---|
 | S (quick fix) | Skip | Skip | Skip | Always |
-| F-lite (feature) | Yes | Optional | Yes | Always |
-| F-full (complex) | Yes | Required | Yes | Always |
+| SS (feature) | Yes | Optional | Yes | Always |
+| SSS (complex) | Yes | Required | Yes | Always |
 
 ## Branch Isolation
 

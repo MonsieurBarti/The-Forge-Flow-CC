@@ -1,13 +1,16 @@
 import type { CommandSchema } from "../utils/flag-parser.js";
+import { branchGuardCheckSchema } from "./branch-guard-check.cmd.js";
 import { checkpointLoadSchema } from "./checkpoint-load.cmd.js";
 import { checkpointSaveSchema } from "./checkpoint-save.cmd.js";
 import { claimCheckStaleSchema } from "./claim-check-stale.cmd.js";
 import { composeDetectSchema } from "./compose-detect.cmd.js";
 import { depAddSchema } from "./dep-add.cmd.js";
 import { directEditGuardSchema } from "./direct-edit-guard.cmd.js";
+import { milestoneAuditStatusSchema } from "./milestone-audit-status.cmd.js";
 import { milestoneCloseSchema } from "./milestone-close.cmd.js";
 import { milestoneCreateSchema } from "./milestone-create.cmd.js";
 import { milestoneListSchema } from "./milestone-list.cmd.js";
+import { milestoneRecordAuditSchema } from "./milestone-record-audit.cmd.js";
 import { observeRecordSchema } from "./observe-record.cmd.js";
 import { patternsAggregateSchema } from "./patterns-aggregate.cmd.js";
 import { patternsExtractSchema } from "./patterns-extract.cmd.js";
@@ -58,6 +61,8 @@ schemaRegistry.set("project:get", projectGetSchema);
 schemaRegistry.set("milestone:create", milestoneCreateSchema);
 schemaRegistry.set("milestone:list", milestoneListSchema);
 schemaRegistry.set("milestone:close", milestoneCloseSchema);
+schemaRegistry.set("milestone:record-audit", milestoneRecordAuditSchema);
+schemaRegistry.set("milestone:audit-status", milestoneAuditStatusSchema);
 schemaRegistry.set("task:claim", taskClaimSchema);
 schemaRegistry.set("task:close", taskCloseSchema);
 schemaRegistry.set("task:ready", taskReadySchema);
@@ -89,6 +94,7 @@ schemaRegistry.set("workflow:next", workflowNextSchema);
 schemaRegistry.set("workflow:should-auto", workflowShouldAutoSchema);
 schemaRegistry.set("claim:check-stale", claimCheckStaleSchema);
 schemaRegistry.set("session:remind", sessionRemindSchema);
+schemaRegistry.set("branch-guard:check", branchGuardCheckSchema);
 
 /**
  * Get a command schema by name

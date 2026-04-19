@@ -274,7 +274,7 @@ slice:close --slice-id M01-S01 --reason "Completed"
 slice:classify --signals '{"taskCount":5,"estimatedFilesAffected":3,"newFilesCreated":0,"modulesAffected":2,"hasExternalIntegrations":false,"requiresInvestigation":true,"architectureImpact":false,"unknownsSurfaced":1,"riskLevel":"low"}'
 ```
 
-**Output:** `{ "ok": true, "data": { "tier": "F-lite" } }`
+**Output:** `{ "ok": true, "data": { "tier": "SS" } }`
 
 ---
 
@@ -421,6 +421,56 @@ checkpoint:load --slice-id M01-S01
 ```
 
 **Output:** `{ "ok": true, "data": { "sliceId": "M01-S01", "baseCommit": "..., "currentWave": 0, ... } }`
+
+---
+
+### review:check-fresh
+
+**Purpose:** Check if reviewer is fresh (not recently assigned to same slice)
+
+**Syntax:** `review:check-fresh --slice-id <string> --agent <string>`
+
+**Required Flags:**
+| Flag | Type | Description | Pattern |
+|------|------|-------------|---------|
+| `--slice-id` | string | Slice ID | `^M\d+-S\d+$` |
+| `--agent` | string | Reviewer agent identity | |
+
+**Optional Flags:** none
+
+**Examples:**
+```bash
+review:check-fresh --slice-id M01-S01 --agent tff-code-reviewer
+```
+
+**Output:** `{ "ok": true, "data": { "fresh": true } }` or `{ "ok": false, "error": { "code": "NOT_FRESH", "message": "..." } }`
+
+---
+
+### review:record
+
+**Purpose:** Record a review result for a slice.
+
+**Syntax:** `review:record --slice-id <string> --agent <string> --verdict <string> --type <string> --commit-sha <string>`
+
+**Required Flags:**
+| Flag | Type | Description | Pattern |
+|------|------|-------------|---------|
+| `--slice-id` | string | Slice label | `^M\d+-S\d+$` |
+| `--agent` | string | Reviewer agent identity | |
+| `--verdict` | string | Review outcome | Enum: `approved`, `changes_requested` |
+| `--type` | string | Review type | Enum: `code`, `security`, `spec` |
+| `--commit-sha` | string | Commit under review | |
+
+**Optional Flags:** none
+
+**Examples:**
+```bash
+review:record --slice-id M01-S01 --agent tff-code-reviewer --verdict approved --type code --commit-sha abc1234
+review:record --slice-id M01-S01 --agent tff-security-auditor --verdict changes_requested --type security --commit-sha abc1234
+```
+
+**Output:** `{ "ok": true, "data": null }` on success. `{ "ok": false, "error": { "code": "NOT_FOUND", ... } }` for unknown slice label.
 
 ---
 
