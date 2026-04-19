@@ -127,6 +127,7 @@ describe("YamlRoutingConfigReader.readPool", () => {
 		expect(isOk(res)).toBe(false);
 		if (isOk(res)) return;
 		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/agent file not found/);
 	});
 
 	it("returns error for duplicate ids", async () => {
@@ -135,6 +136,9 @@ describe("YamlRoutingConfigReader.readPool", () => {
 		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
 		const res = await reader.readPool("tff:ship");
 		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/duplicate agent id/);
 	});
 
 	it("returns error for empty pool", async () => {
@@ -145,6 +149,9 @@ describe("YamlRoutingConfigReader.readPool", () => {
 		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
 		const res = await reader.readPool("tff:ship");
 		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/no pool agents defined/);
 	});
 
 	it("returns error for invalid agent id regex", async () => {
@@ -152,12 +159,50 @@ describe("YamlRoutingConfigReader.readPool", () => {
 		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
 		const res = await reader.readPool("tff:ship");
 		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/invalid agent id/);
 	});
 
 	it("returns error when neither frontmatter nor settings declares a pool", async () => {
 		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
 		const res = await reader.readPool("tff:ship");
 		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/no pool declared/);
+	});
+
+	it("rejects workflow_id containing path traversal segments (..:etc)", async () => {
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("..:etc");
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/invalid workflow_id/);
+	});
+
+	it("rejects workflow_id with 3+ colon-separated parts (a:b:c)", async () => {
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("a:b:c");
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+		expect(res.error.message).toMatch(/invalid workflow_id/);
+	});
+
+	it("surfaces a settings routing.pools schema error when shape is wrong", async () => {
+		await writeAgent(tmp, "tff-spec-reviewer", ["x"]);
+		await writeShipFrontmatter(tmp, ["tff-spec-reviewer"]);
+		await writeFile(
+			join(tmp, ".tff-cc", "settings.yaml"),
+			"routing:\n  pools:\n    - not-a-map-but-array\n",
+		);
+		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });
+		const res = await reader.readPool("tff:ship");
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) return;
+		expect(res.error.message).toMatch(/schema error/);
 	});
 
 	it("surfaces a settings.yaml parse error rather than falling through", async () => {

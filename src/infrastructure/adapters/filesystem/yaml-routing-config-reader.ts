@@ -12,6 +12,9 @@ import { Err, Ok, type Result } from "../../../domain/result.js";
 import type { AgentCapability } from "../../../domain/value-objects/agent-capability.js";
 import type { WorkflowPool } from "../../../domain/value-objects/workflow-pool.js";
 
+const AGENT_ID_REGEX = /^[a-z][a-z0-9-]*$/;
+const MAX_YAML_FILE_SIZE = 1024 * 1024; // 1 MB
+
 const DISABLED_DEFAULT: RoutingConfig = {
 	enabled: false,
 	llm_enrichment: {
@@ -38,6 +41,7 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 		} catch {
 			return Ok(DISABLED_DEFAULT);
 		}
+		if (raw.length > MAX_YAML_FILE_SIZE) return Ok(DISABLED_DEFAULT);
 		let parsed: unknown;
 		try {
 			parsed = parseYaml(raw);
@@ -102,9 +106,8 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 				}),
 			);
 		}
-		const idRegex = /^[a-z][a-z0-9-]*$/;
 		for (const id of agentIds) {
-			if (!idRegex.test(id)) {
+			if (!AGENT_ID_REGEX.test(id)) {
 				return Err(
 					createDomainError("ROUTING_CONFIG", `invalid agent id: ${id}`, { workflow_id, id }),
 				);
@@ -149,6 +152,7 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 		} catch {
 			return Ok(undefined);
 		}
+		if (raw.length > MAX_YAML_FILE_SIZE) return Ok(undefined);
 
 		let parsed: unknown;
 		try {
@@ -168,7 +172,19 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 			.passthrough();
 
 		const result = SettingsPoolsSchema.safeParse(parsed);
-		if (!result.success) return Ok(undefined);
+		if (!result.success) {
+			// Only err if the malformed field is present; silently fall-through if it's just missing.
+			const hasPools =
+				(parsed as { routing?: { pools?: unknown } } | null)?.routing?.pools !== undefined;
+			if (hasPools) {
+				return Err(
+					createDomainError("ROUTING_CONFIG", "settings.yaml routing.pools schema error", {
+						workflow_id,
+					}),
+				);
+			}
+			return Ok(undefined);
+		}
 
 		const pools = result.data.routing?.pools;
 		if (!pools || !(workflow_id in pools)) return Ok(undefined);
@@ -180,6 +196,13 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 		workflow_id: string,
 	): Promise<Result<string[] | undefined, DomainError>> {
 		const [ns, name] = workflow_id.split(":");
+		if (!AGENT_ID_REGEX.test(ns) || !AGENT_ID_REGEX.test(name)) {
+			return Err(
+				createDomainError("ROUTING_CONFIG", `invalid workflow_id segments: ${workflow_id}`, {
+					workflow_id,
+				}),
+			);
+		}
 		const commandPath = join(this.opts.projectRoot, "commands", ns, `${name}.md`);
 
 		let raw: string;
@@ -188,6 +211,7 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 		} catch {
 			return Ok(undefined);
 		}
+		if (raw.length > MAX_YAML_FILE_SIZE) return Ok(undefined);
 
 		const match = raw.match(/^---\n([\s\S]*?)\n---/);
 		if (!match) return Ok(undefined);
@@ -197,7 +221,7 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 			frontmatter = parseYaml(match[1]);
 		} catch {
 			return Err(
-				createDomainError("ROUTING_CONFIG", "command frontmatter parse error", { workflow_id }),
+				createDomainError("ROUTING_CONFIG", "agent frontmatter parse error", { workflow_id }),
 			);
 		}
 
@@ -229,6 +253,9 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 		} catch {
 			return Err(createDomainError("ROUTING_CONFIG", `agent file not found: ${id}`, { id }));
 		}
+		if (raw.length > MAX_YAML_FILE_SIZE) {
+			return Err(createDomainError("ROUTING_CONFIG", `agent file too large: ${id}`, { id }));
+		}
 
 		const match = raw.match(/^---\n([\s\S]*?)\n---/);
 		if (!match) {
@@ -241,7 +268,9 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 		try {
 			frontmatter = parseYaml(match[1]);
 		} catch {
-			return Err(createDomainError("ROUTING_CONFIG", `agent file not found: ${id}`, { id }));
+			return Err(
+				createDomainError("ROUTING_CONFIG", `agent frontmatter parse error: ${id}`, { id }),
+			);
 		}
 
 		const AgentFrontmatterSchema = z
@@ -257,7 +286,9 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 
 		const parsed = AgentFrontmatterSchema.safeParse(frontmatter);
 		if (!parsed.success) {
-			return Err(createDomainError("ROUTING_CONFIG", `agent file not found: ${id}`, { id }));
+			return Err(
+				createDomainError("ROUTING_CONFIG", `agent frontmatter schema error: ${id}`, { id }),
+			);
 		}
 
 		return Ok({
