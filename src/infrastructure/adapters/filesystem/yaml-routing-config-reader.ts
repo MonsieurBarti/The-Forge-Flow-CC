@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { DomainError } from "../../../domain/errors/domain-error.js";
 import { createDomainError } from "../../../domain/errors/domain-error.js";
 import type {
+	CalibrationConfig,
 	RoutingConfig,
 	RoutingConfigReader,
 } from "../../../domain/ports/routing-config-reader.port.js";
@@ -48,8 +49,24 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 		} catch {
 			return Ok(DISABLED_DEFAULT);
 		}
-		const routing = (parsed as { routing?: Partial<RoutingConfig> } | null)?.routing;
+		type RawRouting = Partial<RoutingConfig> & {
+			calibration?: {
+				n_min?: number;
+				implicit_weight?: number;
+				debug_join?: { enabled?: boolean };
+			};
+		};
+		const routing = (parsed as { routing?: RawRouting } | null)?.routing;
 		if (!routing) return Ok(DISABLED_DEFAULT);
+
+		let calibration: CalibrationConfig | undefined;
+		if (routing.calibration !== undefined) {
+			calibration = {
+				n_min: routing.calibration.n_min ?? 5,
+				implicit_weight: routing.calibration.implicit_weight ?? 0.5,
+				debug_join: { enabled: routing.calibration.debug_join?.enabled ?? true },
+			};
+		}
 
 		return Ok({
 			enabled: routing.enabled ?? false,
@@ -63,6 +80,7 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 			logging: {
 				path: routing.logging?.path ?? DISABLED_DEFAULT.logging.path,
 			},
+			...(calibration !== undefined && { calibration }),
 		});
 	}
 

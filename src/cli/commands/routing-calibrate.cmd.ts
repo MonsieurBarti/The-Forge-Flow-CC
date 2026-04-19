@@ -67,13 +67,8 @@ export const routingCalibrateCmd = async (args: string[]): Promise<string> => {
 	const outcomesPath = join(dirname(routingPath), "routing-outcomes.jsonl");
 	const reportPath = join(dirname(routingPath), "routing-calibration.md");
 
-	// TODO(T17): read defaults from configRes.data.calibration once schema extended
-	// Cast through unknown to avoid `as any` — T17 will add the typed field to RoutingConfig.
-	const calibrationCfg = (
-		configRes.data as unknown as { calibration?: { n_min?: number; implicit_weight?: number } }
-	).calibration;
-	const n_min = nMinFlag ?? calibrationCfg?.n_min ?? 5;
-	const implicit_weight = weightFlag ?? calibrationCfg?.implicit_weight ?? 0.5;
+	const n_min = nMinFlag ?? configRes.data.calibration?.n_min ?? 5;
+	const implicit_weight = weightFlag ?? configRes.data.calibration?.implicit_weight ?? 0.5;
 
 	const decisions = await loadDecisions(routingPath);
 	const implicitSource = new DebugJoinOutcomeSource(routingPath);
