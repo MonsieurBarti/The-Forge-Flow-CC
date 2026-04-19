@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	agentWrongRateHigh,
 	runAllRules,
 	tierTooHighDominant,
 	tierTooLowDominant,
@@ -96,5 +97,65 @@ describe("runAllRules", () => {
 		const ids = recs.map((r) => r.rule_id);
 		expect(ids).toContain("tier-too-low-dominant");
 		expect(ids).not.toContain("tier-too-high-dominant");
+	});
+});
+
+describe("agentWrongRateHigh", () => {
+	it("fires on per-agent cells with wrong-rate >= 0.5", () => {
+		const recs = agentWrongRateHigh(
+			cell({
+				key: { kind: "agent", value: "tff-code-reviewer" },
+				total: 6,
+				effective_total: 6,
+				effective_wrong: 4,
+				verdict_breakdown: { ok: 2, wrong: 4, too_low: 0, too_high: 0 },
+			}),
+			{ n_min: 5 },
+		);
+		expect(recs).toHaveLength(1);
+		expect(recs[0].rule_id).toBe("agent-wrong-rate-high");
+		expect(recs[0].severity).toBe("strong");
+	});
+
+	it("does not fire on per-tag cells", () => {
+		const recs = agentWrongRateHigh(
+			cell({
+				key: { kind: "tag", value: "auth" },
+				total: 6,
+				effective_total: 6,
+				effective_wrong: 5,
+				verdict_breakdown: { ok: 1, wrong: 5, too_low: 0, too_high: 0 },
+			}),
+			{ n_min: 5 },
+		);
+		expect(recs).toEqual([]);
+	});
+
+	it("does not fire below N_min", () => {
+		const recs = agentWrongRateHigh(
+			cell({
+				key: { kind: "agent", value: "x" },
+				total: 3,
+				effective_total: 3,
+				effective_wrong: 3,
+				verdict_breakdown: { ok: 0, wrong: 3, too_low: 0, too_high: 0 },
+			}),
+			{ n_min: 5 },
+		);
+		expect(recs).toEqual([]);
+	});
+
+	it("does not fire when rate < 0.5", () => {
+		const recs = agentWrongRateHigh(
+			cell({
+				key: { kind: "agent", value: "x" },
+				total: 6,
+				effective_total: 6,
+				effective_wrong: 2,
+				verdict_breakdown: { ok: 4, wrong: 2, too_low: 0, too_high: 0 },
+			}),
+			{ n_min: 5 },
+		);
+		expect(recs).toEqual([]);
 	});
 });
