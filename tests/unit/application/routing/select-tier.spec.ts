@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { selectTierUseCase } from "../../../../src/application/routing/select-tier.js";
+import type { DomainError } from "../../../../src/domain/errors/domain-error.js";
 import type { RoutingDecisionLogger } from "../../../../src/domain/ports/routing-decision-logger.port.js";
 import {
 	DEFAULT_TIER_POLICY,
 	type TierConfigReader,
 } from "../../../../src/domain/ports/tier-config-reader.port.js";
-import { isOk, Ok } from "../../../../src/domain/result.js";
+import { Err, isOk, Ok } from "../../../../src/domain/result.js";
 import type { Signals } from "../../../../src/domain/value-objects/signals.js";
 import type { ModelTier } from "../../../../src/domain/value-objects/tier-decision.js";
 
@@ -27,7 +28,12 @@ describe("selectTierUseCase", () => {
 	it("returns haiku for low signals with haiku floor", async () => {
 		const deps = mkDeps("haiku");
 		const res = await selectTierUseCase(
-			{ workflow_id: "tff:ship", slice_id: "M01-S01", agent_id: "tff-code-reviewer", signals: LOW_SIGNALS },
+			{
+				workflow_id: "tff:ship",
+				slice_id: "M01-S01",
+				agent_id: "tff-code-reviewer",
+				signals: LOW_SIGNALS,
+			},
 			deps,
 		);
 		expect(isOk(res)).toBe(true);
@@ -40,7 +46,12 @@ describe("selectTierUseCase", () => {
 	it("applies sonnet floor when policy says haiku", async () => {
 		const deps = mkDeps("sonnet");
 		const res = await selectTierUseCase(
-			{ workflow_id: "tff:ship", slice_id: "M01-S01", agent_id: "tff-security-auditor", signals: LOW_SIGNALS },
+			{
+				workflow_id: "tff:ship",
+				slice_id: "M01-S01",
+				agent_id: "tff-security-auditor",
+				signals: LOW_SIGNALS,
+			},
 			deps,
 		);
 		expect(isOk(res)).toBe(true);
@@ -53,7 +64,12 @@ describe("selectTierUseCase", () => {
 	it("returns opus for high signals regardless of floor", async () => {
 		const deps = mkDeps("haiku");
 		const res = await selectTierUseCase(
-			{ workflow_id: "tff:ship", slice_id: "M01-S01", agent_id: "tff-code-reviewer", signals: HIGH_SIGNALS },
+			{
+				workflow_id: "tff:ship",
+				slice_id: "M01-S01",
+				agent_id: "tff-code-reviewer",
+				signals: HIGH_SIGNALS,
+			},
 			deps,
 		);
 		expect(isOk(res)).toBe(true);
@@ -65,7 +81,12 @@ describe("selectTierUseCase", () => {
 	it("logs a tier entry with a UUID decision_id", async () => {
 		const deps = mkDeps();
 		await selectTierUseCase(
-			{ workflow_id: "tff:ship", slice_id: "M01-S01", agent_id: "tff-code-reviewer", signals: LOW_SIGNALS },
+			{
+				workflow_id: "tff:ship",
+				slice_id: "M01-S01",
+				agent_id: "tff-code-reviewer",
+				signals: LOW_SIGNALS,
+			},
 			deps,
 		);
 		expect(deps.logger.append).toHaveBeenCalledOnce();
@@ -79,10 +100,51 @@ describe("selectTierUseCase", () => {
 	it("propagates signals unchanged through to the log entry", async () => {
 		const deps = mkDeps();
 		await selectTierUseCase(
-			{ workflow_id: "tff:ship", slice_id: "M01-S01", agent_id: "tff-code-reviewer", signals: HIGH_SIGNALS },
+			{
+				workflow_id: "tff:ship",
+				slice_id: "M01-S01",
+				agent_id: "tff-code-reviewer",
+				signals: HIGH_SIGNALS,
+			},
 			deps,
 		);
 		const entry = (deps.logger.append as ReturnType<typeof vi.fn>).mock.calls[0][0];
 		expect(entry.decision.signals).toEqual(HIGH_SIGNALS);
+	});
+
+	it("propagates readTierPolicy error", async () => {
+		const deps = mkDeps();
+		const error: DomainError = { code: "ROUTING_CONFIG", message: "boom" };
+		(deps.tierConfigReader.readTierPolicy as ReturnType<typeof vi.fn>).mockResolvedValue(
+			Err(error),
+		);
+		const res = await selectTierUseCase(
+			{
+				workflow_id: "tff:ship",
+				slice_id: "M01-S01",
+				agent_id: "tff-code-reviewer",
+				signals: LOW_SIGNALS,
+			},
+			deps,
+		);
+		expect(isOk(res)).toBe(false);
+	});
+
+	it("propagates readAgentMinTier error", async () => {
+		const deps = mkDeps();
+		const error: DomainError = { code: "ROUTING_CONFIG", message: "boom" };
+		(deps.tierConfigReader.readAgentMinTier as ReturnType<typeof vi.fn>).mockResolvedValue(
+			Err(error),
+		);
+		const res = await selectTierUseCase(
+			{
+				workflow_id: "tff:ship",
+				slice_id: "M01-S01",
+				agent_id: "tff-code-reviewer",
+				signals: LOW_SIGNALS,
+			},
+			deps,
+		);
+		expect(isOk(res)).toBe(false);
 	});
 });
