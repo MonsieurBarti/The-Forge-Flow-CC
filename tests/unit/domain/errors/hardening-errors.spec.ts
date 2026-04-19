@@ -14,10 +14,17 @@ describe("hardening error constructors", () => {
 	});
 
 	it("preconditionViolationError carries a violations array", () => {
-		const violations = [{ code: "SLICE_STATUS_MISMATCH", expected: "planning", actual: "executing" }];
+		const violations = [
+			{ code: "SLICE_STATUS_MISMATCH", expected: "planning", actual: "executing" },
+		];
 		const e = preconditionViolationError(violations);
 		expect(e.code).toBe("PRECONDITION_VIOLATION");
 		expect(e.context?.violations).toEqual(violations);
+	});
+
+	it("preconditionViolationError uses 'no details' fallback for empty violations array", () => {
+		const e = preconditionViolationError([]);
+		expect(e.message).toContain("no details");
 	});
 
 	it("transactionRollbackError wraps a cause", () => {
