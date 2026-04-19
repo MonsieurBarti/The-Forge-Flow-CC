@@ -30,9 +30,11 @@ const RoutingConfigSchema = z
 				model: z.string().default("claude-haiku-4-5-20251001"),
 				timeout_ms: z.number().default(5000),
 			})
-			.default({}),
+			.default({ enabled: false, model: "claude-haiku-4-5-20251001", timeout_ms: 5000 }),
 		confidence_threshold: z.number().default(0.5),
-		logging: z.object({ path: z.string().default(".tff-cc/logs/routing.jsonl") }).default({}),
+		logging: z
+			.object({ path: z.string().default(".tff-cc/logs/routing.jsonl") })
+			.default({ path: ".tff-cc/logs/routing.jsonl" }),
 		calibration: CalibrationConfigSchema.optional(),
 	})
 	.passthrough();
