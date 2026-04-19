@@ -26,8 +26,8 @@ export const wavesDetectSchema: CommandSchema = {
 		{
 			name: "slice-tier",
 			type: "string",
-			description: "Slice complexity tier (S, F-lite, F-full) for classification",
-			enum: ["S", "F-lite", "F-full"],
+			description: "Slice complexity tier (S, SS, SSS) for classification",
+			enum: ["S", "SS", "SSS"],
 		},
 	],
 	examples: [
@@ -70,7 +70,7 @@ export const wavesDetectCmd = async (args: string[]): Promise<string> => {
 
 	// If --classify flag is set, compute difficulty and profile for each task
 	if (classify) {
-		const tier = (sliceTier as "S" | "F-lite" | "F-full") || "S";
+		const tier = (sliceTier as "S" | "SS" | "SSS") || "S";
 		const maxWave = result.data.length - 1;
 
 		const classifiedTasks = tasks.map((task) => {

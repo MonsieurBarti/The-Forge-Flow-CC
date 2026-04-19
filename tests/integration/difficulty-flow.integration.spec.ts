@@ -83,7 +83,7 @@ describe("difficulty flow integration", () => {
 				isDep: false,
 				waveDepth: 1,
 				maxWave: 2,
-				sliceTier: "F-lite" as ComplexityTier,
+				sliceTier: "SS" as ComplexityTier,
 			};
 			const difficulty = classifyDifficulty(signals);
 			const profile = difficultyToProfile(difficulty);
@@ -103,7 +103,7 @@ describe("difficulty flow integration", () => {
 				isDep: true,
 				waveDepth: 2,
 				maxWave: 2,
-				sliceTier: "F-full" as ComplexityTier,
+				sliceTier: "SSS" as ComplexityTier,
 			};
 			const difficulty = classifyDifficulty(signals);
 			const profile = difficultyToProfile(difficulty);

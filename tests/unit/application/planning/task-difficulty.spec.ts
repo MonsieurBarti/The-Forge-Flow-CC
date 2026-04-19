@@ -92,7 +92,7 @@ describe("task-difficulty", () => {
 				title: "Refactor the auth module",
 				files: ["src/auth.ts"],
 				keywords: [],
-				sliceTier: "F-full",
+				sliceTier: "SSS",
 			});
 			// "refactor" keyword should be extracted from title
 			expect(computeTaskDifficulty(input)).toBe("high");
@@ -103,7 +103,7 @@ describe("task-difficulty", () => {
 				title: "Update configuration",
 				files: ["src/config.ts"],
 				keywords: ["refactor"], // explicit keyword
-				sliceTier: "F-full",
+				sliceTier: "SSS",
 			});
 			expect(computeTaskDifficulty(input)).toBe("high");
 		});
@@ -116,7 +116,7 @@ describe("task-difficulty", () => {
 				isDep: false,
 				waveDepth: 1,
 				maxWave: 2,
-				sliceTier: "F-lite",
+				sliceTier: "SS",
 			});
 			expect(computeTaskDifficulty(input)).toBe("medium");
 		});

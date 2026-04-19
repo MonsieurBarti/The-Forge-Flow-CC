@@ -51,9 +51,9 @@ export function computeTierScore(tier: ComplexityTier): number {
 	switch (tier) {
 		case "S":
 			return 0;
-		case "F-lite":
+		case "SS":
 			return 0.5;
-		case "F-full":
+		case "SSS":
 			return 1;
 	}
 }
