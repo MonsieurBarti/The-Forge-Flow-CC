@@ -23,7 +23,7 @@ describe("MilestoneAuditStore (SQLiteStateAdapter)", () => {
 			notes: "clean",
 		});
 
-		const r = adapter.getLatestAudit(milestoneId);
+		const r = adapter.getAudit(milestoneId);
 		expect(r.ok).toBe(true);
 		if (!r.ok) return;
 		expect(r.data?.verdict).toBe("ready");
@@ -46,13 +46,13 @@ describe("MilestoneAuditStore (SQLiteStateAdapter)", () => {
 			auditedAt: "2026-04-19T10:00:00Z",
 		});
 
-		const r = adapter.getLatestAudit(milestoneId);
+		const r = adapter.getAudit(milestoneId);
 		if (!r.ok) throw r.error;
 		expect(r.data?.verdict).toBe("ready");
 	});
 
 	it("returns Ok(null) for unknown milestone", () => {
-		const r = adapter.getLatestAudit("missing-uuid");
+		const r = adapter.getAudit("missing-uuid");
 		expect(r.ok).toBe(true);
 		if (!r.ok) return;
 		expect(r.data).toBeNull();

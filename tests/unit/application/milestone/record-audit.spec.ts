@@ -3,7 +3,7 @@ import { recordAuditUseCase } from "../../../../src/application/milestone/record
 
 const makeStore = () => ({
 	upsertAudit: vi.fn().mockReturnValue({ ok: true, data: undefined }),
-	getLatestAudit: vi.fn(),
+	getAudit: vi.fn(),
 });
 
 describe("recordAuditUseCase", () => {
@@ -32,7 +32,7 @@ describe("recordAuditUseCase", () => {
 				ok: false,
 				error: { code: "WRITE_FAILURE", message: "boom" },
 			}),
-			getLatestAudit: vi.fn(),
+			getAudit: vi.fn(),
 		};
 		const res = await recordAuditUseCase(
 			{ milestoneId: "m1", verdict: "not_ready" },

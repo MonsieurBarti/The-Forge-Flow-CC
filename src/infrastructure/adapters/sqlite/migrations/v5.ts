@@ -8,5 +8,3 @@ CREATE TABLE IF NOT EXISTS milestone_audit (
 
 CREATE INDEX IF NOT EXISTS idx_milestone_audit_verdict ON milestone_audit(verdict);
 `;
-
-export const SCHEMA_VERSION_5 = 5;

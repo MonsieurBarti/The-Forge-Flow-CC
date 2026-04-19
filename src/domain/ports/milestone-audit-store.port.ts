@@ -12,5 +12,5 @@ export interface MilestoneAuditRecord {
 
 export interface MilestoneAuditStore {
 	upsertAudit(record: MilestoneAuditRecord): Result<void, DomainError>;
-	getLatestAudit(milestoneId: string): Result<MilestoneAuditRecord | null, DomainError>;
+	getAudit(milestoneId: string): Result<MilestoneAuditRecord | null, DomainError>;
 }

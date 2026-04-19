@@ -37,7 +37,7 @@ function makeStores(
 			closeMilestone: vi.fn(),
 		},
 		milestoneAuditStore: {
-			getLatestAudit: vi.fn().mockReturnValue(auditResult),
+			getAudit: vi.fn().mockReturnValue(auditResult),
 			upsertAudit: vi.fn(),
 		},
 		sliceStore: {} as ClosableStateStores["sliceStore"],

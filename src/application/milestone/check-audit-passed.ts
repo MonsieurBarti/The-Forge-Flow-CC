@@ -6,7 +6,7 @@ export const checkAuditPassed = (
 	milestoneId: string,
 	store: MilestoneAuditStore,
 ): Result<void, DomainError> => {
-	const r = store.getLatestAudit(milestoneId);
+	const r = store.getAudit(milestoneId);
 	if (!r.ok) return r;
 	if (!r.data) {
 		return Err(

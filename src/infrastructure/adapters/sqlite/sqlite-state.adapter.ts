@@ -857,7 +857,7 @@ export class SQLiteStateAdapter
 		}
 	}
 
-	getLatestAudit(milestoneId: string): Result<MilestoneAuditRecord | null, DomainError> {
+	getAudit(milestoneId: string): Result<MilestoneAuditRecord | null, DomainError> {
 		try {
 			const row = this.db
 				.prepare(

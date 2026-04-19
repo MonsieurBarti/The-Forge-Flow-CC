@@ -6,7 +6,7 @@ import type {
 } from "../../../../src/domain/ports/milestone-audit-store.port.js";
 
 const makeStore = (record: MilestoneAuditRecord | null): MilestoneAuditStore =>
-	({ getLatestAudit: () => ({ ok: true, data: record }) }) as unknown as MilestoneAuditStore;
+	({ getAudit: () => ({ ok: true, data: record }) }) as unknown as MilestoneAuditStore;
 
 describe("checkAuditPassed", () => {
 	it("ok when audit verdict is ready", () => {
