@@ -57,4 +57,18 @@ describe("RoutingOutcomeSchema", () => {
 		expect(() => RoutingOutcomeSchema.parse({ ...valid, outcome_id: "not-a-uuid" })).toThrow();
 		expect(() => RoutingOutcomeSchema.parse({ ...valid, decision_id: "not-a-uuid" })).toThrow();
 	});
+
+	it("refinement error names the rejected verdict and points path at verdict", () => {
+		const result = RoutingOutcomeSchema.safeParse({
+			...valid,
+			dimension: "agent",
+			verdict: "too-low",
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			const issue = result.error.issues[0];
+			expect(issue.path).toContain("verdict");
+			expect(issue.message).toContain("too-low");
+		}
+	});
 });

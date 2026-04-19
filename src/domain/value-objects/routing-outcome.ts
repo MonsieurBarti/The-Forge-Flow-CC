@@ -21,13 +21,23 @@ const BaseShape = z.object({
 	emitted_at: z.string().datetime(),
 });
 
-export const RoutingOutcomeSchema = BaseShape.refine(
-	(o) => {
-		if (o.dimension === "agent") return o.verdict === "ok" || o.verdict === "wrong";
-		if (o.dimension === "unknown") return o.verdict === "wrong";
-		return true;
-	},
-	{ message: "dimension × verdict combination not allowed" },
-);
+/**
+ * RoutingOutcome is the Phase D feedback-loop record written to
+ * routing-outcomes.jsonl. Additive-only across Phase D+: do NOT rename
+ * or remove fields. Dimension×verdict constraints enforced via refine.
+ */
+export const RoutingOutcomeSchema = BaseShape.superRefine((o, ctx) => {
+	const valid =
+		(o.dimension === "agent" && (o.verdict === "ok" || o.verdict === "wrong")) ||
+		(o.dimension === "unknown" && o.verdict === "wrong") ||
+		o.dimension === "tier";
+	if (!valid) {
+		ctx.addIssue({
+			code: "custom",
+			message: `verdict "${o.verdict}" not allowed for dimension "${o.dimension}"`,
+			path: ["verdict"],
+		});
+	}
+});
 
 export type RoutingOutcome = z.infer<typeof RoutingOutcomeSchema>;
