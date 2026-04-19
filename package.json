@@ -10,7 +10,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "dev": "tsc -p tsconfig.build.json --watch",
-    "test": "vitest run",
+    "test": "bun run build && vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/ tests/",
