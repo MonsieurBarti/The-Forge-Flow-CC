@@ -83,6 +83,12 @@ describe("syncStateCmd — behavior", () => {
 				getLatestReview: vi.fn(),
 				listReviews: vi.fn(),
 			},
+			milestoneAuditStore: { upsertAudit: vi.fn(), getAudit: vi.fn() },
+			sliceDependencyStore: {
+				addSliceDependency: vi.fn(),
+				removeSliceDependency: vi.fn(),
+				getSliceDependencies: vi.fn(),
+			},
 			journalRepository: {
 				append: vi.fn(),
 				readAll: vi.fn(),
@@ -91,6 +97,7 @@ describe("syncStateCmd — behavior", () => {
 			},
 			db: { init: vi.fn() },
 			close: vi.fn(),
+			checkpoint: vi.fn(),
 		} as unknown as ClosableStateStores;
 	}
 

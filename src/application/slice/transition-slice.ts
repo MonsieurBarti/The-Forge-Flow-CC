@@ -106,7 +106,7 @@ export const transitionSliceOrchestrator = async (
 					recoveryHint,
 					validPredecessors: predecessors,
 					validNext,
-				} as DomainError,
+				} satisfies DomainError,
 			};
 		}
 		return { ok: false, error: validation.error };
