@@ -36,6 +36,7 @@ vi.mock("../../src/infrastructure/adapters/sqlite/create-state-stores.js", () =>
 			sliceDependencyStore: adapter,
 			sessionStore: adapter,
 			reviewStore: adapter,
+			milestoneAuditStore: adapter,
 			journalRepository: nullJournal,
 			close: () => {},
 			checkpoint: () => {},
@@ -48,10 +49,11 @@ function unreachable(): never {
 	throw new Error("unexpected call");
 }
 
-/** Build a minimal GitOps stub that returns the given branch name. */
+/** Build a minimal GitOps stub that returns the given branch name as current, and 'main' as default. */
 function makeGit(branch: string): GitOps {
 	return {
 		getCurrentBranch: async () => Ok(branch),
+		detectDefaultBranch: async () => Ok("main"),
 		createBranch: unreachable,
 		createWorktree: unreachable,
 		deleteWorktree: unreachable,
@@ -67,7 +69,6 @@ function makeGit(branch: string): GitOps {
 		pruneWorktrees: unreachable,
 		lsTree: unreachable,
 		extractFile: unreachable,
-		detectDefaultBranch: unreachable,
 		pushBranch: unreachable,
 		fetchBranch: unreachable,
 	};
@@ -108,7 +109,7 @@ beforeEach(() => {
 	vi.resetModules();
 });
 
-describe("withMilestoneBranchGuard — composed with reviewRecordCmd", () => {
+describe("withBranchGuards — composed with reviewRecordCmd", () => {
 	it("(a) refuses review:record when on milestone branch with open slices", async () => {
 		const { adapter, milestoneId } = seedAdapter();
 		setAdapter(adapter);
@@ -118,12 +119,10 @@ describe("withMilestoneBranchGuard — composed with reviewRecordCmd", () => {
 		const branch = `milestone/${prefix}`;
 		const git = makeGit(branch);
 
-		const { withMilestoneBranchGuard } = await import(
-			"../../src/cli/utils/with-milestone-branch-guard.js"
-		);
+		const { withBranchGuards } = await import("../../src/cli/utils/with-branch-guards.js");
 		const { reviewRecordCmd } = await import("../../src/cli/commands/review-record.cmd.js");
 
-		const guarded = withMilestoneBranchGuard("review:record", reviewRecordCmd, () => git);
+		const guarded = withBranchGuards("review:record", reviewRecordCmd, { gitFactory: () => git });
 		const result = JSON.parse(await guarded([]));
 
 		expect(result.ok).toBe(false);
@@ -140,12 +139,10 @@ describe("withMilestoneBranchGuard — composed with reviewRecordCmd", () => {
 		const branch = `milestone/${prefix}`;
 		const git = makeGit(branch);
 
-		const { withMilestoneBranchGuard } = await import(
-			"../../src/cli/utils/with-milestone-branch-guard.js"
-		);
+		const { withBranchGuards } = await import("../../src/cli/utils/with-branch-guards.js");
 		const { reviewRecordCmd } = await import("../../src/cli/commands/review-record.cmd.js");
 
-		const guarded = withMilestoneBranchGuard("review:record", reviewRecordCmd, () => git);
+		const guarded = withBranchGuards("review:record", reviewRecordCmd, { gitFactory: () => git });
 		const result = JSON.parse(await guarded([]));
 
 		// Guard passes — the downstream command may fail for other reasons (missing args),
