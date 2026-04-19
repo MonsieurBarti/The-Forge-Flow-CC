@@ -22,12 +22,7 @@ describe("routing:decide", () => {
 	});
 
 	it("validates slice-id pattern", async () => {
-		const out = await routingDecideCmd([
-			"--slice-id",
-			"bad",
-			"--workflow",
-			"tff:ship",
-		]);
+		const out = await routingDecideCmd(["--slice-id", "bad", "--workflow", "tff:ship"]);
 		const parsed = JSON.parse(out);
 		expect(parsed.ok).toBe(false);
 	});
