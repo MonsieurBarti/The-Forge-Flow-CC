@@ -5,7 +5,6 @@ import { z } from "zod";
 import type { DomainError } from "../../../domain/errors/domain-error.js";
 import { createDomainError } from "../../../domain/errors/domain-error.js";
 import type {
-	CalibrationConfig,
 	RoutingConfig,
 	RoutingConfigReader,
 } from "../../../domain/ports/routing-config-reader.port.js";
@@ -15,6 +14,28 @@ import type { WorkflowPool } from "../../../domain/value-objects/workflow-pool.j
 
 const AGENT_ID_REGEX = /^[a-z][a-z0-9-]*$/;
 const MAX_YAML_FILE_SIZE = 1024 * 1024; // 1 MB
+
+const CalibrationConfigSchema = z.object({
+	n_min: z.number().int().positive().default(5),
+	implicit_weight: z.number().min(0).max(1).default(0.5),
+	debug_join: z.object({ enabled: z.boolean().default(true) }).default({ enabled: true }),
+});
+
+const RoutingConfigSchema = z
+	.object({
+		enabled: z.boolean().default(false),
+		llm_enrichment: z
+			.object({
+				enabled: z.boolean().default(false),
+				model: z.string().default("claude-haiku-4-5-20251001"),
+				timeout_ms: z.number().default(5000),
+			})
+			.default({}),
+		confidence_threshold: z.number().default(0.5),
+		logging: z.object({ path: z.string().default(".tff-cc/logs/routing.jsonl") }).default({}),
+		calibration: CalibrationConfigSchema.optional(),
+	})
+	.passthrough();
 
 const DISABLED_DEFAULT: RoutingConfig = {
 	enabled: false,
@@ -49,52 +70,39 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 		} catch {
 			return Ok(DISABLED_DEFAULT);
 		}
-		type RawRouting = Partial<RoutingConfig> & {
-			calibration?: {
-				n_min?: number;
-				implicit_weight?: number;
-				debug_join?: { enabled?: boolean };
-			};
-		};
-		const routing = (parsed as { routing?: RawRouting } | null)?.routing;
-		if (!routing) return Ok(DISABLED_DEFAULT);
+		const rawRouting = (parsed as { routing?: unknown } | null)?.routing;
+		if (!rawRouting) return Ok(DISABLED_DEFAULT);
 
-		let calibration: CalibrationConfig | undefined;
-		if (routing.calibration !== undefined) {
-			calibration = {
-				n_min: routing.calibration.n_min ?? 5,
-				implicit_weight: routing.calibration.implicit_weight ?? 0.5,
-				debug_join: { enabled: routing.calibration.debug_join?.enabled ?? true },
-			};
+		const schemaResult = RoutingConfigSchema.safeParse(rawRouting);
+		if (!schemaResult.success) {
+			return Err(
+				createDomainError("ROUTING_CONFIG", "routing config schema validation failed", {
+					errors: schemaResult.error.issues,
+				}),
+			);
 		}
+
+		const routing = schemaResult.data;
 
 		// M2: path containment check — reject logging.path that escapes project root
 		const projectRoot = this.opts.projectRoot;
-		const loggingPath = routing.logging?.path ?? DISABLED_DEFAULT.logging.path;
-		const resolvedLogPath = resolve(projectRoot, loggingPath);
+		const resolvedLogPath = resolve(projectRoot, routing.logging.path);
 		const rel = relative(projectRoot, resolvedLogPath);
 		if (rel.startsWith("..") || rel.startsWith(`..${sep}`)) {
 			return Err(
 				createDomainError("ROUTING_CONFIG", "routing.logging.path escapes project root", {
-					path: loggingPath,
+					path: routing.logging.path,
 					projectRoot,
 				}),
 			);
 		}
 
 		return Ok({
-			enabled: routing.enabled ?? false,
-			llm_enrichment: {
-				enabled: routing.llm_enrichment?.enabled ?? DISABLED_DEFAULT.llm_enrichment.enabled,
-				model: routing.llm_enrichment?.model ?? DISABLED_DEFAULT.llm_enrichment.model,
-				timeout_ms:
-					routing.llm_enrichment?.timeout_ms ?? DISABLED_DEFAULT.llm_enrichment.timeout_ms,
-			},
-			confidence_threshold: routing.confidence_threshold ?? DISABLED_DEFAULT.confidence_threshold,
-			logging: {
-				path: loggingPath,
-			},
-			...(calibration !== undefined && { calibration }),
+			enabled: routing.enabled,
+			llm_enrichment: routing.llm_enrichment,
+			confidence_threshold: routing.confidence_threshold,
+			logging: routing.logging,
+			...(routing.calibration !== undefined && { calibration: routing.calibration }),
 		});
 	}
 

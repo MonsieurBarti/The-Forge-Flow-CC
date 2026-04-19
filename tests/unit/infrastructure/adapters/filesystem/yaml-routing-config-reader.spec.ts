@@ -267,6 +267,19 @@ describe("YamlRoutingConfigReader — calibration block", () => {
 		expect(cal.n_min).toBe(5);
 		expect(cal.implicit_weight).toBe(0.5);
 	});
+
+	it("rejects calibration.implicit_weight outside [0, 1]", async () => {
+		await writeFile(
+			join(dir, ".tff-cc", "settings.yaml"),
+			"routing:\n  enabled: true\n  logging:\n    path: .tff-cc/logs/routing.jsonl\n  calibration:\n    implicit_weight: 2.0\n",
+			"utf8",
+		);
+		const reader = new YamlRoutingConfigReader({ projectRoot: dir });
+		const res = await reader.readConfig();
+		expect(res.ok).toBe(false);
+		if (res.ok) throw new Error("expected err");
+		expect(res.error.code).toBe("ROUTING_CONFIG");
+	});
 });
 
 describe("logging.path containment", () => {
