@@ -16,6 +16,7 @@ LOAD @skills/finishing-work/SKILL.md
    → on CLI error or `skipped=true`: all stages run without model override (silent fallback)
    → per-stage `fallback_used=true`: that stage only runs without model override
 1. `∀ reviewer: tff-tools review:check-fresh --slice-id <slice-id> --agent <role>`
+   **Note:** After each review stage passes, `review:record` is invoked with all five required flags (`--slice-id`, `--agent`, `--verdict`, `--type`, `--commit-sha`). `--type` accepts only `code`, `security`, or `spec`.
 2. Stage 1 (spec) — SPAWN tff-spec-reviewer with
      model = <routing-decisions-json>[agent=tff-spec-reviewer].tier (fallback: no model param)
      inputs: {acceptance_criteria, diff}
