@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
+import { existsSync, lstatSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 export interface RecoverInput {
@@ -27,7 +27,11 @@ export const recoverOrphans = async (input: RecoverInput): Promise<RecoverResult
 			if (!entry.endsWith(".tmp")) continue;
 			const p = join(dir, entry);
 			try {
-				const st = statSync(p);
+				// Use lstat so we never follow symlinks out of the staging tree.
+				// Skip anything that isn't a plain file — symlinks, dirs, sockets,
+				// etc. are never considered orphan tmps for sweeping.
+				const st = lstatSync(p);
+				if (!st.isFile()) continue;
 				if (nowMs - st.mtimeMs > threshold) {
 					rmSync(p, { force: true });
 					cleanedTmps++;
@@ -41,7 +45,11 @@ export const recoverOrphans = async (input: RecoverInput): Promise<RecoverResult
 	for (const p of input.lockPaths) {
 		if (!existsSync(p)) continue;
 		try {
-			const st = statSync(p);
+			// Lock paths may legitimately be a directory (proper-lockfile) or a
+			// plain file; either way, use lstat so a symlinked lock can't trick
+			// us into deleting outside the intended tree.
+			const st = lstatSync(p);
+			if (st.isSymbolicLink()) continue;
 			if (nowMs - st.mtimeMs > threshold) {
 				rmSync(p, { recursive: true, force: true });
 				cleanedLocks++;

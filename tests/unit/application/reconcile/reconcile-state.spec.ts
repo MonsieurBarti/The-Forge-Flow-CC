@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -65,5 +65,19 @@ describe("reconcileState", () => {
 
 		expect(result.action).toBe("render-failed");
 		expect(readFileSync(stateMdPath, "utf8")).toBe(existingContent);
+	});
+
+	it("leaves no stale .tmp behind when the atomic write fails", async () => {
+		// Point stateMdPath inside a non-existent directory to force writeFileSync
+		// (during atomic staging) to throw. The helper must not leak a .tmp.
+		const missingDir = join(tmpDir, "does-not-exist");
+		const badPath = join(missingDir, "STATE.md");
+		const renderStateMd = vi.fn().mockResolvedValue("new content");
+
+		const result = await reconcileState({ stateMdPath: badPath, renderStateMd });
+
+		expect(result.action).toBe("render-failed");
+		expect(existsSync(`${badPath}.tmp`)).toBe(false);
+		expect(existsSync(badPath)).toBe(false);
 	});
 });
