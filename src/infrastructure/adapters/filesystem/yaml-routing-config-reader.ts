@@ -221,7 +221,7 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 			frontmatter = parseYaml(match[1]);
 		} catch {
 			return Err(
-				createDomainError("ROUTING_CONFIG", "agent frontmatter parse error", { workflow_id }),
+				createDomainError("ROUTING_CONFIG", "command frontmatter parse error", { workflow_id }),
 			);
 		}
 
