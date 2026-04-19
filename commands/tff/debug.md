@@ -14,6 +14,14 @@ Read tff conventions: @references/conventions.md
 Read orchestrator pattern: @references/orchestrator-pattern.md
 </context>
 
+<observability>
+Emit a Phase D feedback event before analysis begins. Non-blocking — do not halt if the CLI is absent or args are invalid.
+
+```bash
+tff-tools routing:event --kind debug --slice <slice_id> 2>/dev/null || true
+```
+</observability>
+
 <execution_context>
 Execute debug workflow from @workflows/debug.md.
 </execution_context>
