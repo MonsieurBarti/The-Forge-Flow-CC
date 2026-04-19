@@ -97,6 +97,11 @@ export class SQLiteStateAdapter
 		}
 	}
 
+	// T7 stub; real impl in T8
+	transaction<T>(fn: () => T): T {
+		return fn();
+	}
+
 	close(): void {
 		this.db.close();
 	}

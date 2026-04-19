@@ -59,6 +59,11 @@ export class InMemoryStateAdapter
 		return Ok(undefined);
 	}
 
+	// T7 stub; real impl in T8
+	transaction<T>(fn: () => T): T {
+		return fn();
+	}
+
 	// ProjectStore
 	getProject(): Result<Project | null, DomainError> {
 		return Ok(this.project);
