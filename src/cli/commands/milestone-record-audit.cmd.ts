@@ -29,13 +29,17 @@ export const milestoneRecordAuditCmd = async (args: string[]): Promise<string> =
 	};
 
 	const stores = createClosableStateStoresUnchecked();
-	const resolved = resolveMilestoneId(label, stores.milestoneStore);
-	if (!resolved.ok) return JSON.stringify({ ok: false, error: resolved.error });
+	try {
+		const resolved = resolveMilestoneId(label, stores.milestoneStore);
+		if (!resolved.ok) return JSON.stringify({ ok: false, error: resolved.error });
 
-	const res = await recordAuditUseCase(
-		{ milestoneId: resolved.data, verdict, notes },
-		{ milestoneAuditStore: stores.milestoneAuditStore },
-	);
-	if (isOk(res)) return JSON.stringify({ ok: true, data: null });
-	return JSON.stringify({ ok: false, error: res.error });
+		const res = await recordAuditUseCase(
+			{ milestoneId: resolved.data, verdict, notes },
+			{ milestoneAuditStore: stores.milestoneAuditStore },
+		);
+		if (isOk(res)) return JSON.stringify({ ok: true, data: null });
+		return JSON.stringify({ ok: false, error: res.error });
+	} finally {
+		stores.close();
+	}
 };
