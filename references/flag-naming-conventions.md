@@ -157,10 +157,10 @@ Flag errors must include valid alternatives:
   "ok": false,
   "error": {
     "code": "INVALID_ENUM_VALUE",
-    "message": "Invalid value for --status: 'invalid'. Must be one of: discussing, researching, planning, executing, verifying, reviewing, shipping, closed",
+    "message": "Invalid value for --status: 'invalid'. Must be one of: discussing, researching, planning, executing, verifying, reviewing, completing, closed",
     "flag": "--status",
     "provided": "invalid",
-    "validValues": ["discussing", "researching", "planning", "executing", "verifying", "reviewing", "shipping", "closed"]
+    "validValues": ["discussing", "researching", "planning", "executing", "verifying", "reviewing", "completing", "closed"]
   }
 }
 ```
