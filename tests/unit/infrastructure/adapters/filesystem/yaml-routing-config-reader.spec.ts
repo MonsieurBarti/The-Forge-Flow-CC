@@ -79,7 +79,7 @@ describe("YamlRoutingConfigReader.readPool", () => {
 	const writeShipFrontmatter = async (dir: string, poolLines: string[]) => {
 		await writeFile(
 			join(dir, "commands", "tff", "ship.md"),
-			`---\nname: tff:ship\nrouting:\n  pool:\n${poolLines.map((l) => "    - " + l).join("\n")}\n---\n\nbody\n`,
+			`---\nname: tff:ship\nrouting:\n  pool:\n${poolLines.map((l) => `    - ${l}`).join("\n")}\n---\n\nbody\n`,
 		);
 	};
 

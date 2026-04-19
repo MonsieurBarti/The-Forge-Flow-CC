@@ -41,7 +41,6 @@ vi.mock("../../src/infrastructure/adapters/sqlite/create-state-stores.js", () =>
 
 vi.mock("../../src/infrastructure/adapters/git/git-cli.adapter.js", () => ({
 	GitCliAdapter: class {
-		constructor(_cwd: string) {}
 		createBranch(name: string, start: string): Promise<void> {
 			return mockCreateBranch(name, start);
 		}

@@ -67,10 +67,7 @@ describe("Phase D end-to-end", () => {
 		const parsed = JSON.parse(out);
 		expect(parsed.ok).toBe(true);
 
-		const outcomesRaw = await readFile(
-			join(dir, ".tff-cc/logs/routing-outcomes.jsonl"),
-			"utf8",
-		);
+		const outcomesRaw = await readFile(join(dir, ".tff-cc/logs/routing-outcomes.jsonl"), "utf8");
 		const sources = outcomesRaw
 			.trim()
 			.split("\n")
