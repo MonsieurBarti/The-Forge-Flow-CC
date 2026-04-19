@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 import type { DomainError } from "../../../domain/errors/domain-error.js";
@@ -68,6 +68,20 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 			};
 		}
 
+		// M2: path containment check — reject logging.path that escapes project root
+		const projectRoot = this.opts.projectRoot;
+		const loggingPath = routing.logging?.path ?? DISABLED_DEFAULT.logging.path;
+		const resolvedLogPath = resolve(projectRoot, loggingPath);
+		const rel = relative(projectRoot, resolvedLogPath);
+		if (rel.startsWith("..") || rel.startsWith(`..${sep}`)) {
+			return Err(
+				createDomainError("ROUTING_CONFIG", "routing.logging.path escapes project root", {
+					path: loggingPath,
+					projectRoot,
+				}),
+			);
+		}
+
 		return Ok({
 			enabled: routing.enabled ?? false,
 			llm_enrichment: {
@@ -78,7 +92,7 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 			},
 			confidence_threshold: routing.confidence_threshold ?? DISABLED_DEFAULT.confidence_threshold,
 			logging: {
-				path: routing.logging?.path ?? DISABLED_DEFAULT.logging.path,
+				path: loggingPath,
 			},
 			...(calibration !== undefined && { calibration }),
 		});

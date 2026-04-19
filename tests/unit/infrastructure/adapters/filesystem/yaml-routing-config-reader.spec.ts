@@ -268,3 +268,51 @@ describe("YamlRoutingConfigReader — calibration block", () => {
 		expect(cal.implicit_weight).toBe(0.5);
 	});
 });
+
+describe("logging.path containment", () => {
+	it("rejects logging.path that escapes project root", async () => {
+		const { mkdtemp, mkdir, writeFile: wf, rm } = await import("node:fs/promises");
+		const { tmpdir } = await import("node:os");
+		const { join: j } = await import("node:path");
+		const d = await mkdtemp(j(tmpdir(), "yaml-path-esc-"));
+		try {
+			await mkdir(j(d, ".tff-cc"), { recursive: true });
+			await wf(
+				j(d, ".tff-cc", "settings.yaml"),
+				"routing:\n  enabled: true\n  logging:\n    path: ../../evil/routing.jsonl\n",
+				"utf8",
+			);
+			const { YamlRoutingConfigReader: R } = await import(
+				"../../../../../src/infrastructure/adapters/filesystem/yaml-routing-config-reader.js"
+			);
+			const res = await new R({ projectRoot: d }).readConfig();
+			expect(res.ok).toBe(false);
+			if (res.ok) throw new Error("expected err");
+			expect(res.error.code).toBe("ROUTING_CONFIG");
+		} finally {
+			await rm(d, { recursive: true, force: true });
+		}
+	});
+
+	it("accepts logging.path inside project root", async () => {
+		const { mkdtemp, mkdir, writeFile: wf, rm } = await import("node:fs/promises");
+		const { tmpdir } = await import("node:os");
+		const { join: j } = await import("node:path");
+		const d = await mkdtemp(j(tmpdir(), "yaml-path-ok-"));
+		try {
+			await mkdir(j(d, ".tff-cc"), { recursive: true });
+			await wf(
+				j(d, ".tff-cc", "settings.yaml"),
+				"routing:\n  enabled: true\n  logging:\n    path: .tff-cc/logs/routing.jsonl\n",
+				"utf8",
+			);
+			const { YamlRoutingConfigReader: R } = await import(
+				"../../../../../src/infrastructure/adapters/filesystem/yaml-routing-config-reader.js"
+			);
+			const res = await new R({ projectRoot: d }).readConfig();
+			expect(res.ok).toBe(true);
+		} finally {
+			await rm(d, { recursive: true, force: true });
+		}
+	});
+});
