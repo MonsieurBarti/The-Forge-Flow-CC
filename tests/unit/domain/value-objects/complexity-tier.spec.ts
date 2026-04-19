@@ -5,34 +5,35 @@ import {
 } from "../../../../src/domain/value-objects/complexity-tier.js";
 
 describe("ComplexityTier", () => {
-	it("should accept valid tiers", () => {
-		expect(ComplexityTierSchema.parse("S")).toBe("S");
-		expect(ComplexityTierSchema.parse("F-lite")).toBe("F-lite");
-		expect(ComplexityTierSchema.parse("F-full")).toBe("F-full");
+	it("accepts S, SS, SSS", () => {
+		expect(ComplexityTierSchema.safeParse("S").success).toBe(true);
+		expect(ComplexityTierSchema.safeParse("SS").success).toBe(true);
+		expect(ComplexityTierSchema.safeParse("SSS").success).toBe(true);
 	});
 
-	it("should reject invalid tiers", () => {
-		expect(() => ComplexityTierSchema.parse("XXL")).toThrow();
+	it("rejects legacy labels F-lite and F-full", () => {
+		expect(ComplexityTierSchema.safeParse("F-lite").success).toBe(false);
+		expect(ComplexityTierSchema.safeParse("F-full").success).toBe(false);
 	});
 
-	it("should have correct config for S tier", () => {
-		const config = tierConfig("S");
-		expect(config.brainstormer).toBe(false);
-		expect(config.research).toBe("skip");
-		expect(config.tdd).toBe(false);
+	it("S has no brainstormer, no TDD, skipped research", () => {
+		const cfg = tierConfig("S");
+		expect(cfg.brainstormer).toBe(false);
+		expect(cfg.research).toBe("skip");
+		expect(cfg.tdd).toBe(false);
 	});
 
-	it("should have correct config for F-lite tier", () => {
-		const config = tierConfig("F-lite");
-		expect(config.brainstormer).toBe(true);
-		expect(config.research).toBe("optional");
-		expect(config.tdd).toBe(true);
+	it("SS has brainstormer, optional research, TDD (former F-lite)", () => {
+		const cfg = tierConfig("SS");
+		expect(cfg.brainstormer).toBe(true);
+		expect(cfg.research).toBe("optional");
+		expect(cfg.tdd).toBe(true);
 	});
 
-	it("should have correct config for F-full tier", () => {
-		const config = tierConfig("F-full");
-		expect(config.brainstormer).toBe(true);
-		expect(config.research).toBe("required");
-		expect(config.tdd).toBe(true);
+	it("SSS has brainstormer, required research, TDD (former F-full)", () => {
+		const cfg = tierConfig("SSS");
+		expect(cfg.brainstormer).toBe(true);
+		expect(cfg.research).toBe("required");
+		expect(cfg.tdd).toBe(true);
 	});
 });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ComplexityTierSchema = z.enum(["S", "F-lite", "F-full"]);
+export const ComplexityTierSchema = z.enum(["S", "SS", "SSS"]);
 export type ComplexityTier = z.infer<typeof ComplexityTierSchema>;
 
 export const TierConfigSchema = z.object({
@@ -19,13 +19,13 @@ const configs: Record<ComplexityTier, TierConfig> = {
 		freshReviewer: true,
 		tdd: false,
 	},
-	"F-lite": {
+	SS: {
 		brainstormer: true,
 		research: "optional",
 		freshReviewer: true,
 		tdd: true,
 	},
-	"F-full": {
+	SSS: {
 		brainstormer: true,
 		research: "required",
 		freshReviewer: true,
