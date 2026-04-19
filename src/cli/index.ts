@@ -19,7 +19,10 @@ import { projectInitCmd } from "./commands/project-init.cmd.js";
 import { getCommandSchema } from "./commands/registry.js";
 import { reviewCheckFreshCmd } from "./commands/review-check-fresh.cmd.js";
 import { reviewRecordCmd } from "./commands/review-record.cmd.js";
+import { routingCalibrateCmd } from "./commands/routing-calibrate.cmd.js";
 import { routingDecideCmd } from "./commands/routing-decide.cmd.js";
+import { routingEventCmd } from "./commands/routing-event.cmd.js";
+import { routingOutcomeCmd } from "./commands/routing-outcome.cmd.js";
 import { schemaCmd } from "./commands/schema.cmd.js";
 import { sessionRemindCmd } from "./commands/session-remind.cmd.js";
 import { skillsDriftCmd } from "./commands/skills-drift.cmd.js";
@@ -71,6 +74,9 @@ const commands: Record<string, CommandFn> = {
 	"review:check-fresh": reviewCheckFreshCmd,
 	"review:record": withBranchGuard("review:record", reviewRecordCmd),
 	"routing:decide": withBranchGuard("routing:decide", routingDecideCmd),
+	"routing:event": withBranchGuard("routing:event", routingEventCmd),
+	"routing:outcome": withBranchGuard("routing:outcome", routingOutcomeCmd),
+	"routing:calibrate": withBranchGuard("routing:calibrate", routingCalibrateCmd),
 	"checkpoint:save": withBranchGuard("checkpoint:save", checkpointSaveCmd),
 	"checkpoint:load": checkpointLoadCmd,
 	"observe:record": withBranchGuard("observe:record", observeRecordCmd),

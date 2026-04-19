@@ -18,6 +18,9 @@ const writers = [
 	"worktree:delete",
 	"review:record",
 	"routing:decide",
+	"routing:event",
+	"routing:outcome",
+	"routing:calibrate",
 	"checkpoint:save",
 	"observe:record",
 ];

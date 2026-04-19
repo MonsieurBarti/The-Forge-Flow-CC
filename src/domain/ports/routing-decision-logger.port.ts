@@ -31,10 +31,18 @@ export interface TierDecisionLogEntry {
 	decision: TierDecision;
 }
 
+export interface DebugEventLogEntry {
+	kind: "debug";
+	timestamp: string;
+	workflow_id: string;
+	slice_id: string;
+}
+
 export type RoutingLogEntry =
 	| SignalExtractionLogEntry
 	| RoutingDecisionLogEntry
-	| TierDecisionLogEntry;
+	| TierDecisionLogEntry
+	| DebugEventLogEntry;
 
 export interface RoutingDecisionLogger {
 	append(entry: RoutingLogEntry): Promise<Result<void, DomainError>>;

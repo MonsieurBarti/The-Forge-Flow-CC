@@ -469,6 +469,20 @@ auto-learn:
 
 Settings are resilient: corrupted or partial files fall back to defaults per field. Run `/tff:settings` to detect and add missing fields.
 
+## Routing
+
+tff-cc classifies every routing decision through a layered pipeline (signals → tier → confidence) that was built in phases.
+
+### Phase D — feedback loop (advisory calibration)
+
+Phase D closes the routing loop by measuring outcomes and recommending threshold adjustments.
+
+- `tff-tools routing:event --kind debug --slice <id>` — emit a `/tff:debug` observability event (invoked automatically from `/tff:debug`).
+- `tff-tools routing:outcome --decision <uuid> --dimension {agent|tier|unknown} --verdict {ok|wrong|too-low|too-high} [--reason "..."]` — hand-label a past decision.
+- `tff-tools routing:calibrate [--n-min 5] [--implicit-weight 0.5]` — generate an advisory markdown report at `.tff-cc/logs/routing-calibration.md` with per-agent and per-tag accuracy cells and rule-based recommendations.
+
+Phase D is read-only over `settings.yaml` — it never auto-applies. Rules fire only on cells with `effective_total ≥ n_min` (default 5). Auto-apply is Phase E.
+
 ## Releasing (maintainers)
 
 The `release` branch is a built-artifact channel. The intended flow after a PR merges to `main`:
