@@ -21,6 +21,7 @@ export class FilesystemTierConfigReader implements TierConfigReader {
 	constructor(private readonly opts: FilesystemTierConfigReaderOpts) {}
 
 	async readTierPolicy(): Promise<Result<Record<RiskLevel, ModelTier>, DomainError>> {
+		const MAX_SETTINGS_SIZE = 1024 * 1024; // 1 MB
 		const path = join(this.opts.projectRoot, ".tff-cc", "settings.yaml");
 		let raw = "";
 		try {
@@ -28,6 +29,7 @@ export class FilesystemTierConfigReader implements TierConfigReader {
 		} catch {
 			return Ok(DEFAULT_TIER_POLICY);
 		}
+		if (raw.length > MAX_SETTINGS_SIZE) return Ok(DEFAULT_TIER_POLICY);
 		let parsed: unknown;
 		try {
 			parsed = parseYaml(raw);
@@ -45,6 +47,10 @@ export class FilesystemTierConfigReader implements TierConfigReader {
 	}
 
 	async readAgentMinTier(agent_id: string): Promise<Result<ModelTier, DomainError>> {
+		if (!/^[a-z][a-z0-9-]*$/.test(agent_id)) {
+			return Ok(DEFAULT_AGENT_MIN_TIER); // invalid agent_id → safe fallback
+		}
+		const MAX_AGENT_FILE_SIZE = 1024 * 1024; // 1 MB
 		const path = join(this.opts.agentsDir, `${agent_id}.md`);
 		let raw = "";
 		try {
@@ -52,6 +58,7 @@ export class FilesystemTierConfigReader implements TierConfigReader {
 		} catch {
 			return Ok(DEFAULT_AGENT_MIN_TIER);
 		}
+		if (raw.length > MAX_AGENT_FILE_SIZE) return Ok(DEFAULT_AGENT_MIN_TIER);
 		const match = raw.match(/^---\n([\s\S]*?)\n---/);
 		if (!match) return Ok(DEFAULT_AGENT_MIN_TIER);
 		let frontmatter: unknown;

@@ -67,4 +67,37 @@ describe("JsonlRoutingDecisionLogger", () => {
 		});
 		expect(isOk(res)).toBe(true);
 	});
+
+	it("serializes a TierDecisionLogEntry as a JSONL line with kind: 'tier'", async () => {
+		const path = join(dir, "routing.jsonl");
+		const logger = new JsonlRoutingDecisionLogger(path);
+		const decisionId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+		const tierEntry = {
+			kind: "tier" as const,
+			timestamp: "2026-04-19T11:00:00.000Z",
+			workflow_id: "tff:ship",
+			slice_id: "M01-S01",
+			decision: {
+				tier: "sonnet" as const,
+				policy_tier: "haiku" as const,
+				min_tier_applied: true,
+				agent_id: "tff-security-auditor",
+				decision_id: decisionId,
+				signals: { complexity: "low" as const, risk: { level: "low", tags: [] } },
+			},
+		};
+
+		const result = await logger.append(tierEntry);
+		expect(isOk(result)).toBe(true);
+
+		const content = await readFile(path, "utf8");
+		const lines = content.split("\n").filter((l) => l.length > 0);
+		expect(lines).toHaveLength(1);
+
+		const parsed = JSON.parse(lines[0] as string);
+		expect(parsed.kind).toBe("tier");
+		expect(parsed.decision.tier).toBe("sonnet");
+		expect(parsed.decision.decision_id).toBe(decisionId);
+		expect(parsed.decision.min_tier_applied).toBe(true);
+	});
 });

@@ -100,6 +100,14 @@ describe("FilesystemTierConfigReader.readAgentMinTier", () => {
 		expect(res.data).toBe("haiku");
 	});
 
+	it("rejects path traversal agent_id and returns haiku", async () => {
+		const reader = new FilesystemTierConfigReader({ projectRoot: tmpDir, agentsDir: tmpDir });
+		const res = await reader.readAgentMinTier("../../etc/passwd");
+		expect(isOk(res)).toBe(true);
+		if (!isOk(res)) return;
+		expect(res.data).toBe("haiku");
+	});
+
 	it("falls back to haiku for invalid min_tier value", async () => {
 		writeFileSync(
 			join(tmpDir, "tff-unknown.md"),

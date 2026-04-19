@@ -21,6 +21,7 @@ export const routingSelectTierSchema: CommandSchema = {
 			name: "agent",
 			type: "string",
 			description: "Agent identifier (e.g., tff-code-reviewer)",
+			pattern: "^[a-z][a-z0-9-]*$",
 		},
 		{
 			name: "signals",
