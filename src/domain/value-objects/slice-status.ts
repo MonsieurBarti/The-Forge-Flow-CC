@@ -37,3 +37,8 @@ export const canTransition = (from: SliceStatus, to: SliceStatus): boolean =>
 
 export const validTransitionsFrom = (status: SliceStatus): readonly SliceStatus[] =>
 	transitions[status];
+
+export const validPredecessorsOf = (target: SliceStatus): readonly SliceStatus[] =>
+	(Object.entries(transitions) as [SliceStatus, readonly SliceStatus[]][])
+		.filter(([, nexts]) => nexts.includes(target))
+		.map(([from]) => from);

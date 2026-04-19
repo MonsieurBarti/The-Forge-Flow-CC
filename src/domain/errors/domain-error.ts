@@ -34,6 +34,9 @@ export const DomainErrorSchema = z.object({
 	code: DomainErrorCodeSchema,
 	message: z.string(),
 	context: z.record(z.string(), z.unknown()).optional(),
+	recoveryHint: z.string().optional(),
+	validPredecessors: z.array(z.string()).readonly().optional(),
+	validNext: z.array(z.string()).readonly().optional(),
 });
 
 export type DomainError = z.infer<typeof DomainErrorSchema>;

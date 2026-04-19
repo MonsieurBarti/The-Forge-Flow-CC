@@ -7,7 +7,11 @@ import { createDomainError } from "../../domain/errors/domain-error.js";
 import { preconditionViolationError } from "../../domain/errors/precondition-violation.error.js";
 import type { Slice } from "../../domain/index.js";
 import { checkSliceStatus } from "../../domain/state-machine/preconditions.js";
-import { type SliceStatus, validTransitionsFrom } from "../../domain/value-objects/slice-status.js";
+import {
+	type SliceStatus,
+	validPredecessorsOf,
+	validTransitionsFrom,
+} from "../../domain/value-objects/slice-status.js";
 import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import type { ClosableStateStores } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { stageStateMdTmp } from "../../infrastructure/persistence/stage-state-md.js";
@@ -87,16 +91,21 @@ export const transitionSliceOrchestrator = async (
 	if (!validation.ok) {
 		if (validation.error.code === "INVALID_TRANSITION") {
 			const validNext = validTransitionsFrom(currentSlice.status);
+			const predecessors = validPredecessorsOf(targetStatus);
 			const recoveryHint =
-				validNext.length > 0
-					? `Valid next: ${validNext.join(", ")}`
-					: "No valid transitions available from this status";
+				predecessors.length > 0
+					? `Valid predecessors of '${targetStatus}': [${predecessors.join(", ")}]. Transition through one of those first.`
+					: validNext.length > 0
+						? `Valid next from '${currentSlice.status}': [${validNext.join(", ")}]`
+						: "No valid transitions available from this status";
 			return {
 				ok: false,
 				error: {
 					code: validation.error.code,
 					message: validation.error.message,
 					recoveryHint,
+					validPredecessors: predecessors,
+					validNext,
 				} as DomainError,
 			};
 		}

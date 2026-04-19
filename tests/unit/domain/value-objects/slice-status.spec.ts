@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	canTransition,
 	SliceStatusSchema,
+	validPredecessorsOf,
 	validTransitionsFrom,
 } from "../../../../src/domain/value-objects/slice-status.js";
 
@@ -85,6 +86,24 @@ describe("SliceStatus", () => {
 			const transitions = validTransitionsFrom("verifying");
 			expect(transitions).toContain("reviewing");
 			expect(transitions).toContain("executing");
+		});
+	});
+
+	describe("validPredecessorsOf", () => {
+		it("returns [verifying] for reviewing", () => {
+			expect(validPredecessorsOf("reviewing")).toEqual(["verifying"]);
+		});
+
+		it("returns [executing] as a predecessor of verifying", () => {
+			expect(validPredecessorsOf("verifying")).toContain("executing");
+		});
+
+		it("returns [completing] as the only predecessor of closed", () => {
+			expect(validPredecessorsOf("closed")).toEqual(["completing"]);
+		});
+
+		it("returns empty for discussing (initial state)", () => {
+			expect(validPredecessorsOf("discussing")).toEqual([]);
 		});
 	});
 });
