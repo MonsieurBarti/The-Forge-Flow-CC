@@ -2,6 +2,7 @@ import path from "node:path";
 import type { DatabaseInit } from "../../../domain/ports/database-init.port.js";
 import type { DependencyStore } from "../../../domain/ports/dependency-store.port.js";
 import type { JournalRepository } from "../../../domain/ports/journal-repository.port.js";
+import type { MilestoneAuditStore } from "../../../domain/ports/milestone-audit-store.port.js";
 import type { MilestoneStore } from "../../../domain/ports/milestone-store.port.js";
 import type { ProjectStore } from "../../../domain/ports/project-store.port.js";
 import type { ReviewStore } from "../../../domain/ports/review-store.port.js";
@@ -24,6 +25,7 @@ export interface StateStores {
 	sliceDependencyStore: SliceDependencyStore;
 	sessionStore: SessionStore;
 	reviewStore: ReviewStore;
+	milestoneAuditStore: MilestoneAuditStore;
 	journalRepository: JournalRepository;
 }
 
@@ -66,6 +68,7 @@ export function createStateStoresUnchecked(dbPath?: string): StateStores {
 		sliceDependencyStore: adapter,
 		sessionStore: adapter,
 		reviewStore: adapter,
+		milestoneAuditStore: adapter, // adapter implements MilestoneAuditStore
 		journalRepository,
 	};
 }
@@ -104,6 +107,7 @@ export function createClosableStateStoresUnchecked(dbPath?: string): ClosableSta
 		sliceDependencyStore: adapter,
 		sessionStore: adapter,
 		reviewStore: adapter,
+		milestoneAuditStore: adapter, // adapter implements MilestoneAuditStore
 		journalRepository,
 		close: () => adapter.close(),
 		checkpoint: () => adapter.checkpoint(),
