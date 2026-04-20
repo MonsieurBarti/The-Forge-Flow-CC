@@ -13,28 +13,23 @@
  */
 
 export interface Exemption {
-  filePath: string;
-  line: number;
-  methodName: string;
-  reason: string;
+	filePath: string;
+	line: number;
+	methodName: string;
+	reason: string;
 }
 
 export const SKIPLIST: Exemption[] = [
-  // Example format — empty until populated during baseline:
-  // {
-  //   filePath: "/abs/path/to/file.ts",
-  //   line: 42,
-  //   methodName: "closeAdapter",
-  //   reason: "lifecycle; runs after the tx is committed",
-  // },
+	// Example format — empty until populated during baseline:
+	// {
+	//   filePath: "/abs/path/to/file.ts",
+	//   line: 42,
+	//   methodName: "closeAdapter",
+	//   reason: "lifecycle; runs after the tx is committed",
+	// },
 ];
 
-export const isExempt = (
-  filePath: string,
-  line: number,
-  methodName: string,
-): boolean =>
-  SKIPLIST.some(
-    (e) =>
-      e.filePath.endsWith(filePath) && e.line === line && e.methodName === methodName,
-  );
+export const isExempt = (filePath: string, line: number, methodName: string): boolean =>
+	SKIPLIST.some(
+		(e) => e.filePath.endsWith(filePath) && e.line === line && e.methodName === methodName,
+	);
