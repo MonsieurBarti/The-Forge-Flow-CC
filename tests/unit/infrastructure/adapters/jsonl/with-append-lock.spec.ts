@@ -87,4 +87,28 @@ describe("withAppendLock", () => {
 		expect(elapsed).toBeLessThan(50); // should complete without any retry sleep
 		await expect(access(`${path}.lock`)).rejects.toThrow(); // released cleanly
 	});
+
+	it("does not treat a fresh lockfile as stale", async () => {
+		// fresh mtime (now); short maxAttempts so the test fails fast if detection is wrong
+		await writeFile(`${path}.lock`, "", { flag: "wx" });
+		await expect(
+			withAppendLock(path, async () => "done", {
+				maxAttempts: 2,
+				retryMs: 20,
+				staleMs: 10_000,
+			}),
+		).rejects.toThrow(/timeout/);
+	});
+
+	it("tolerates concurrent stale-unlink races", async () => {
+		await writeFile(`${path}.lock`, "", { flag: "wx" });
+		const past = (Date.now() - 30_000) / 1000;
+		await utimes(`${path}.lock`, past, past);
+
+		const [a, b] = await Promise.all([
+			withAppendLock(path, async () => "A", { staleMs: 10_000, retryMs: 5 }),
+			withAppendLock(path, async () => "B", { staleMs: 10_000, retryMs: 5 }),
+		]);
+		expect(new Set([a, b])).toEqual(new Set(["A", "B"]));
+	});
 });
