@@ -1,14 +1,18 @@
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 describe("build manifest", () => {
 	it("writes dist/.build-manifest.json with sourceSha, bundleSha256, builtAt", () => {
 		// Ensure a clean build so timestamps and hashes are fresh.
-		execSync("bun run build", { stdio: "inherit" });
+		execSync("bun run build", { stdio: "inherit", cwd: repoRoot });
 
-		const manifestPath = "dist/.build-manifest.json";
+		const manifestPath = resolve(repoRoot, "dist/.build-manifest.json");
 		expect(existsSync(manifestPath)).toBe(true);
 
 		const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
@@ -18,11 +22,14 @@ describe("build manifest", () => {
 		};
 
 		// sourceSha: matches `git rev-parse HEAD`
-		const expectedSha = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim();
+		const expectedSha = execSync("git rev-parse HEAD", {
+			encoding: "utf8",
+			cwd: repoRoot,
+		}).trim();
 		expect(manifest.sourceSha).toBe(expectedSha);
 
 		// bundleSha256: matches sha256 of dist/cli/index.js
-		const bundle = readFileSync("dist/cli/index.js");
+		const bundle = readFileSync(resolve(repoRoot, "dist/cli/index.js"));
 		const expectedBundleSha = createHash("sha256").update(bundle).digest("hex");
 		expect(manifest.bundleSha256).toBe(expectedBundleSha);
 
