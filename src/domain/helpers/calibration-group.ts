@@ -4,9 +4,9 @@ import type {
 	VerdictBreakdown,
 } from "../value-objects/calibration-report.js";
 import type { RoutingDecision } from "../value-objects/routing-decision.js";
-import type { OutcomeSourceKind, RoutingOutcome } from "../value-objects/routing-outcome.js";
+import type { RoutingOutcome } from "../value-objects/routing-outcome.js";
 
-export type GroupWeights = Record<OutcomeSourceKind, number>;
+export type GroupWeights = Record<"manual" | "debug-join", number>;
 
 export interface GroupOutcomesInput {
 	decisions: RoutingDecision[];
@@ -61,7 +61,7 @@ const emptyCell = (key: CellKey): CalibrationCell => ({
 	sample_decision_ids: [],
 });
 
-const weightFor = (source: OutcomeSourceKind, weights: GroupWeights): number =>
+const weightFor = (source: RoutingOutcome["source"], weights: GroupWeights): number =>
 	source === "manual" ? weights.manual : weights["debug-join"];
 
 export const groupOutcomes = (input: GroupOutcomesInput): GroupOutcomesResult => {
