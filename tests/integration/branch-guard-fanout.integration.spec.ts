@@ -21,6 +21,7 @@ const writers = [
 	"routing:event",
 	"routing:outcome",
 	"routing:calibrate",
+	"routing:judge",
 	"checkpoint:save",
 	"observe:record",
 ];
