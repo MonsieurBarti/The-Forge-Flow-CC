@@ -34,8 +34,20 @@ const seed = (root: string) => {
 				enriched: false,
 				decision_id: D1,
 			},
-		})}
-`,
+		})}\n${JSON.stringify({
+			kind: "tier",
+			timestamp: "2026-04-20T09:00:01.000Z",
+			workflow_id: "tff:ship",
+			slice_id: SLICE,
+			decision: {
+				decision_id: "00000000-0000-4000-8000-000000000002",
+				agent_id: "reviewer",
+				tier: "opus",
+				policy_tier: "opus",
+				min_tier_applied: false,
+				signals: { complexity: "medium", risk: { level: "low", tags: ["auth"] } },
+			},
+		})}\n`,
 	);
 	writeFileSync(join(root, ".tff-cc", "milestones", "M01", "S02-auth", "SPEC.md"), "# spec");
 };
@@ -62,14 +74,19 @@ describe("routing:judge — roundtrip", () => {
 
 	it("writes a model-judge outcome for a closed slice", async () => {
 		seed(root);
-		const fakeJudge = {
-			judge: async () => ({
-				ok: true as const,
-				data: [
-					{ decision_id: D1, dimension: "agent" as const, verdict: "ok" as const, reason: "fine" },
-				],
-			}),
-		};
+		const judgeSpy = vi.fn().mockResolvedValue({
+			ok: true as const,
+			data: [
+				{ decision_id: D1, dimension: "agent" as const, verdict: "ok" as const, reason: "fine" },
+				{
+					decision_id: D1,
+					dimension: "tier" as const,
+					verdict: "too-high" as const,
+					reason: "overkill",
+				},
+			],
+		});
+		const fakeJudge = { judge: judgeSpy };
 		const fakeLookup = {
 			findMergeCommit: async () => ({ ok: true as const, data: "abc1234567890" }),
 		};
@@ -83,15 +100,22 @@ describe("routing:judge — roundtrip", () => {
 		});
 		const parsed = JSON.parse(out);
 		expect(parsed.ok).toBe(true);
-		expect(parsed.data.outcomes_emitted).toBe(1);
+		expect(parsed.data.outcomes_emitted).toBe(2);
 
-		const line = readFileSync(
-			join(root, ".tff-cc", "logs", "routing-outcomes.jsonl"),
-			"utf8",
-		).trim();
-		const obj = JSON.parse(line);
-		expect(obj.source).toBe("model-judge");
-		expect(obj.decision_id).toBe(D1);
+		const lines = readFileSync(join(root, ".tff-cc", "logs", "routing-outcomes.jsonl"), "utf8")
+			.trim()
+			.split("\n")
+			.filter(Boolean);
+		expect(lines).toHaveLength(2);
+		const objs = lines.map((l) => JSON.parse(l));
+		expect(objs.some((o) => o.dimension === "agent")).toBe(true);
+		expect(objs.some((o) => o.dimension === "tier")).toBe(true);
+		expect(objs.every((o) => o.source === "model-judge")).toBe(true);
+
+		// Verify the join worked: the judge received decisions[0].tier === "opus"
+		expect(judgeSpy).toHaveBeenCalledOnce();
+		const callArg = judgeSpy.mock.calls[0][0] as { decisions: Array<{ tier: string }> };
+		expect(callArg.decisions[0].tier).toBe("opus");
 	});
 
 	it("refuses when slice is not closed", async () => {

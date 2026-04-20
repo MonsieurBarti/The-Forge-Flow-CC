@@ -101,6 +101,37 @@ describe("JsonlRoutingDecisionReader", () => {
 		});
 	});
 
+	it("populates tier from matching tier event when joining route+tier", async () => {
+		const tierLine = {
+			kind: "tier",
+			timestamp: "2026-04-19T09:00:01.000Z",
+			workflow_id: "tff:ship",
+			slice_id: "M01-S01",
+			decision: {
+				decision_id: "00000000-0000-4000-8000-000000000002",
+				agent_id: "tff-code-reviewer",
+				tier: "opus",
+				policy_tier: "opus",
+				min_tier_applied: false,
+				signals: { complexity: "medium", risk: { level: "low", tags: ["auth"] } },
+			},
+		};
+		await appendFile(path, `${JSON.stringify(routeLine)}\n`, "utf8");
+		await appendFile(path, `${JSON.stringify(tierLine)}\n`, "utf8");
+		const reader = new JsonlRoutingDecisionReader(path);
+		const known = await reader.readKnownDecisions();
+		expect(known).toHaveLength(1);
+		expect(known[0].tier).toBe("opus");
+	});
+
+	it("leaves tier undefined when no matching tier event exists", async () => {
+		await appendFile(path, `${JSON.stringify(routeLine)}\n`, "utf8");
+		const reader = new JsonlRoutingDecisionReader(path);
+		const known = await reader.readKnownDecisions();
+		expect(known).toHaveLength(1);
+		expect(known[0].tier).toBeUndefined();
+	});
+
 	it("skips corrupt lines silently in-memory (logs to stderr)", async () => {
 		await appendFile(path, `${JSON.stringify(routeLine)}\n`, "utf8");
 		await appendFile(path, "not-json\n", "utf8");

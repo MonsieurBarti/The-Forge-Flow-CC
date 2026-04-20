@@ -148,7 +148,7 @@ export const routingJudgeCmd = async (
 		.map((k) => ({
 			decision_id: k.decision_id,
 			agent: k.agent ?? "unknown",
-			tier: "sonnet" as const,
+			tier: k.tier ?? ("sonnet" as const),
 			slice_id: k.slice_id,
 			workflow_id: k.workflow_id,
 			signals: k.signals,
