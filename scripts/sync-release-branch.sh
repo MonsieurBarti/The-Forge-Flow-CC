@@ -145,6 +145,15 @@ case "$ORIGIN_URL" in
 esac
 
 cd "$RELEASE_DIR"
+echo "release tree assembled at $RELEASE_DIR"
+
+if [ "$TFF_RELEASE_SYNC_DRY_RUN" = "yes" ]; then
+  echo "DRY RUN: skipping force-push. Inspect the tree above."
+  # Disable the EXIT trap so the tmp dir survives for inspection.
+  trap - EXIT
+  exit 0
+fi
+
 echo "Initializing release git tree..."
 git init -q
 git remote add origin "$PUSH_URL"
