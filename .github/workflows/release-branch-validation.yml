@@ -28,8 +28,23 @@ jobs:
       - name: Verify build manifest byte-matches bundle
         run: bash scripts/verify-build-manifest.sh
 
-      - name: Verify CLI runs
-        run: node dist/cli/index.js --help
+      - name: Smoke-test CLI commands against a tmp state dir
+        run: |
+          set -e
+          node dist/cli/index.js --help
+          WORK=$(mktemp -d)
+          cd "$WORK"
+          # Branch guards require a git repo on a non-default branch.
+          git init --quiet
+          git commit --allow-empty -m "smoke-init" --quiet
+          git checkout -b smoke-branch --quiet
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" schema --command project:init > schema.json
+          test -s schema.json
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" project:init --name smoke-test
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" milestone:create --name "Smoke Milestone"
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" slice:create --title "smoke slice"
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" slice:list | grep -q "smoke slice"
+          echo "ok: CLI smoke passed"
 
       - name: Run observe hook smoke
         run: |
