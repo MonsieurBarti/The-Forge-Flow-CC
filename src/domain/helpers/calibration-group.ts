@@ -6,7 +6,7 @@ import type {
 import type { RoutingDecision } from "../value-objects/routing-decision.js";
 import type { RoutingOutcome } from "../value-objects/routing-outcome.js";
 
-export type GroupWeights = Record<"manual" | "debug-join", number>;
+export type GroupWeights = Record<string, number>;
 
 export interface GroupOutcomesInput {
 	decisions: RoutingDecision[];
@@ -61,8 +61,12 @@ const emptyCell = (key: CellKey): CalibrationCell => ({
 	sample_decision_ids: [],
 });
 
-const weightFor = (source: RoutingOutcome["source"], weights: GroupWeights): number =>
-	source === "manual" ? weights.manual : weights["debug-join"];
+/**
+ * Unknown source keys map to weight 0 (outcome counted in `total` but excluded
+ * from `effective_total` / `effective_wrong`). This prevents silently mis-weighting
+ * data written by a future, unrecognized source.
+ */
+const weightFor = (source: string, weights: GroupWeights): number => weights[source] ?? 0;
 
 export const groupOutcomes = (input: GroupOutcomesInput): GroupOutcomesResult => {
 	const byAgent = new Map<string, CalibrationCell>();
