@@ -40,6 +40,19 @@ const seed = (root: string) => {
 	writeFileSync(join(root, ".tff-cc", "milestones", "M01", "S02-auth", "SPEC.md"), "# spec");
 };
 
+const stubDiffReader = {
+	readMergeDiff: async () => ({
+		ok: true as const,
+		data: { files_changed: 0, insertions: 0, deletions: 0, patch: "", truncated: false },
+	}),
+};
+const stubSpecReader = {
+	readSpec: async () => ({
+		ok: true as const,
+		data: { text: "", truncated: false, missing: false },
+	}),
+};
+
 describe("routing:judge — roundtrip", () => {
 	let root: string;
 	beforeEach(() => {
@@ -63,6 +76,8 @@ describe("routing:judge — roundtrip", () => {
 		const out = await routingJudgeCmd(["--slice", SLICE], {
 			judgeFactory: () => fakeJudge,
 			mergeLookupFactory: () => fakeLookup,
+			diffReaderFactory: () => stubDiffReader,
+			specReaderFactory: () => stubSpecReader,
 			sliceStatusLookup: async () => "closed",
 			sliceLabelLookup: async () => SLICE,
 		});
@@ -84,6 +99,8 @@ describe("routing:judge — roundtrip", () => {
 		const out = await routingJudgeCmd(["--slice", SLICE], {
 			judgeFactory: () => ({ judge: async () => ({ ok: true, data: [] }) }),
 			mergeLookupFactory: () => ({ findMergeCommit: async () => ({ ok: true, data: "abc1234" }) }),
+			diffReaderFactory: () => stubDiffReader,
+			specReaderFactory: () => stubSpecReader,
 			sliceStatusLookup: async () => "executing",
 			sliceLabelLookup: async () => SLICE,
 		});

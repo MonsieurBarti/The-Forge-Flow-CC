@@ -7,7 +7,8 @@ import { preconditionViolationError } from "../../domain/errors/precondition-vio
 import type { DiffReader } from "../../domain/ports/diff-reader.port.js";
 import type { OutcomeJudge } from "../../domain/ports/outcome-judge.port.js";
 import type { SliceMergeLookup } from "../../domain/ports/slice-merge-lookup.port.js";
-import { isOk, Ok } from "../../domain/result.js";
+import type { SliceSpecReader } from "../../domain/ports/slice-spec-reader.port.js";
+import { isOk } from "../../domain/result.js";
 import { HaikuOutcomeJudge } from "../../infrastructure/adapters/anthropic/haiku-outcome-judge.js";
 import { SliceSpecFsReader } from "../../infrastructure/adapters/filesystem/slice-spec-fs-reader.js";
 import { YamlRoutingConfigReader } from "../../infrastructure/adapters/filesystem/yaml-routing-config-reader.js";
@@ -20,11 +21,6 @@ import { createClosableStateStoresUnchecked } from "../../infrastructure/adapter
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { resolveSliceId } from "../utils/resolve-id.js";
 import { resolveRoutingPaths } from "../utils/routing-paths.js";
-
-const STUB_DIFF_READER: DiffReader = {
-	readMergeDiff: async () =>
-		Ok({ files_changed: 0, insertions: 0, deletions: 0, patch: "", truncated: false }),
-};
 
 const execFileP = promisify(execFile);
 
@@ -52,6 +48,8 @@ export const routingJudgeSchema: CommandSchema = {
 export interface RoutingJudgeFactoryOverrides {
 	judgeFactory?: (opts: { model: string; temperature: number; timeout_ms: number }) => OutcomeJudge;
 	mergeLookupFactory?: (opts: { cwd: string; defaultBranch: string }) => SliceMergeLookup;
+	diffReaderFactory?: (opts: { cwd: string }) => DiffReader;
+	specReaderFactory?: (opts: { projectRoot: string }) => SliceSpecReader;
 	sliceStatusLookup?: (sliceId: string) => Promise<string>;
 	sliceLabelLookup?: (sliceId: string) => Promise<string>;
 }
@@ -182,10 +180,12 @@ export const routingJudgeCmd = async (
 	const mergeLookup: SliceMergeLookup = overrides.mergeLookupFactory
 		? overrides.mergeLookupFactory({ cwd: projectRoot, defaultBranch: "main" })
 		: new GitSliceMergeLookup({ run: runGit, cwd: projectRoot, defaultBranch: "main" });
-	const diffReader: DiffReader = overrides.mergeLookupFactory
-		? STUB_DIFF_READER
+	const diffReader: DiffReader = overrides.diffReaderFactory
+		? overrides.diffReaderFactory({ cwd: projectRoot })
 		: new GitDiffReader({ run: runGit, cwd: projectRoot });
-	const specReader = new SliceSpecFsReader({ projectRoot });
+	const specReader: SliceSpecReader = overrides.specReaderFactory
+		? overrides.specReaderFactory({ projectRoot })
+		: new SliceSpecFsReader({ projectRoot });
 
 	const res = await judgeOutcomesUseCase(
 		{ slice_id: sliceId },
