@@ -38,6 +38,7 @@ import { sliceCreateCmd } from "./commands/slice-create.cmd.js";
 import { sliceListCmd } from "./commands/slice-list.cmd.js";
 import { sliceTransitionCmd } from "./commands/slice-transition.cmd.js";
 import { specEditGuardCmd } from "./commands/spec-edit-guard.cmd.js";
+import { stateDiffCmd } from "./commands/state-diff.cmd.js";
 import { syncStateCmd } from "./commands/sync-state.cmd.js";
 import { taskClaimCmd } from "./commands/task-claim.cmd.js";
 import { taskCloseCmd } from "./commands/task-close.cmd.js";
@@ -76,6 +77,7 @@ const commands: Record<string, CommandFn> = {
 	"pre-op:guard": preOpGuardCmd,
 	"spec-edit:guard": specEditGuardCmd,
 	"waves:detect": wavesDetectCmd,
+	"state:diff": stateDiffCmd,
 	"sync:state": withBranchGuard("sync:state", syncStateCmd),
 	"worktree:create": withBranchGuard("worktree:create", worktreeCreateCmd),
 	"worktree:delete": withBranchGuard("worktree:delete", worktreeDeleteCmd),
