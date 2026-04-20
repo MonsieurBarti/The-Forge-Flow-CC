@@ -5,6 +5,13 @@ import { Err, Ok, type Result } from "../../../domain/result.js";
 
 const SLICE_LABEL_RE = /^M\d+-S\d+$/;
 
+const escapeRegex = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const buildLabelMatcher = (label: string): RegExp =>
+	// Label stands alone: preceded by start-of-string or non-alnum, followed by non-digit (to
+	// distinguish M01-S02 from M01-S020) and then non-alnum or end-of-string.
+	new RegExp(`(?:^|[^0-9A-Za-z])${escapeRegex(label)}(?![0-9])(?:[^0-9A-Za-z]|$)`);
+
 export type GitRunner = (cmd: string, args: string[], opts: { cwd: string }) => Promise<string>;
 
 export interface GitSliceMergeLookupOpts {
@@ -29,7 +36,7 @@ export class GitSliceMergeLookup implements SliceMergeLookup {
 		try {
 			stdout = await this.opts.run(
 				"git",
-				["log", "--grep", sliceLabel, "--format=%H", this.opts.defaultBranch],
+				["log", "--grep", sliceLabel, "--format=%H%x00%s", "--reverse", this.opts.defaultBranch],
 				{ cwd: this.opts.cwd },
 			);
 		} catch (err) {
@@ -40,18 +47,24 @@ export class GitSliceMergeLookup implements SliceMergeLookup {
 			);
 		}
 
-		const first = stdout.split("\n").find((l) => l.trim().length > 0);
-		if (!first) {
-			return Err(
-				preconditionViolationError([
-					{
-						code: "slice.merge_commit",
-						expected: `merge commit matching ${sliceLabel} on ${this.opts.defaultBranch}`,
-						actual: "no match",
-					},
-				]),
-			);
+		const matcher = buildLabelMatcher(sliceLabel);
+		for (const line of stdout.split("\n")) {
+			if (!line.trim()) continue;
+			const nul = line.indexOf("\u0000");
+			if (nul < 0) continue;
+			const sha = line.slice(0, nul).trim();
+			const subject = line.slice(nul + 1);
+			if (matcher.test(subject)) return Ok(sha);
 		}
-		return Ok(first.trim());
+
+		return Err(
+			preconditionViolationError([
+				{
+					code: "slice.merge_commit",
+					expected: `commit whose subject contains ${sliceLabel} as a standalone token on ${this.opts.defaultBranch}`,
+					actual: "no match",
+				},
+			]),
+		);
 	}
 }
