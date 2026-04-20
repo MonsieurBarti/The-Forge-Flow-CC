@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.8](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.7...tff-cc-v0.9.8) (2026-04-19)
+
+
+### Features
+
+* phase-d prep — state & transaction hardening ([#119](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/119)) ([3c0ac32](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/3c0ac32844faafeb86332d2b2e97063671cbb05b))
+* **routing:** Phase C — layered router {agent, tier, confidence, signals} ([#118](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/118)) ([8567d69](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/8567d696b475bbdf520b9d2381825d67e2fb59c2))
+* **routing:** Phase D — feedback loop (advisory calibration) ([#120](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/120)) ([aba1b01](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/aba1b01202f771e08adacca85bbd88a2bccace7a))
+
+
+### Bug Fixes
+
+* **docs:** use plannotator-annotate for install verification ([#116](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/116)) ([bc2abf6](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/bc2abf6cc547364e24348234e5b95555c58988fe))
+* quickfix bundle — tier rename, branch guards, review:record fk, audit gate ([#121](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/121)) ([d335873](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/d33587394fdd89294fc26184be77f70c069cd612))
+
 ## [0.9.7](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.6...tff-cc-v0.9.7) (2026-04-19)
 
 
