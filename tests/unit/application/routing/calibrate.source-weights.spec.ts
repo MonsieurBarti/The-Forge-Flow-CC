@@ -43,12 +43,12 @@ describe("calibrateUseCase — source_weights", () => {
 			outcomesSource,
 			writer,
 			config: {
-				n_min: 3,
+				n_min: 2,
 				source_weights: { manual: 1.0, "debug-join": 0.5, "model-judge": 0.5 },
 			},
 			now: () => "2026-04-20T10:00:00.000Z",
 		});
-		// 5 model-judge outcomes × weight 0.5 = 2.5 effective_total on the agent cell.
+		// 5 model-judge outcomes × weight 0.5 = 2.5 effective_total ≥ n_min=2 → cell passes
 		expect(report.cells.length).toBeGreaterThanOrEqual(1);
 		const agentCell = report.cells.find((c) => c.key.kind === "agent");
 		expect(agentCell?.effective_total).toBeCloseTo(2.5);
@@ -61,7 +61,7 @@ describe("calibrateUseCase — source_weights", () => {
 			outcomesSource,
 			writer,
 			config: {
-				n_min: 3,
+				n_min: 2,
 				implicit_weight: 0.3,
 			},
 			now: () => "2026-04-20T10:00:00.000Z",
@@ -77,7 +77,7 @@ describe("calibrateUseCase — source_weights", () => {
 			outcomesSource,
 			writer,
 			config: {
-				n_min: 3,
+				n_min: 2,
 				implicit_weight: 0.3,
 				source_weights: { manual: 1.0, "debug-join": 0.9, "model-judge": 1.0 },
 			},

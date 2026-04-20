@@ -68,11 +68,11 @@ export const calibrateUseCase = async (deps: CalibrateDeps): Promise<Calibration
 
 	const collectCells = (cellsByKey: Map<string, CalibrationCell>) => {
 		for (const cell of cellsByKey.values()) {
-			if (cell.total < deps.config.n_min) {
+			if (cell.effective_total < deps.config.n_min) {
 				skipped.push({
 					key: cell.key,
 					total: cell.total,
-					reason: `insufficient evidence (N=${cell.total}, need N_min=${deps.config.n_min})`,
+					reason: `insufficient evidence (effective_N=${cell.effective_total}, need N_min=${deps.config.n_min})`,
 				});
 			} else {
 				cells.push(cell);
