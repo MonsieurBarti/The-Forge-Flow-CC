@@ -2,6 +2,7 @@ import { createDomainError, type DomainError } from "../../../domain/errors/doma
 import { preconditionViolationError } from "../../../domain/errors/precondition-violation.error.js";
 import type { SliceMergeLookup } from "../../../domain/ports/slice-merge-lookup.port.js";
 import { Err, Ok, type Result } from "../../../domain/result.js";
+import type { GitRunner } from "./git-runner.js";
 
 const SLICE_LABEL_RE = /^M\d+-S\d+$/;
 
@@ -11,8 +12,6 @@ const buildLabelMatcher = (label: string): RegExp =>
 	// Label stands alone: preceded by start-of-string or non-alnum, followed by non-digit (to
 	// distinguish M01-S02 from M01-S020) and then non-alnum or end-of-string.
 	new RegExp(`(?:^|[^0-9A-Za-z])${escapeRegex(label)}(?![0-9])(?:[^0-9A-Za-z]|$)`);
-
-export type GitRunner = (cmd: string, args: string[], opts: { cwd: string }) => Promise<string>;
 
 export interface GitSliceMergeLookupOpts {
 	run: GitRunner;
