@@ -52,7 +52,10 @@ export const routingCalibrateCmd = async (args: string[]): Promise<string> => {
 	);
 
 	const n_min = nMinFlag ?? configRes.data.calibration?.n_min ?? 5;
-	const implicit_weight = weightFlag ?? configRes.data.calibration?.implicit_weight ?? 0.5;
+	const implicitWeightFromSettings = configRes.data.calibration?.implicit_weight;
+	const sourceWeightsFromSettings = configRes.data.calibration?.source_weights;
+	// CLI flag override wins; if no flag, fall through to settings; if neither, leave undefined so calibrateUseCase defaults kick in.
+	const implicit_weight = weightFlag ?? implicitWeightFromSettings;
 
 	const decisionReader = new JsonlRoutingDecisionReader(routingPath);
 	const decisions = await decisionReader.readDecisions();
@@ -65,7 +68,11 @@ export const routingCalibrateCmd = async (args: string[]): Promise<string> => {
 		implicitSource,
 		outcomesSource,
 		writer,
-		config: { n_min, implicit_weight },
+		config: {
+			n_min,
+			...(sourceWeightsFromSettings ? { source_weights: sourceWeightsFromSettings } : {}),
+			...(implicit_weight !== undefined ? { implicit_weight } : {}),
+		},
 		now: () => new Date().toISOString(),
 	});
 
