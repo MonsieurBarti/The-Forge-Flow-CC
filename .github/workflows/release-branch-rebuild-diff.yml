@@ -70,6 +70,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          gh label create release-pipeline --color B60205 --description "issues from release-pipeline automation" --force
           gh issue create \
             --title "release-branch rebuild-diff mismatch ($(date -u +%Y-%m-%d))" \
             --body "The scheduled rebuild-diff found a bundle sha256 mismatch.
