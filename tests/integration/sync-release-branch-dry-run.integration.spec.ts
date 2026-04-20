@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 describe("sync-release-branch.sh DRY_RUN mode", () => {
@@ -22,5 +22,10 @@ describe("sync-release-branch.sh DRY_RUN mode", () => {
 
 		expect(output).toContain("DRY RUN: skipping force-push");
 		expect(output).toContain("release tree assembled at");
+
+		const match = output.match(/release tree assembled at (\S+)/);
+		expect(match).not.toBeNull();
+		expect(existsSync(match![1])).toBe(true);
+		rmSync(match![1], { recursive: true, force: true });
 	});
 });
