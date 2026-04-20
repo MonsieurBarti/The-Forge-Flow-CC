@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidDimensionVerdict } from "../helpers/dimension-verdict.js";
 
 export const OutcomeDimensionSchema = z.enum(["agent", "tier", "unknown"]);
 export type OutcomeDimension = z.infer<typeof OutcomeDimensionSchema>;
@@ -27,11 +28,7 @@ const BaseShape = z.object({
  * or remove fields. Dimension×verdict constraints enforced via refine.
  */
 export const RoutingOutcomeSchema = BaseShape.superRefine((o, ctx) => {
-	const valid =
-		(o.dimension === "agent" && (o.verdict === "ok" || o.verdict === "wrong")) ||
-		(o.dimension === "unknown" && o.verdict === "wrong") ||
-		o.dimension === "tier";
-	if (!valid) {
+	if (!isValidDimensionVerdict(o.dimension, o.verdict)) {
 		ctx.addIssue({
 			code: "custom",
 			message: `verdict "${o.verdict}" not allowed for dimension "${o.dimension}"`,

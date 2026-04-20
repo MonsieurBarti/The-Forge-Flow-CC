@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidDimensionVerdict } from "../helpers/dimension-verdict.js";
 
 export const JudgeDimensionSchema = z.enum(["agent", "tier"]);
 export type JudgeDimension = z.infer<typeof JudgeDimensionSchema>;
@@ -19,10 +20,9 @@ const BaseShape = z.object({
  * is not allowed — that dimension is reserved for DebugJoinOutcomeSource.
  */
 export const JudgeVerdictSchema = BaseShape.superRefine((v, ctx) => {
-	const valid =
-		(v.dimension === "agent" && (v.verdict === "ok" || v.verdict === "wrong")) ||
-		v.dimension === "tier";
-	if (!valid) {
+	// Defense-in-depth: JudgeDimensionSchema already rejects "unknown", but we also
+	// apply the shared predicate so the error message is consistent.
+	if (!isValidDimensionVerdict(v.dimension, v.verdict)) {
 		ctx.addIssue({
 			code: "custom",
 			message: `verdict "${v.verdict}" not allowed for dimension "${v.dimension}"`,
