@@ -26,7 +26,7 @@ const ModelJudgeConfigSchema = z.object({
 
 const CalibrationConfigSchema = z.object({
 	n_min: z.number().int().positive().default(5),
-	implicit_weight: z.number().min(0).max(1).default(0.5),
+	implicit_weight: z.number().min(0).max(1).optional(),
 	debug_join: z.object({ enabled: z.boolean().default(true) }).default({ enabled: true }),
 	source_weights: z.record(z.string(), z.number().min(0).max(2)).optional(),
 	model_judge: ModelJudgeConfigSchema.optional(),

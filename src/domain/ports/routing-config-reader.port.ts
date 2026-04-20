@@ -13,7 +13,7 @@ export interface ModelJudgeConfig {
 
 export interface CalibrationConfig {
 	n_min: number;
-	implicit_weight: number;
+	implicit_weight?: number;
 	debug_join: { enabled: boolean };
 	source_weights?: Record<string, number>;
 	model_judge?: ModelJudgeConfig;

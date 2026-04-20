@@ -79,6 +79,8 @@ describe("routing:calibrate — three sources", () => {
 		// effective_total on the reviewer agent cell:
 		// 1.0 (manual) + 0.5 (debug-join) + 1.0 (model-judge) = 2.5 ≥ n_min=2 → cell passes the gate
 		expect(md).not.toContain("reviewer) — insufficient evidence");
+		// source_weights only — no implicit_weight in settings → no deprecation footer
+		expect(md).not.toContain("Deprecation");
 	});
 
 	it("emits a deprecation footer when only implicit_weight is configured", async () => {
