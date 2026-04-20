@@ -63,12 +63,25 @@ export const renderCalibrationReport = (report: CalibrationReport): string => {
 
 	const emptySummary = report.cells.length === 0 ? "No cells evaluated.\n\n" : "";
 
-	return [
+	const sections = [
 		header(report),
 		emptySummary,
 		tableOr("Per-agent", byAgent, "No per-agent cells."),
 		tableOr("Per-tag", byTag, "No per-tag cells."),
 		recsSection(report.recommendations),
 		skippedSection(report.skipped_cells),
-	].join("\n");
+	];
+
+	if (report.implicit_weight_deprecated) {
+		sections.push(
+			[
+				"---",
+				"",
+				`> **Deprecation:** \`routing.calibration.implicit_weight\` is deprecated. Migrate to \`routing.calibration.source_weights\`. The current run used weights: ${JSON.stringify(report.source_weights ?? {})}.`,
+				"",
+			].join("\n"),
+		);
+	}
+
+	return sections.join("\n");
 };

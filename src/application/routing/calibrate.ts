@@ -14,7 +14,10 @@ import { computeImplicitOutcomesUseCase } from "./compute-outcomes.js";
 
 export interface CalibrateConfig {
 	n_min: number;
-	implicit_weight: number;
+	/** Preferred: explicit per-source weights. */
+	source_weights?: Record<string, number>;
+	/** Deprecated: single-dial debug-join weight. Used only if source_weights is absent. */
+	implicit_weight?: number;
 }
 
 export interface CalibrateDeps {
@@ -26,6 +29,20 @@ export interface CalibrateDeps {
 	now: () => string;
 }
 
+const DEFAULT_WEIGHTS: Record<string, number> = {
+	manual: 1.0,
+	"debug-join": 0.5,
+	"model-judge": 1.0,
+};
+
+const resolveWeights = (config: CalibrateConfig): Record<string, number> => {
+	if (config.source_weights) return config.source_weights;
+	if (config.implicit_weight !== undefined) {
+		return { manual: 1.0, "debug-join": config.implicit_weight, "model-judge": 1.0 };
+	}
+	return DEFAULT_WEIGHTS;
+};
+
 export const calibrateUseCase = async (deps: CalibrateDeps): Promise<CalibrationReport> => {
 	await computeImplicitOutcomesUseCase({
 		implicitSource: deps.implicitSource,
@@ -36,10 +53,13 @@ export const calibrateUseCase = async (deps: CalibrateDeps): Promise<Calibration
 	const outcomes: RoutingOutcome[] = [];
 	for await (const o of deps.outcomesSource.readOutcomes({})) outcomes.push(o);
 
+	const weights = resolveWeights(deps.config);
+	const implicitWeightDeprecated = deps.config.implicit_weight !== undefined;
+
 	const { byAgent, byTag } = groupOutcomes({
 		decisions: deps.decisions,
 		outcomes,
-		weights: { manual: 1.0, "debug-join": deps.config.implicit_weight },
+		weights,
 	});
 
 	const cells: CalibrationCell[] = [];
@@ -48,7 +68,7 @@ export const calibrateUseCase = async (deps: CalibrateDeps): Promise<Calibration
 
 	const collectCells = (cellsByKey: Map<string, CalibrationCell>) => {
 		for (const cell of cellsByKey.values()) {
-			if (cell.effective_total < deps.config.n_min) {
+			if (cell.total < deps.config.n_min) {
 				skipped.push({
 					key: cell.key,
 					total: cell.total,
@@ -67,7 +87,9 @@ export const calibrateUseCase = async (deps: CalibrateDeps): Promise<Calibration
 	return {
 		generated_at: deps.now(),
 		n_min: deps.config.n_min,
-		implicit_weight: deps.config.implicit_weight,
+		implicit_weight: weights["debug-join"] ?? 0.5,
+		source_weights: weights,
+		implicit_weight_deprecated: implicitWeightDeprecated,
 		decisions_scanned: deps.decisions.length,
 		outcomes_scanned: outcomes.length,
 		cells,
