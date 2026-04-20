@@ -130,13 +130,15 @@ cp package.json "$RELEASE_DIR/"
 # The release branch needs its own .github/workflows/ for GitHub Actions to
 # trigger validation on push-to-release. Workflows are loaded from the branch
 # being pushed to, so skipping this directory leaves release pushes ungated.
-# Keep this copy step — removing it re-introduces the 0.9.x bug where
-# release-branch-validation.yml never ran on release pushes.
-if [ -d .github/workflows ]; then
-  echo "Copying .github/workflows/ into release tree..."
-  mkdir -p "$RELEASE_DIR/.github/workflows"
-  cp .github/workflows/*.yml "$RELEASE_DIR/.github/workflows/"
+# Keep this copy step — GitHub Actions loads workflows from the target branch,
+# so dropping this re-breaks release-branch validation.
+if [ ! -d .github/workflows ]; then
+  echo "error: .github/workflows missing — release gating cannot work without it" >&2
+  exit 1
 fi
+echo "Copying .github/workflows/ into release tree..."
+mkdir -p "$RELEASE_DIR/.github/workflows"
+cp -r .github/workflows/. "$RELEASE_DIR/.github/workflows/"
 
 # --- 6. Minimal .gitignore (does NOT ignore dist/) ---------------------------
 
