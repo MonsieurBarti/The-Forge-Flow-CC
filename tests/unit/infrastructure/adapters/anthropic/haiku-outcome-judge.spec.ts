@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { HaikuOutcomeJudge } from "../../../../../src/infrastructure/adapters/anthropic/haiku-outcome-judge.js";
 import { isErr, isOk } from "../../../../../src/domain/result.js";
 import type { JudgeEvidence } from "../../../../../src/domain/value-objects/judge-evidence.js";
+import { HaikuOutcomeJudge } from "../../../../../src/infrastructure/adapters/anthropic/haiku-outcome-judge.js";
 
 const evidence: JudgeEvidence = {
 	slice_id: "M01-S02",
@@ -88,7 +88,11 @@ describe("HaikuOutcomeJudge", () => {
 				{
 					type: "tool_use",
 					name: "record_verdicts",
-					input: { verdicts: [{ decision_id: "not-a-uuid", dimension: "agent", verdict: "ok", reason: "r" }] },
+					input: {
+						verdicts: [
+							{ decision_id: "not-a-uuid", dimension: "agent", verdict: "ok", reason: "r" },
+						],
+					},
 				},
 			],
 		}));

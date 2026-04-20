@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { GitSliceMergeLookup } from "../../../../../src/infrastructure/adapters/git/git-slice-merge-lookup.js";
 import { isErr, isOk } from "../../../../../src/domain/result.js";
+import { GitSliceMergeLookup } from "../../../../../src/infrastructure/adapters/git/git-slice-merge-lookup.js";
 
 describe("GitSliceMergeLookup", () => {
 	it("returns the first matching merge commit SHA", async () => {

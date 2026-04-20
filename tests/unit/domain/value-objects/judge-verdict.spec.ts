@@ -8,11 +8,15 @@ const base = {
 
 describe("JudgeVerdictSchema", () => {
 	it("accepts agent + ok", () => {
-		expect(JudgeVerdictSchema.safeParse({ ...base, dimension: "agent", verdict: "ok" }).success).toBe(true);
+		expect(
+			JudgeVerdictSchema.safeParse({ ...base, dimension: "agent", verdict: "ok" }).success,
+		).toBe(true);
 	});
 
 	it("accepts tier + too-high", () => {
-		expect(JudgeVerdictSchema.safeParse({ ...base, dimension: "tier", verdict: "too-high" }).success).toBe(true);
+		expect(
+			JudgeVerdictSchema.safeParse({ ...base, dimension: "tier", verdict: "too-high" }).success,
+		).toBe(true);
 	});
 
 	it("rejects dimension=unknown (reserved for debug-join)", () => {
@@ -29,15 +33,23 @@ describe("JudgeVerdictSchema", () => {
 
 	it("rejects reason over 500 chars", () => {
 		expect(
-			JudgeVerdictSchema.safeParse({ ...base, dimension: "agent", verdict: "ok", reason: "x".repeat(501) })
-				.success,
+			JudgeVerdictSchema.safeParse({
+				...base,
+				dimension: "agent",
+				verdict: "ok",
+				reason: "x".repeat(501),
+			}).success,
 		).toBe(false);
 	});
 
 	it("rejects non-uuid decision_id", () => {
 		expect(
-			JudgeVerdictSchema.safeParse({ ...base, decision_id: "not-a-uuid", dimension: "agent", verdict: "ok" })
-				.success,
+			JudgeVerdictSchema.safeParse({
+				...base,
+				decision_id: "not-a-uuid",
+				dimension: "agent",
+				verdict: "ok",
+			}).success,
 		).toBe(false);
 	});
 });
