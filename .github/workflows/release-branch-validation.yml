@@ -25,6 +25,9 @@ jobs:
       - name: Verify dist/ is present
         run: test -f dist/cli/index.js
 
+      - name: Verify build manifest byte-matches bundle
+        run: bash scripts/verify-build-manifest.sh
+
       - name: Verify CLI runs
         run: node dist/cli/index.js --help
 
