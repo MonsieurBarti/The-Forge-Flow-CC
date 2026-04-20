@@ -1,8 +1,8 @@
-import type { RoutingOutcome } from "../value-objects/routing-outcome.js";
+import type { OutcomeSourceKind, RoutingOutcome } from "../value-objects/routing-outcome.js";
 
 export interface OutcomeReadFilter {
 	since?: string;
-	source?: "debug-join" | "manual";
+	source?: OutcomeSourceKind;
 	decision_id?: string;
 }
 

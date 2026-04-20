@@ -6,7 +6,7 @@ export type OutcomeDimension = z.infer<typeof OutcomeDimensionSchema>;
 export const OutcomeVerdictSchema = z.enum(["ok", "wrong", "too-low", "too-high"]);
 export type OutcomeVerdict = z.infer<typeof OutcomeVerdictSchema>;
 
-export const OutcomeSourceKindSchema = z.enum(["debug-join", "manual"]);
+export const OutcomeSourceKindSchema = z.enum(["debug-join", "manual", "model-judge"]);
 export type OutcomeSourceKind = z.infer<typeof OutcomeSourceKindSchema>;
 
 const BaseShape = z.object({
