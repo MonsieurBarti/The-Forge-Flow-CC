@@ -2,7 +2,11 @@ import { createWorktreeUseCase } from "../../application/worktree/create-worktre
 import { isOk } from "../../domain/result.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { createTffCcSymlink, getProjectId } from "../../infrastructure/home-directory.js";
+import {
+	createTffCcSymlink,
+	getProjectId,
+	writeProjectIdFile,
+} from "../../infrastructure/home-directory.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { resolveSliceId } from "../utils/resolve-id.js";
 
@@ -74,6 +78,10 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
 			const projectId = getProjectId(cwd);
 			const worktreePath = result.data.worktreePath;
 			createTffCcSymlink(worktreePath, projectId);
+			// Persist the project id in the new worktree so subsequent tff-tools commands
+			// run inside it don't mint a fresh one (e.g. when the branch's HEAD predates
+			// the commit that added .tff-project-id).
+			writeProjectIdFile(worktreePath, projectId);
 
 			return JSON.stringify({ ok: true, data: result.data });
 		}

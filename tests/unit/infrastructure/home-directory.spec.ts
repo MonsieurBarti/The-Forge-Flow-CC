@@ -9,7 +9,8 @@
  * 3. Commit
  */
 
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, mkdirSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -83,6 +84,53 @@ describe("T14: Home directory resolver module", () => {
 			// Should have written the file
 			expect(existsSync(join(projectDir, ".tff-project-id"))).toBe(true);
 		});
+
+		it("recovers project id from primary worktree when secondary is missing the file", async () => {
+			process.env.TFF_CC_HOME = join(tempDir, "tff-home");
+			mkdirSync(process.env.TFF_CC_HOME, { recursive: true });
+
+			// Set up a real git primary worktree with a committed .tff-project-id
+			const primaryDir = join(tempDir, "primary-repo");
+			mkdirSync(primaryDir, { recursive: true });
+			execFileSync("git", ["init", primaryDir]);
+			execFileSync("git", ["-C", primaryDir, "config", "user.email", "test@test.com"]);
+			execFileSync("git", ["-C", primaryDir, "config", "user.name", "Test"]);
+
+			const primaryUuid = "a1b2c3d4-e5f6-4000-8000-111111111111";
+			writeFileSync(join(primaryDir, ".tff-project-id"), `${primaryUuid}\n`);
+			execFileSync("git", ["-C", primaryDir, "add", ".tff-project-id"]);
+			execFileSync("git", ["-C", primaryDir, "commit", "-m", "add project id"]);
+
+			// Create a secondary worktree (no .tff-project-id file in it)
+			const secondaryDir = join(tempDir, "secondary-worktree");
+			mkdirSync(secondaryDir, { recursive: true });
+			execFileSync("git", ["-C", primaryDir, "worktree", "add", "--detach", secondaryDir]);
+
+			const { getProjectId } = await import("../../../src/infrastructure/home-directory.js");
+			const recovered = getProjectId(secondaryDir);
+
+			// Should return the primary's UUID
+			expect(recovered).toBe(primaryUuid);
+			// Should have written the file into the secondary worktree
+			expect(existsSync(join(secondaryDir, ".tff-project-id"))).toBe(true);
+		});
+
+		it("mints fresh when not in a git repo", async () => {
+			process.env.TFF_CC_HOME = join(tempDir, "tff-home-fresh");
+			mkdirSync(process.env.TFF_CC_HOME, { recursive: true });
+
+			// A plain temp directory — not git-initialized
+			const plainDir = join(tempDir, "not-a-git-repo");
+			mkdirSync(plainDir, { recursive: true });
+
+			const { getProjectId } = await import("../../../src/infrastructure/home-directory.js");
+			const minted = getProjectId(plainDir);
+
+			expect(minted).toMatch(
+				/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+			);
+			expect(existsSync(join(plainDir, ".tff-project-id"))).toBe(true);
+		});
 	});
 
 	describe("ensureProjectHomeDir", () => {
@@ -125,6 +173,62 @@ describe("T14: Home directory resolver module", () => {
 			const { createTffCcSymlink } = await import("../../../src/infrastructure/home-directory.js");
 
 			expect(() => createTffCcSymlink(projectDir, "migration-test")).toThrow();
+		});
+
+		it("repairs a drifted symlink target", async () => {
+			process.env.TFF_CC_HOME = tempDir;
+			const projectDir = join(tempDir, "project-drift");
+			mkdirSync(projectDir, { recursive: true });
+
+			const { createTffCcSymlink, ensureProjectHomeDir, getProjectHome } = await import(
+				"../../../src/infrastructure/home-directory.js"
+			);
+
+			const oldProjectId = "old00000-0000-4000-8000-000000000000";
+			const newProjectId = "new00000-0000-4000-8000-111111111111";
+
+			// Pre-create a symlink pointing to the old target
+			const oldTarget = join(tempDir, oldProjectId);
+			mkdirSync(oldTarget, { recursive: true });
+			const symlinkPath = join(projectDir, ".tff-cc");
+			const { symlinkSync } = await import("node:fs");
+			symlinkSync(oldTarget, symlinkPath);
+
+			// Ensure new project home exists so the symlink target is valid
+			ensureProjectHomeDir(newProjectId);
+
+			// Repair
+			createTffCcSymlink(projectDir, newProjectId);
+
+			// Symlink should now point to the new target
+			const actualTarget = readlinkSync(symlinkPath);
+			expect(actualTarget).toBe(getProjectHome(newProjectId));
+		});
+
+		it("leaves a correct symlink alone", async () => {
+			process.env.TFF_CC_HOME = tempDir;
+			const projectDir = join(tempDir, "project-correct-symlink");
+			mkdirSync(projectDir, { recursive: true });
+
+			const { createTffCcSymlink, ensureProjectHomeDir, getProjectHome } = await import(
+				"../../../src/infrastructure/home-directory.js"
+			);
+
+			const projectId = "correct0-0000-4000-8000-000000000000";
+			ensureProjectHomeDir(projectId);
+
+			// Create the correct symlink first
+			createTffCcSymlink(projectDir, projectId);
+
+			const symlinkPath = join(projectDir, ".tff-cc");
+			const targetBefore = readlinkSync(symlinkPath);
+
+			// Call again — should not throw and target should be unchanged
+			createTffCcSymlink(projectDir, projectId);
+			const targetAfter = readlinkSync(symlinkPath);
+
+			expect(targetAfter).toBe(targetBefore);
+			expect(targetAfter).toBe(getProjectHome(projectId));
 		});
 	});
 

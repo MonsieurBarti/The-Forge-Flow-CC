@@ -5,21 +5,47 @@
  * pattern (~/.tff-cc/{projectId}/) shared across all worktrees.
  */
 
+import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import {
 	existsSync,
 	lstatSync,
 	mkdirSync,
 	readFileSync,
+	readlinkSync,
 	symlinkSync,
+	unlinkSync,
 	writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { TFF_CC_DIR } from "../shared/paths.js";
 
 /** UUID v4 format validation regex */
 const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Attempt to locate the primary (main) git worktree root for a repo.
+ * Returns null when:
+ *  - `repoRoot` isn't inside a git repo (e.g., first-init before `git init`)
+ *  - git isn't installed / on PATH
+ *  - the repo is bare (no working tree)
+ */
+function findPrimaryWorktreeRoot(repoRoot: string): string | null {
+	try {
+		const commonDir = execFileSync(
+			"git",
+			["-C", repoRoot, "rev-parse", "--path-format=absolute", "--git-common-dir"],
+			{ encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] },
+		).trim();
+		if (!commonDir) return null;
+		// For a non-bare repo, the primary worktree is the parent of the common-dir.
+		// (e.g. common-dir=/path/to/repo/.git → primary=/path/to/repo)
+		return dirname(commonDir);
+	} catch {
+		return null;
+	}
+}
 
 /** Validate that a string is a valid UUID v4 format. */
 function isValidUuidV4(id: string): boolean {
@@ -74,23 +100,34 @@ export function writeProjectIdFile(repoRoot: string, projectId: string): void {
 
 /**
  * Get or generate the project ID.
- * If .tff-project-id exists, reads it. Otherwise generates a new UUID v4 and writes it.
- * Also ensures home directory exists.
+ * 1. Prefer the current repo's own .tff-project-id file.
+ * 2. If missing and we are in a secondary git worktree, recover from the primary worktree.
+ * 3. Only mint a fresh UUID on true first-init (no git repo or no ID in primary either).
  * @param repoRoot - The repository root directory
  */
 export function getProjectId(repoRoot: string): string {
+	// Step 1: prefer the current repo's own file.
 	const existing = readProjectIdFile(repoRoot);
 	if (existing) {
 		return existing;
 	}
 
-	// Generate new UUID v4
+	// Step 2: if we're in a secondary git worktree, recover from the primary.
+	const primaryRoot = findPrimaryWorktreeRoot(repoRoot);
+	if (primaryRoot && primaryRoot !== repoRoot) {
+		const recovered = readProjectIdFile(primaryRoot);
+		if (recovered) {
+			// Persist in this worktree so subsequent reads are O(1) and don't re-exec git.
+			writeProjectIdFile(repoRoot, recovered);
+			ensureProjectHomeDir(recovered);
+			return recovered;
+		}
+	}
+
+	// Step 3: true first-init — mint fresh.
 	const projectId = randomUUID();
 	writeProjectIdFile(repoRoot, projectId);
-
-	// Ensure home directory exists for new projects
 	ensureProjectHomeDir(projectId);
-
 	return projectId;
 }
 
@@ -130,27 +167,32 @@ export function ensureProjectHomeDir(projectId: string): string {
 
 /**
  * Create symlink from .tff-cc in repo root to project home directory.
+ * If a symlink already exists but points to the wrong target, repairs it.
  * Throws if .tff-cc/ exists as a real directory.
  */
 export function createTffCcSymlink(repoRoot: string, projectId: string): void {
 	const symlinkPath = join(repoRoot, TFF_CC_DIR);
 	const targetPath = getProjectHome(projectId);
 
-	// Check if .tff-cc exists
 	if (existsSync(symlinkPath)) {
-		// Check if it's a symlink
 		const stats = lstatSync(symlinkPath);
 		if (stats.isSymbolicLink()) {
-			// Symlink already exists, verify it points to correct target
-			// For now, just return - symlink is already there
-			return;
-		} else {
-			throw new Error(
-				`${TFF_CC_DIR}/ exists as a real directory. Remove or rename it before proceeding.`,
+			const currentTarget = readlinkSync(symlinkPath);
+			// Compare absolute targets — we always write absolute targets below.
+			if (currentTarget === targetPath) {
+				return;
+			}
+			process.stderr.write(
+				`tff-cc: repairing .tff-cc symlink in ${repoRoot} — was ${currentTarget}, now ${targetPath}\n`,
 			);
+			unlinkSync(symlinkPath);
+			symlinkSync(targetPath, symlinkPath);
+			return;
 		}
+		throw new Error(
+			`${TFF_CC_DIR}/ exists as a real directory. Remove or rename it before proceeding.`,
+		);
 	}
 
-	// Create symlink
 	symlinkSync(targetPath, symlinkPath);
 }
