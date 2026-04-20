@@ -12,7 +12,11 @@ env:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
         with:
@@ -25,8 +29,27 @@ jobs:
       - name: Verify dist/ is present
         run: test -f dist/cli/index.js
 
-      - name: Verify CLI runs
-        run: node dist/cli/index.js --help
+      - name: Verify build manifest byte-matches bundle
+        run: bash scripts/verify-build-manifest.sh
+
+      - name: Smoke-test CLI commands against a tmp state dir
+        run: |
+          set -e
+          node dist/cli/index.js --help
+          WORK=$(mktemp -d)
+          cd "$WORK"
+          # Branch guards require a git repo on a non-default branch.
+          git init --quiet
+          git -c user.email=smoke@tff.invalid -c user.name=smoke-test commit --allow-empty -m "smoke-init" --quiet
+          git checkout -b smoke-branch --quiet
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" schema --command project:init > schema.json
+          test -s schema.json
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" project:init --name smoke-test
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" milestone:create --name "Smoke Milestone"
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" slice:create --title "smoke slice"
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" slice:list \
+            | jq -e '.data[] | select(.title == "smoke slice")' > /dev/null
+          echo "ok: CLI smoke passed"
 
       - name: Run observe hook smoke
         run: |

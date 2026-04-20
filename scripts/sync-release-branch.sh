@@ -17,6 +17,14 @@
 #      `claude /plugin install tff-cc@the-forge-flow`; verify commands load.
 #   6. Once verified, revert the script edit before merging.
 #
+# DRY-RUN INSPECTION (no push, no test fork required):
+#   bun run build
+#   TFF_RELEASE_SYNC_CONFIRM=yes TFF_RELEASE_SYNC_DRY_RUN=yes \
+#     bash scripts/sync-release-branch.sh
+#   # prints the assembled release-tree path; exits before any git ops.
+#   # the EXIT trap is disabled in dry-run so the tmp tree survives for
+#   # inspection — clean it up yourself when done.
+#
 # This script is invoked from .github/workflows/release.yml AFTER
 # release-please cuts a release and npm publish succeeds, so a force-push
 # here always reflects a tagged, published version.
@@ -27,10 +35,13 @@ set -e
 # This script force-pushes to origin/release. Refuse to run outside GitHub
 # Actions unless the caller opts in with TFF_RELEASE_SYNC_CONFIRM=yes
 # (used for the SAFE LOCAL TEST flow documented above).
-if [ -z "$GITHUB_ACTIONS" ] && [ "$TFF_RELEASE_SYNC_CONFIRM" != "yes" ]; then
-  echo "error: refusing force-push from non-CI context." >&2
-  echo "  set TFF_RELEASE_SYNC_CONFIRM=yes to opt in (see SAFE LOCAL TEST block)." >&2
-  exit 1
+if [ -z "$GITHUB_ACTIONS" ]; then
+  if [ "$TFF_RELEASE_SYNC_CONFIRM" != "yes" ] || [ "$TFF_RELEASE_SYNC_DRY_RUN" != "yes" ]; then
+    echo "error: refusing force-push from non-CI context." >&2
+    echo "  for local inspection, set BOTH TFF_RELEASE_SYNC_CONFIRM=yes and TFF_RELEASE_SYNC_DRY_RUN=yes." >&2
+    echo "  the dry-run branch exits before any git mutation; see SAFE LOCAL TEST block." >&2
+    exit 1
+  fi
 fi
 
 # --- Preconditions -----------------------------------------------------------
@@ -115,6 +126,20 @@ cp package.json "$RELEASE_DIR/"
 [ -f CHANGELOG.md ] && cp CHANGELOG.md "$RELEASE_DIR/"
 [ -f LICENSE ]      && cp LICENSE      "$RELEASE_DIR/"
 
+# --- 5b. GitHub Actions workflows -------------------------------------------
+# The release branch needs its own .github/workflows/ for GitHub Actions to
+# trigger validation on push-to-release. Workflows are loaded from the branch
+# being pushed to, so skipping this directory leaves release pushes ungated.
+# Keep this copy step — GitHub Actions loads workflows from the target branch,
+# so dropping this re-breaks release-branch validation.
+if [ ! -d .github/workflows ]; then
+  echo "error: .github/workflows missing — release gating cannot work without it" >&2
+  exit 1
+fi
+echo "Copying .github/workflows/ into release tree..."
+mkdir -p "$RELEASE_DIR/.github/workflows"
+cp -r .github/workflows/. "$RELEASE_DIR/.github/workflows/"
+
 # --- 6. Minimal .gitignore (does NOT ignore dist/) ---------------------------
 
 cat > "$RELEASE_DIR/.gitignore" <<'EOF'
@@ -145,6 +170,15 @@ case "$ORIGIN_URL" in
 esac
 
 cd "$RELEASE_DIR"
+echo "release tree assembled at $RELEASE_DIR"
+
+if [ "$TFF_RELEASE_SYNC_DRY_RUN" = "yes" ]; then
+  echo "DRY RUN: skipping force-push. Inspect the tree above."
+  # Disable the EXIT trap so the tmp dir survives for inspection.
+  trap - EXIT
+  exit 0
+fi
+
 echo "Initializing release git tree..."
 git init -q
 git remote add origin "$PUSH_URL"

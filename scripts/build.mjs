@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { execSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
@@ -53,3 +54,35 @@ if (existsSync(localBinding)) {
 }
 
 execSync("node scripts/add-cli-shebang.cjs", { cwd: rootDir, stdio: "inherit" });
+
+// --- Build manifest ---------------------------------------------------------
+// Record provenance for the release-branch validation workflow to byte-match
+// the shipped bundle against a known-good build. See
+// docs/specs/ROADMAP-0.10.0.md Stage C.
+const bundlePath = resolve(distCliDir, "index.js");
+const bundleBytes = readFileSync(bundlePath);
+const bundleSha256 = createHash("sha256").update(bundleBytes).digest("hex");
+
+let sourceSha = "";
+try {
+	sourceSha = execSync("git rev-parse HEAD", { cwd: rootDir, encoding: "utf8" }).trim();
+} catch {
+	// Rare: running `bun run build` outside a git checkout. Leave empty;
+	// the validation workflow still byte-matches bundleSha256, and the
+	// scheduled rebuild-diff workflow reports "no source sha" rather than
+	// silently skipping the comparison.
+	sourceSha = "";
+}
+
+const manifest = {
+	sourceSha,
+	bundleSha256,
+	builtAt: new Date().toISOString(),
+};
+
+writeFileSync(
+	resolve(rootDir, "dist", ".build-manifest.json"),
+	JSON.stringify(manifest, null, 2) + "\n",
+);
+
+console.log(`wrote dist/.build-manifest.json (bundleSha256: ${bundleSha256.slice(0, 16)}…)`);
