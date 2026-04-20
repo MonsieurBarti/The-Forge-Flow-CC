@@ -54,10 +54,11 @@ export interface JudgeOutcomesResult {
 	skipped: number;
 	model_judge_already_had: number;
 	merge_commit: string | null;
+	spec_missing?: boolean;
 }
 
 export const judgeOutcomesUseCase = async (
-	input: JudgeOutcomesInput,
+	_input: JudgeOutcomesInput,
 	deps: JudgeOutcomesDeps,
 ): Promise<Result<JudgeOutcomesResult, DomainError>> => {
 	if (!deps.modelJudgeEnabled) {
@@ -112,6 +113,7 @@ export const judgeOutcomesUseCase = async (
 
 	const specRes = await deps.specReader.readSpec(deps.sliceLabel, deps.maxSpecBytes);
 	if (!isOk(specRes)) return specRes;
+	const specMissing = specRes.data.missing;
 
 	const debug_happened = deps.debugEvents.some((e) => e.slice_id === (unjudged[0]?.slice_id ?? ""));
 
@@ -170,5 +172,6 @@ export const judgeOutcomesUseCase = async (
 		skipped: deps.decisions.length - unjudged.length,
 		model_judge_already_had: alreadyJudged.size,
 		merge_commit: mergeSha,
+		...(specMissing ? { spec_missing: true } : {}),
 	});
 };

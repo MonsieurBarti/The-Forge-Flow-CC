@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { judgeOutcomesUseCase } from "../../../../src/application/routing/judge-outcomes.js";
 import type { DomainError } from "../../../../src/domain/errors/domain-error.js";
+import type { DiffReader } from "../../../../src/domain/ports/diff-reader.port.js";
 import type { OutcomeJudge } from "../../../../src/domain/ports/outcome-judge.port.js";
 import type { OutcomeSource } from "../../../../src/domain/ports/outcome-source.port.js";
 import type { OutcomeWriter } from "../../../../src/domain/ports/outcome-writer.port.js";
 import type { SliceMergeLookup } from "../../../../src/domain/ports/slice-merge-lookup.port.js";
-import type { DiffReader } from "../../../../src/domain/ports/diff-reader.port.js";
 import type { SliceSpecReader } from "../../../../src/domain/ports/slice-spec-reader.port.js";
-import { Err, Ok, isErr, isOk } from "../../../../src/domain/result.js";
+import { Err, isErr, isOk, Ok } from "../../../../src/domain/result.js";
 import type { JudgeVerdict } from "../../../../src/domain/value-objects/judge-verdict.js";
 import type { RoutingOutcome } from "../../../../src/domain/value-objects/routing-outcome.js";
 
@@ -18,18 +18,31 @@ const MERGE = "abc1234567890abcdef1234567890abcdef1234";
 
 type DebugEvent = { slice_id: string };
 
-const makeDeps = (overrides: Partial<{
-	sliceStatus: "closed" | "executing";
-	sliceLabel: string;
-	decisions: { decision_id: string; agent: string; tier: "haiku" | "sonnet" | "opus"; slice_id: string }[];
-	existingOutcomes: RoutingOutcome[];
-	debugEvents: DebugEvent[];
-	specResult: { text: string; truncated: boolean; missing: boolean };
-	diffResult: { files_changed: number; insertions: number; deletions: number; patch: string; truncated: boolean };
-	mergeResult: "found" | "missing";
-	judgeVerdicts: JudgeVerdict[] | "error";
-	modelJudgeEnabled: boolean;
-}>) => {
+const makeDeps = (
+	overrides: Partial<{
+		sliceStatus: "closed" | "executing";
+		sliceLabel: string;
+		decisions: {
+			decision_id: string;
+			agent: string;
+			tier: "haiku" | "sonnet" | "opus";
+			slice_id: string;
+		}[];
+		existingOutcomes: RoutingOutcome[];
+		debugEvents: DebugEvent[];
+		specResult: { text: string; truncated: boolean; missing: boolean };
+		diffResult: {
+			files_changed: number;
+			insertions: number;
+			deletions: number;
+			patch: string;
+			truncated: boolean;
+		};
+		mergeResult: "found" | "missing";
+		judgeVerdicts: JudgeVerdict[] | "error";
+		modelJudgeEnabled: boolean;
+	}>,
+) => {
 	const written: RoutingOutcome[] = [];
 	const writer: OutcomeWriter = { append: async (o) => void written.push(o) };
 
@@ -61,7 +74,8 @@ const makeDeps = (overrides: Partial<{
 	};
 
 	const specReader: SliceSpecReader = {
-		readSpec: async () => Ok(overrides.specResult ?? { text: "# spec", truncated: false, missing: false }),
+		readSpec: async () =>
+			Ok(overrides.specResult ?? { text: "# spec", truncated: false, missing: false }),
 	};
 
 	const judge: OutcomeJudge = {
@@ -164,7 +178,12 @@ describe("judgeOutcomesUseCase", () => {
 			decisions: [{ decision_id: D1, agent: "reviewer", tier: "sonnet", slice_id: "M01-S02" }],
 			judgeVerdicts: [
 				{ decision_id: D1, dimension: "agent", verdict: "ok", reason: "r1" },
-				{ decision_id: "00000000-0000-4000-8000-00000000ffff", dimension: "agent", verdict: "ok", reason: "stray" },
+				{
+					decision_id: "00000000-0000-4000-8000-00000000ffff",
+					dimension: "agent",
+					verdict: "ok",
+					reason: "stray",
+				},
 			],
 		});
 		const res = await judgeOutcomesUseCase({ slice_id: SLICE_ID }, deps);
@@ -188,10 +207,26 @@ describe("judgeOutcomesUseCase", () => {
 
 	it("prefixes reason with [evidence_truncated] when diff or spec was truncated", async () => {
 		const { deps, written } = makeDeps({
-			diffResult: { files_changed: 5, insertions: 5000, deletions: 100, patch: "x", truncated: true },
+			diffResult: {
+				files_changed: 5,
+				insertions: 5000,
+				deletions: 100,
+				patch: "x",
+				truncated: true,
+			},
 			judgeVerdicts: [{ decision_id: D1, dimension: "agent", verdict: "ok", reason: "r1" }],
 		});
 		await judgeOutcomesUseCase({ slice_id: SLICE_ID }, deps);
 		expect(written[0].reason?.startsWith("[evidence_truncated]")).toBe(true);
+	});
+
+	it("sets spec_missing=true in result when SPEC.md is not found", async () => {
+		const { deps } = makeDeps({
+			specResult: { text: "", truncated: false, missing: true },
+			judgeVerdicts: [{ decision_id: D1, dimension: "agent", verdict: "ok", reason: "r1" }],
+		});
+		const res = await judgeOutcomesUseCase({ slice_id: SLICE_ID }, deps);
+		if (!isOk(res)) throw new Error("not ok");
+		expect(res.data.spec_missing).toBe(true);
 	});
 });

@@ -208,6 +208,11 @@ export const routingJudgeCmd = async (
 		},
 	);
 	if (!isOk(res)) return JSON.stringify({ ok: false, error: res.error });
+	if (res.data.spec_missing) {
+		process.stderr.write(
+			`routing:judge: warning — SPEC.md missing for slice ${sliceLabel}; verdicts may be less reliable.\n`,
+		);
+	}
 	return JSON.stringify({
 		ok: true,
 		data: { ...res.data, slice_label: sliceLabel, model },
