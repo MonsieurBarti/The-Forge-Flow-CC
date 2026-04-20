@@ -30,9 +30,7 @@ describe("verify-build-manifest.sh", () => {
 		const realSha = createHash("sha256").update(bundle).digest("hex");
 		const root = setup(bundle, realSha);
 
-		expect(() =>
-			execSync(`bash ${verifyScript}`, { cwd: root, stdio: "pipe" }),
-		).not.toThrow();
+		expect(() => execSync(`bash ${verifyScript}`, { cwd: root, stdio: "pipe" })).not.toThrow();
 	});
 
 	it("exits non-zero when bundle sha256 does not match manifest", () => {
@@ -40,17 +38,13 @@ describe("verify-build-manifest.sh", () => {
 			"real content\n",
 			"0000000000000000000000000000000000000000000000000000000000000000",
 		);
-		expect(() =>
-			execSync(`bash ${verifyScript}`, { cwd: root, stdio: "pipe" }),
-		).toThrow();
+		expect(() => execSync(`bash ${verifyScript}`, { cwd: root, stdio: "pipe" })).toThrow();
 	});
 
 	it("exits non-zero when manifest is missing", () => {
 		const root = mkdtempSync(join(tmpdir(), "verify-manifest-missing-"));
 		mkdirSync(join(root, "dist", "cli"), { recursive: true });
 		writeFileSync(join(root, "dist", "cli", "index.js"), "x");
-		expect(() =>
-			execSync(`bash ${verifyScript}`, { cwd: root, stdio: "pipe" }),
-		).toThrow();
+		expect(() => execSync(`bash ${verifyScript}`, { cwd: root, stdio: "pipe" })).toThrow();
 	});
 });
