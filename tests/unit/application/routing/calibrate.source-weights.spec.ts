@@ -70,6 +70,52 @@ describe("calibrateUseCase — source_weights", () => {
 		expect(report.source_weights).toEqual({ manual: 1.0, "debug-join": 0.3, "model-judge": 1.0 });
 	});
 
+	it("merges partial source_weights over defaults instead of zeroing untouched sources", async () => {
+		const manualOutcome: RoutingOutcome = {
+			outcome_id: "00000000-0000-4000-8000-0000000000b1",
+			decision_id: D1,
+			dimension: "tier",
+			verdict: "ok",
+			source: "manual",
+			slice_id: "M01-S01",
+			workflow_id: "tff:ship",
+			emitted_at: "2026-04-20T10:00:00.000Z",
+		};
+		const modelJudgeOutcome: RoutingOutcome = {
+			outcome_id: "00000000-0000-4000-8000-0000000000b2",
+			decision_id: D1,
+			dimension: "tier",
+			verdict: "too-low",
+			source: "model-judge",
+			slice_id: "M01-S01",
+			workflow_id: "tff:ship",
+			emitted_at: "2026-04-20T10:00:00.000Z",
+		};
+		const mixedSource: OutcomeSource = {
+			async *readOutcomes() {
+				yield manualOutcome;
+				yield modelJudgeOutcome;
+			},
+		};
+		const report = await calibrateUseCase({
+			decisions: [decision],
+			implicitSource: emptySource,
+			outcomesSource: mixedSource,
+			writer,
+			config: {
+				n_min: 1,
+				// Partial: only model-judge specified. Manual must NOT be silently zeroed.
+				source_weights: { "model-judge": 0.5 },
+			},
+			now: () => "2026-04-20T10:00:00.000Z",
+		});
+		expect(report.source_weights).toEqual({
+			manual: 1.0, // from DEFAULT_WEIGHTS
+			"debug-join": 0.5, // from DEFAULT_WEIGHTS
+			"model-judge": 0.5, // overridden by user
+		});
+	});
+
 	it("prefers source_weights when both keys are provided", async () => {
 		const report = await calibrateUseCase({
 			decisions: [decision],

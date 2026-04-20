@@ -36,7 +36,10 @@ const DEFAULT_WEIGHTS: Record<string, number> = {
 };
 
 const resolveWeights = (config: CalibrateConfig): Record<string, number> => {
-	if (config.source_weights) return config.source_weights;
+	if (config.source_weights) {
+		// Merge over defaults so partial maps don't silently zero out other sources.
+		return { ...DEFAULT_WEIGHTS, ...config.source_weights };
+	}
 	if (config.implicit_weight !== undefined) {
 		return { manual: 1.0, "debug-join": config.implicit_weight, "model-judge": 1.0 };
 	}

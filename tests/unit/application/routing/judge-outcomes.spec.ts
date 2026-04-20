@@ -220,6 +220,19 @@ describe("judgeOutcomesUseCase", () => {
 		expect(written[0].reason?.startsWith("[evidence_truncated]")).toBe(true);
 	});
 
+	it("strips ASCII control characters from verdict reason before persisting", async () => {
+		const { deps, written } = makeDeps({
+			judgeVerdicts: [
+				{ decision_id: D1, dimension: "agent", verdict: "ok", reason: "looks\x1bfine\x07" },
+			],
+		});
+		await judgeOutcomesUseCase({ slice_id: SLICE_ID }, deps);
+		expect(written[0].reason).not.toContain("\x1b");
+		expect(written[0].reason).not.toContain("\x07");
+		expect(written[0].reason).toContain("looks");
+		expect(written[0].reason).toContain("fine");
+	});
+
 	it("sets spec_missing=true in result when SPEC.md is not found", async () => {
 		const { deps } = makeDeps({
 			specResult: { text: "", truncated: false, missing: true },

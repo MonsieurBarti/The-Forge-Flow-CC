@@ -1,5 +1,6 @@
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { preconditionViolationError } from "../../domain/errors/precondition-violation.error.js";
+import { sanitizeReason } from "../../domain/helpers/sanitize-reason.js";
 import type { DiffReader } from "../../domain/ports/diff-reader.port.js";
 import type { OutcomeJudge } from "../../domain/ports/outcome-judge.port.js";
 import type { OutcomeSource } from "../../domain/ports/outcome-source.port.js";
@@ -115,7 +116,8 @@ export const judgeOutcomesUseCase = async (
 	if (!isOk(specRes)) return specRes;
 	const specMissing = specRes.data.missing;
 
-	const debug_happened = deps.debugEvents.some((e) => e.slice_id === (unjudged[0]?.slice_id ?? ""));
+	// CLI already filters debugEvents to this slice before calling the use case.
+	const debug_happened = deps.debugEvents.length > 0;
 
 	const evidence: JudgeEvidence = {
 		slice_id: unjudged[0].slice_id,
@@ -152,6 +154,7 @@ export const judgeOutcomesUseCase = async (
 		if (!unjudgedIds.has(v.decision_id)) continue;
 		const dec = decisionMap.get(v.decision_id);
 		if (!dec) continue;
+		const cleanReason = sanitizeReason(v.reason) ?? "";
 		const outcome: RoutingOutcome = {
 			outcome_id: deps.uuid(),
 			decision_id: v.decision_id,
@@ -160,7 +163,7 @@ export const judgeOutcomesUseCase = async (
 			source: "model-judge",
 			slice_id: dec.slice_id,
 			workflow_id: dec.workflow_id ?? "tff:ship",
-			reason: `${reasonPrefix}${v.reason}`,
+			reason: `${reasonPrefix}${cleanReason}`,
 			emitted_at: deps.now(),
 		};
 		await deps.writer.append(outcome);
