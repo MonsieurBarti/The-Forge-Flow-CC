@@ -8,6 +8,10 @@ export interface KnownDecision {
 	decision_id: string;
 	slice_id: string;
 	workflow_id: string;
+	agent?: string;
+	signals?: import("../value-objects/signals.js").Signals;
+	fallback_used?: boolean;
+	confidence?: number;
 }
 
 /**

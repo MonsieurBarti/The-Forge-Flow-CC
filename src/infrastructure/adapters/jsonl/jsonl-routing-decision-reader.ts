@@ -16,11 +16,16 @@ export class JsonlRoutingDecisionReader implements RoutingDecisionReader {
 			if (entry.kind !== "route") return null;
 			const decision = entry.decision as Record<string, unknown> | undefined;
 			if (!decision?.decision_id) return null;
-			return {
+			const known: KnownDecision = {
 				decision_id: decision.decision_id as string,
 				slice_id: entry.slice_id as string,
 				workflow_id: entry.workflow_id as string,
 			};
+			if (typeof decision.agent === "string") known.agent = decision.agent;
+			if (decision.signals != null) known.signals = decision.signals as KnownDecision["signals"];
+			if (typeof decision.fallback_used === "boolean") known.fallback_used = decision.fallback_used;
+			if (typeof decision.confidence === "number") known.confidence = decision.confidence;
+			return known;
 		});
 	}
 

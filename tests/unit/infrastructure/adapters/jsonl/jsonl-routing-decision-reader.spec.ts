@@ -32,17 +32,23 @@ describe("JsonlRoutingDecisionReader", () => {
 		await rm(dir, { recursive: true, force: true });
 	});
 
-	it("readKnownDecisions projects {decision_id, slice_id, workflow_id} from route entries", async () => {
+	it("readKnownDecisions projects {decision_id, slice_id, workflow_id} and optional fields from route entries", async () => {
 		await appendFile(path, `${JSON.stringify(routeLine)}\n`, "utf8");
 		const reader = new JsonlRoutingDecisionReader(path);
 		const known = await reader.readKnownDecisions();
-		expect(known).toEqual([
-			{
-				decision_id: "00000000-0000-4000-8000-000000000001",
-				slice_id: "M01-S01",
-				workflow_id: "tff:ship",
-			},
-		]);
+		expect(known).toHaveLength(1);
+		expect(known[0]).toMatchObject({
+			decision_id: "00000000-0000-4000-8000-000000000001",
+			slice_id: "M01-S01",
+			workflow_id: "tff:ship",
+		});
+		expect(known[0].agent).toBe("tff-code-reviewer");
+		expect(known[0].confidence).toBe(0.9);
+		expect(known[0].fallback_used).toBe(false);
+		expect(known[0].signals).toEqual({
+			complexity: "medium",
+			risk: { level: "low", tags: ["auth"] },
+		});
 	});
 
 	it("readDecisions returns full RoutingDecision payloads", async () => {

@@ -25,6 +25,7 @@ import { reviewRecordCmd } from "./commands/review-record.cmd.js";
 import { routingCalibrateCmd } from "./commands/routing-calibrate.cmd.js";
 import { routingDecideCmd } from "./commands/routing-decide.cmd.js";
 import { routingEventCmd } from "./commands/routing-event.cmd.js";
+import { routingJudgeCmd } from "./commands/routing-judge.cmd.js";
 import { routingOutcomeCmd } from "./commands/routing-outcome.cmd.js";
 import { schemaCmd } from "./commands/schema.cmd.js";
 import { sessionRemindCmd } from "./commands/session-remind.cmd.js";
@@ -84,6 +85,7 @@ const commands: Record<string, CommandFn> = {
 	"routing:event": withBranchGuard("routing:event", routingEventCmd),
 	"routing:outcome": withBranchGuard("routing:outcome", routingOutcomeCmd),
 	"routing:calibrate": withBranchGuard("routing:calibrate", routingCalibrateCmd),
+	"routing:judge": withBranchGuard("routing:judge", (args) => routingJudgeCmd(args)),
 	"checkpoint:save": withBranchGuard("checkpoint:save", checkpointSaveCmd),
 	"checkpoint:load": checkpointLoadCmd,
 	"observe:record": withBranchGuard("observe:record", observeRecordCmd),
