@@ -36,14 +36,15 @@ jobs:
           cd "$WORK"
           # Branch guards require a git repo on a non-default branch.
           git init --quiet
-          git commit --allow-empty -m "smoke-init" --quiet
+          git -c user.email=smoke@tff.invalid -c user.name=smoke-test commit --allow-empty -m "smoke-init" --quiet
           git checkout -b smoke-branch --quiet
           node "$GITHUB_WORKSPACE/dist/cli/index.js" schema --command project:init > schema.json
           test -s schema.json
           node "$GITHUB_WORKSPACE/dist/cli/index.js" project:init --name smoke-test
           node "$GITHUB_WORKSPACE/dist/cli/index.js" milestone:create --name "Smoke Milestone"
           node "$GITHUB_WORKSPACE/dist/cli/index.js" slice:create --title "smoke slice"
-          node "$GITHUB_WORKSPACE/dist/cli/index.js" slice:list | grep -q "smoke slice"
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" slice:list \
+            | jq -e '.data[] | select(.title == "smoke slice")' > /dev/null
           echo "ok: CLI smoke passed"
 
       - name: Run observe hook smoke
