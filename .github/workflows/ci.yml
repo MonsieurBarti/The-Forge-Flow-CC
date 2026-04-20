@@ -81,7 +81,8 @@ jobs:
       - name: Align native sqlite binding with runner abi (macos only)
         if: matrix.os == 'macos-14'
         run: |
-          install -D node_modules/better-sqlite3/build/Release/better_sqlite3.node \
+          mkdir -p dist/cli
+          cp node_modules/better-sqlite3/build/Release/better_sqlite3.node \
             dist/cli/better_sqlite3.darwin-arm64.node
 
       - name: Verify build manifest byte-matches bundle
