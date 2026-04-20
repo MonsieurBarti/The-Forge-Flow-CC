@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.9](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.8...tff-cc-v0.9.9) (2026-04-20)
+
+
+### Features
+
+* **routing:** phase E — model-judge outcome source via sub-agent ([#122](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/122)) ([dfceb39](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/dfceb39b880d86de2e3baf3f2baa188ae5236e86))
+
+
+### Bug Fixes
+
+* recover project id from primary worktree; persist in new worktrees ([#124](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/124)) ([a7fe509](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/a7fe5091c0cc950a9007d934a4a69c292745b9c1))
+
 ## [0.9.8](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.7...tff-cc-v0.9.8) (2026-04-19)
 
 
