@@ -52,6 +52,8 @@ export const CalibrationReportSchema = z.object({
 	generated_at: z.string().datetime(),
 	n_min: z.number().int().positive(),
 	implicit_weight: z.number().min(0).max(1),
+	source_weights: z.record(z.string(), z.number().min(0).max(2)).optional(),
+	implicit_weight_deprecated: z.boolean().optional(),
 	decisions_scanned: z.number().int().nonnegative(),
 	outcomes_scanned: z.number().int().nonnegative(),
 	cells: z.array(CalibrationCellSchema),

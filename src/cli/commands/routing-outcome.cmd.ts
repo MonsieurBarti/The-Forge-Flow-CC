@@ -3,6 +3,7 @@ import {
 	type KnownDecision,
 	recordOutcomeUseCase,
 } from "../../application/routing/record-outcome.js";
+import { sanitizeReason } from "../../domain/helpers/sanitize-reason.js";
 import { isOk } from "../../domain/result.js";
 import { YamlRoutingConfigReader } from "../../infrastructure/adapters/filesystem/yaml-routing-config-reader.js";
 import { JsonlRoutingDecisionReader } from "../../infrastructure/adapters/jsonl/jsonl-routing-decision-reader.js";
@@ -11,14 +12,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { resolveRoutingPaths } from "../utils/routing-paths.js";
 
 export type { KnownDecision };
-
-export const sanitizeReason = (input: string | undefined): string | undefined => {
-	if (input === undefined) return undefined;
-	// strip ASCII control chars (including newlines, tabs, DEL) and trim.
-	// biome-ignore lint/suspicious/noControlCharactersInRegex: intentional — this regex IS the control-char filter
-	const stripped = input.replace(/[\x00-\x1F\x7F]/g, " ").trim();
-	return stripped.length === 0 ? undefined : stripped;
-};
+export { sanitizeReason };
 
 export const routingOutcomeSchema: CommandSchema = {
 	name: "routing:outcome",

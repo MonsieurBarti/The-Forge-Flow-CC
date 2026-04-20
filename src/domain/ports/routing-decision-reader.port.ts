@@ -1,4 +1,5 @@
 import type { RoutingDecision } from "../value-objects/routing-decision.js";
+import type { ModelTier } from "../value-objects/tier-decision.js";
 
 /**
  * KnownDecision is the minimal projection each CLI needs when looking up
@@ -8,6 +9,11 @@ export interface KnownDecision {
 	decision_id: string;
 	slice_id: string;
 	workflow_id: string;
+	agent?: string;
+	signals?: import("../value-objects/signals.js").Signals;
+	fallback_used?: boolean;
+	confidence?: number;
+	tier?: ModelTier; // populated from matching tier event via route+tier join
 }
 
 /**

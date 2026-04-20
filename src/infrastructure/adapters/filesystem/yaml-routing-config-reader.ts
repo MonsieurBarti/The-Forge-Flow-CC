@@ -15,10 +15,21 @@ import type { WorkflowPool } from "../../../domain/value-objects/workflow-pool.j
 const AGENT_ID_REGEX = /^[a-z][a-z0-9-]*$/;
 const MAX_YAML_FILE_SIZE = 1024 * 1024; // 1 MB
 
+const ModelJudgeConfigSchema = z.object({
+	enabled: z.boolean().default(true),
+	model: z.string().default("claude-haiku-4-5-20251001"),
+	temperature: z.number().min(0).max(2).default(0),
+	max_patch_bytes: z.number().int().positive().default(32768),
+	max_spec_bytes: z.number().int().positive().default(16384),
+	timeout_ms: z.number().int().positive().default(30000),
+});
+
 const CalibrationConfigSchema = z.object({
 	n_min: z.number().int().positive().default(5),
-	implicit_weight: z.number().min(0).max(1).default(0.5),
+	implicit_weight: z.number().min(0).max(1).optional(),
 	debug_join: z.object({ enabled: z.boolean().default(true) }).default({ enabled: true }),
+	source_weights: z.record(z.string(), z.number().min(0).max(2)).optional(),
+	model_judge: ModelJudgeConfigSchema.optional(),
 });
 
 const RoutingConfigSchema = z
