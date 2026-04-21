@@ -115,10 +115,7 @@ describe("checkFirstObservationSentinel", () => {
 
 	it("does not warn when enabled is commented out in settings.yaml", () => {
 		fs.mkdirSync(path.join(tmp, ".tff-cc/observations"), { recursive: true });
-		fs.writeFileSync(
-			path.join(tmp, ".tff-cc/settings.yaml"),
-			"# enabled: true\n",
-		);
+		fs.writeFileSync(path.join(tmp, ".tff-cc/settings.yaml"), "# enabled: true\n");
 		fs.writeFileSync(path.join(tmp, ".tff-cc/observations/.mutating-cli-ran"), "");
 		const r = checkFirstObservationSentinel(tmp);
 		expect(r).toMatchObject({ ok: true, enabled: false, shouldWarn: false });
