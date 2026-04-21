@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { handleStartupRecovery } from "../application/recovery/handle-startup-recovery.js";
 import { NativeBindingError } from "../infrastructure/adapters/sqlite/native-binding-error.js";
 import { branchGuardCheckCmd, branchGuardCheckSchema } from "./commands/branch-guard-check.cmd.js";
@@ -497,16 +498,18 @@ const main = async () => {
 	console.log(output);
 };
 
-main().catch((err) => {
-	if (err instanceof NativeBindingError) {
-		console.log(JSON.stringify({ ok: false, error: err.toJSON() }));
-	} else {
-		console.log(
-			JSON.stringify({
-				ok: false,
-				error: { code: "INTERNAL_ERROR", message: String(err) },
-			}),
-		);
-	}
-	process.exit(1);
-});
+if (process.argv[1] && process.argv[1] === fileURLToPath(import.meta.url)) {
+	main().catch((err) => {
+		if (err instanceof NativeBindingError) {
+			console.log(JSON.stringify({ ok: false, error: err.toJSON() }));
+		} else {
+			console.log(
+				JSON.stringify({
+					ok: false,
+					error: { code: "INTERNAL_ERROR", message: String(err) },
+				}),
+			);
+		}
+		process.exit(1);
+	});
+}
