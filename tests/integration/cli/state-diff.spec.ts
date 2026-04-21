@@ -48,7 +48,9 @@ describe("state:diff command", () => {
 		rmSync(projectDir, { recursive: true, force: true });
 	});
 
-	it("reports inSync:false with a non-empty diff when STATE.md is hand-edited", { timeout: 30_000 }, async () => {
+	it("reports inSync:false with a non-empty diff when STATE.md is hand-edited", {
+		timeout: 30_000,
+	}, async () => {
 		const { writeFileSync, readFileSync } = await import("node:fs");
 		const { projectInitCmd } = await import("../../../src/cli/commands/project-init.cmd.js");
 		const { milestoneCreateCmd } = await import(
