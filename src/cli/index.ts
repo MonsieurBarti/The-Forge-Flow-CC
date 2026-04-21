@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { handleStartupRecovery } from "../application/recovery/handle-startup-recovery.js";
+import { NativeBindingError } from "../infrastructure/adapters/sqlite/native-binding-error.js";
 import { branchGuardCheckCmd } from "./commands/branch-guard-check.cmd.js";
 import { checkpointLoadCmd } from "./commands/checkpoint-load.cmd.js";
 import { checkpointSaveCmd } from "./commands/checkpoint-save.cmd.js";
@@ -265,11 +266,15 @@ const main = async () => {
 };
 
 main().catch((err) => {
-	console.log(
-		JSON.stringify({
-			ok: false,
-			error: { code: "INTERNAL_ERROR", message: String(err) },
-		}),
-	);
+	if (err instanceof NativeBindingError) {
+		console.log(JSON.stringify({ ok: false, error: err.toJSON() }));
+	} else {
+		console.log(
+			JSON.stringify({
+				ok: false,
+				error: { code: "INTERNAL_ERROR", message: String(err) },
+			}),
+		);
+	}
 	process.exit(1);
 });
