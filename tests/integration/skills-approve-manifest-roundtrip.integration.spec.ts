@@ -55,7 +55,15 @@ describe("skills:approve round-trip", () => {
 	});
 
 	it("updates the manifest row and echoes reason/shaBefore/shaAfter", async () => {
-		const out = await skillsApproveCmd(["--id", "foo", "--reason", "integration test reason"]);
+		const approvedDiffSha = computeSha("foo v2\n");
+		const out = await skillsApproveCmd([
+			"--id",
+			"foo",
+			"--reason",
+			"integration test reason",
+			"--approved-diff-sha",
+			approvedDiffSha,
+		]);
 		const parsed = JSON.parse(out) as {
 			ok: boolean;
 			data: {
@@ -78,7 +86,14 @@ describe("skills:approve round-trip", () => {
 
 	it("refuses when the target file has uncommitted changes", async () => {
 		fs.writeFileSync(path.join(tmp, "skills/foo/SKILL.md"), "foo DIRTY\n");
-		const out = await skillsApproveCmd(["--id", "foo", "--reason", "should fail"]);
+		const out = await skillsApproveCmd([
+			"--id",
+			"foo",
+			"--reason",
+			"should fail",
+			"--approved-diff-sha",
+			"0".repeat(64),
+		]);
 		const parsed = JSON.parse(out) as {
 			ok: boolean;
 			error?: { message: string };

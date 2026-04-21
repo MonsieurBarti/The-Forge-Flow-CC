@@ -13,12 +13,23 @@ export const skillsApproveSchema: CommandSchema = {
 			type: "string",
 			description: "Human-readable rationale; echoed for the commit message",
 		},
+		{
+			name: "approved-diff-sha",
+			type: "string",
+			description:
+				"Sha256 of the committed content being approved (must match git show HEAD:<path>)",
+		},
 	],
 	optionalFlags: [
 		{
 			name: "seed-original-commit-sha",
 			type: "string",
 			description: "Used by the seed script only; sets originalCommitSha when creating a new row",
+		},
+		{
+			name: "refinement-id",
+			type: "string",
+			description: "Id of the /tff:learn draft being applied (null for manual approvals)",
 		},
 	],
 	examples: ['skills:approve --id brainstorming --reason "align with new brainstorming flow"'],
@@ -57,6 +68,8 @@ export const skillsApproveCmd = async (args: string[]): Promise<string> => {
 	const id = parsed.data.id as string;
 	const reason = parsed.data.reason as string;
 	const seedOriginalCommitSha = parsed.data["seed-original-commit-sha"] as string | undefined;
+	const approvedDiffSha = parsed.data["approved-diff-sha"] as string;
+	const refinementId = parsed.data["refinement-id"] as string | undefined;
 
 	const result = await approveSkill({
 		skillId: id,
@@ -64,6 +77,8 @@ export const skillsApproveCmd = async (args: string[]): Promise<string> => {
 		root: process.cwd(),
 		git: makeGit(process.cwd()),
 		seedOriginalCommitSha,
+		approvedDiffSha,
+		refinementId,
 	});
 
 	if (!result.ok) {

@@ -49,6 +49,7 @@ describe("approveSkill", () => {
 			root: tmp,
 			git: cleanGit,
 			now: () => new Date("2026-04-21T00:00:00Z"),
+			approvedDiffSha: "0".repeat(64),
 		});
 		expect(result).toEqual({
 			ok: false,
@@ -63,6 +64,7 @@ describe("approveSkill", () => {
 			root: tmp,
 			git: dirtyGit,
 			now: () => new Date("2026-04-21T00:00:00Z"),
+			approvedDiffSha: "0".repeat(64),
 		});
 		expect(result).toEqual({
 			ok: false,
@@ -91,6 +93,7 @@ describe("approveSkill", () => {
 			root: tmp,
 			git: cleanGit,
 			now: () => new Date("2026-04-21T00:00:00Z"),
+			approvedDiffSha: sha,
 		});
 
 		expect(result).toEqual({
@@ -102,6 +105,7 @@ describe("approveSkill", () => {
 				shaAfter: sha,
 				reason: "no-op",
 				originalCommitSha: "origA",
+				refinementId: null,
 			},
 		});
 
@@ -123,15 +127,16 @@ describe("approveSkill", () => {
 			},
 		});
 
+		const newSha = computeSha("foo v2\n");
 		const result = await approveSkill({
 			skillId: "foo",
 			reason: "manual refinement",
 			root: tmp,
 			git: cleanGit,
 			now: () => new Date("2026-04-21T00:00:00Z"),
+			approvedDiffSha: newSha,
 		});
 
-		const newSha = computeSha("foo v2\n");
 		expect(result).toEqual({
 			ok: true,
 			noop: false,
@@ -141,6 +146,7 @@ describe("approveSkill", () => {
 				shaAfter: newSha,
 				reason: "manual refinement",
 				originalCommitSha: "origA",
+				refinementId: null,
 			},
 		});
 
@@ -152,6 +158,7 @@ describe("approveSkill", () => {
 	});
 
 	it("creates a manifest row when one does not exist yet", async () => {
+		const newSha = computeSha("foo v2\n");
 		const result = await approveSkill({
 			skillId: "foo",
 			reason: "first approval",
@@ -159,6 +166,7 @@ describe("approveSkill", () => {
 			git: cleanGit,
 			now: () => new Date("2026-04-21T00:00:00Z"),
 			seedOriginalCommitSha: "seedcommit",
+			approvedDiffSha: newSha,
 		});
 
 		expect(result.ok).toBe(true);
@@ -172,11 +180,12 @@ describe("approveSkill", () => {
 	});
 
 	it("rejects seedOriginalCommitSha when the row already exists", async () => {
+		const sha = computeSha("foo v2\n");
 		writeManifest(tmp, {
 			version: 1,
 			skills: {
 				foo: {
-					sha256: computeSha("foo v2\n"),
+					sha256: sha,
 					originalCommitSha: "origA",
 					approvedAt: "2026-04-20T00:00:00.000Z",
 					refinementId: null,
@@ -191,6 +200,7 @@ describe("approveSkill", () => {
 			git: cleanGit,
 			now: () => new Date("2026-04-21T00:00:00Z"),
 			seedOriginalCommitSha: "should-not-be-used",
+			approvedDiffSha: sha,
 		});
 
 		expect(result).toEqual({
@@ -206,6 +216,7 @@ describe("approveSkill", () => {
 			root: tmp,
 			git: makeGit({ showError: "fatal: bad object" }),
 			now: () => new Date("2026-04-21T00:00:00Z"),
+			approvedDiffSha: "0".repeat(64),
 		});
 		expect(r).toMatchObject({ ok: false });
 		expect((r as { reason: string }).reason).toContain("unable to read committed content");
@@ -218,6 +229,7 @@ describe("approveSkill", () => {
 			root: tmp,
 			git: makeGit({}),
 			now: () => new Date("2026-04-21T00:00:00Z"),
+			approvedDiffSha: "0".repeat(64),
 		});
 		expect(r).toMatchObject({ ok: false });
 		expect((r as { reason: string }).reason).toContain("invalid skill id");
@@ -230,6 +242,7 @@ describe("approveSkill", () => {
 			root: tmp,
 			git: makeGit({}),
 			now: () => new Date("2026-04-21T00:00:00Z"),
+			approvedDiffSha: "0".repeat(64),
 		});
 		expect(r).toMatchObject({ ok: false });
 	});
@@ -237,6 +250,7 @@ describe("approveSkill", () => {
 	it("accepts conventional skill ids (lowercase, digits, hyphens)", async () => {
 		fs.mkdirSync(path.join(tmp, "skills", "my-skill-42"), { recursive: true });
 		fs.writeFileSync(path.join(tmp, "skills/my-skill-42/SKILL.md"), "hi\n");
+		const newSha = computeSha("hi\n");
 		const r = await approveSkill({
 			skillId: "my-skill-42",
 			reason: "init",
@@ -244,7 +258,88 @@ describe("approveSkill", () => {
 			git: makeGit({ contentAtHead: "hi\n" }),
 			now: () => new Date("2026-04-21T00:00:00Z"),
 			seedOriginalCommitSha: "seed",
+			approvedDiffSha: newSha,
 		});
 		expect(r.ok).toBe(true);
+	});
+
+	it("rejects when approved-diff-sha does not match committed content", async () => {
+		const r = await approveSkill({
+			skillId: "foo",
+			reason: "r",
+			root: tmp,
+			git: makeGit({ contentAtHead: "foo v2\n" }),
+			now: () => new Date("2026-04-21T00:00:00Z"),
+			approvedDiffSha: "0".repeat(64),
+		});
+		expect(r).toMatchObject({ ok: false });
+		expect((r as { reason: string }).reason).toContain("approved-diff-sha mismatch");
+	});
+
+	it("appends an audit log entry on successful update", async () => {
+		const oldSha = "0".repeat(64);
+		writeManifest(tmp, {
+			version: 1,
+			skills: {
+				foo: {
+					sha256: oldSha,
+					originalCommitSha: "origA",
+					approvedAt: "2026-04-20T00:00:00.000Z",
+					refinementId: "r1",
+				},
+			},
+		});
+		const newSha = computeSha("foo v2\n");
+		const r = await approveSkill({
+			skillId: "foo",
+			reason: "manual refinement",
+			root: tmp,
+			git: makeGit({ contentAtHead: "foo v2\n" }),
+			now: () => new Date("2026-04-21T00:00:00Z"),
+			approvedDiffSha: newSha,
+			refinementId: "refinement-42",
+		});
+		expect(r.ok).toBe(true);
+		const log = fs.readFileSync(
+			path.join(tmp, ".tff-cc/observations/skill-approvals.jsonl"),
+			"utf8",
+		);
+		const entry = JSON.parse(log.trim());
+		expect(entry).toMatchObject({
+			skillId: "foo",
+			reason: "manual refinement",
+			shaBefore: oldSha,
+			shaAfter: newSha,
+			refinementId: "refinement-42",
+			approvedDiffSha: newSha,
+		});
+	});
+
+	it("does NOT write audit log on no-op", async () => {
+		const sha = computeSha("foo v2\n");
+		writeManifest(tmp, {
+			version: 1,
+			skills: {
+				foo: {
+					sha256: sha,
+					originalCommitSha: "origA",
+					approvedAt: "2026-04-20T00:00:00.000Z",
+					refinementId: null,
+				},
+			},
+		});
+		const r = await approveSkill({
+			skillId: "foo",
+			reason: "noop",
+			root: tmp,
+			git: makeGit({ contentAtHead: "foo v2\n" }),
+			now: () => new Date("2026-04-21T00:00:00Z"),
+			approvedDiffSha: sha,
+		});
+		expect(r.ok).toBe(true);
+		expect((r as { noop: boolean }).noop).toBe(true);
+		expect(
+			fs.existsSync(path.join(tmp, ".tff-cc/observations/skill-approvals.jsonl")),
+		).toBe(false);
 	});
 });
