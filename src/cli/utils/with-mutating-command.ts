@@ -2,7 +2,10 @@ import { assertNotOnDefaultBranch } from "../../application/guards/branch-guard.
 import { assertNotOnMilestoneBranch } from "../../application/guards/milestone-branch-guard.js";
 import type { GitOps } from "../../domain/ports/git-ops.port.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
-import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import {
+	type ClosableStateStores,
+	createClosableStateStoresUnchecked,
+} from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 
 export const WITH_MUTATING_COMMAND_TAG = Symbol("with-mutating-command");
 
@@ -16,6 +19,25 @@ interface WrapperDeps {
 	gitFactory?: () => GitOps;
 }
 
+// Module-level cache: migrations and DB init run once per process.
+let _cachedStores: ClosableStateStores | null = null;
+
+const getStores = (): ClosableStateStores => {
+	if (!_cachedStores) {
+		_cachedStores = createClosableStateStoresUnchecked();
+	}
+	return _cachedStores;
+};
+
+/**
+ * Reset the module-level store cache. Use in test teardown to prevent
+ * connection leaks when tests run multiple withMutatingCommand invocations
+ * within a single process.
+ */
+export const resetMutatingCommandCache = (): void => {
+	_cachedStores = null;
+};
+
 export const withMutatingCommand = (handler: Handler, deps?: WrapperDeps): TaggedHandler => {
 	const wrapped = async (args: string[]): Promise<string> => {
 		const git = deps?.gitFactory ? deps.gitFactory() : new GitCliAdapter(process.cwd());
@@ -26,19 +48,15 @@ export const withMutatingCommand = (handler: Handler, deps?: WrapperDeps): Tagge
 		}
 
 		if (process.env.TFF_ALLOW_MILESTONE_COMMIT !== "1") {
-			const stores = createClosableStateStoresUnchecked();
-			try {
-				const milestoneGuard = await assertNotOnMilestoneBranch(
-					git,
-					"cli:mutating",
-					stores.sliceStore,
-					stores.milestoneStore,
-				);
-				if (!milestoneGuard.ok) {
-					return JSON.stringify({ ok: false, error: milestoneGuard.error });
-				}
-			} finally {
-				stores.close();
+			const stores = getStores();
+			const milestoneGuard = await assertNotOnMilestoneBranch(
+				git,
+				"cli:mutating",
+				stores.sliceStore,
+				stores.milestoneStore,
+			);
+			if (!milestoneGuard.ok) {
+				return JSON.stringify({ ok: false, error: milestoneGuard.error });
 			}
 		}
 

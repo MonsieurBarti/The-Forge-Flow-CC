@@ -182,15 +182,13 @@ describe("withMutatingCommand", () => {
 		expect(handler).toHaveBeenCalledWith(["--flag"]);
 	});
 
-	it("closes stores on milestone-branch violation", async () => {
+	it("opens stores exactly once on milestone-branch violation (cached, no close)", async () => {
 		const { adapter, milestoneId } = seedAdapter();
 		setAdapter(adapter);
 
 		const prefix = milestoneId.slice(0, 8);
 		const git = makeGit(`milestone/${prefix}`, "main");
 		const handler = vi.fn();
-
-		const beforeCount = closeStub.mock.calls.length;
 
 		const { withMutatingCommand } = await import(
 			"../../../../src/cli/utils/with-mutating-command.js"
@@ -199,12 +197,16 @@ describe("withMutatingCommand", () => {
 			"../../../../src/infrastructure/adapters/sqlite/create-state-stores.js"
 		);
 		vi.mocked(createClosableStateStoresUnchecked).mockClear();
+		closeStub.mockClear();
 
 		const wrapped = withMutatingCommand(handler, { gitFactory: () => git });
 		await wrapped([]);
+		// Second call must reuse cached stores — no additional factory invocation
+		await wrapped([]);
 
 		expect(createClosableStateStoresUnchecked).toHaveBeenCalledTimes(1);
-		expect(closeStub.mock.calls.length).toBe(beforeCount + 1);
+		// With module-level caching, close() is never called during normal operation
+		expect(closeStub).not.toHaveBeenCalled();
 	});
 
 	it("does NOT open stores on default-branch violation (bails before milestone check)", async () => {

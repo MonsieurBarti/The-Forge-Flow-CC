@@ -4,7 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { projectInitCmd } from "../../src/cli/commands/project-init.cmd.js";
-import { withMutatingCommand } from "../../src/cli/utils/with-mutating-command.js";
+import {
+	resetMutatingCommandCache,
+	withMutatingCommand,
+} from "../../src/cli/utils/with-mutating-command.js";
 
 describe("branch-guard chokepoint via CLI dispatcher", () => {
 	let workdir: string;
@@ -30,6 +33,7 @@ describe("branch-guard chokepoint via CLI dispatcher", () => {
 	});
 
 	afterEach(() => {
+		resetMutatingCommandCache();
 		process.chdir(originalCwd);
 		if (originalTffCcHome === undefined) {
 			delete process.env.TFF_CC_HOME;
