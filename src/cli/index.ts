@@ -20,6 +20,7 @@ import {
 	milestoneRecordAuditCmd,
 	milestoneRecordAuditSchema,
 } from "./commands/milestone-record-audit.cmd.js";
+import { observeHealthCmd, observeHealthSchema } from "./commands/observe-health.cmd.js";
 import { observeRecordCmd, observeRecordSchema } from "./commands/observe-record.cmd.js";
 import {
 	patternsAggregateCmd,
@@ -230,6 +231,10 @@ export const COMMAND_REGISTRY: Record<string, CommandEntry> = (() => {
 		"checkpoint:load": {
 			schema: checkpointLoadSchema,
 			dispatcher: wrap(checkpointLoadCmd, checkpointLoadSchema),
+		},
+		"observe:health": {
+			schema: observeHealthSchema,
+			dispatcher: wrap(observeHealthCmd, observeHealthSchema),
 		},
 		"observe:record": {
 			schema: observeRecordSchema,
