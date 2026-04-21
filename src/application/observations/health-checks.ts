@@ -1,0 +1,110 @@
+import fs from "node:fs";
+import path from "node:path";
+
+const OBS_DIR = ".tff-cc/observations";
+const SESSIONS = `${OBS_DIR}/sessions.jsonl`;
+const DEAD_LETTER = `${OBS_DIR}/dead-letter.jsonl`;
+const MUTATING_SENTINEL = `${OBS_DIR}/.mutating-cli-ran`;
+const SETTINGS = ".tff-cc/settings.yaml";
+
+const readLastLine = (filepath: string): string | null => {
+	const content = fs.readFileSync(filepath, "utf8");
+	const lines = content.split("\n").filter((l) => l.length > 0);
+	return lines.length > 0 ? lines[lines.length - 1] : null;
+};
+
+export interface LastObservationResult {
+	readonly ok: true;
+	readonly present: boolean;
+	readonly lastSeenAt: string | null;
+	readonly stale: boolean;
+}
+
+export interface ProbeFailure {
+	readonly ok: false;
+	readonly reason: string;
+}
+
+export const checkLastObservation = (
+	root: string,
+	now: Date,
+	staleAfterDays: number,
+): LastObservationResult | ProbeFailure => {
+	try {
+		const filepath = path.join(root, SESSIONS);
+		if (!fs.existsSync(filepath)) {
+			return { ok: true, present: false, lastSeenAt: null, stale: false };
+		}
+		const last = readLastLine(filepath);
+		if (last === null) {
+			return { ok: true, present: false, lastSeenAt: null, stale: false };
+		}
+		const parsed = JSON.parse(last) as { ts?: string };
+		if (typeof parsed.ts !== "string") {
+			return { ok: false, reason: "last observation has no ts field" };
+		}
+		const lastTime = Date.parse(parsed.ts);
+		if (Number.isNaN(lastTime)) {
+			return { ok: false, reason: `unparseable ts: ${parsed.ts}` };
+		}
+		const ageDays = (now.getTime() - lastTime) / (1000 * 60 * 60 * 24);
+		return {
+			ok: true,
+			present: true,
+			lastSeenAt: parsed.ts,
+			stale: ageDays > staleAfterDays,
+		};
+	} catch (err) {
+		return { ok: false, reason: `checkLastObservation failed: ${(err as Error).message}` };
+	}
+};
+
+export interface SentinelResult {
+	readonly ok: true;
+	readonly enabled: boolean;
+	readonly sessionsFileExists: boolean;
+	readonly mutatingCliEverRan: boolean;
+	readonly shouldWarn: boolean;
+}
+
+export const checkFirstObservationSentinel = (root: string): SentinelResult | ProbeFailure => {
+	try {
+		const settingsPath = path.join(root, SETTINGS);
+		let enabled = false;
+		if (fs.existsSync(settingsPath)) {
+			const content = fs.readFileSync(settingsPath, "utf8");
+			enabled = /enabled:\s*true/.test(content);
+		}
+		const sessionsFileExists = fs.existsSync(path.join(root, SESSIONS));
+		const mutatingCliEverRan = fs.existsSync(path.join(root, MUTATING_SENTINEL));
+		const shouldWarn = enabled && mutatingCliEverRan && !sessionsFileExists;
+		return { ok: true, enabled, sessionsFileExists, mutatingCliEverRan, shouldWarn };
+	} catch (err) {
+		return {
+			ok: false,
+			reason: `checkFirstObservationSentinel failed: ${(err as Error).message}`,
+		};
+	}
+};
+
+export interface DeadLetterResult {
+	readonly ok: true;
+	readonly present: boolean;
+	readonly entryCount: number;
+	readonly bytes: number;
+}
+
+export const auditDeadLetter = (root: string): DeadLetterResult | ProbeFailure => {
+	try {
+		const filepath = path.join(root, DEAD_LETTER);
+		if (!fs.existsSync(filepath)) {
+			return { ok: true, present: false, entryCount: 0, bytes: 0 };
+		}
+		const stat = fs.statSync(filepath);
+		const content = fs.readFileSync(filepath, "utf8");
+		const entryCount = content.split("\n").filter((l) => l.length > 0).length;
+		return { ok: true, present: true, entryCount, bytes: stat.size };
+	} catch (err) {
+		return { ok: false, reason: `auditDeadLetter failed: ${(err as Error).message}` };
+	}
+};
