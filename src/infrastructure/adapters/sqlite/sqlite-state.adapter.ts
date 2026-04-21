@@ -10,6 +10,7 @@ import type { DomainError } from "../../../domain/errors/domain-error.js";
 import { createDomainError } from "../../../domain/errors/domain-error.js";
 import { freshReviewerViolationError } from "../../../domain/errors/fresh-reviewer-violation.error.js";
 import { hasOpenChildrenError } from "../../../domain/errors/has-open-children.error.js";
+import { shipCompletenessViolationError } from "../../../domain/errors/ship-completeness-violation.error.js";
 import { versionMismatchError } from "../../../domain/errors/version-mismatch.error.js";
 import type { DomainEvent } from "../../../domain/events/domain-event.js";
 import { milestoneBranchName } from "../../../domain/helpers/branch-naming.js";
@@ -416,6 +417,23 @@ export class SQLiteStateAdapter
 	}
 
 	transitionSlice(id: string, target: SliceStatus): Result<DomainEvent[], DomainError> {
+		if (target === "closed") {
+			const currentResult = this.getSlice(id);
+			if (!currentResult.ok) return currentResult;
+			if (currentResult.data?.status === "completing") {
+				const reviewsResult = this.listReviews(id);
+				if (!reviewsResult.ok) return reviewsResult;
+				const approvedTypes = new Set(
+					reviewsResult.data.filter((r) => r.verdict === "approved").map((r) => r.type),
+				);
+				const missing: Array<"code" | "security"> = [];
+				if (!approvedTypes.has("code")) missing.push("code");
+				if (!approvedTypes.has("security")) missing.push("security");
+				if (missing.length > 0) {
+					return Err(shipCompletenessViolationError(id, missing));
+				}
+			}
+		}
 		try {
 			const getResult = this.getSlice(id);
 			if (!getResult.ok) return getResult;
