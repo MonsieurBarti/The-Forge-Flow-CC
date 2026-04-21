@@ -15,8 +15,6 @@ describe("COMMAND_REGISTRY", () => {
 		const entry = COMMAND_REGISTRY["slice:list"];
 		expect(entry).toBeDefined();
 		expect(isWrappedMutating(entry.dispatcher)).toBe(false);
-		// for non-mutating, dispatcher === handler
-		expect(entry.dispatcher).toBe(entry.handler);
 	});
 
 	it("has all expected top-level keys", () => {

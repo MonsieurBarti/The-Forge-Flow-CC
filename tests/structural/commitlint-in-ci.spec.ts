@@ -10,7 +10,7 @@ interface Workflow {
 		string,
 		{
 			if?: string;
-			steps?: Array<{ run?: string }>;
+			steps?: Array<{ run?: string; env?: Record<string, string> }>;
 		}
 	>;
 }
@@ -29,9 +29,12 @@ describe("commitlint gate wired in CI", () => {
 
 	it("commitlint job invokes commitlint with base/head sha range", () => {
 		const steps = workflow.jobs?.commitlint?.steps ?? [];
-		const joined = steps.map((s) => s.run ?? "").join("\n");
-		expect(joined).toMatch(/commitlint/);
-		expect(joined).toMatch(/base\.sha/);
-		expect(joined).toMatch(/head\.sha/);
+		const runContent = steps.map((s) => s.run ?? "").join("\n");
+		const envContent = steps.map((s) => (s.env ? JSON.stringify(s.env) : "")).join("\n");
+		const fullContent = `${runContent}\n${envContent}`;
+
+		expect(fullContent).toMatch(/commitlint/);
+		expect(fullContent).toMatch(/base\.sha/);
+		expect(fullContent).toMatch(/head\.sha/);
 	});
 });

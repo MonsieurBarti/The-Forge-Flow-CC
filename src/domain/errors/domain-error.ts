@@ -32,6 +32,7 @@ export const DomainErrorCodeSchema = z.enum([
 	"EXTERNAL_CALL_FAILED",
 	"SHIP_COMPLETENESS_VIOLATION",
 	"MILESTONE_COMPLETENESS_VIOLATION",
+	"DETACHED_HEAD",
 ]);
 
 export type DomainErrorCode = z.infer<typeof DomainErrorCodeSchema>;

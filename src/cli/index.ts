@@ -77,7 +77,6 @@ type CommandFn = (args: string[]) => Promise<string>;
 
 export interface CommandEntry {
 	schema: CommandSchema;
-	handler: CommandFn;
 	dispatcher: CommandFn;
 }
 
@@ -89,247 +88,198 @@ export const COMMAND_REGISTRY: Record<string, CommandEntry> = (() => {
 	return {
 		"branch-guard:check": {
 			schema: branchGuardCheckSchema,
-			handler: branchGuardCheckHandler,
 			dispatcher: wrap(branchGuardCheckHandler, branchGuardCheckSchema),
 		},
 		"project:init": {
 			schema: projectInitSchema,
-			handler: projectInitCmd,
 			dispatcher: wrap(projectInitCmd, projectInitSchema),
 		},
 		"project:get": {
 			schema: projectGetSchema,
-			handler: projectGetCmd,
 			dispatcher: wrap(projectGetCmd, projectGetSchema),
 		},
 		"milestone:create": {
 			schema: milestoneCreateSchema,
-			handler: milestoneCreateCmd,
 			dispatcher: wrap(milestoneCreateCmd, milestoneCreateSchema),
 		},
 		"milestone:list": {
 			schema: milestoneListSchema,
-			handler: milestoneListCmd,
 			dispatcher: wrap(milestoneListCmd, milestoneListSchema),
 		},
 		"milestone:close": {
 			schema: milestoneCloseSchema,
-			handler: milestoneCloseCmd,
 			dispatcher: wrap(milestoneCloseCmd, milestoneCloseSchema),
 		},
 		"milestone:record-audit": {
 			schema: milestoneRecordAuditSchema,
-			handler: milestoneRecordAuditCmd,
 			dispatcher: wrap(milestoneRecordAuditCmd, milestoneRecordAuditSchema),
 		},
 		"milestone:audit-status": {
 			schema: milestoneAuditStatusSchema,
-			handler: milestoneAuditStatusCmd,
 			dispatcher: wrap(milestoneAuditStatusCmd, milestoneAuditStatusSchema),
 		},
 		"slice:create": {
 			schema: sliceCreateSchema,
-			handler: sliceCreateCmd,
 			dispatcher: wrap(sliceCreateCmd, sliceCreateSchema),
 		},
 		"slice:list": {
 			schema: sliceListSchema,
-			handler: sliceListCmd,
 			dispatcher: wrap(sliceListCmd, sliceListSchema),
 		},
 		"slice:transition": {
 			schema: sliceTransitionSchema,
-			handler: sliceTransitionCmd,
 			dispatcher: wrap(sliceTransitionCmd, sliceTransitionSchema),
 		},
 		"slice:close": {
 			schema: sliceCloseSchema,
-			handler: sliceCloseCmd,
 			dispatcher: wrap(sliceCloseCmd, sliceCloseSchema),
 		},
 		"slice:classify": {
 			schema: sliceClassifySchema,
-			handler: sliceClassifyCmd,
 			dispatcher: wrap(sliceClassifyCmd, sliceClassifySchema),
 		},
 		"task:claim": {
 			schema: taskClaimSchema,
-			handler: taskClaimCmd,
 			dispatcher: wrap(taskClaimCmd, taskClaimSchema),
 		},
 		"task:close": {
 			schema: taskCloseSchema,
-			handler: taskCloseCmd,
 			dispatcher: wrap(taskCloseCmd, taskCloseSchema),
 		},
 		"task:ready": {
 			schema: taskReadySchema,
-			handler: taskReadyCmd,
 			dispatcher: wrap(taskReadyCmd, taskReadySchema),
 		},
 		"dep:add": {
 			schema: depAddSchema,
-			handler: depAddCmd,
 			dispatcher: wrap(depAddCmd, depAddSchema),
 		},
 		"direct-edit:guard": {
 			schema: directEditGuardSchema,
-			handler: directEditGuardCmd,
 			dispatcher: wrap(directEditGuardCmd, directEditGuardSchema),
 		},
 		"pre-op:guard": {
 			schema: preOpGuardSchema,
-			handler: preOpGuardCmd,
 			dispatcher: wrap(preOpGuardCmd, preOpGuardSchema),
 		},
 		"spec-edit:guard": {
 			schema: specEditGuardSchema,
-			handler: specEditGuardCmd,
 			dispatcher: wrap(specEditGuardCmd, specEditGuardSchema),
 		},
 		"waves:detect": {
 			schema: wavesDetectSchema,
-			handler: wavesDetectCmd,
 			dispatcher: wrap(wavesDetectCmd, wavesDetectSchema),
 		},
 		"state:diff": {
 			schema: stateDiffSchema,
-			handler: stateDiffCmd,
 			dispatcher: wrap(stateDiffCmd, stateDiffSchema),
 		},
 		"sync:state": {
 			schema: syncStateSchema,
-			handler: syncStateCmd,
 			dispatcher: wrap(syncStateCmd, syncStateSchema),
 		},
 		"worktree:create": {
 			schema: worktreeCreateSchema,
-			handler: worktreeCreateCmd,
 			dispatcher: wrap(worktreeCreateCmd, worktreeCreateSchema),
 		},
 		"worktree:delete": {
 			schema: worktreeDeleteSchema,
-			handler: worktreeDeleteCmd,
 			dispatcher: wrap(worktreeDeleteCmd, worktreeDeleteSchema),
 		},
 		"worktree:list": {
 			schema: worktreeListSchema,
-			handler: worktreeListCmd,
 			dispatcher: wrap(worktreeListCmd, worktreeListSchema),
 		},
 		"review:check-fresh": {
 			schema: reviewCheckFreshSchema,
-			handler: reviewCheckFreshCmd,
 			dispatcher: wrap(reviewCheckFreshCmd, reviewCheckFreshSchema),
 		},
 		"review:record": {
 			schema: reviewRecordSchema,
-			handler: reviewRecordCmd,
 			dispatcher: wrap(reviewRecordCmd, reviewRecordSchema),
 		},
 		"routing:decide": {
 			schema: routingDecideSchema,
-			handler: routingDecideCmd,
 			dispatcher: wrap(routingDecideCmd, routingDecideSchema),
 		},
 		"routing:event": {
 			schema: routingEventSchema,
-			handler: routingEventCmd,
 			dispatcher: wrap(routingEventCmd, routingEventSchema),
 		},
 		"routing:outcome": {
 			schema: routingOutcomeSchema,
-			handler: routingOutcomeCmd,
 			dispatcher: wrap(routingOutcomeCmd, routingOutcomeSchema),
 		},
 		"routing:calibrate": {
 			schema: routingCalibrateSchema,
-			handler: routingCalibrateCmd,
 			dispatcher: wrap(routingCalibrateCmd, routingCalibrateSchema),
 		},
 		"routing:judge-prepare": {
 			schema: routingJudgePrepareSchema,
-			handler: routingJudgePrepareCmd,
 			dispatcher: wrap(routingJudgePrepareCmd, routingJudgePrepareSchema),
 		},
 		"routing:judge-record": {
 			schema: routingJudgeRecordSchema,
-			handler: routingJudgeRecordCmd,
 			dispatcher: wrap(routingJudgeRecordCmd, routingJudgeRecordSchema),
 		},
 		"checkpoint:save": {
 			schema: checkpointSaveSchema,
-			handler: checkpointSaveCmd,
 			dispatcher: wrap(checkpointSaveCmd, checkpointSaveSchema),
 		},
 		"checkpoint:load": {
 			schema: checkpointLoadSchema,
-			handler: checkpointLoadCmd,
 			dispatcher: wrap(checkpointLoadCmd, checkpointLoadSchema),
 		},
 		"observe:record": {
 			schema: observeRecordSchema,
-			handler: observeRecordCmd,
 			dispatcher: wrap(observeRecordCmd, observeRecordSchema),
 		},
 		"patterns:extract": {
 			schema: patternsExtractSchema,
-			handler: patternsExtractCmd,
 			dispatcher: wrap(patternsExtractCmd, patternsExtractSchema),
 		},
 		"patterns:aggregate": {
 			schema: patternsAggregateSchema,
-			handler: patternsAggregateCmd,
 			dispatcher: wrap(patternsAggregateCmd, patternsAggregateSchema),
 		},
 		"patterns:rank": {
 			schema: patternsRankSchema,
-			handler: patternsRankCmd,
 			dispatcher: wrap(patternsRankCmd, patternsRankSchema),
 		},
 		"compose:detect": {
 			schema: composeDetectSchema,
-			handler: composeDetectCmd,
 			dispatcher: wrap(composeDetectCmd, composeDetectSchema),
 		},
 		"skills:drift": {
 			schema: skillsDriftSchema,
-			handler: skillsDriftCmd,
 			dispatcher: wrap(skillsDriftCmd, skillsDriftSchema),
 		},
 		"skills:validate": {
 			schema: skillsValidateSchema,
-			handler: skillsValidateCmd,
 			dispatcher: wrap(skillsValidateCmd, skillsValidateSchema),
 		},
 		"workflow:next": {
 			schema: workflowNextSchema,
-			handler: workflowNextCmd,
 			dispatcher: wrap(workflowNextCmd, workflowNextSchema),
 		},
 		"workflow:should-auto": {
 			schema: workflowShouldAutoSchema,
-			handler: workflowShouldAutoCmd,
 			dispatcher: wrap(workflowShouldAutoCmd, workflowShouldAutoSchema),
 		},
 		"claim:check-stale": {
 			schema: claimCheckStaleSchema,
-			handler: claimCheckStaleCmd,
 			dispatcher: wrap(claimCheckStaleCmd, claimCheckStaleSchema),
 		},
 		"session:remind": {
 			schema: sessionRemindSchema,
-			handler: sessionRemindCmd,
 			dispatcher: wrap(sessionRemindCmd, sessionRemindSchema),
 		},
 		version: {
 			schema: versionSchema,
-			handler: versionCmd,
 			dispatcher: wrap(versionCmd, versionSchema),
 		},
 		schema: {
 			schema: schemaCmdSchema,
-			handler: schemaCmd,
 			dispatcher: wrap(schemaCmd, schemaCmdSchema),
 		},
 	};
