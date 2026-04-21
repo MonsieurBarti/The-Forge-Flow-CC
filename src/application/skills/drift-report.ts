@@ -1,0 +1,55 @@
+import fs from "node:fs";
+import path from "node:path";
+import { readManifest } from "./baseline-registry.js";
+import { checkDrift } from "./check-drift.js";
+
+const SEMANTIC_DRIFT_RATIO = 0.6;
+
+export interface GitShow {
+	show: (commitSha: string, relPath: string) => Promise<string>;
+}
+
+export interface DriftReportRow {
+	readonly id: string;
+	readonly ratio?: number;
+	readonly overThreshold?: boolean;
+	readonly error?: string;
+}
+
+export interface DriftReportResult {
+	readonly skills: DriftReportRow[];
+}
+
+export const driftReport = async (input: {
+	root: string;
+	git: GitShow;
+}): Promise<DriftReportResult> => {
+	const manifest = readManifest(input.root);
+	const rows: DriftReportRow[] = [];
+
+	for (const id of Object.keys(manifest.skills).sort()) {
+		const baseline = manifest.skills[id];
+		const relPath = `skills/${id}/SKILL.md`;
+		const absPath = path.join(input.root, relPath);
+		if (!fs.existsSync(absPath)) {
+			rows.push({ id, error: `${relPath} missing` });
+			continue;
+		}
+		const current = fs.readFileSync(absPath, "utf8");
+		try {
+			const original = await input.git.show(baseline.originalCommitSha, relPath);
+			const { driftScore } = checkDrift(original, current, {
+				maxDrift: SEMANTIC_DRIFT_RATIO,
+			});
+			rows.push({
+				id,
+				ratio: driftScore,
+				overThreshold: driftScore > SEMANTIC_DRIFT_RATIO,
+			});
+		} catch (err) {
+			rows.push({ id, error: (err as Error).message });
+		}
+	}
+
+	return { skills: rows };
+};
