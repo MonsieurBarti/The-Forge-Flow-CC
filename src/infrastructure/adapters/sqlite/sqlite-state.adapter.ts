@@ -271,40 +271,42 @@ export class SQLiteStateAdapter
 	}
 
 	closeMilestone(id: string, reason?: string): Result<void, DomainError> {
-		// Per-slice spec-approval invariant: every slice in the milestone must have
-		// at least one approved `type: "spec"` review. Fires regardless of slice state.
-		const slicesResult = this.listSlices(id);
-		if (!slicesResult.ok) return slicesResult;
-		const missing: string[] = [];
-		for (const slice of slicesResult.data) {
-			const reviewsResult = this.listReviews(slice.id);
-			if (!reviewsResult.ok) return reviewsResult;
-			const hasApprovedSpec = reviewsResult.data.some(
-				(r) => r.type === "spec" && r.verdict === "approved",
-			);
-			if (!hasApprovedSpec) missing.push(slice.id);
-		}
-		if (missing.length > 0) {
-			return Err(milestoneCompletenessViolationError(id, missing));
-		}
-		try {
-			const openSlices = this.db
-				.prepare(
-					"SELECT COUNT(*) as count FROM slice WHERE milestone_id = ? AND status != 'closed'",
-				)
-				.get(id) as { count: number };
-			if (openSlices.count > 0) {
-				return Err(hasOpenChildrenError(id, openSlices.count));
+		return this.db.transaction((): Result<void, DomainError> => {
+			// Per-slice spec-approval invariant: every slice in the milestone must have
+			// at least one approved `type: "spec"` review. Fires regardless of slice state.
+			const slicesResult = this.listSlices(id);
+			if (!slicesResult.ok) return slicesResult;
+			const missing: string[] = [];
+			for (const slice of slicesResult.data) {
+				const reviewsResult = this.listReviews(slice.id);
+				if (!reviewsResult.ok) return reviewsResult;
+				const hasApprovedSpec = reviewsResult.data.some(
+					(r) => r.type === "spec" && r.verdict === "approved",
+				);
+				if (!hasApprovedSpec) missing.push(slice.id);
 			}
-			this.db
-				.prepare(
-					"UPDATE milestone SET status = 'closed', close_reason = ?, updated_at = datetime('now') WHERE id = ?",
-				)
-				.run(reason ?? null, id);
-			return Ok(undefined);
-		} catch (e) {
-			return Err(createDomainError("WRITE_FAILURE", `Failed to close milestone: ${e}`));
-		}
+			if (missing.length > 0) {
+				return Err(milestoneCompletenessViolationError(id, missing));
+			}
+			try {
+				const openSlices = this.db
+					.prepare(
+						"SELECT COUNT(*) as count FROM slice WHERE milestone_id = ? AND status != 'closed'",
+					)
+					.get(id) as { count: number };
+				if (openSlices.count > 0) {
+					return Err(hasOpenChildrenError(id, openSlices.count));
+				}
+				this.db
+					.prepare(
+						"UPDATE milestone SET status = 'closed', close_reason = ?, updated_at = datetime('now') WHERE id = ?",
+					)
+					.run(reason ?? null, id);
+				return Ok(undefined);
+			} catch (e) {
+				return Err(createDomainError("WRITE_FAILURE", `Failed to close milestone: ${e}`));
+			}
+		})();
 	}
 
 	// SliceStore
@@ -434,38 +436,40 @@ export class SQLiteStateAdapter
 	}
 
 	transitionSlice(id: string, target: SliceStatus): Result<DomainEvent[], DomainError> {
-		if (target === "closed") {
-			const currentResult = this.getSlice(id);
-			if (!currentResult.ok) return currentResult;
-			if (currentResult.data?.status === "completing") {
-				const reviewsResult = this.listReviews(id);
-				if (!reviewsResult.ok) return reviewsResult;
-				const approvedTypes = new Set(
-					reviewsResult.data.filter((r) => r.verdict === "approved").map((r) => r.type),
-				);
-				const missing: Array<"code" | "security"> = [];
-				if (!approvedTypes.has("code")) missing.push("code");
-				if (!approvedTypes.has("security")) missing.push("security");
-				if (missing.length > 0) {
-					return Err(shipCompletenessViolationError(id, missing));
+		return this.db.transaction((): Result<DomainEvent[], DomainError> => {
+			if (target === "closed") {
+				const currentResult = this.getSlice(id);
+				if (!currentResult.ok) return currentResult;
+				if (currentResult.data?.status === "completing") {
+					const reviewsResult = this.listReviews(id);
+					if (!reviewsResult.ok) return reviewsResult;
+					const approvedTypes = new Set(
+						reviewsResult.data.filter((r) => r.verdict === "approved").map((r) => r.type),
+					);
+					const missing: Array<"code" | "security"> = [];
+					if (!approvedTypes.has("code")) missing.push("code");
+					if (!approvedTypes.has("security")) missing.push("security");
+					if (missing.length > 0) {
+						return Err(shipCompletenessViolationError(id, missing));
+					}
 				}
 			}
-		}
-		try {
-			const getResult = this.getSlice(id);
-			if (!getResult.ok) return getResult;
-			if (!getResult.data) {
-				return Err(createDomainError("NOT_FOUND", `Slice "${id}" not found`));
+			try {
+				const getResult = this.getSlice(id);
+				if (!getResult.ok) return getResult;
+				if (!getResult.data) {
+					return Err(createDomainError("NOT_FOUND", `Slice "${id}" not found`));
+				}
+				const domainResult = transitionSlice(getResult.data, target);
+				if (!domainResult.ok) return domainResult;
+				this.db
+					.prepare("UPDATE slice SET status = ?, updated_at = datetime('now') WHERE id = ?")
+					.run(target, id);
+				return Ok(domainResult.data.events);
+			} catch (e) {
+				return Err(createDomainError("WRITE_FAILURE", `Failed to transition slice: ${e}`));
 			}
-			const domainResult = transitionSlice(getResult.data, target);
-			if (!domainResult.ok) return domainResult;
-			this.db
-				.prepare("UPDATE slice SET status = ?, updated_at = datetime('now') WHERE id = ?")
-				.run(target, id);
-			return Ok(domainResult.data.events);
-		} catch (e) {
-			return Err(createDomainError("WRITE_FAILURE", `Failed to transition slice: ${e}`));
-		}
+		})();
 	}
 
 	// TaskStore
@@ -808,30 +812,32 @@ export class SQLiteStateAdapter
 
 	// ReviewStore
 	recordReview(review: ReviewRecord): Result<void, DomainError> {
-		const executorsResult = this.getExecutorsForSlice(review.sliceId);
-		if (!executorsResult.ok) return executorsResult;
-		if (executorsResult.data.includes(review.reviewer)) {
-			return Err(freshReviewerViolationError(review.sliceId, review.reviewer));
-		}
-		try {
-			this.db
-				.prepare(
-					`INSERT INTO review (slice_id, type, reviewer, verdict, commit_sha, notes, created_at)
+		return this.db.transaction((): Result<void, DomainError> => {
+			const executorsResult = this.getExecutorsForSlice(review.sliceId);
+			if (!executorsResult.ok) return executorsResult;
+			if (executorsResult.data.includes(review.reviewer)) {
+				return Err(freshReviewerViolationError(review.sliceId, review.reviewer));
+			}
+			try {
+				this.db
+					.prepare(
+						`INSERT INTO review (slice_id, type, reviewer, verdict, commit_sha, notes, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				)
-				.run(
-					review.sliceId,
-					review.type,
-					review.reviewer,
-					review.verdict,
-					review.commitSha,
-					review.notes ?? null,
-					review.createdAt,
-				);
-			return Ok(undefined);
-		} catch (e) {
-			return Err(createDomainError("WRITE_FAILURE", `Failed to record review: ${e}`));
-		}
+					)
+					.run(
+						review.sliceId,
+						review.type,
+						review.reviewer,
+						review.verdict,
+						review.commitSha,
+						review.notes ?? null,
+						review.createdAt,
+					);
+				return Ok(undefined);
+			} catch (e) {
+				return Err(createDomainError("WRITE_FAILURE", `Failed to record review: ${e}`));
+			}
+		})();
 	}
 
 	getLatestReview(sliceId: string, type: ReviewType): Result<ReviewRecord | null, DomainError> {
