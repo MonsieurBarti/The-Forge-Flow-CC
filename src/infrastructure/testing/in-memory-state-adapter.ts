@@ -7,6 +7,7 @@ import { alreadyClaimedError } from "../../domain/errors/already-claimed.error.j
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { createDomainError } from "../../domain/errors/domain-error.js";
 import { hasOpenChildrenError } from "../../domain/errors/has-open-children.error.js";
+import { milestoneCompletenessViolationError } from "../../domain/errors/milestone-completeness-violation.error.js";
 import type { DomainEvent } from "../../domain/events/domain-event.js";
 import { milestoneBranchName } from "../../domain/helpers/branch-naming.js";
 import type { DatabaseInit } from "../../domain/ports/database-init.port.js";
@@ -160,9 +161,20 @@ export class InMemoryStateAdapter
 	closeMilestone(id: string, reason?: string): Result<void, DomainError> {
 		const ms = this.milestones.get(id);
 		if (!ms) return Ok(undefined);
-		const openSlices = [...this.slices.values()].filter(
-			(s) => s.milestoneId === id && s.status !== "closed",
-		);
+		// Per-slice spec-approval invariant: every slice in the milestone must have
+		// at least one approved `type: "spec"` review. Fires regardless of slice state.
+		const milestoneSlices = [...this.slices.values()].filter((s) => s.milestoneId === id);
+		const missing: string[] = [];
+		for (const slice of milestoneSlices) {
+			const hasApprovedSpec = this.reviews.some(
+				(r) => r.sliceId === slice.id && r.type === "spec" && r.verdict === "approved",
+			);
+			if (!hasApprovedSpec) missing.push(slice.id);
+		}
+		if (missing.length > 0) {
+			return Err(milestoneCompletenessViolationError(id, missing));
+		}
+		const openSlices = milestoneSlices.filter((s) => s.status !== "closed");
 		if (openSlices.length > 0) {
 			return Err(hasOpenChildrenError(id, openSlices.length));
 		}

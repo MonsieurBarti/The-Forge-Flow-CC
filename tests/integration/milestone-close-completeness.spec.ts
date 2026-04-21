@@ -92,6 +92,42 @@ describe("milestone-close completeness invariant", () => {
 	it("accepts close when all slices have approved spec reviews", () => {
 		expect(seedSpecApproval(sliceIds[0], "plannotator-1").ok).toBe(true);
 		expect(seedSpecApproval(sliceIds[1], "plannotator-2").ok).toBe(true);
+
+		// Close each slice: transition through the full state chain and seed required reviews
+		for (const sliceId of sliceIds) {
+			for (const state of [
+				"researching",
+				"planning",
+				"executing",
+				"verifying",
+				"reviewing",
+				"completing",
+			] as const) {
+				expect(stores.sliceStore.transitionSlice(sliceId, state).ok).toBe(true);
+			}
+			expect(
+				stores.reviewStore.recordReview({
+					sliceId,
+					reviewer: "reviewer-code",
+					type: "code",
+					verdict: "approved",
+					commitSha: "abc",
+					createdAt: new Date().toISOString(),
+				}).ok,
+			).toBe(true);
+			expect(
+				stores.reviewStore.recordReview({
+					sliceId,
+					reviewer: "reviewer-sec",
+					type: "security",
+					verdict: "approved",
+					commitSha: "abc",
+					createdAt: new Date().toISOString(),
+				}).ok,
+			).toBe(true);
+			expect(stores.sliceStore.transitionSlice(sliceId, "closed").ok).toBe(true);
+		}
+
 		const r = stores.milestoneStore.closeMilestone(milestoneId);
 		expect(r.ok).toBe(true);
 	});

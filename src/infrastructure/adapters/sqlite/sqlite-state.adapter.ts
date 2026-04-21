@@ -10,6 +10,7 @@ import type { DomainError } from "../../../domain/errors/domain-error.js";
 import { createDomainError } from "../../../domain/errors/domain-error.js";
 import { freshReviewerViolationError } from "../../../domain/errors/fresh-reviewer-violation.error.js";
 import { hasOpenChildrenError } from "../../../domain/errors/has-open-children.error.js";
+import { milestoneCompletenessViolationError } from "../../../domain/errors/milestone-completeness-violation.error.js";
 import { shipCompletenessViolationError } from "../../../domain/errors/ship-completeness-violation.error.js";
 import { versionMismatchError } from "../../../domain/errors/version-mismatch.error.js";
 import type { DomainEvent } from "../../../domain/events/domain-event.js";
@@ -270,6 +271,22 @@ export class SQLiteStateAdapter
 	}
 
 	closeMilestone(id: string, reason?: string): Result<void, DomainError> {
+		// Per-slice spec-approval invariant: every slice in the milestone must have
+		// at least one approved `type: "spec"` review. Fires regardless of slice state.
+		const slicesResult = this.listSlices(id);
+		if (!slicesResult.ok) return slicesResult;
+		const missing: string[] = [];
+		for (const slice of slicesResult.data) {
+			const reviewsResult = this.listReviews(slice.id);
+			if (!reviewsResult.ok) return reviewsResult;
+			const hasApprovedSpec = reviewsResult.data.some(
+				(r) => r.type === "spec" && r.verdict === "approved",
+			);
+			if (!hasApprovedSpec) missing.push(slice.id);
+		}
+		if (missing.length > 0) {
+			return Err(milestoneCompletenessViolationError(id, missing));
+		}
 		try {
 			const openSlices = this.db
 				.prepare(
