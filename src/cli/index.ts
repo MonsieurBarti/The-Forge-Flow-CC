@@ -47,6 +47,7 @@ import {
 import { routingOutcomeCmd, routingOutcomeSchema } from "./commands/routing-outcome.cmd.js";
 import { schemaCmd, schemaCmdSchema } from "./commands/schema.cmd.js";
 import { sessionRemindCmd, sessionRemindSchema } from "./commands/session-remind.cmd.js";
+import { skillsApproveCmd, skillsApproveSchema } from "./commands/skills-approve.cmd.js";
 import { skillsDriftCmd, skillsDriftSchema } from "./commands/skills-drift.cmd.js";
 import { skillsValidateCmd, skillsValidateSchema } from "./commands/skills-validate.cmd.js";
 import { sliceClassifyCmd, sliceClassifySchema } from "./commands/slice-classify.cmd.js";
@@ -249,6 +250,10 @@ export const COMMAND_REGISTRY: Record<string, CommandEntry> = (() => {
 		"compose:detect": {
 			schema: composeDetectSchema,
 			dispatcher: wrap(composeDetectCmd, composeDetectSchema),
+		},
+		"skills:approve": {
+			schema: skillsApproveSchema,
+			dispatcher: wrap(skillsApproveCmd, skillsApproveSchema),
 		},
 		"skills:drift": {
 			schema: skillsDriftSchema,
