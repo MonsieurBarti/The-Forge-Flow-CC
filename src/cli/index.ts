@@ -44,6 +44,7 @@ import { syncStateCmd } from "./commands/sync-state.cmd.js";
 import { taskClaimCmd } from "./commands/task-claim.cmd.js";
 import { taskCloseCmd } from "./commands/task-close.cmd.js";
 import { taskReadyCmd } from "./commands/task-ready.cmd.js";
+import { versionCmd } from "./commands/version.cmd.js";
 import { wavesDetectCmd } from "./commands/waves-detect.cmd.js";
 import { workflowNextCmd } from "./commands/workflow-next.cmd.js";
 import { workflowShouldAutoCmd } from "./commands/workflow-should-auto.cmd.js";
@@ -108,6 +109,7 @@ const commands: Record<string, CommandFn> = {
 	"workflow:should-auto": workflowShouldAutoCmd,
 	"claim:check-stale": claimCheckStaleCmd,
 	"session:remind": sessionRemindCmd,
+	version: versionCmd,
 	schema: schemaCmd,
 };
 
@@ -210,6 +212,11 @@ const main = async () => {
 				data: { name: "tff-tools", version: __TFF_VERSION__, commands: Object.keys(commands) },
 			}),
 		);
+		return;
+	}
+
+	if (command === "--version" || command === "-v") {
+		console.log(await versionCmd(args));
 		return;
 	}
 
