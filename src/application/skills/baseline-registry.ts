@@ -80,7 +80,14 @@ export const diffAgainstManifest = (root: string, manifest: Manifest): DriftRepo
 	for (const id of [...skillDirs].sort()) {
 		const row = manifest.skills[id];
 		if (!row) continue;
-		const content = fs.readFileSync(path.join(root, "skills", id, "SKILL.md"), "utf8");
+		let content: string;
+		try {
+			content = fs.readFileSync(path.join(root, "skills", id, "SKILL.md"), "utf8");
+		} catch (err) {
+			throw new Error(
+				`diffAgainstManifest: cannot read skills/${id}/SKILL.md — ${(err as NodeJS.ErrnoException).message}`,
+			);
+		}
 		const actual = computeSha(content);
 		if (actual !== row.sha256) {
 			mismatched.push({ id, expected: row.sha256, actual });
