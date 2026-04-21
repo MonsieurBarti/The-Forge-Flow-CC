@@ -50,6 +50,10 @@ import { schemaCmd, schemaCmdSchema } from "./commands/schema.cmd.js";
 import { sessionRemindCmd, sessionRemindSchema } from "./commands/session-remind.cmd.js";
 import { skillsApproveCmd, skillsApproveSchema } from "./commands/skills-approve.cmd.js";
 import { skillsDriftCmd, skillsDriftSchema } from "./commands/skills-drift.cmd.js";
+import {
+	skillsDriftReportCmd,
+	skillsDriftReportSchema,
+} from "./commands/skills-drift-report.cmd.js";
 import { skillsValidateCmd, skillsValidateSchema } from "./commands/skills-validate.cmd.js";
 import { sliceClassifyCmd, sliceClassifySchema } from "./commands/slice-classify.cmd.js";
 import { sliceCloseCmd, sliceCloseSchema } from "./commands/slice-close.cmd.js";
@@ -263,6 +267,10 @@ export const COMMAND_REGISTRY: Record<string, CommandEntry> = (() => {
 		"skills:drift": {
 			schema: skillsDriftSchema,
 			dispatcher: wrap(skillsDriftCmd, skillsDriftSchema),
+		},
+		"skills:drift-report": {
+			schema: skillsDriftReportSchema,
+			dispatcher: wrap(skillsDriftReportCmd, skillsDriftReportSchema),
 		},
 		"skills:validate": {
 			schema: skillsValidateSchema,
