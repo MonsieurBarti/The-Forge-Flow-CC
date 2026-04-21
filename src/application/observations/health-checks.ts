@@ -92,8 +92,18 @@ export const checkFirstObservationSentinel = (root: string): SentinelResult | Pr
 		const settingsPath = path.join(root, SETTINGS);
 		let enabled = false;
 		if (fs.existsSync(settingsPath)) {
+			const stat = fs.statSync(settingsPath);
+			if (stat.size > 64 * 1024) {
+				return {
+					ok: false,
+					reason: `settings.yaml is unexpectedly large (${stat.size} bytes); refusing to parse`,
+				};
+			}
 			const content = fs.readFileSync(settingsPath, "utf8");
-			const parsed = yaml.load(content) as { enabled?: boolean } | null | undefined;
+			const parsed = yaml.load(content, { schema: yaml.CORE_SCHEMA }) as
+				| { enabled?: boolean }
+				| null
+				| undefined;
 			enabled = parsed?.enabled === true;
 		}
 		const sessionsFileExists = fs.existsSync(path.join(root, SESSIONS));
