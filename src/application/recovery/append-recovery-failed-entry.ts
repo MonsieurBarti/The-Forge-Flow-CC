@@ -43,12 +43,13 @@ export async function appendRecoveryFailedEntry(homeDir: string, err: unknown): 
 		return;
 	}
 
+	const line = `${JSON.stringify(toEvent(err))}\n`;
 	const path = join(homeDir, RECOVERY_EVENTS_FILE);
 	try {
 		await withAppendLock(path, async () => {
-			await appendFile(path, `${JSON.stringify(toEvent(err))}\n`, "utf-8");
+			await appendFile(path, line, "utf-8");
 		});
 	} catch {
-		// best-effort; marker + stderr are the unconditional guarantees.
+		// fs/lock failure — best-effort; marker + stderr are the unconditional guarantees.
 	}
 }

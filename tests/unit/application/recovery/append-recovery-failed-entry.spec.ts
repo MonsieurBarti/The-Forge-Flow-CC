@@ -1,5 +1,5 @@
 // tests/unit/application/recovery/append-recovery-failed-entry.spec.ts
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -43,14 +43,13 @@ describe("appendRecoveryFailedEntry", () => {
     expect(lines).toHaveLength(2);
   });
 
-  it("swallows internal failures (does not rethrow)", async () => {
-    // Make the target an un-writable path by using a non-existent deep parent chain
-    // under a file that is not a directory.
+  it("swallows internal failures and creates no side effects", async () => {
+    // Point homeDir at a regular file so stat(...).isDirectory() is false.
     const file = join(repo, "blocker");
-    // Create a regular file named 'blocker'; then use that path as home
-    // so any mkdir/append against it fails.
-    const { writeFileSync } = await import("node:fs");
     writeFileSync(file, "");
     await expect(appendRecoveryFailedEntry(file, new Error("x"))).resolves.toBeUndefined();
+    // Assert no side effects: no sibling events file, blocker untouched.
+    expect(existsSync(join(repo, RECOVERY_EVENTS_FILE))).toBe(false);
+    expect(readFileSync(file, "utf-8")).toBe("");
   });
 });
