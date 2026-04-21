@@ -1,19 +1,40 @@
+// src/infrastructure/adapters/sqlite/load-native-binding.ts
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-// ESM equivalent of __dirname
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 
+export interface BindingCandidate {
+	path: string;
+	source: "prebuilt" | "local";
+}
+
 /**
- * Resolves the platform-specific better_sqlite3 native binding path.
- * In the built CLI (dist/), the .node file is co-located.
- * In dev/test, returns undefined so better-sqlite3 uses standard node_modules resolution.
+ * Ordered candidate iterator for the better_sqlite3 native binding.
+ *
+ * 1. Platform-tagged prebuilt co-located with dist/ (matches what Stage C
+ *    validates on release).
+ * 2. Locally-compiled binding under node_modules/better-sqlite3/build/Release/
+ *    (activates only in dev or when the prebuilt is missing).
+ *
+ * Only paths that exist on disk are returned — absent candidates are omitted.
  */
-export function getNativeBindingPath(dirname?: string): string | undefined {
+export function getNativeBindingCandidates(dirname?: string): BindingCandidate[] {
 	const dir = dirname ?? currentDir;
-	const bindingFile = `better_sqlite3.${process.platform}-${process.arch}.node`;
-	const bindingPath = path.join(dir, bindingFile);
-	if (existsSync(bindingPath)) return bindingPath;
-	return undefined;
+	const prebuiltFile = `better_sqlite3.${process.platform}-${process.arch}.node`;
+	const prebuiltPath = path.join(dir, prebuiltFile);
+	const localPath = path.resolve(
+		process.cwd(),
+		"node_modules",
+		"better-sqlite3",
+		"build",
+		"Release",
+		"better_sqlite3.node",
+	);
+
+	const out: BindingCandidate[] = [];
+	if (existsSync(prebuiltPath)) out.push({ path: prebuiltPath, source: "prebuilt" });
+	if (existsSync(localPath)) out.push({ path: localPath, source: "local" });
+	return out;
 }

@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import type Database from "better-sqlite3";
 import type { Milestone } from "../../../domain/entities/milestone.js";
 import type { Project } from "../../../domain/entities/project.js";
 import type { Slice } from "../../../domain/entities/slice.js";
@@ -10,7 +10,7 @@ import { Err, Ok } from "../../../domain/result.js";
 import type { Dependency } from "../../../domain/value-objects/dependency.js";
 import type { ReviewRecord } from "../../../domain/value-objects/review-record.js";
 import type { WorkflowSession } from "../../../domain/value-objects/workflow-session.js";
-import { getNativeBindingPath } from "./load-native-binding.js";
+import { openDatabase } from "./open-database.js";
 
 /**
  * Local type for salvaged state (internal to salvage operations).
@@ -71,12 +71,7 @@ export class SQLiteSalvage {
 
 		try {
 			// Open in read-only mode with timeout for resilience
-			const nativeBinding = getNativeBindingPath();
-			db = new Database(dbPath, {
-				readonly: true,
-				timeout: 5000, // 5 second timeout for queries
-				...(nativeBinding ? { nativeBinding } : {}),
-			});
+			db = openDatabase(dbPath, { readonly: true, timeout: 5000 });
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			return Err(
