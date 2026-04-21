@@ -40,6 +40,8 @@ export async function handleStartupRecovery(
 		} catch {
 			// marker write is best-effort; stderr below is the unconditional guarantee.
 		}
+		// appendRecoveryFailedEntry is contractually non-throwing (swallows its own
+		// errors); the stderr write below is therefore the unconditional guarantee.
 		await appendRecoveryFailedEntry(input.homeDir, err);
 		process.stderr.write(WARNING);
 		return { threw: true };
