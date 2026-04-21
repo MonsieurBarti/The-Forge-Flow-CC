@@ -17,6 +17,10 @@ function tryOpen(
 	return new Database(dbPath, { ...(extraOpts ?? {}), nativeBinding: cand.path });
 }
 
+/**
+ * Same as {@link openDatabase} but returns the winning candidate alongside
+ * the database handle for diagnostic surfaces (`version --verbose`).
+ */
 export function openDatabaseWithTrace(
 	dbPath: string,
 	extraOpts?: Database.Options,
@@ -66,6 +70,15 @@ export function openDatabaseWithTrace(
 	});
 }
 
+/**
+ * Open a better-sqlite3 database, iterating through native-binding candidates
+ * and throwing a structured {@link NativeBindingError} if every candidate fails.
+ *
+ * Note: any `nativeBinding` key passed in `extraOpts` is overridden by the
+ * iterator's winning candidate. Callers that need a specific binding must
+ * either co-locate the file where {@link getNativeBindingCandidates} expects
+ * it, or construct `better-sqlite3` directly.
+ */
 export function openDatabase(
 	dbPath: string,
 	extraOpts?: Database.Options,

@@ -54,4 +54,30 @@ describe("openDatabaseWithTrace", () => {
 			traced.db.close();
 		}
 	});
+
+	it("uses the better-sqlite3 default resolver when no candidates exist and labels the trace as <better-sqlite3 default>", () => {
+		// Empty dirname + cwd with no node_modules/better-sqlite3 => candidates: [].
+		const emptyDir = join(workdir, "no-candidates");
+		mkdirSync(emptyDir, { recursive: true });
+		const originalCwd = process.cwd();
+		process.chdir(workdir);
+		try {
+			const traced = openDatabaseWithTrace(":memory:", undefined, emptyDir);
+			try {
+				expect(traced.winningCandidate.path).toBe("<better-sqlite3 default>");
+				expect(traced.winningCandidate.source).toBe("prebuilt");
+				expect(traced.db.prepare("SELECT 1 AS x").get()).toEqual({ x: 1 });
+			} finally {
+				traced.db.close();
+			}
+		} finally {
+			process.chdir(originalCwd);
+		}
+	});
+
+	// Default-resolver FAILURE path: would require monkey-patching better-sqlite3 at
+	// module-load time; not worth the test infra for a branch that's already reached
+	// via the `candidates.length > 0` exhaustion path in the test above. Left
+	// documented here so future dev knows the gap exists.
+	it.skip("wraps a default-resolver failure in NativeBindingError (covered by type review only)", () => {});
 });
