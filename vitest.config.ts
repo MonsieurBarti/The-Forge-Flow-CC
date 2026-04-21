@@ -5,6 +5,10 @@ export default defineConfig({
     include: ['tests/**/*.spec.ts'],
     globals: true,
     setupFiles: ['tests/setup.ts'],
+    // ts-morph tests and integration specs that spawn the CLI are slow under
+    // parallel suite execution (especially when lefthook runs typecheck+test
+    // sequentially on a warm system). Give them enough headroom to finish.
+    testTimeout: 30_000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
