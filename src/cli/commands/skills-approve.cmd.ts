@@ -37,6 +37,17 @@ const makeGit = (cwd: string): ApproveSkillGit => ({
 		}
 		return result.stdout.trim().length > 0;
 	},
+	showAtHead: async (relPath) => {
+		const result = spawnSync("git", ["show", `HEAD:${relPath}`], {
+			cwd,
+			encoding: "utf8",
+			timeout: 30_000,
+		});
+		if (result.status !== 0) {
+			throw new Error(result.stderr?.trim() || `git show exited ${result.status}`);
+		}
+		return result.stdout;
+	},
 });
 
 export const skillsApproveCmd = async (args: string[]): Promise<string> => {

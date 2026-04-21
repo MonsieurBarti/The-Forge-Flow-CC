@@ -68,7 +68,18 @@ export const approveSkill = async (input: ApproveSkillInput): Promise<ApproveSki
 		};
 	}
 
-	const content = fs.readFileSync(absPath, "utf8");
+	// Hash the COMMITTED bytes (git show HEAD:<path>), not the working copy.
+	// Closes a TOCTOU between the dirty-tree check and the hash, and avoids
+	// cross-platform EOL drift introduced by the filesystem layer.
+	let content: string;
+	try {
+		content = await git.showAtHead(relPath);
+	} catch (err) {
+		return {
+			ok: false,
+			reason: `unable to read committed content for ${relPath}: ${(err as Error).message}`,
+		};
+	}
 	const newSha = computeSha(content);
 	const manifest = readManifest(root);
 	const existing = manifest.skills[skillId];

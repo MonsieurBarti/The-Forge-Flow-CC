@@ -199,6 +199,18 @@ describe("approveSkill", () => {
 		});
 	});
 
+	it("fails gracefully when showAtHead throws", async () => {
+		const r = await approveSkill({
+			skillId: "foo",
+			reason: "r",
+			root: tmp,
+			git: makeGit({ showError: "fatal: bad object" }),
+			now: () => new Date("2026-04-21T00:00:00Z"),
+		});
+		expect(r).toMatchObject({ ok: false });
+		expect((r as { reason: string }).reason).toContain("unable to read committed content");
+	});
+
 	it("rejects skill ids with path-traversal characters", async () => {
 		const r = await approveSkill({
 			skillId: "../../etc/passwd",
