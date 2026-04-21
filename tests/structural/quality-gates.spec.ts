@@ -9,6 +9,7 @@ const repoRoot = path.resolve(__dirname, "..", "..");
 // Flipping back to `pending` requires deleting from this list IN THE SAME PR,
 // which surfaces the regression in review.
 const ENFORCED_RATCHET: readonly string[] = [
+	"fresh-reviewer",
 	"branch-guard",
 	"ship-completeness",
 	"milestone-completeness",
