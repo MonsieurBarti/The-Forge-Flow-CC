@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { recoverOrphans } from "../application/recovery/recover-orphans.js";
+import { handleStartupRecovery } from "../application/recovery/handle-startup-recovery.js";
 import { branchGuardCheckCmd } from "./commands/branch-guard-check.cmd.js";
 import { checkpointLoadCmd } from "./commands/checkpoint-load.cmd.js";
 import { checkpointSaveCmd } from "./commands/checkpoint-save.cmd.js";
@@ -200,19 +200,7 @@ function flagToJsonSchema(flag: {
 const main = async () => {
 	const [command, ...args] = process.argv.slice(2);
 
-	try {
-		const result = await recoverOrphans({
-			stagingDirs: [join(process.cwd(), ".tff-cc")],
-			lockPaths: [],
-		});
-		if (result.cleanedTmps + result.cleanedLocks > 0) {
-			console.error(
-				`recovered ${result.cleanedTmps} stale tmp files, ${result.cleanedLocks} stale locks`,
-			);
-		}
-	} catch {
-		// best-effort; do not block CLI on recovery failure.
-	}
+	await handleStartupRecovery({ homeDir: join(process.cwd(), ".tff-cc") });
 
 	if (!command || command === "--help" || command === "-h") {
 		console.log(
