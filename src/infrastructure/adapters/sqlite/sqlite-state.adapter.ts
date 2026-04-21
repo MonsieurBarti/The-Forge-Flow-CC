@@ -8,6 +8,7 @@ import type { Task } from "../../../domain/entities/task.js";
 import { alreadyClaimedError } from "../../../domain/errors/already-claimed.error.js";
 import type { DomainError } from "../../../domain/errors/domain-error.js";
 import { createDomainError } from "../../../domain/errors/domain-error.js";
+import { freshReviewerViolationError } from "../../../domain/errors/fresh-reviewer-violation.error.js";
 import { hasOpenChildrenError } from "../../../domain/errors/has-open-children.error.js";
 import { versionMismatchError } from "../../../domain/errors/version-mismatch.error.js";
 import type { DomainEvent } from "../../../domain/events/domain-event.js";
@@ -772,6 +773,11 @@ export class SQLiteStateAdapter
 
 	// ReviewStore
 	recordReview(review: ReviewRecord): Result<void, DomainError> {
+		const executorsResult = this.getExecutorsForSlice(review.sliceId);
+		if (!executorsResult.ok) return executorsResult;
+		if (executorsResult.data.includes(review.reviewer)) {
+			return Err(freshReviewerViolationError(review.sliceId, review.reviewer));
+		}
 		try {
 			this.db
 				.prepare(
