@@ -81,6 +81,6 @@ export const QUALITY_GATES: readonly QualityGate[] = [
 		mechanism: "value-object",
 		enforcementSite: "src/domain/value-objects",
 		metaTestPath: "tests/structural/value-object-invariants.spec.ts",
-		status: "pending",
+		status: "enforced",
 	},
 ];

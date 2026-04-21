@@ -12,7 +12,7 @@ Canonical list of quality gates in `tff-cc`, the mechanism hardening each, and t
 | `milestone-completeness` | Milestone-close requires approved spec review per slice | V | adapter-invariant | enforced | `src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts` | `tests/structural/milestone-close-completeness-invariant.spec.ts` |
 | `coverage-in-ci` | Coverage threshold enforced on every PR | II | mirror-in-ci | enforced | `.github/workflows/ci.yml` | `tests/structural/coverage-in-ci.spec.ts` |
 | `commitlint-in-ci` | Commitlint enforced on every PR | II | mirror-in-ci | enforced | `.github/workflows/ci.yml` | `tests/structural/commitlint-in-ci.spec.ts` |
-| `value-object-invariants` | Every value-object exports a Zod schema or parse fn | III | value-object | pending | `src/domain/value-objects` | `tests/structural/value-object-invariants.spec.ts` |
+| `value-object-invariants` | Every value-object exports a Zod schema or parse fn | III | value-object | enforced | `src/domain/value-objects` | `tests/structural/value-object-invariants.spec.ts` |
 
 ## Classes
 
