@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { QUALITY_GATES } from "../../src/quality-gates.registry.js";
+import { QUALITY_GATES } from "../../src/shared/quality-gates/registry.js";
 
 const repoRoot = path.resolve(__dirname, "..", "..");
 

@@ -1,6 +1,6 @@
 # Quality Gates
 
-Canonical list of quality gates in `tff-cc`, the mechanism hardening each, and the meta-test that proves the mechanism is wired in. Mirrors `src/quality-gates.registry.ts` — keep them in sync.
+Canonical list of quality gates in `tff-cc`, the mechanism hardening each, and the meta-test that proves the mechanism is wired in. Mirrors `src/shared/quality-gates/registry.ts` — keep them in sync.
 
 ## Catalog
 
@@ -50,7 +50,7 @@ Each mechanism has a worked example already in the repo. Follow the pattern clos
 7. **Replace the stub** with real assertions. Include at minimum:
    - A *fires* test: gate triggers on a bypass attempt.
    - A *structural* test: fails if the enforcement mechanism is removed (e.g., `vi.spyOn` on the sibling method called by an adapter-invariant; registry walk for a chokepoint wrapper).
-8. **Flip the registry entry to `status: "enforced"`** in both `src/quality-gates.registry.ts` and this file.
+8. **Flip the registry entry to `status: "enforced"`** in both `src/shared/quality-gates/registry.ts` and this file.
 
 ### Sanity check before committing
 
