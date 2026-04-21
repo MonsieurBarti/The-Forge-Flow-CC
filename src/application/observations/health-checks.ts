@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import yaml from "js-yaml";
 
 const OBS_DIR = ".tff-cc/observations";
 const SESSIONS = `${OBS_DIR}/sessions.jsonl`;
@@ -7,6 +8,7 @@ const DEAD_LETTER = `${OBS_DIR}/dead-letter.jsonl`;
 const MUTATING_SENTINEL = `${OBS_DIR}/.mutating-cli-ran`;
 const SETTINGS = ".tff-cc/settings.yaml";
 
+// Reads whole file into memory; acceptable for health probes that run on demand.
 const readLastLine = (filepath: string): string | null => {
 	const content = fs.readFileSync(filepath, "utf8");
 	const lines = content.split("\n").filter((l) => l.length > 0);
@@ -52,6 +54,7 @@ export const checkLastObservation = (
 			ok: true,
 			present: true,
 			lastSeenAt: parsed.ts,
+			// Strict >: observations exactly N days old are NOT stale.
 			stale: ageDays > staleAfterDays,
 		};
 	} catch (err) {
@@ -73,7 +76,8 @@ export const checkFirstObservationSentinel = (root: string): SentinelResult | Pr
 		let enabled = false;
 		if (fs.existsSync(settingsPath)) {
 			const content = fs.readFileSync(settingsPath, "utf8");
-			enabled = /enabled:\s*true/.test(content);
+			const parsed = yaml.load(content) as { enabled?: boolean } | null | undefined;
+			enabled = parsed?.enabled === true;
 		}
 		const sessionsFileExists = fs.existsSync(path.join(root, SESSIONS));
 		const mutatingCliEverRan = fs.existsSync(path.join(root, MUTATING_SENTINEL));
