@@ -22,6 +22,11 @@ Pass maxDrift: `tff-tools skills:drift --max-drift 0.2`
    - violated → warn user, suggest new skill instead
 5. REVIEW: invoke Skill `plannotator-annotate` with arg `.tff-cc/drafts/<skill-name>.md`
 6. HANDLE:
-   - approved → archive to `.tff-cc/observations/skill-history/<name>.v<N>.md`, update `skills/<name>.md`
+   - approved →
+     - archive to `.tff-cc/observations/skill-history/<name>.v<N>.md`
+     - update `skills/<name>.md` with the approved refinement
+     - commit the content change (so the working tree is clean for the next step)
+     - run `tff-tools skills:approve --id <name> --reason "<refinement summary>"` to sync `skills/skill-baselines.json`
+     - stage the manifest update and amend it into the content commit (or create a second commit; the audit-trail requirement is that the reason is captured in a commit message)
    - rejected → record as intentional divergence (suppress future suggestions)
 7. NEXT: @references/next-steps.md
