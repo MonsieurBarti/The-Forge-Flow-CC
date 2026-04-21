@@ -11,10 +11,23 @@ import {
 
 interface GitStub {
 	isPathDirty: (relPath: string) => Promise<boolean>;
+	showAtHead: (relPath: string) => Promise<string>;
 }
 
-const cleanGit: GitStub = { isPathDirty: async () => false };
-const dirtyGit: GitStub = { isPathDirty: async () => true };
+const makeGit = (opts: {
+	dirty?: boolean;
+	contentAtHead?: string;
+	showError?: string;
+}): GitStub => ({
+	isPathDirty: async () => opts.dirty ?? false,
+	showAtHead: async () => {
+		if (opts.showError) throw new Error(opts.showError);
+		return opts.contentAtHead ?? "";
+	},
+});
+
+const cleanGit: GitStub = makeGit({ contentAtHead: "foo v2\n" });
+const dirtyGit: GitStub = makeGit({ dirty: true, contentAtHead: "foo v2\n" });
 
 describe("approveSkill", () => {
 	let tmp: string;
@@ -184,5 +197,42 @@ describe("approveSkill", () => {
 			ok: false,
 			reason: "seedOriginalCommitSha is only valid for new rows; row for foo already exists",
 		});
+	});
+
+	it("rejects skill ids with path-traversal characters", async () => {
+		const r = await approveSkill({
+			skillId: "../../etc/passwd",
+			reason: "attack",
+			root: tmp,
+			git: makeGit({}),
+			now: () => new Date("2026-04-21T00:00:00Z"),
+		});
+		expect(r).toMatchObject({ ok: false });
+		expect((r as { reason: string }).reason).toContain("invalid skill id");
+	});
+
+	it("rejects empty skill id", async () => {
+		const r = await approveSkill({
+			skillId: "",
+			reason: "r",
+			root: tmp,
+			git: makeGit({}),
+			now: () => new Date("2026-04-21T00:00:00Z"),
+		});
+		expect(r).toMatchObject({ ok: false });
+	});
+
+	it("accepts conventional skill ids (lowercase, digits, hyphens)", async () => {
+		fs.mkdirSync(path.join(tmp, "skills", "my-skill-42"), { recursive: true });
+		fs.writeFileSync(path.join(tmp, "skills/my-skill-42/SKILL.md"), "hi\n");
+		const r = await approveSkill({
+			skillId: "my-skill-42",
+			reason: "init",
+			root: tmp,
+			git: makeGit({ contentAtHead: "hi\n" }),
+			now: () => new Date("2026-04-21T00:00:00Z"),
+			seedOriginalCommitSha: "seed",
+		});
+		expect(r.ok).toBe(true);
 	});
 });

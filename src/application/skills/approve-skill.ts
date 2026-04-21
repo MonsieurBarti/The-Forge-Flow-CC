@@ -4,6 +4,7 @@ import { computeSha, type Manifest, readManifest, writeManifest } from "./baseli
 
 export interface ApproveSkillGit {
 	readonly isPathDirty: (relPath: string) => Promise<boolean>;
+	readonly showAtHead: (relPath: string) => Promise<string>;
 }
 
 export interface ApproveSkillInput {
@@ -34,12 +35,28 @@ export interface ApproveSkillFailure {
 
 export type ApproveSkillResult = ApproveSkillSuccess | ApproveSkillFailure;
 
+const SKILL_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
 export const approveSkill = async (input: ApproveSkillInput): Promise<ApproveSkillResult> => {
 	const { skillId, reason, root, git } = input;
 	const now = input.now ?? (() => new Date());
 
+	if (!SKILL_ID_PATTERN.test(skillId)) {
+		return {
+			ok: false,
+			reason: `invalid skill id: ${JSON.stringify(skillId)}; must match ${SKILL_ID_PATTERN}`,
+		};
+	}
+
 	const relPath = `skills/${skillId}/SKILL.md`;
-	const absPath = path.join(root, relPath);
+	const absPath = path.resolve(root, relPath);
+	const skillsRoot = path.resolve(root, "skills");
+	if (!absPath.startsWith(skillsRoot + path.sep)) {
+		return {
+			ok: false,
+			reason: `resolved skill path escapes skills/: ${absPath}`,
+		};
+	}
 	if (!fs.existsSync(absPath)) {
 		return { ok: false, reason: `skill not found: ${skillId}` };
 	}
