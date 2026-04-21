@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { assertNotOnDefaultBranch } from "../../application/guards/branch-guard.js";
 import { assertNotOnMilestoneBranch } from "../../application/guards/milestone-branch-guard.js";
 import type { GitOps } from "../../domain/ports/git-ops.port.js";
@@ -8,6 +10,18 @@ import {
 } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 
 export const WITH_MUTATING_COMMAND_TAG = Symbol("with-mutating-command");
+
+const SENTINEL_REL = ".tff-cc/observations/.mutating-cli-ran";
+
+export const touchMutatingSentinel = (root: string): void => {
+	try {
+		const abs = path.join(root, SENTINEL_REL);
+		fs.mkdirSync(path.dirname(abs), { recursive: true });
+		if (!fs.existsSync(abs)) fs.writeFileSync(abs, "", "utf8");
+	} catch {
+		// Silent — observability should never break a mutating command.
+	}
+};
 
 type Handler = (args: string[]) => Promise<string>;
 
@@ -60,6 +74,7 @@ export const withMutatingCommand = (handler: Handler, deps?: WrapperDeps): Tagge
 			}
 		}
 
+		touchMutatingSentinel(process.cwd());
 		return handler(args);
 	};
 
