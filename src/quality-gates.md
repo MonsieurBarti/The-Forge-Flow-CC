@@ -31,14 +31,29 @@ Canonical list of quality gates in `tff-cc`, the mechanism hardening each, and t
 
 ## Adding a new gate
 
-1. **Pick a mechanism.** Use the table above. If the rule is relational or needs external state (git, filesystem), prefer chokepoint-wrapper. If the rule is a property of the data being written, prefer adapter-invariant.
-2. **Pick an id.** Lowercase kebab-case. Must be unique.
-3. **Stub the meta-test.** Create the file at your target `metaTestPath` with a single `it.todo(...)`.
+Each mechanism has a worked example already in the repo. Follow the pattern closest to your rule.
+
+- **adapter-invariant** — see `fresh-reviewer` (call sibling port method on `this` in a write path). Implementation: `SQLiteStateAdapter.recordReview` calls `this.getExecutorsForSlice`. Tests: `tests/integration/review-store-fresh-reviewer.spec.ts` (fires), `tests/structural/review-store-fresh-reviewer-invariant.spec.ts` (spy), `tests/integration/fresh-reviewer-redundancy.spec.ts` (two-layer defense).
+- **chokepoint-wrapper** — see `branch-guard`. Implementation: `src/cli/utils/with-mutating-command.ts` tags the wrapped handler with a symbol; `src/cli/index.ts` applies the wrapper when `schema.mutates === true`. Tests: `tests/integration/branch-guard-dispatcher.spec.ts` (fires), `tests/structural/branch-guard-chokepoint.spec.ts` (registry walk).
+- **mirror-in-ci** — see `coverage-in-ci` or `commitlint-in-ci`. Implementation: new job in `.github/workflows/ci.yml`. Test: YAML-parsing structural spec asserting the job exists and its key steps reference the right scripts.
+- **value-object** — see `value-object-invariants`. Test: globs a directory and asserts each file exports a Zod schema or `parse`/`create` fn.
+
+### Steps
+
+1. **Pick a mechanism** per the descriptions above.
+2. **Pick an id.** Lowercase kebab-case. Must be unique across `QUALITY_GATES`.
+3. **Stub the meta-test** at your target `metaTestPath` with a single `it.todo(...)`.
 4. **Add the registry entry** with `status: "pending"`, pointing at the stub meta-test and the (possibly not-yet-existing) enforcement site.
-5. **Add a row to this catalog.**
-6. **Implement the enforcement.**
-7. **Replace the stub meta-test with real assertions.** Include at least one fires test (gate triggers on a bypass attempt) and one structural test (fails if the mechanism is silently removed).
-8. **Flip the registry entry to `status: "enforced"`.**
+5. **Add a row to this catalog** mirroring the registry entry.
+6. **Implement the enforcement** at the declared `enforcementSite`.
+7. **Replace the stub** with real assertions. Include at minimum:
+   - A *fires* test: gate triggers on a bypass attempt.
+   - A *structural* test: fails if the enforcement mechanism is removed (e.g., `vi.spyOn` on the sibling method called by an adapter-invariant; registry walk for a chokepoint wrapper).
+8. **Flip the registry entry to `status: "enforced"`** in both `src/quality-gates.registry.ts` and this file.
+
+### Sanity check before committing
+
+Temporarily remove your enforcement (comment out the check). The structural test should FAIL. Restore it. Tests should PASS. If the structural test passes even with the enforcement removed, it's not doing its job — strengthen it.
 
 ## Invariant
 
