@@ -50,6 +50,10 @@ describe("tff-tools version --verbose (built CLI)", () => {
 		expect(runJson(["-v"])).toEqual(runJson(["version"]));
 	});
 
+	it("top-level --version --verbose matches 'version --verbose'", () => {
+		expect(runJson(["--version", "--verbose"])).toEqual(runJson(["version", "--verbose"]));
+	});
+
 	it("lastRecovery.status=skipped when marker present", () => {
 		const marker = {
 			timestamp: "2026-04-21T14:32:07.421Z",

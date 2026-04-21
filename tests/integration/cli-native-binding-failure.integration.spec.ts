@@ -1,6 +1,6 @@
 // tests/integration/cli-native-binding-failure.integration.spec.ts
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, renameSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, renameSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -56,6 +56,37 @@ describe("CLI emits structured JSON when native binding fails", () => {
 			expect(payload.error.details.nodeAbi).toBe(process.versions.modules);
 			expect(Array.isArray(payload.error.details.candidates)).toBe(true);
 			expect(payload.error.details.remediation).toContain("bun install --force better-sqlite3");
+		},
+	);
+
+	it.skipIf(!prebuiltExists)(
+		"uses local node_modules fallback when prebuilt candidates are missing",
+		() => {
+			// Stash the dist prebuilts so the iterator skips the prebuilt candidate
+			// and falls through to the local node_modules candidate.
+			for (const p of PREBUILT_PATHS) {
+				if (existsSync(p)) {
+					const stashed = `${p}.stashed-by-test`;
+					renameSync(p, stashed);
+					moved.push(stashed);
+				}
+			}
+			// The local-fallback candidate resolves from `process.cwd()/node_modules/
+			// better-sqlite3/build/Release/better_sqlite3.node`. Symlink the real
+			// package into the tmp repo so the candidate iterator finds it.
+			const src = join(process.cwd(), "node_modules", "better-sqlite3");
+			const dstDir = join(repo, "node_modules");
+			mkdirSync(dstDir, { recursive: true });
+			symlinkSync(src, join(dstDir, "better-sqlite3"), "dir");
+
+			const out = spawnSync("node", [CLI, "slice:list"], {
+				cwd: repo,
+				encoding: "utf-8",
+				timeout: 30_000,
+			});
+			// The key assertion is: exit 0 — the CLI opened the DB via the local fallback.
+			expect(out.status).toBe(0);
+			expect(JSON.parse(out.stdout).ok).toBe(true);
 		},
 	);
 });

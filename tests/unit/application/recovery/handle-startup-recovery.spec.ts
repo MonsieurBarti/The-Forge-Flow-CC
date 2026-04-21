@@ -81,4 +81,25 @@ describe("handleStartupRecovery", () => {
 			.filter((s) => s.includes("tff: orphan recovery skipped"));
 		expect(warnings).toHaveLength(1);
 	});
+
+	it("when .tff-cc/ does not exist and recover throws: marker written (dir auto-created), warning printed", async () => {
+		// home does NOT exist on disk — simulate fresh/uninitialized project.
+		rmSync(home, { recursive: true, force: true });
+		const stderr = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+		const result = await handleStartupRecovery({
+			homeDir: home,
+			recover: async () => {
+				throw new Error("no home");
+			},
+		});
+		expect(result.threw).toBe(true);
+		// Marker helper creates the dir and writes the marker.
+		const { existsSync } = await import("node:fs");
+		expect(existsSync(join(home, ".recovery-marker"))).toBe(true);
+		// Warning printed exactly once.
+		const calls = stderr.mock.calls
+			.map((c) => String(c[0]))
+			.filter((s) => s.includes("tff: orphan recovery skipped"));
+		expect(calls).toHaveLength(1);
+	});
 });

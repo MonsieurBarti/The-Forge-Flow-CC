@@ -61,4 +61,23 @@ describe("versionCmd", () => {
 			errorMessage: "prior failure",
 		});
 	});
+
+	it("verbose output reports binding: null when native binding fails to load", async () => {
+		const open = await import("../../../../src/infrastructure/adapters/sqlite/open-database.js");
+		const { NativeBindingError } = await import(
+			"../../../../src/infrastructure/adapters/sqlite/native-binding-error.js"
+		);
+		const spy = vi.spyOn(open, "openDatabaseWithTrace").mockImplementation(() => {
+			throw new NativeBindingError({
+				platform: process.platform,
+				arch: process.arch,
+				nodeAbi: process.versions.modules,
+				candidates: [],
+			});
+		});
+		const out = JSON.parse(await versionCmd(["--verbose"]));
+		expect(out.ok).toBe(true);
+		expect(out.data.binding).toBeNull();
+		spy.mockRestore();
+	});
 });
