@@ -338,8 +338,6 @@ describe("approveSkill", () => {
 		});
 		expect(r.ok).toBe(true);
 		expect((r as { noop: boolean }).noop).toBe(true);
-		expect(
-			fs.existsSync(path.join(tmp, ".tff-cc/observations/skill-approvals.jsonl")),
-		).toBe(false);
+		expect(fs.existsSync(path.join(tmp, ".tff-cc/observations/skill-approvals.jsonl"))).toBe(false);
 	});
 });
