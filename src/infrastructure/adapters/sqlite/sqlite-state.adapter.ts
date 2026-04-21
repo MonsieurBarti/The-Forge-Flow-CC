@@ -272,23 +272,23 @@ export class SQLiteStateAdapter
 
 	closeMilestone(id: string, reason?: string): Result<void, DomainError> {
 		return this.db.transaction((): Result<void, DomainError> => {
-			// Per-slice spec-approval invariant: every slice in the milestone must have
-			// at least one approved `type: "spec"` review. Fires regardless of slice state.
-			const slicesResult = this.listSlices(id);
-			if (!slicesResult.ok) return slicesResult;
-			const missing: string[] = [];
-			for (const slice of slicesResult.data) {
-				const reviewsResult = this.listReviews(slice.id);
-				if (!reviewsResult.ok) return reviewsResult;
-				const hasApprovedSpec = reviewsResult.data.some(
-					(r) => r.type === "spec" && r.verdict === "approved",
-				);
-				if (!hasApprovedSpec) missing.push(slice.id);
-			}
-			if (missing.length > 0) {
-				return Err(milestoneCompletenessViolationError(id, missing));
-			}
 			try {
+				// Per-slice spec-approval invariant: every slice in the milestone must have
+				// at least one approved `type: "spec"` review. Fires regardless of slice state.
+				const slicesResult = this.listSlices(id);
+				if (!slicesResult.ok) return slicesResult;
+				const missing: string[] = [];
+				for (const slice of slicesResult.data) {
+					const reviewsResult = this.listReviews(slice.id);
+					if (!reviewsResult.ok) return reviewsResult;
+					const hasApprovedSpec = reviewsResult.data.some(
+						(r) => r.type === "spec" && r.verdict === "approved",
+					);
+					if (!hasApprovedSpec) missing.push(slice.id);
+				}
+				if (missing.length > 0) {
+					return Err(milestoneCompletenessViolationError(id, missing));
+				}
 				const openSlices = this.db
 					.prepare(
 						"SELECT COUNT(*) as count FROM slice WHERE milestone_id = ? AND status != 'closed'",

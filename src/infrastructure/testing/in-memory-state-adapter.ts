@@ -163,27 +163,31 @@ export class InMemoryStateAdapter
 	closeMilestone(id: string, reason?: string): Result<void, DomainError> {
 		const ms = this.milestones.get(id);
 		if (!ms) return Ok(undefined);
-		// Per-slice spec-approval invariant: every slice in the milestone must have
-		// at least one approved `type: "spec"` review. Fires regardless of slice state.
-		const milestoneSlices = [...this.slices.values()].filter((s) => s.milestoneId === id);
-		const missing: string[] = [];
-		for (const slice of milestoneSlices) {
-			const hasApprovedSpec = this.reviews.some(
-				(r) => r.sliceId === slice.id && r.type === "spec" && r.verdict === "approved",
-			);
-			if (!hasApprovedSpec) missing.push(slice.id);
+		try {
+			// Per-slice spec-approval invariant: every slice in the milestone must have
+			// at least one approved `type: "spec"` review. Fires regardless of slice state.
+			const milestoneSlices = [...this.slices.values()].filter((s) => s.milestoneId === id);
+			const missing: string[] = [];
+			for (const slice of milestoneSlices) {
+				const hasApprovedSpec = this.reviews.some(
+					(r) => r.sliceId === slice.id && r.type === "spec" && r.verdict === "approved",
+				);
+				if (!hasApprovedSpec) missing.push(slice.id);
+			}
+			if (missing.length > 0) {
+				return Err(milestoneCompletenessViolationError(id, missing));
+			}
+			const openSlices = milestoneSlices.filter((s) => s.status !== "closed");
+			if (openSlices.length > 0) {
+				return Err(hasOpenChildrenError(id, openSlices.length));
+			}
+			ms.status = "closed";
+			ms.closeReason = reason;
+			this.milestones.set(id, ms);
+			return Ok(undefined);
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to close milestone: ${e}`));
 		}
-		if (missing.length > 0) {
-			return Err(milestoneCompletenessViolationError(id, missing));
-		}
-		const openSlices = milestoneSlices.filter((s) => s.status !== "closed");
-		if (openSlices.length > 0) {
-			return Err(hasOpenChildrenError(id, openSlices.length));
-		}
-		ms.status = "closed";
-		ms.closeReason = reason;
-		this.milestones.set(id, ms);
-		return Ok(undefined);
 	}
 
 	// SliceStore
