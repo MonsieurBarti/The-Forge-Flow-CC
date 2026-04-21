@@ -3,29 +3,29 @@ import path from "node:path";
 import { readManifest } from "./baseline-registry.js";
 import { checkDrift } from "./check-drift.js";
 
-const SEMANTIC_DRIFT_RATIO = 0.6;
+export const SEMANTIC_DRIFT_RATIO = 0.6;
 
 export interface GitShow {
 	show: (commitSha: string, relPath: string) => Promise<string>;
 }
 
-export interface DriftReportRow {
+export interface SemanticDriftRow {
 	readonly id: string;
 	readonly ratio?: number;
 	readonly overThreshold?: boolean;
 	readonly error?: string;
 }
 
-export interface DriftReportResult {
-	readonly skills: DriftReportRow[];
+export interface SemanticDriftReport {
+	readonly skills: SemanticDriftRow[];
 }
 
 export const driftReport = async (input: {
 	root: string;
 	git: GitShow;
-}): Promise<DriftReportResult> => {
+}): Promise<SemanticDriftReport> => {
 	const manifest = readManifest(input.root);
-	const rows: DriftReportRow[] = [];
+	const rows: SemanticDriftRow[] = [];
 
 	for (const id of Object.keys(manifest.skills).sort()) {
 		const baseline = manifest.skills[id];

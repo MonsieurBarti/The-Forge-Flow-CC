@@ -53,7 +53,7 @@ export const writeManifest = (root: string, manifest: Manifest): void => {
 	fs.writeFileSync(p, sortedStringify(manifest), "utf8");
 };
 
-export interface DriftReport {
+export interface GovernanceDriftReport {
 	readonly missing: string[];
 	readonly mismatched: Array<{ id: string; expected: string; actual: string }>;
 	readonly orphaned: string[];
@@ -69,7 +69,7 @@ const listSkillDirs = (root: string): string[] => {
 		.filter((name) => fs.existsSync(path.join(skillsRoot, name, "SKILL.md")));
 };
 
-export const diffAgainstManifest = (root: string, manifest: Manifest): DriftReport => {
+export const diffAgainstManifest = (root: string, manifest: Manifest): GovernanceDriftReport => {
 	const skillDirs = new Set(listSkillDirs(root));
 	const manifestIds = new Set(Object.keys(manifest.skills));
 
