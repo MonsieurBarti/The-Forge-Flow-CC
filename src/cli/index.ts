@@ -1,117 +1,338 @@
 import { join } from "node:path";
 import { handleStartupRecovery } from "../application/recovery/handle-startup-recovery.js";
 import { NativeBindingError } from "../infrastructure/adapters/sqlite/native-binding-error.js";
-import { branchGuardCheckCmd } from "./commands/branch-guard-check.cmd.js";
-import { checkpointLoadCmd } from "./commands/checkpoint-load.cmd.js";
-import { checkpointSaveCmd } from "./commands/checkpoint-save.cmd.js";
-import { claimCheckStaleCmd } from "./commands/claim-check-stale.cmd.js";
-import { composeDetectCmd } from "./commands/compose-detect.cmd.js";
-import { depAddCmd } from "./commands/dep-add.cmd.js";
-import { directEditGuardCmd } from "./commands/direct-edit-guard.cmd.js";
-import { milestoneAuditStatusCmd } from "./commands/milestone-audit-status.cmd.js";
-import { milestoneCloseCmd } from "./commands/milestone-close.cmd.js";
-import { milestoneCreateCmd } from "./commands/milestone-create.cmd.js";
-import { milestoneListCmd } from "./commands/milestone-list.cmd.js";
-import { milestoneRecordAuditCmd } from "./commands/milestone-record-audit.cmd.js";
-import { observeRecordCmd } from "./commands/observe-record.cmd.js";
-import { patternsAggregateCmd } from "./commands/patterns-aggregate.cmd.js";
-import { patternsExtractCmd } from "./commands/patterns-extract.cmd.js";
-import { patternsRankCmd } from "./commands/patterns-rank.cmd.js";
-import { preOpGuardCmd } from "./commands/pre-op-guard.cmd.js";
-import { projectGetCmd } from "./commands/project-get.cmd.js";
-import { projectInitCmd } from "./commands/project-init.cmd.js";
+import { branchGuardCheckCmd, branchGuardCheckSchema } from "./commands/branch-guard-check.cmd.js";
+import { checkpointLoadCmd, checkpointLoadSchema } from "./commands/checkpoint-load.cmd.js";
+import { checkpointSaveCmd, checkpointSaveSchema } from "./commands/checkpoint-save.cmd.js";
+import { claimCheckStaleCmd, claimCheckStaleSchema } from "./commands/claim-check-stale.cmd.js";
+import { composeDetectCmd, composeDetectSchema } from "./commands/compose-detect.cmd.js";
+import { depAddCmd, depAddSchema } from "./commands/dep-add.cmd.js";
+import { directEditGuardCmd, directEditGuardSchema } from "./commands/direct-edit-guard.cmd.js";
+import {
+	milestoneAuditStatusCmd,
+	milestoneAuditStatusSchema,
+} from "./commands/milestone-audit-status.cmd.js";
+import { milestoneCloseCmd, milestoneCloseSchema } from "./commands/milestone-close.cmd.js";
+import { milestoneCreateCmd, milestoneCreateSchema } from "./commands/milestone-create.cmd.js";
+import { milestoneListCmd, milestoneListSchema } from "./commands/milestone-list.cmd.js";
+import {
+	milestoneRecordAuditCmd,
+	milestoneRecordAuditSchema,
+} from "./commands/milestone-record-audit.cmd.js";
+import { observeRecordCmd, observeRecordSchema } from "./commands/observe-record.cmd.js";
+import {
+	patternsAggregateCmd,
+	patternsAggregateSchema,
+} from "./commands/patterns-aggregate.cmd.js";
+import { patternsExtractCmd, patternsExtractSchema } from "./commands/patterns-extract.cmd.js";
+import { patternsRankCmd, patternsRankSchema } from "./commands/patterns-rank.cmd.js";
+import { preOpGuardCmd, preOpGuardSchema } from "./commands/pre-op-guard.cmd.js";
+import { projectGetCmd, projectGetSchema } from "./commands/project-get.cmd.js";
+import { projectInitCmd, projectInitSchema } from "./commands/project-init.cmd.js";
 import { getCommandSchema } from "./commands/registry.js";
-import { reviewCheckFreshCmd } from "./commands/review-check-fresh.cmd.js";
-import { reviewRecordCmd } from "./commands/review-record.cmd.js";
-import { routingCalibrateCmd } from "./commands/routing-calibrate.cmd.js";
-import { routingDecideCmd } from "./commands/routing-decide.cmd.js";
-import { routingEventCmd } from "./commands/routing-event.cmd.js";
-import { routingJudgePrepareCmd } from "./commands/routing-judge-prepare.cmd.js";
-import { routingJudgeRecordCmd } from "./commands/routing-judge-record.cmd.js";
-import { routingOutcomeCmd } from "./commands/routing-outcome.cmd.js";
-import { schemaCmd } from "./commands/schema.cmd.js";
-import { sessionRemindCmd } from "./commands/session-remind.cmd.js";
-import { skillsDriftCmd } from "./commands/skills-drift.cmd.js";
-import { skillsValidateCmd } from "./commands/skills-validate.cmd.js";
-import { sliceClassifyCmd } from "./commands/slice-classify.cmd.js";
-import { sliceCloseCmd } from "./commands/slice-close.cmd.js";
-import { sliceCreateCmd } from "./commands/slice-create.cmd.js";
-import { sliceListCmd } from "./commands/slice-list.cmd.js";
-import { sliceTransitionCmd } from "./commands/slice-transition.cmd.js";
-import { specEditGuardCmd } from "./commands/spec-edit-guard.cmd.js";
-import { stateDiffCmd } from "./commands/state-diff.cmd.js";
-import { syncStateCmd } from "./commands/sync-state.cmd.js";
-import { taskClaimCmd } from "./commands/task-claim.cmd.js";
-import { taskCloseCmd } from "./commands/task-close.cmd.js";
-import { taskReadyCmd } from "./commands/task-ready.cmd.js";
-import { versionCmd } from "./commands/version.cmd.js";
-import { wavesDetectCmd } from "./commands/waves-detect.cmd.js";
-import { workflowNextCmd } from "./commands/workflow-next.cmd.js";
-import { workflowShouldAutoCmd } from "./commands/workflow-should-auto.cmd.js";
-import { worktreeCreateCmd } from "./commands/worktree-create.cmd.js";
-import { worktreeDeleteCmd } from "./commands/worktree-delete.cmd.js";
-import { worktreeListCmd } from "./commands/worktree-list.cmd.js";
+import { reviewCheckFreshCmd, reviewCheckFreshSchema } from "./commands/review-check-fresh.cmd.js";
+import { reviewRecordCmd, reviewRecordSchema } from "./commands/review-record.cmd.js";
+import { routingCalibrateCmd, routingCalibrateSchema } from "./commands/routing-calibrate.cmd.js";
+import { routingDecideCmd, routingDecideSchema } from "./commands/routing-decide.cmd.js";
+import { routingEventCmd, routingEventSchema } from "./commands/routing-event.cmd.js";
+import {
+	routingJudgePrepareCmd,
+	routingJudgePrepareSchema,
+} from "./commands/routing-judge-prepare.cmd.js";
+import {
+	routingJudgeRecordCmd,
+	routingJudgeRecordSchema,
+} from "./commands/routing-judge-record.cmd.js";
+import { routingOutcomeCmd, routingOutcomeSchema } from "./commands/routing-outcome.cmd.js";
+import { schemaCmd, schemaCmdSchema } from "./commands/schema.cmd.js";
+import { sessionRemindCmd, sessionRemindSchema } from "./commands/session-remind.cmd.js";
+import { skillsDriftCmd, skillsDriftSchema } from "./commands/skills-drift.cmd.js";
+import { skillsValidateCmd, skillsValidateSchema } from "./commands/skills-validate.cmd.js";
+import { sliceClassifyCmd, sliceClassifySchema } from "./commands/slice-classify.cmd.js";
+import { sliceCloseCmd, sliceCloseSchema } from "./commands/slice-close.cmd.js";
+import { sliceCreateCmd, sliceCreateSchema } from "./commands/slice-create.cmd.js";
+import { sliceListCmd, sliceListSchema } from "./commands/slice-list.cmd.js";
+import { sliceTransitionCmd, sliceTransitionSchema } from "./commands/slice-transition.cmd.js";
+import { specEditGuardCmd, specEditGuardSchema } from "./commands/spec-edit-guard.cmd.js";
+import { stateDiffCmd, stateDiffSchema } from "./commands/state-diff.cmd.js";
+import { syncStateCmd, syncStateSchema } from "./commands/sync-state.cmd.js";
+import { taskClaimCmd, taskClaimSchema } from "./commands/task-claim.cmd.js";
+import { taskCloseCmd, taskCloseSchema } from "./commands/task-close.cmd.js";
+import { taskReadyCmd, taskReadySchema } from "./commands/task-ready.cmd.js";
+import { versionCmd, versionSchema } from "./commands/version.cmd.js";
+import { wavesDetectCmd, wavesDetectSchema } from "./commands/waves-detect.cmd.js";
+import { workflowNextCmd, workflowNextSchema } from "./commands/workflow-next.cmd.js";
+import {
+	workflowShouldAutoCmd,
+	workflowShouldAutoSchema,
+} from "./commands/workflow-should-auto.cmd.js";
+import { worktreeCreateCmd, worktreeCreateSchema } from "./commands/worktree-create.cmd.js";
+import { worktreeDeleteCmd, worktreeDeleteSchema } from "./commands/worktree-delete.cmd.js";
+import { worktreeListCmd, worktreeListSchema } from "./commands/worktree-list.cmd.js";
 import type { CommandSchema } from "./utils/flag-parser.js";
-import { withBranchGuard } from "./utils/with-branch-guard.js";
-import { withBranchGuards } from "./utils/with-branch-guards.js";
+import { withMutatingCommand } from "./utils/with-mutating-command.js";
 
 type CommandFn = (args: string[]) => Promise<string>;
 
-const commands: Record<string, CommandFn> = {
-	"branch-guard:check": branchGuardCheckCmd(),
-	"project:init": projectInitCmd,
-	"project:get": projectGetCmd,
-	"milestone:create": withBranchGuard("milestone:create", milestoneCreateCmd),
-	"milestone:list": milestoneListCmd,
-	"milestone:close": withBranchGuard("milestone:close", milestoneCloseCmd),
-	"milestone:record-audit": withBranchGuard("milestone:record-audit", milestoneRecordAuditCmd),
-	"milestone:audit-status": withBranchGuard("milestone:audit-status", milestoneAuditStatusCmd),
-	"slice:create": withBranchGuard("slice:create", sliceCreateCmd),
-	"slice:list": sliceListCmd,
-	"slice:transition": withBranchGuards("slice:transition", sliceTransitionCmd),
-	"slice:close": withBranchGuard("slice:close", sliceCloseCmd),
-	"slice:classify": sliceClassifyCmd,
-	"task:claim": withBranchGuards("task:claim", taskClaimCmd),
-	"task:close": withBranchGuards("task:close", taskCloseCmd),
-	"task:ready": taskReadyCmd,
-	"dep:add": withBranchGuard("dep:add", depAddCmd),
-	"direct-edit:guard": directEditGuardCmd,
-	"pre-op:guard": preOpGuardCmd,
-	"spec-edit:guard": specEditGuardCmd,
-	"waves:detect": wavesDetectCmd,
-	"state:diff": stateDiffCmd,
-	"sync:state": withBranchGuard("sync:state", syncStateCmd),
-	"worktree:create": withBranchGuard("worktree:create", worktreeCreateCmd),
-	"worktree:delete": withBranchGuard("worktree:delete", worktreeDeleteCmd),
-	"worktree:list": worktreeListCmd,
-	"review:check-fresh": reviewCheckFreshCmd,
-	"review:record": withBranchGuards("review:record", reviewRecordCmd),
-	"routing:decide": withBranchGuard("routing:decide", routingDecideCmd),
-	"routing:event": withBranchGuard("routing:event", routingEventCmd),
-	"routing:outcome": withBranchGuard("routing:outcome", routingOutcomeCmd),
-	"routing:calibrate": withBranchGuard("routing:calibrate", routingCalibrateCmd),
-	"routing:judge-prepare": withBranchGuard("routing:judge-prepare", (args) =>
-		routingJudgePrepareCmd(args),
-	),
-	"routing:judge-record": withBranchGuard("routing:judge-record", (args) =>
-		routingJudgeRecordCmd(args),
-	),
-	"checkpoint:save": withBranchGuard("checkpoint:save", checkpointSaveCmd),
-	"checkpoint:load": checkpointLoadCmd,
-	"observe:record": withBranchGuard("observe:record", observeRecordCmd),
-	"patterns:extract": patternsExtractCmd,
-	"patterns:aggregate": patternsAggregateCmd,
-	"patterns:rank": patternsRankCmd,
-	"compose:detect": composeDetectCmd,
-	"skills:drift": skillsDriftCmd,
-	"skills:validate": skillsValidateCmd,
-	"workflow:next": workflowNextCmd,
-	"workflow:should-auto": workflowShouldAutoCmd,
-	"claim:check-stale": claimCheckStaleCmd,
-	"session:remind": sessionRemindCmd,
-	version: versionCmd,
-	schema: schemaCmd,
-};
+export interface CommandEntry {
+	schema: CommandSchema;
+	handler: CommandFn;
+	dispatcher: CommandFn;
+}
+
+const wrap = (handler: CommandFn, schema: CommandSchema): CommandFn =>
+	schema.mutates === true ? withMutatingCommand(handler) : handler;
+
+export const COMMAND_REGISTRY: Record<string, CommandEntry> = (() => {
+	const branchGuardCheckHandler = branchGuardCheckCmd();
+	return {
+		"branch-guard:check": {
+			schema: branchGuardCheckSchema,
+			handler: branchGuardCheckHandler,
+			dispatcher: wrap(branchGuardCheckHandler, branchGuardCheckSchema),
+		},
+		"project:init": {
+			schema: projectInitSchema,
+			handler: projectInitCmd,
+			dispatcher: wrap(projectInitCmd, projectInitSchema),
+		},
+		"project:get": {
+			schema: projectGetSchema,
+			handler: projectGetCmd,
+			dispatcher: wrap(projectGetCmd, projectGetSchema),
+		},
+		"milestone:create": {
+			schema: milestoneCreateSchema,
+			handler: milestoneCreateCmd,
+			dispatcher: wrap(milestoneCreateCmd, milestoneCreateSchema),
+		},
+		"milestone:list": {
+			schema: milestoneListSchema,
+			handler: milestoneListCmd,
+			dispatcher: wrap(milestoneListCmd, milestoneListSchema),
+		},
+		"milestone:close": {
+			schema: milestoneCloseSchema,
+			handler: milestoneCloseCmd,
+			dispatcher: wrap(milestoneCloseCmd, milestoneCloseSchema),
+		},
+		"milestone:record-audit": {
+			schema: milestoneRecordAuditSchema,
+			handler: milestoneRecordAuditCmd,
+			dispatcher: wrap(milestoneRecordAuditCmd, milestoneRecordAuditSchema),
+		},
+		"milestone:audit-status": {
+			schema: milestoneAuditStatusSchema,
+			handler: milestoneAuditStatusCmd,
+			dispatcher: wrap(milestoneAuditStatusCmd, milestoneAuditStatusSchema),
+		},
+		"slice:create": {
+			schema: sliceCreateSchema,
+			handler: sliceCreateCmd,
+			dispatcher: wrap(sliceCreateCmd, sliceCreateSchema),
+		},
+		"slice:list": {
+			schema: sliceListSchema,
+			handler: sliceListCmd,
+			dispatcher: wrap(sliceListCmd, sliceListSchema),
+		},
+		"slice:transition": {
+			schema: sliceTransitionSchema,
+			handler: sliceTransitionCmd,
+			dispatcher: wrap(sliceTransitionCmd, sliceTransitionSchema),
+		},
+		"slice:close": {
+			schema: sliceCloseSchema,
+			handler: sliceCloseCmd,
+			dispatcher: wrap(sliceCloseCmd, sliceCloseSchema),
+		},
+		"slice:classify": {
+			schema: sliceClassifySchema,
+			handler: sliceClassifyCmd,
+			dispatcher: wrap(sliceClassifyCmd, sliceClassifySchema),
+		},
+		"task:claim": {
+			schema: taskClaimSchema,
+			handler: taskClaimCmd,
+			dispatcher: wrap(taskClaimCmd, taskClaimSchema),
+		},
+		"task:close": {
+			schema: taskCloseSchema,
+			handler: taskCloseCmd,
+			dispatcher: wrap(taskCloseCmd, taskCloseSchema),
+		},
+		"task:ready": {
+			schema: taskReadySchema,
+			handler: taskReadyCmd,
+			dispatcher: wrap(taskReadyCmd, taskReadySchema),
+		},
+		"dep:add": {
+			schema: depAddSchema,
+			handler: depAddCmd,
+			dispatcher: wrap(depAddCmd, depAddSchema),
+		},
+		"direct-edit:guard": {
+			schema: directEditGuardSchema,
+			handler: directEditGuardCmd,
+			dispatcher: wrap(directEditGuardCmd, directEditGuardSchema),
+		},
+		"pre-op:guard": {
+			schema: preOpGuardSchema,
+			handler: preOpGuardCmd,
+			dispatcher: wrap(preOpGuardCmd, preOpGuardSchema),
+		},
+		"spec-edit:guard": {
+			schema: specEditGuardSchema,
+			handler: specEditGuardCmd,
+			dispatcher: wrap(specEditGuardCmd, specEditGuardSchema),
+		},
+		"waves:detect": {
+			schema: wavesDetectSchema,
+			handler: wavesDetectCmd,
+			dispatcher: wrap(wavesDetectCmd, wavesDetectSchema),
+		},
+		"state:diff": {
+			schema: stateDiffSchema,
+			handler: stateDiffCmd,
+			dispatcher: wrap(stateDiffCmd, stateDiffSchema),
+		},
+		"sync:state": {
+			schema: syncStateSchema,
+			handler: syncStateCmd,
+			dispatcher: wrap(syncStateCmd, syncStateSchema),
+		},
+		"worktree:create": {
+			schema: worktreeCreateSchema,
+			handler: worktreeCreateCmd,
+			dispatcher: wrap(worktreeCreateCmd, worktreeCreateSchema),
+		},
+		"worktree:delete": {
+			schema: worktreeDeleteSchema,
+			handler: worktreeDeleteCmd,
+			dispatcher: wrap(worktreeDeleteCmd, worktreeDeleteSchema),
+		},
+		"worktree:list": {
+			schema: worktreeListSchema,
+			handler: worktreeListCmd,
+			dispatcher: wrap(worktreeListCmd, worktreeListSchema),
+		},
+		"review:check-fresh": {
+			schema: reviewCheckFreshSchema,
+			handler: reviewCheckFreshCmd,
+			dispatcher: wrap(reviewCheckFreshCmd, reviewCheckFreshSchema),
+		},
+		"review:record": {
+			schema: reviewRecordSchema,
+			handler: reviewRecordCmd,
+			dispatcher: wrap(reviewRecordCmd, reviewRecordSchema),
+		},
+		"routing:decide": {
+			schema: routingDecideSchema,
+			handler: routingDecideCmd,
+			dispatcher: wrap(routingDecideCmd, routingDecideSchema),
+		},
+		"routing:event": {
+			schema: routingEventSchema,
+			handler: routingEventCmd,
+			dispatcher: wrap(routingEventCmd, routingEventSchema),
+		},
+		"routing:outcome": {
+			schema: routingOutcomeSchema,
+			handler: routingOutcomeCmd,
+			dispatcher: wrap(routingOutcomeCmd, routingOutcomeSchema),
+		},
+		"routing:calibrate": {
+			schema: routingCalibrateSchema,
+			handler: routingCalibrateCmd,
+			dispatcher: wrap(routingCalibrateCmd, routingCalibrateSchema),
+		},
+		"routing:judge-prepare": {
+			schema: routingJudgePrepareSchema,
+			handler: routingJudgePrepareCmd,
+			dispatcher: wrap(routingJudgePrepareCmd, routingJudgePrepareSchema),
+		},
+		"routing:judge-record": {
+			schema: routingJudgeRecordSchema,
+			handler: routingJudgeRecordCmd,
+			dispatcher: wrap(routingJudgeRecordCmd, routingJudgeRecordSchema),
+		},
+		"checkpoint:save": {
+			schema: checkpointSaveSchema,
+			handler: checkpointSaveCmd,
+			dispatcher: wrap(checkpointSaveCmd, checkpointSaveSchema),
+		},
+		"checkpoint:load": {
+			schema: checkpointLoadSchema,
+			handler: checkpointLoadCmd,
+			dispatcher: wrap(checkpointLoadCmd, checkpointLoadSchema),
+		},
+		"observe:record": {
+			schema: observeRecordSchema,
+			handler: observeRecordCmd,
+			dispatcher: wrap(observeRecordCmd, observeRecordSchema),
+		},
+		"patterns:extract": {
+			schema: patternsExtractSchema,
+			handler: patternsExtractCmd,
+			dispatcher: wrap(patternsExtractCmd, patternsExtractSchema),
+		},
+		"patterns:aggregate": {
+			schema: patternsAggregateSchema,
+			handler: patternsAggregateCmd,
+			dispatcher: wrap(patternsAggregateCmd, patternsAggregateSchema),
+		},
+		"patterns:rank": {
+			schema: patternsRankSchema,
+			handler: patternsRankCmd,
+			dispatcher: wrap(patternsRankCmd, patternsRankSchema),
+		},
+		"compose:detect": {
+			schema: composeDetectSchema,
+			handler: composeDetectCmd,
+			dispatcher: wrap(composeDetectCmd, composeDetectSchema),
+		},
+		"skills:drift": {
+			schema: skillsDriftSchema,
+			handler: skillsDriftCmd,
+			dispatcher: wrap(skillsDriftCmd, skillsDriftSchema),
+		},
+		"skills:validate": {
+			schema: skillsValidateSchema,
+			handler: skillsValidateCmd,
+			dispatcher: wrap(skillsValidateCmd, skillsValidateSchema),
+		},
+		"workflow:next": {
+			schema: workflowNextSchema,
+			handler: workflowNextCmd,
+			dispatcher: wrap(workflowNextCmd, workflowNextSchema),
+		},
+		"workflow:should-auto": {
+			schema: workflowShouldAutoSchema,
+			handler: workflowShouldAutoCmd,
+			dispatcher: wrap(workflowShouldAutoCmd, workflowShouldAutoSchema),
+		},
+		"claim:check-stale": {
+			schema: claimCheckStaleSchema,
+			handler: claimCheckStaleCmd,
+			dispatcher: wrap(claimCheckStaleCmd, claimCheckStaleSchema),
+		},
+		"session:remind": {
+			schema: sessionRemindSchema,
+			handler: sessionRemindCmd,
+			dispatcher: wrap(sessionRemindCmd, sessionRemindSchema),
+		},
+		version: {
+			schema: versionSchema,
+			handler: versionCmd,
+			dispatcher: wrap(versionCmd, versionSchema),
+		},
+		schema: {
+			schema: schemaCmdSchema,
+			handler: schemaCmd,
+			dispatcher: wrap(schemaCmd, schemaCmdSchema),
+		},
+	};
+})();
 
 /**
  * Generate help output for a command
@@ -209,7 +430,11 @@ const main = async () => {
 		console.log(
 			JSON.stringify({
 				ok: true,
-				data: { name: "tff-tools", version: __TFF_VERSION__, commands: Object.keys(commands) },
+				data: {
+					name: "tff-tools",
+					version: __TFF_VERSION__,
+					commands: Object.keys(COMMAND_REGISTRY),
+				},
 			}),
 		);
 		return;
@@ -246,29 +471,29 @@ const main = async () => {
 				error: {
 					code: "UNKNOWN_COMMAND",
 					message: `Unknown command "${command}". Run --help for available commands.`,
-					availableCommands: Object.keys(commands).filter((c) => c !== "schema"),
+					availableCommands: Object.keys(COMMAND_REGISTRY).filter((c) => c !== "schema"),
 				},
 			}),
 		);
 		return;
 	}
 
-	const handler = commands[command];
-	if (!handler) {
+	const entry = COMMAND_REGISTRY[command];
+	if (!entry) {
 		console.log(
 			JSON.stringify({
 				ok: false,
 				error: {
 					code: "UNKNOWN_COMMAND",
 					message: `Unknown command "${command}". Run --help for available commands.`,
-					availableCommands: Object.keys(commands).filter((c) => c !== "schema"),
+					availableCommands: Object.keys(COMMAND_REGISTRY).filter((c) => c !== "schema"),
 				},
 			}),
 		);
 		return;
 	}
 
-	const output = await handler(args);
+	const output = await entry.dispatcher(args);
 	console.log(output);
 };
 

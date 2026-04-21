@@ -21,10 +21,10 @@ const writers = [
 	"routing:event",
 	"routing:outcome",
 	"routing:calibrate",
-	"routing:judge-prepare",
 	"routing:judge-record",
 	"checkpoint:save",
 	"observe:record",
+	"project:init",
 ];
 
 let repo: string;
@@ -60,14 +60,5 @@ describe("branch-guard fan-out", () => {
 		const parsed = JSON.parse(lines[lines.length - 1]);
 		expect(parsed.ok).toBe(false);
 		expect(parsed.error.code).toBe("REFUSED_ON_DEFAULT_BRANCH");
-	});
-
-	it("project:init is not refused (exempt)", () => {
-		const out = runCli("project:init", ["--name", "x", "--vision", "y"]);
-		const lines = out.trim().split("\n").filter(Boolean);
-		const parsed = JSON.parse(lines[lines.length - 1]);
-		if (!parsed.ok) {
-			expect(parsed.error.code).not.toBe("REFUSED_ON_DEFAULT_BRANCH");
-		}
 	});
 });
