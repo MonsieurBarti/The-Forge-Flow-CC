@@ -129,6 +129,30 @@ describe("syncStateCmd — behavior", () => {
 		expect(result.error.code).toBe("NOT_FOUND");
 	});
 
+	it("returns error JSON when required --milestone-id flag is missing", async () => {
+		const result = JSON.parse(await syncStateCmd([]));
+		expect(result.ok).toBe(false);
+	});
+
+	it("returns error JSON when generateState fails", async () => {
+		const milestoneId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+
+		vi.mocked(withClosableSyncLock).mockImplementation(async (fn) => {
+			const stores = makeMockStores({
+				getMilestoneByNumber: vi.fn().mockReturnValue({ ok: true, data: { id: milestoneId } }),
+			});
+			return fn(stores);
+		});
+
+		vi.mocked(generateState).mockResolvedValue({
+			ok: false,
+			error: { code: "WRITE_FAILURE", message: "fail" },
+		} as never);
+
+		const result = JSON.parse(await syncStateCmd(["--milestone-id", "M01"]));
+		expect(result.ok).toBe(false);
+	});
+
 	it("calls generateState and returns ok when milestone resolves", async () => {
 		const milestoneId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 

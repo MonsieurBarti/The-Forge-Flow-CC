@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { checkStaleClaims } from "../../../../src/application/claims/check-stale-claims.js";
 import { isOk } from "../../../../src/domain/result.js";
 import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
@@ -82,5 +82,25 @@ describe("checkStaleClaims use case", () => {
 			expect(result.data.staleClaims).toHaveLength(1);
 			expect(result.data.staleClaims[0].id).toBe("M01-S01-T01");
 		}
+	});
+
+	it("uses DEFAULT_TTL_MINUTES when ttlMinutes is not provided", async () => {
+		// No ttlMinutes → falls back to default (30 min)
+		const result = await checkStaleClaims({}, { taskStore: adapter });
+		expect(isOk(result)).toBe(true);
+	});
+
+	it("returns error when taskStore.listStaleClaims fails", async () => {
+		const failingTaskStore = {
+			listStaleClaims: vi.fn().mockReturnValue({
+				ok: false as const,
+				error: { code: "WRITE_FAILURE" as const, message: "db error" },
+			}),
+		};
+		const result = await checkStaleClaims(
+			{ ttlMinutes: 30 },
+			{ taskStore: failingTaskStore as never },
+		);
+		expect(isOk(result)).toBe(false);
 	});
 });

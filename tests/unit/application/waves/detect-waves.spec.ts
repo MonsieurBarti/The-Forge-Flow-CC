@@ -109,6 +109,35 @@ describe("detectWavesFromStores", () => {
 		}
 	});
 
+	it("treats getDependencies error as no outbound deps (outbound = [])", () => {
+		const adapter = new InMemoryStateAdapter();
+		adapter.init();
+		adapter.saveProject({ name: "Test" });
+		adapter.createMilestone({ number: 1, name: "M1" });
+		adapter.createSlice({ milestoneId: "M01", number: 1, title: "S1" });
+		adapter.createTask({ sliceId: "M01-S01", number: 1, title: "Solo" });
+
+		// Mock getDependencies to return an error — exercises the `outbound = []` branch
+		const mockDependencyStore = {
+			getDependencies: () => ({
+				ok: false as const,
+				error: { code: "WRITE_FAILURE" as const, message: "db fail" },
+			}),
+			addDependency: () => ({ ok: true as const, data: undefined }),
+			removeDependency: () => ({ ok: true as const, data: undefined }),
+		};
+
+		const result = detectWavesFromStores(
+			{ taskStore: adapter, dependencyStore: mockDependencyStore },
+			"M01-S01",
+		);
+		expect(isOk(result)).toBe(true);
+		if (isOk(result)) {
+			// Task has no deps (error treated as empty) so single wave
+			expect(result.data).toHaveLength(1);
+		}
+	});
+
 	it("returns empty waves for slice with no tasks", () => {
 		const adapter = new InMemoryStateAdapter();
 		adapter.init();

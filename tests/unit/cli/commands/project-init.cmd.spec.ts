@@ -48,4 +48,17 @@ describe("project:init — .tff-cc/ auto-creation", () => {
 		// Database is in home directory
 		expect(existsSync(path.join(homeDir, projectId, "state.db"))).toBe(true);
 	});
+
+	it("returns error JSON when required --name flag is missing", async () => {
+		const result = JSON.parse(await projectInitCmd([]));
+		expect(result.ok).toBe(false);
+	});
+
+	it("returns error JSON when project already exists (PROJECT_EXISTS)", async () => {
+		// Init twice to trigger PROJECT_EXISTS
+		await projectInitCmd(["--name", "test-project"]);
+		const result = JSON.parse(await projectInitCmd(["--name", "test-project"]));
+		expect(result.ok).toBe(false);
+		expect(result.error.code).toBe("PROJECT_EXISTS");
+	});
 });

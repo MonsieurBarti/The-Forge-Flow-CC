@@ -64,4 +64,61 @@ describe("InMemoryGitOps — S03 extensions", () => {
 		const r = await git.detectDefaultBranch();
 		expect(isOk(r) && r.data).toBe("main");
 	});
+
+	it("commit creates a commit ref and appends to commits", async () => {
+		const r = await git.commit("feat: add thing", ["src/thing.ts"]);
+		expect(isOk(r)).toBe(true);
+		if (!isOk(r)) throw new Error("expected ok");
+		expect(r.data.message).toBe("feat: add thing");
+		expect(git.getCommits()).toHaveLength(1);
+	});
+
+	it("revert creates a revert commit ref", async () => {
+		const r = await git.revert("abc1234");
+		expect(isOk(r)).toBe(true);
+		if (!isOk(r)) throw new Error("expected ok");
+		expect(r.data.message).toContain("Revert");
+		expect(git.getCommits()).toHaveLength(1);
+	});
+
+	it("merge succeeds", async () => {
+		const r = await git.merge("feature/x", "main");
+		expect(isOk(r)).toBe(true);
+	});
+
+	it("getCurrentBranch returns the current branch", async () => {
+		const r = await git.getCurrentBranch();
+		expect(isOk(r) && r.data).toBe("main");
+	});
+
+	it("getHeadSha returns the current HEAD sha", async () => {
+		const r = await git.getHeadSha();
+		expect(isOk(r)).toBe(true);
+		if (!isOk(r)) throw new Error("expected ok");
+		expect(typeof r.data).toBe("string");
+	});
+
+	it("pushBranch succeeds", async () => {
+		const r = await git.pushBranch("main");
+		expect(isOk(r)).toBe(true);
+	});
+
+	it("fetchBranch succeeds", async () => {
+		const r = await git.fetchBranch("main", "origin");
+		expect(isOk(r)).toBe(true);
+	});
+
+	it("extractFile returns NOT_FOUND error for missing file", async () => {
+		const r = await git.extractFile("refs/missing", "some/file.ts");
+		expect(isOk(r)).toBe(false);
+		if (isOk(r)) throw new Error("expected error");
+		expect(r.error.code).toBe("NOT_FOUND");
+	});
+
+	it("reset restores initial state", async () => {
+		await git.commit("first", []);
+		git.reset();
+		expect(git.getCommits()).toHaveLength(0);
+		expect(git.hasBranch("main")).toBe(true);
+	});
 });

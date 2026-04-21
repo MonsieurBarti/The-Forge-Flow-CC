@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { generateState } from "../../../../src/application/sync/generate-state.js";
+import { generateState, renderStateMd } from "../../../../src/application/sync/generate-state.js";
 import { isOk } from "../../../../src/domain/result.js";
 import { InMemoryArtifactStore } from "../../../../src/infrastructure/testing/in-memory-artifact-store.js";
 import { InMemoryStateAdapter } from "../../../../src/infrastructure/testing/in-memory-state-adapter.js";
@@ -62,5 +62,43 @@ describe("generateState", () => {
 			{ milestoneStore: adapter, sliceStore: adapter, taskStore: adapter, artifactStore },
 		);
 		expect(isOk(result)).toBe(true);
+	});
+});
+
+describe("renderStateMd", () => {
+	it("returns NOT_FOUND when milestone id does not exist", () => {
+		const adapter = new InMemoryStateAdapter();
+		adapter.init();
+		adapter.saveProject({ name: "Test" });
+
+		const result = renderStateMd(
+			{ milestoneId: "nonexistent-id" },
+			{ milestoneStore: adapter, sliceStore: adapter, taskStore: adapter },
+		);
+		expect(isOk(result)).toBe(false);
+		if (isOk(result)) throw new Error("expected error");
+		expect(result.error.code).toBe("NOT_FOUND");
+	});
+
+	it("returns error when getMilestone store call fails (line 32 branch)", () => {
+		const failingMilestoneStore = {
+			getMilestone: () => ({
+				ok: false as const,
+				error: { code: "WRITE_FAILURE" as const, message: "db fail" },
+			}),
+			listMilestones: () => ({ ok: true as const, data: [] }),
+			getMilestoneByNumber: () => ({ ok: true as const, data: null }),
+			createMilestone: () => ({ ok: true as const, data: {} }),
+			updateMilestone: () => ({ ok: true as const, data: {} }),
+			closeMilestone: () => ({ ok: true as const, data: {} }),
+		};
+		const adapter = new InMemoryStateAdapter();
+		adapter.init();
+
+		const result = renderStateMd(
+			{ milestoneId: "any-id" },
+			{ milestoneStore: failingMilestoneStore as never, sliceStore: adapter, taskStore: adapter },
+		);
+		expect(isOk(result)).toBe(false);
 	});
 });

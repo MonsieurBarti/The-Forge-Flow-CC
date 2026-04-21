@@ -43,6 +43,16 @@ describe("appendRecoveryFailedEntry", () => {
 		expect(lines).toHaveLength(2);
 	});
 
+	it("handles non-Error thrown values (string, plain object)", async () => {
+		mkdirSync(home, { recursive: true });
+		// Pass a plain string — exercises the `err instanceof Error ? ... : new Error(String(err))` false branch
+		await appendRecoveryFailedEntry(home, "string error");
+		const raw = readFileSync(join(home, RECOVERY_EVENTS_FILE), "utf-8");
+		const parsed = JSON.parse(raw.trim()) as Record<string, unknown>;
+		expect(parsed.type).toBe("recovery-failed");
+		expect(typeof parsed.error).toBe("string");
+	});
+
 	it("swallows internal failures and creates no side effects", async () => {
 		// Point homeDir at a regular file so stat(...).isDirectory() is false.
 		const file = join(repo, "blocker");

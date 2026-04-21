@@ -100,4 +100,24 @@ describe("JsonlRoutingDecisionLogger", () => {
 		expect(parsed.decision.decision_id).toBe(decisionId);
 		expect(parsed.decision.min_tier_applied).toBe(true);
 	});
+
+	it("returns ROUTING_CONFIG error when append fails (e.g. path is a directory)", async () => {
+		// Use a directory as the path — appendFile to a directory will throw an OS error
+		const badPath = dir; // dir itself is a directory
+		const logger = new JsonlRoutingDecisionLogger(badPath);
+		const result = await logger.append({
+			kind: "extract",
+			timestamp: "t",
+			workflow_id: "w",
+			slice_id: "s",
+			deterministic_signals: {
+				complexity: "low",
+				risk: { level: "low", tags: [] },
+			},
+			duration_ms: 0,
+		});
+		expect(isOk(result)).toBe(false);
+		if (isOk(result)) throw new Error("expected error");
+		expect(result.error.code).toBe("ROUTING_CONFIG");
+	});
 });
