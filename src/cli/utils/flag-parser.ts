@@ -27,6 +27,8 @@ export interface CommandSchema {
 	name: string;
 	/** Brief description of what the command does */
 	purpose: string;
+	/** When true, wraps handler in withMutatingCommand for branch-guard enforcement */
+	mutates?: boolean;
 	/** Flags that must be provided */
 	requiredFlags: FlagDefinition[];
 	/** Flags that are optional */
