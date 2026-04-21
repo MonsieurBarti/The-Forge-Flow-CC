@@ -7,6 +7,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const sliceListSchema: CommandSchema = {
 	name: "slice:list",
 	purpose: "List all slices, optionally filtered by milestone",
+	mutates: false,
 	requiredFlags: [],
 	optionalFlags: [
 		{

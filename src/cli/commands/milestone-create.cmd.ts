@@ -17,6 +17,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const milestoneCreateSchema: CommandSchema = {
 	name: "milestone:create",
 	purpose: "Create a new milestone",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "name",

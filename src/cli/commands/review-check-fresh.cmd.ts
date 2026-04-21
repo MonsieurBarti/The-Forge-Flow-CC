@@ -6,6 +6,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const reviewCheckFreshSchema: CommandSchema = {
 	name: "review:check-fresh",
 	purpose: "Check if a reviewer is fresh for a slice",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "slice-id",

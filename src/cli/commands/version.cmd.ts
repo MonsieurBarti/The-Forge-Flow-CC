@@ -8,6 +8,7 @@ export const versionSchema: CommandSchema = {
 	name: "version",
 	purpose:
 		"Print the tff-tools version. With --verbose, include binding source, Node ABI, platform, arch, and last-recovery status as JSON.",
+	mutates: false,
 	requiredFlags: [],
 	optionalFlags: [
 		{

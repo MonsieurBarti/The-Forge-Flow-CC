@@ -6,6 +6,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const worktreeDeleteSchema: CommandSchema = {
 	name: "worktree:delete",
 	purpose: "Delete a git worktree for a slice",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "slice-id",

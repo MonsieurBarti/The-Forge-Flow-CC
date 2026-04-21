@@ -9,6 +9,7 @@ import { resolveSliceId } from "../utils/resolve-id.js";
 export const sliceCloseSchema: CommandSchema = {
 	name: "slice:close",
 	purpose: "Close a slice",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "slice-id",

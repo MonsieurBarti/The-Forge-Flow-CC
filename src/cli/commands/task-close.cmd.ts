@@ -9,6 +9,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const taskCloseSchema: CommandSchema = {
 	name: "task:close",
 	purpose: "Close a completed task",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "task-id",

@@ -7,6 +7,7 @@ import type { CommandSchema } from "../utils/flag-parser.js";
 export const patternsExtractSchema: CommandSchema = {
 	name: "patterns:extract",
 	purpose: "Extract patterns from observations",
+	mutates: true,
 	requiredFlags: [],
 	optionalFlags: [],
 	examples: ["patterns:extract"],

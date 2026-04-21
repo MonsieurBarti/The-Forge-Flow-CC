@@ -9,6 +9,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const stateDiffSchema: CommandSchema = {
 	name: "state:diff",
 	purpose: "Diff rendered STATE.md (from SQLite) against on-disk STATE.md",
+	mutates: false,
 	requiredFlags: [],
 	optionalFlags: [
 		{

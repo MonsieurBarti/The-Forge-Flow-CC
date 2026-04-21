@@ -36,6 +36,7 @@ function isProjectInitialized(): boolean {
 export const directEditGuardSchema: CommandSchema = {
 	name: "direct-edit:guard",
 	purpose: "Check for direct edits without proper workflow",
+	mutates: false,
 	requiredFlags: [],
 	optionalFlags: [],
 	examples: ["direct-edit:guard"],

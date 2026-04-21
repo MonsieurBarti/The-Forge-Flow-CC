@@ -6,7 +6,10 @@ import type { Task } from "../../domain/entities/task.js";
 import { alreadyClaimedError } from "../../domain/errors/already-claimed.error.js";
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { createDomainError } from "../../domain/errors/domain-error.js";
+import { freshReviewerViolationError } from "../../domain/errors/fresh-reviewer-violation.error.js";
 import { hasOpenChildrenError } from "../../domain/errors/has-open-children.error.js";
+import { milestoneCompletenessViolationError } from "../../domain/errors/milestone-completeness-violation.error.js";
+import { shipCompletenessViolationError } from "../../domain/errors/ship-completeness-violation.error.js";
 import type { DomainEvent } from "../../domain/events/domain-event.js";
 import { milestoneBranchName } from "../../domain/helpers/branch-naming.js";
 import type { DatabaseInit } from "../../domain/ports/database-init.port.js";
@@ -160,16 +163,31 @@ export class InMemoryStateAdapter
 	closeMilestone(id: string, reason?: string): Result<void, DomainError> {
 		const ms = this.milestones.get(id);
 		if (!ms) return Ok(undefined);
-		const openSlices = [...this.slices.values()].filter(
-			(s) => s.milestoneId === id && s.status !== "closed",
-		);
-		if (openSlices.length > 0) {
-			return Err(hasOpenChildrenError(id, openSlices.length));
+		try {
+			// Per-slice spec-approval invariant: every slice in the milestone must have
+			// at least one approved `type: "spec"` review. Fires regardless of slice state.
+			const milestoneSlices = [...this.slices.values()].filter((s) => s.milestoneId === id);
+			const missing: string[] = [];
+			for (const slice of milestoneSlices) {
+				const hasApprovedSpec = this.reviews.some(
+					(r) => r.sliceId === slice.id && r.type === "spec" && r.verdict === "approved",
+				);
+				if (!hasApprovedSpec) missing.push(slice.id);
+			}
+			if (missing.length > 0) {
+				return Err(milestoneCompletenessViolationError(id, missing));
+			}
+			const openSlices = milestoneSlices.filter((s) => s.status !== "closed");
+			if (openSlices.length > 0) {
+				return Err(hasOpenChildrenError(id, openSlices.length));
+			}
+			ms.status = "closed";
+			ms.closeReason = reason;
+			this.milestones.set(id, ms);
+			return Ok(undefined);
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to close milestone: ${e}`));
 		}
-		ms.status = "closed";
-		ms.closeReason = reason;
-		this.milestones.set(id, ms);
-		return Ok(undefined);
 	}
 
 	// SliceStore
@@ -231,6 +249,17 @@ export class InMemoryStateAdapter
 		const slice = this.slices.get(id);
 		if (!slice) {
 			return Err(createDomainError("NOT_FOUND", `Slice "${id}" not found`));
+		}
+		if (target === "closed" && slice.status === "completing") {
+			const approvedTypes = new Set(
+				this.reviews.filter((r) => r.sliceId === id && r.verdict === "approved").map((r) => r.type),
+			);
+			const missing: Array<"code" | "security"> = [];
+			if (!approvedTypes.has("code")) missing.push("code");
+			if (!approvedTypes.has("security")) missing.push("security");
+			if (missing.length > 0) {
+				return Err(shipCompletenessViolationError(id, missing));
+			}
 		}
 		const domainResult = transitionSlice(slice, target);
 		if (!domainResult.ok) return domainResult;
@@ -384,6 +413,11 @@ export class InMemoryStateAdapter
 
 	// ReviewStore
 	recordReview(review: ReviewRecord): Result<void, DomainError> {
+		const executorsResult = this.getExecutorsForSlice(review.sliceId);
+		if (!executorsResult.ok) return executorsResult;
+		if (executorsResult.data.includes(review.reviewer)) {
+			return Err(freshReviewerViolationError(review.sliceId, review.reviewer));
+		}
 		this.reviews.push(review);
 		return Ok(undefined);
 	}

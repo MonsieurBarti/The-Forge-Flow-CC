@@ -5,6 +5,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const skillsValidateSchema: CommandSchema = {
 	name: "skills:validate",
 	purpose: "Validate a skill definition",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "skill",

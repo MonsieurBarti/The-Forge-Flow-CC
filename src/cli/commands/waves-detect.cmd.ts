@@ -10,6 +10,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const wavesDetectSchema: CommandSchema = {
 	name: "waves:detect",
 	purpose: "Detect execution waves from task dependencies",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "tasks",

@@ -8,6 +8,7 @@ import { resolveSliceId } from "../utils/resolve-id.js";
 export const reviewRecordSchema: CommandSchema = {
 	name: "review:record",
 	purpose: "Record a review for a slice",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "slice-id",

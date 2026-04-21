@@ -103,6 +103,7 @@ function flagToJsonSchema(flag: {
 export const schemaCmdSchema: CommandSchema = {
 	name: "schema",
 	purpose: "Get JSON Schema for any command's flags",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "command",

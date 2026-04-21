@@ -24,9 +24,42 @@ describe("SliceSpecFsReader", () => {
 		expect(res.data.truncated).toBe(false);
 	});
 
+	it("returns Err for an invalid slice label (no regex match)", async () => {
+		const reader = new SliceSpecFsReader({ projectRoot: root });
+		const res = await reader.readSpec("not-valid!!", 1024);
+		expect(isOk(res)).toBe(false);
+		if (isOk(res)) throw new Error("expected error");
+		expect(res.error.code).toBe("VALIDATION_ERROR");
+	});
+
 	it("returns missing=true when no slice directory exists", async () => {
 		const reader = new SliceSpecFsReader({ projectRoot: root });
 		const res = await reader.readSpec("M99-S99", 1024);
+		if (!isOk(res)) throw new Error("not ok");
+		expect(res.data.missing).toBe(true);
+		expect(res.data.text).toBe("");
+	});
+
+	it("returns missing=true when milestone dir exists but no matching slice entry", async () => {
+		// Create the milestone directory but with a different slice prefix
+		const milestoneDir = join(root, ".tff-cc", "milestones", "M01");
+		mkdirSync(join(milestoneDir, "S03-other-slice"), { recursive: true });
+		const reader = new SliceSpecFsReader({ projectRoot: root });
+		// Ask for S02 — no S02-* entry exists
+		const res = await reader.readSpec("M01-S02", 1024);
+		expect(isOk(res)).toBe(true);
+		if (!isOk(res)) throw new Error("not ok");
+		expect(res.data.missing).toBe(true);
+		expect(res.data.text).toBe("");
+	});
+
+	it("returns missing=true when slice dir exists but SPEC.md is absent", async () => {
+		// Create the slice directory without a SPEC.md file
+		const dir = join(root, ".tff-cc", "milestones", "M01", "S02-no-spec");
+		mkdirSync(dir, { recursive: true });
+		const reader = new SliceSpecFsReader({ projectRoot: root });
+		const res = await reader.readSpec("M01-S02", 1024);
+		expect(isOk(res)).toBe(true);
 		if (!isOk(res)) throw new Error("not ok");
 		expect(res.data.missing).toBe(true);
 		expect(res.data.text).toBe("");

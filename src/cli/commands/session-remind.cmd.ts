@@ -36,6 +36,7 @@ function isProjectInitialized(): boolean {
 export const sessionRemindSchema: CommandSchema = {
 	name: "session:remind",
 	purpose: "Generate a reminder for the current session",
+	mutates: false,
 	requiredFlags: [],
 	optionalFlags: [],
 	examples: ["session:remind"],

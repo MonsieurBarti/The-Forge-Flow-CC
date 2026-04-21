@@ -7,6 +7,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const observeRecordSchema: CommandSchema = {
 	name: "observe:record",
 	purpose: "Record an observation for pattern detection",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "ts",

@@ -35,6 +35,7 @@ function isProjectInitialized(): boolean {
 export const specEditGuardSchema: CommandSchema = {
 	name: "spec-edit:guard",
 	purpose: "Check for spec file edits outside proper workflow",
+	mutates: false,
 	requiredFlags: [],
 	optionalFlags: [],
 	examples: ["spec-edit:guard"],

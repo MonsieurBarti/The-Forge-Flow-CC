@@ -7,6 +7,7 @@ import type { CommandSchema } from "../utils/flag-parser.js";
 export const milestoneListSchema: CommandSchema = {
 	name: "milestone:list",
 	purpose: "List all milestones",
+	mutates: false,
 	requiredFlags: [],
 	optionalFlags: [],
 	examples: ["milestone:list"],

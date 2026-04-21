@@ -6,6 +6,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const sliceTransitionSchema: CommandSchema = {
 	name: "slice:transition",
 	purpose: "Transition a slice to a new status",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "slice-id",

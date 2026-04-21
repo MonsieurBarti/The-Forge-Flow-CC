@@ -17,6 +17,7 @@ export { sanitizeReason };
 export const routingOutcomeSchema: CommandSchema = {
 	name: "routing:outcome",
 	purpose: "Record a manual outcome for a routing decision (Phase D feedback loop)",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "decision",

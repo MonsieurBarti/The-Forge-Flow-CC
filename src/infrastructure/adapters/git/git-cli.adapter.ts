@@ -125,7 +125,15 @@ export class GitCliAdapter implements GitOps {
 		const cached = this.getCached(cacheKey);
 		if (cached) return Ok(cached);
 		const r = await runGit(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
-		if (r.ok) this.setCache(cacheKey, r.data);
+		if (!r.ok) return r;
+		if (r.data === "HEAD") {
+			return Err(
+				createDomainError("DETACHED_HEAD", "git is on detached HEAD — checkout a feature branch", {
+					cwd,
+				}),
+			);
+		}
+		this.setCache(cacheKey, r.data);
 		return r;
 	}
 

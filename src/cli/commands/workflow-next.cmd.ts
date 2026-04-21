@@ -4,6 +4,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const workflowNextSchema: CommandSchema = {
 	name: "workflow:next",
 	purpose: "Get the next workflow status and suggested /tff command from current status",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "status",

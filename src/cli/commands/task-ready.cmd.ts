@@ -5,6 +5,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const taskReadySchema: CommandSchema = {
 	name: "task:ready",
 	purpose: "List ready tasks for a slice",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "slice-id",

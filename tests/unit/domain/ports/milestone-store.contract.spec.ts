@@ -86,14 +86,14 @@ export const runMilestoneStoreContractTests = (
 			expect(isOk(result)).toBe(true);
 		});
 
-		it("closeMilestone with open slices returns HAS_OPEN_CHILDREN", () => {
+		it("closeMilestone with open slices without spec approval returns MILESTONE_COMPLETENESS_VIOLATION", () => {
 			const createResult = store.createMilestone({ number: 1, name: "Test" });
 			const milestoneId = isOk(createResult) ? createResult.data.id : "M01";
 			store.createSlice({ milestoneId, number: 1, title: "Open Slice" });
 			const result = store.closeMilestone(milestoneId);
 			expect(isErr(result)).toBe(true);
 			if (isErr(result)) {
-				expect(result.error.code).toBe("HAS_OPEN_CHILDREN");
+				expect(result.error.code).toBe("MILESTONE_COMPLETENESS_VIOLATION");
 			}
 		});
 	});

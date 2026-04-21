@@ -90,13 +90,13 @@ describe("SQLite integration", () => {
 		if (isErr(result)) expect(result.error.code).toBe("VERSION_MISMATCH");
 	});
 
-	it("closeMilestone with open slices returns HAS_OPEN_CHILDREN", () => {
+	it("closeMilestone with open slices without spec approval returns MILESTONE_COMPLETENESS_VIOLATION", () => {
 		adapter.saveProject({ name: "P" });
 		const msResult = adapter.createMilestone({ number: 1, name: "M" });
 		const milestoneId = isOk(msResult) ? msResult.data.id : "M01";
 		adapter.createSlice({ milestoneId, number: 1, title: "S" });
 		const result = adapter.closeMilestone(milestoneId);
 		expect(isErr(result)).toBe(true);
-		if (isErr(result)) expect(result.error.code).toBe("HAS_OPEN_CHILDREN");
+		if (isErr(result)) expect(result.error.code).toBe("MILESTONE_COMPLETENESS_VIOLATION");
 	});
 });

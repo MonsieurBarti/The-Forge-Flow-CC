@@ -27,6 +27,7 @@ const runGit = async (cmd: string, args: string[], opts: { cwd: string }): Promi
 export const routingJudgePrepareSchema: CommandSchema = {
 	name: "routing:judge-prepare",
 	purpose: "Fetch JudgeEvidence for a closed slice — feeds the tff-outcome-judge agent",
+	mutates: false,
 	requiredFlags: [{ name: "slice", type: "string", description: "Slice label (M##-S##) or UUID" }],
 	optionalFlags: [
 		{

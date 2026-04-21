@@ -7,6 +7,7 @@ import type { CommandSchema } from "../utils/flag-parser.js";
 export const projectGetSchema: CommandSchema = {
 	name: "project:get",
 	purpose: "Get the current project information",
+	mutates: false,
 	requiredFlags: [],
 	optionalFlags: [],
 	examples: ["project:get"],

@@ -9,6 +9,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const taskClaimSchema: CommandSchema = {
 	name: "task:claim",
 	purpose: "Claim a task for execution",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "task-id",

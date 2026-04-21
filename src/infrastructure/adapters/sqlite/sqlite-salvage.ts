@@ -57,6 +57,18 @@ export interface SalvageResult {
 /**
  * Utility class for salvaging data from corrupted SQLite databases.
  * Uses defensive extraction - attempts to recover whatever data is readable.
+ *
+ * **Salvage path — intentionally bypasses Stage-D adapter invariants**
+ * (fresh-reviewer, ship-completeness, milestone-completeness).
+ *
+ * Rationale: salvage repairs corrupted state that may have been written under
+ * pre-invariant rules. Forcing invariants during recovery would make a class
+ * of legitimate corrupt-but-repairable DBs unrecoverable. The exemption is
+ * confined to this file; all normal write paths continue to enforce the
+ * invariants via SQLiteStateAdapter.
+ *
+ * See docs/superpowers/specs/2026-04-21-stage-d-quality-gate-hardening-design.md
+ * (non-goals: "Runtime enforcement that makes bypass impossible").
  */
 export class SQLiteSalvage {
 	/**

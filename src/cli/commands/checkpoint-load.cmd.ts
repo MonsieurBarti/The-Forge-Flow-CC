@@ -6,6 +6,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const checkpointLoadSchema: CommandSchema = {
 	name: "checkpoint:load",
 	purpose: "Load a checkpoint for a slice",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "slice-id",
