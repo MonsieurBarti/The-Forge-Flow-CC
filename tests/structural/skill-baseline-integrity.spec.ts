@@ -24,7 +24,10 @@ describe("skill-baselines.json governance invariant", () => {
 			if (report.mismatched.length > 0) {
 				parts.push(
 					`mismatched hashes:\n${report.mismatched
-						.map((m) => `  ${m.id}: expected ${m.expected.slice(0, 12)}…, actual ${m.actual.slice(0, 12)}…`)
+						.map(
+							(m) =>
+								`  ${m.id}: expected ${m.expected.slice(0, 12)}…, actual ${m.actual.slice(0, 12)}…`,
+						)
 						.join("\n")}`,
 				);
 			}

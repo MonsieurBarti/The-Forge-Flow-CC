@@ -83,7 +83,13 @@ describe("approveSkill", () => {
 		expect(result).toEqual({
 			ok: true,
 			noop: true,
-			data: { skillId: "foo", shaBefore: sha, shaAfter: sha, reason: "no-op", originalCommitSha: "origA" },
+			data: {
+				skillId: "foo",
+				shaBefore: sha,
+				shaAfter: sha,
+				reason: "no-op",
+				originalCommitSha: "origA",
+			},
 		});
 
 		const after = readManifest(tmp);
@@ -176,8 +182,7 @@ describe("approveSkill", () => {
 
 		expect(result).toEqual({
 			ok: false,
-			reason:
-				"seedOriginalCommitSha is only valid for new rows; row for foo already exists",
+			reason: "seedOriginalCommitSha is only valid for new rows; row for foo already exists",
 		});
 	});
 });
