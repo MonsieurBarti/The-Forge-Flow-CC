@@ -23,6 +23,7 @@ export interface ApproveSkillSuccess {
 		readonly shaBefore: string;
 		readonly shaAfter: string;
 		readonly reason: string;
+		readonly originalCommitSha: string;
 	};
 }
 
@@ -56,11 +57,26 @@ export const approveSkill = async (input: ApproveSkillInput): Promise<ApproveSki
 	const existing = manifest.skills[skillId];
 	const oldSha = existing?.sha256 ?? "";
 
+	// seedOriginalCommitSha is only valid when creating a new row.
+	// Silently dropping it for an existing row could erase provenance.
+	if (existing && input.seedOriginalCommitSha !== undefined) {
+		return {
+			ok: false,
+			reason: `seedOriginalCommitSha is only valid for new rows; row for ${skillId} already exists`,
+		};
+	}
+
 	if (existing && existing.sha256 === newSha) {
 		return {
 			ok: true,
 			noop: true,
-			data: { skillId, shaBefore: oldSha, shaAfter: newSha, reason },
+			data: {
+				skillId,
+				shaBefore: oldSha,
+				shaAfter: newSha,
+				reason,
+				originalCommitSha: existing.originalCommitSha,
+			},
 		};
 	}
 
@@ -71,16 +87,16 @@ export const approveSkill = async (input: ApproveSkillInput): Promise<ApproveSki
 		};
 	}
 
+	const resolvedOriginalCommitSha =
+		existing?.originalCommitSha ?? input.seedOriginalCommitSha ?? "";
 	const next: Manifest = {
 		version: 1,
 		skills: {
 			...manifest.skills,
 			[skillId]: {
 				sha256: newSha,
-				originalCommitSha: existing?.originalCommitSha ?? input.seedOriginalCommitSha ?? "",
-				approvedAt: now()
-					.toISOString()
-					.replace(/\.\d{3}Z$/, "Z"),
+				originalCommitSha: resolvedOriginalCommitSha,
+				approvedAt: now().toISOString(),
 				refinementId: null,
 			},
 		},
@@ -91,6 +107,12 @@ export const approveSkill = async (input: ApproveSkillInput): Promise<ApproveSki
 	return {
 		ok: true,
 		noop: false,
-		data: { skillId, shaBefore: oldSha, shaAfter: newSha, reason },
+		data: {
+			skillId,
+			shaBefore: oldSha,
+			shaAfter: newSha,
+			reason,
+			originalCommitSha: resolvedOriginalCommitSha,
+		},
 	};
 };
