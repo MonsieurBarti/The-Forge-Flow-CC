@@ -12,13 +12,16 @@ src/infrastructure/adapters/git/git-slice-merge-lookup.ts:36
 src/infrastructure/adapters/sqlite/schema.ts:18
 src/infrastructure/adapters/sqlite/schema.ts:47
 src/infrastructure/adapters/sqlite/schema.ts:48
-src/infrastructure/adapters/sqlite/sqlite-salvage.ts:154
-src/infrastructure/adapters/sqlite/sqlite-salvage.ts:215
-src/infrastructure/adapters/sqlite/sqlite-salvage.ts:288
-src/infrastructure/adapters/sqlite/sqlite-salvage.ts:364
-src/infrastructure/adapters/sqlite/sqlite-salvage.ts:463
-src/infrastructure/adapters/sqlite/sqlite-salvage.ts:518
-src/infrastructure/adapters/sqlite/sqlite-salvage.ts:562
+# Salvage path exemption: SQLiteSalvage bypasses normal adapter invariants by design
+# (fresh-reviewer, ship-completeness, milestone-completeness) to recover pre-invariant state.
+# See docs/superpowers/specs/2026-04-21-stage-d-quality-gate-hardening-design.md.
+src/infrastructure/adapters/sqlite/sqlite-salvage.ts:166
+src/infrastructure/adapters/sqlite/sqlite-salvage.ts:227
+src/infrastructure/adapters/sqlite/sqlite-salvage.ts:300
+src/infrastructure/adapters/sqlite/sqlite-salvage.ts:376
+src/infrastructure/adapters/sqlite/sqlite-salvage.ts:475
+src/infrastructure/adapters/sqlite/sqlite-salvage.ts:530
+src/infrastructure/adapters/sqlite/sqlite-salvage.ts:574
 src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:125
 src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:145
 src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:150
