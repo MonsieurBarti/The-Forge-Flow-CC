@@ -30,6 +30,7 @@ const makeGit = (cwd: string): ApproveSkillGit => ({
 		const result = spawnSync("git", ["status", "--porcelain", "--", relPath], {
 			cwd,
 			encoding: "utf8",
+			timeout: 30_000,
 		});
 		if (result.status !== 0) {
 			throw new Error(`git status failed: ${result.stderr?.trim() || `exit ${result.status}`}`);
