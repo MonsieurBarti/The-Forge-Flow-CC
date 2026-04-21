@@ -36,6 +36,11 @@ jobs:
         run: |
           set -e
           node dist/cli/index.js --help
+          # Release-branch must also ship the bin/ shim — it's the entry point
+          # Claude Code users hit once the plugin installs. Fail fast if sync
+          # dropped bin/ or the shim regressed.
+          test -x bin/tff-tools
+          PATH="$GITHUB_WORKSPACE/bin:$PATH" tff-tools --help > /dev/null
           WORK=$(mktemp -d)
           cd "$WORK"
           # Branch guards require a git repo on a non-default branch.

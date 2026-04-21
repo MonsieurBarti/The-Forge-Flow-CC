@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# tff-tools — PATH-registered entry point for the tff-cc CLI.
+#
+# Claude Code appends $PLUGIN_ROOT/bin to PATH for every installed plugin,
+# so dropping this executable here makes `tff-tools <cmd>` work verbatim
+# from any Claude-launched shell. Outside Claude Code, invoke it by its
+# absolute path or add the plugin's bin/ dir to PATH manually.
+#
+# The shim resolves its own directory (following symlinks — the marketplace
+# cache may symlink the plugin into place) and execs the bundled Node entry.
+
+set -euo pipefail
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+PLUGIN_ROOT="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
+
+CLI="$PLUGIN_ROOT/dist/cli/index.js"
+if [ ! -f "$CLI" ]; then
+  echo "tff-tools: $CLI not found. The plugin may not be built." >&2
+  exit 1
+fi
+
+exec node "$CLI" "$@"

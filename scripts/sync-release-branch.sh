@@ -83,7 +83,7 @@ echo "Copying plugin content dirs (resolving top-level symlinks only)..."
 # that top-level hop, but any *nested* symlinks must NOT be dereferenced —
 # `rsync -a --safe-links` drops links that escape the source tree so a
 # hypothetical plugin/agents/evil -> /etc/passwd cannot leak into consumers.
-for sub in agents commands hooks references skills tools workflows; do
+for sub in agents bin commands hooks references skills tools workflows; do
   plugin_entry="plugin/$sub"
   if [ ! -e "$plugin_entry" ]; then
     echo "  warn: $plugin_entry not found, skipping" >&2
