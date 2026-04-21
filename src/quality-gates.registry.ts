@@ -44,7 +44,7 @@ export const QUALITY_GATES: readonly QualityGate[] = [
 		mechanism: "adapter-invariant",
 		enforcementSite: "src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts",
 		metaTestPath: "tests/structural/slice-close-completeness-invariant.spec.ts",
-		status: "pending",
+		status: "enforced",
 	},
 	{
 		id: "milestone-completeness",
