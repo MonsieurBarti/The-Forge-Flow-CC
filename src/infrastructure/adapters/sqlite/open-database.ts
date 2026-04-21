@@ -34,6 +34,9 @@ export function openDatabaseWithTrace(
 			const db = tryOpen(dbPath, extraOpts, undefined);
 			return { db, winningCandidate: { path: "<better-sqlite3 default>", source: "prebuilt" } };
 		} catch (err) {
+			// SqliteError means the binding loaded fine and SQLite itself rejected
+			// the open (e.g. missing parent dir, permissions). Do NOT wrap those.
+			if (err instanceof Database.SqliteError) throw err;
 			throw new NativeBindingError({
 				platform: process.platform,
 				arch: process.arch,
@@ -54,6 +57,8 @@ export function openDatabaseWithTrace(
 			const db = tryOpen(dbPath, extraOpts, cand);
 			return { db, winningCandidate: cand };
 		} catch (err) {
+			// Once the binding loads, SQLite runtime errors are not binding failures.
+			if (err instanceof Database.SqliteError) throw err;
 			failures.push({
 				path: cand.path,
 				source: cand.source,
