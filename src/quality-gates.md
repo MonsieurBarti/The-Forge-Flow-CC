@@ -6,7 +6,7 @@ Canonical list of quality gates in `tff-cc`, the mechanism hardening each, and t
 
 | ID | Gate | Class | Mechanism | Status | Enforcement site | Meta-test |
 |---|---|---|---|---|---|---|
-| `fresh-reviewer` | Fresh-reviewer invariant on `recordReview` | III | adapter-invariant | pending | `src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts` | `tests/structural/review-store-fresh-reviewer-invariant.spec.ts` |
+| `fresh-reviewer` | Fresh-reviewer invariant on `recordReview` | III | adapter-invariant | enforced | `src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts` | `tests/structural/review-store-fresh-reviewer-invariant.spec.ts` |
 | `branch-guard` | Branch-guard chokepoint on mutating CLI commands | III | chokepoint-wrapper | pending | `src/cli/utils/with-mutating-command.ts` | `tests/structural/branch-guard-chokepoint.spec.ts` |
 | `ship-completeness` | Slice-close requires approved code + security reviews | V | adapter-invariant | pending | `src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts` | `tests/structural/slice-close-completeness-invariant.spec.ts` |
 | `milestone-completeness` | Milestone-close requires approved spec review per slice | V | adapter-invariant | pending | `src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts` | `tests/structural/milestone-close-completeness-invariant.spec.ts` |
