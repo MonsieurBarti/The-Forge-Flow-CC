@@ -1,7 +1,8 @@
+import type { DomainError } from "../../domain/errors/domain-error.js";
 import { preconditionViolationError } from "../../domain/errors/precondition-violation.error.js";
-import { isOk } from "../../domain/result.js";
 import { checkTasksClosed } from "../../domain/state-machine/preconditions.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { resolveSliceId } from "../utils/resolve-id.js";
 
@@ -41,7 +42,7 @@ export const sliceCloseCmd = async (args: string[]): Promise<string> => {
 	};
 
 	const closableStores = createClosableStateStoresUnchecked();
-	const { sliceStore, taskStore } = closableStores;
+	const { db, sliceStore, taskStore } = closableStores;
 
 	try {
 		const resolved = resolveSliceId(rawSliceId, sliceStore);
@@ -62,9 +63,15 @@ export const sliceCloseCmd = async (args: string[]): Promise<string> => {
 		}
 
 		// Transition to closed via the normal transition path.
-		const result = sliceStore.transitionSlice(sliceId, "closed");
-		if (isOk(result)) return JSON.stringify({ ok: true, data: { status: "closed", reason } });
-		return JSON.stringify({ ok: false, error: result.error });
+		let businessError: DomainError | null = null;
+		const txResult = await withTransaction(db, () => {
+			const r = sliceStore.transitionSlice(sliceId, "closed");
+			if (!r.ok) businessError = r.error;
+			return { data: null, tmpRenames: [] };
+		});
+		if (!txResult.ok) return JSON.stringify({ ok: false, error: txResult.error });
+		if (businessError) return JSON.stringify({ ok: false, error: businessError });
+		return JSON.stringify({ ok: true, data: { status: "closed", reason } });
 	} finally {
 		closableStores.close();
 	}

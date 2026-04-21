@@ -36,6 +36,7 @@ import { sliceListSchema } from "./slice-list.cmd.js";
 // Import all command schemas
 import { sliceTransitionSchema } from "./slice-transition.cmd.js";
 import { specEditGuardSchema } from "./spec-edit-guard.cmd.js";
+import { stateDiffSchema } from "./state-diff.cmd.js";
 import { syncStateSchema } from "./sync-state.cmd.js";
 import { taskClaimSchema } from "./task-claim.cmd.js";
 import { taskCloseSchema } from "./task-close.cmd.js";
@@ -73,6 +74,7 @@ schemaRegistry.set("direct-edit:guard", directEditGuardSchema);
 schemaRegistry.set("pre-op:guard", preOpGuardSchema);
 schemaRegistry.set("spec-edit:guard", specEditGuardSchema);
 schemaRegistry.set("waves:detect", wavesDetectSchema);
+schemaRegistry.set("state:diff", stateDiffSchema);
 schemaRegistry.set("sync:state", syncStateSchema);
 schemaRegistry.set("worktree:create", worktreeCreateSchema);
 schemaRegistry.set("worktree:delete", worktreeDeleteSchema);

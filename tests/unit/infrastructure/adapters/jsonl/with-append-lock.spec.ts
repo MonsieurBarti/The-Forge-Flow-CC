@@ -1,4 +1,4 @@
-import { access, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -66,5 +66,49 @@ describe("withAppendLock", () => {
 		await expect(
 			withAppendLock(path, async () => "done", { maxAttempts: 3, retryMs: 5 }),
 		).rejects.toThrow(/timeout/);
+	});
+
+	it("unlinks a stale lockfile and proceeds within one retry tick", async () => {
+		// write a lockfile whose mtime is 30s in the past
+		await writeFile(`${path}.lock`, "", { flag: "wx" });
+		const past = (Date.now() - 30_000) / 1000; // utimes expects POSIX seconds
+		await utimes(`${path}.lock`, past, past);
+
+		const started = Date.now();
+		const result = await withAppendLock(
+			path,
+			async () => "done",
+			// staleMs must be less than the 30s age set above so the lockfile is treated as stale
+			{ maxAttempts: 5, retryMs: 20, staleMs: 10_000 },
+		);
+		const elapsed = Date.now() - started;
+
+		expect(result).toBe("done");
+		expect(elapsed).toBeLessThan(50); // should complete without any retry sleep
+		await expect(access(`${path}.lock`)).rejects.toThrow(); // released cleanly
+	});
+
+	it("does not treat a fresh lockfile as stale", async () => {
+		// fresh mtime (now); short maxAttempts so the test fails fast if detection is wrong
+		await writeFile(`${path}.lock`, "", { flag: "wx" });
+		await expect(
+			withAppendLock(path, async () => "done", {
+				maxAttempts: 2,
+				retryMs: 20,
+				staleMs: 10_000,
+			}),
+		).rejects.toThrow(/timeout/);
+	});
+
+	it("tolerates concurrent stale-unlink races", async () => {
+		await writeFile(`${path}.lock`, "", { flag: "wx" });
+		const past = (Date.now() - 30_000) / 1000;
+		await utimes(`${path}.lock`, past, past);
+
+		const [a, b] = await Promise.all([
+			withAppendLock(path, async () => "A", { staleMs: 10_000, retryMs: 5 }),
+			withAppendLock(path, async () => "B", { staleMs: 10_000, retryMs: 5 }),
+		]);
+		expect(new Set([a, b])).toEqual(new Set(["A", "B"]));
 	});
 });
