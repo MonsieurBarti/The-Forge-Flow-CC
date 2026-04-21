@@ -6,6 +6,7 @@ import type { CommandSchema } from "../utils/flag-parser.js";
 export const worktreeListSchema: CommandSchema = {
 	name: "worktree:list",
 	purpose: "List all git worktrees",
+	mutates: false,
 	requiredFlags: [],
 	optionalFlags: [],
 	examples: ["worktree:list"],

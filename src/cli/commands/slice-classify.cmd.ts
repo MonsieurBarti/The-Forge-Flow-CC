@@ -7,6 +7,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const sliceClassifySchema: CommandSchema = {
 	name: "slice:classify",
 	purpose: "Classify a slice's complexity tier based on signals",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "signals",

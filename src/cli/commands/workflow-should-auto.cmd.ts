@@ -4,6 +4,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const workflowShouldAutoSchema: CommandSchema = {
 	name: "workflow:should-auto",
 	purpose: "Check if automatic transition is allowed for a status and mode",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "status",

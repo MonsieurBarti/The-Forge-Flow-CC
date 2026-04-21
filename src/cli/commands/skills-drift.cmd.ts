@@ -4,6 +4,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const skillsDriftSchema: CommandSchema = {
 	name: "skills:drift",
 	purpose: "Check for drift between original and current content",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "original",

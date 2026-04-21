@@ -6,6 +6,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const claimCheckStaleSchema: CommandSchema = {
 	name: "claim:check-stale",
 	purpose: "Check for stale task claims",
+	mutates: false,
 	requiredFlags: [],
 	optionalFlags: [
 		{

@@ -83,4 +83,13 @@ export const QUALITY_GATES: readonly QualityGate[] = [
 		metaTestPath: "tests/structural/value-object-invariants.spec.ts",
 		status: "enforced",
 	},
+	{
+		id: "command-mutates-annotation",
+		name: "Every registered CLI command explicitly annotates schema.mutates",
+		class: "III",
+		mechanism: "value-object",
+		enforcementSite: "src/cli/utils/flag-parser.ts",
+		metaTestPath: "tests/structural/command-schema-mutates-annotation.spec.ts",
+		status: "enforced",
+	},
 ];

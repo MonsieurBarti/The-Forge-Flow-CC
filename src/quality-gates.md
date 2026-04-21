@@ -13,6 +13,7 @@ Canonical list of quality gates in `tff-cc`, the mechanism hardening each, and t
 | `coverage-in-ci` | Coverage threshold enforced on every PR | II | mirror-in-ci | enforced | `.github/workflows/ci.yml` | `tests/structural/coverage-in-ci.spec.ts` |
 | `commitlint-in-ci` | Commitlint enforced on every PR | II | mirror-in-ci | enforced | `.github/workflows/ci.yml` | `tests/structural/commitlint-in-ci.spec.ts` |
 | `value-object-invariants` | Every value-object exports a Zod schema or parse fn | III | value-object | enforced | `src/domain/value-objects` | `tests/structural/value-object-invariants.spec.ts` |
+| `command-mutates-annotation` | Every registered CLI command explicitly annotates schema.mutates | III | value-object | enforced | `src/cli/utils/flag-parser.ts` | `tests/structural/command-schema-mutates-annotation.spec.ts` |
 
 ## Classes
 

@@ -7,6 +7,7 @@ import { resolveMilestoneId } from "../utils/resolve-id.js";
 export const milestoneAuditStatusSchema: CommandSchema = {
 	name: "milestone:audit-status",
 	purpose: "Check whether a milestone has a passing audit (gate for complete-milestone)",
+	mutates: false,
 	requiredFlags: [{ name: "milestone-id", type: "string", description: "Milestone label or UUID" }],
 	optionalFlags: [],
 	examples: ["milestone:audit-status --milestone-id M01"],

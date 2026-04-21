@@ -42,6 +42,7 @@ function isProjectInitialized(): boolean {
 export const preOpGuardSchema: CommandSchema = {
 	name: "pre-op:guard",
 	purpose: "Validate an operation is allowed for a slice",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "slice-id",

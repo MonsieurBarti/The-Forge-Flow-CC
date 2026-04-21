@@ -9,6 +9,7 @@ import { parseFlags } from "../utils/flag-parser.js";
 export const branchGuardCheckSchema: CommandSchema = {
 	name: "branch-guard:check",
 	purpose: "Check whether the current branch violates default-branch or milestone-branch guards",
+	mutates: false,
 	requiredFlags: [],
 	optionalFlags: [
 		{

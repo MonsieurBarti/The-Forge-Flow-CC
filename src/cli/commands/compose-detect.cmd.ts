@@ -8,6 +8,7 @@ type Observation = z.infer<typeof ObservationSchema>;
 export const composeDetectSchema: CommandSchema = {
 	name: "compose:detect",
 	purpose: "Detect clusters from observations",
+	mutates: false,
 	requiredFlags: [
 		{
 			name: "observations",
