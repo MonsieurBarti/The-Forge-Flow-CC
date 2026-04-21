@@ -6,6 +6,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const checkpointSaveSchema: CommandSchema = {
 	name: "checkpoint:save",
 	purpose: "Save a checkpoint for a slice",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "slice-id",

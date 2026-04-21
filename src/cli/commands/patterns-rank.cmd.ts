@@ -7,6 +7,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const patternsRankSchema: CommandSchema = {
 	name: "patterns:rank",
 	purpose: "Rank pattern candidates by score",
+	mutates: true,
 	requiredFlags: [],
 	optionalFlags: [
 		{

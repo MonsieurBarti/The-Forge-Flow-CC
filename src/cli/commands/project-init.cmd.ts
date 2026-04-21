@@ -9,6 +9,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const projectInitSchema: CommandSchema = {
 	name: "project:init",
 	purpose: "Initialize a new TFF project",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "name",

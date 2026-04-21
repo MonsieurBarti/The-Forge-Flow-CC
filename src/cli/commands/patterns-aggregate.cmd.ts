@@ -7,6 +7,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const patternsAggregateSchema: CommandSchema = {
 	name: "patterns:aggregate",
 	purpose: "Aggregate patterns by frequency",
+	mutates: true,
 	requiredFlags: [],
 	optionalFlags: [
 		{

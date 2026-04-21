@@ -6,6 +6,7 @@ import { resolveSliceId } from "../utils/resolve-id.js";
 export const depAddSchema: CommandSchema = {
 	name: "dep:add",
 	purpose: "Add a dependency between two entities",
+	mutates: true,
 	requiredFlags: [
 		{ name: "from-id", type: "string", description: "ID of the entity that is blocked" },
 		{ name: "to-id", type: "string", description: "ID of the blocking entity" },

@@ -14,6 +14,7 @@ import { resolveRoutingPaths } from "../utils/routing-paths.js";
 export const routingCalibrateSchema: CommandSchema = {
 	name: "routing:calibrate",
 	purpose: "Produce an advisory calibration report from routing decisions + outcomes",
+	mutates: true,
 	requiredFlags: [],
 	optionalFlags: [
 		{ name: "n-min", type: "number", description: "Minimum cell size (default 5)" },

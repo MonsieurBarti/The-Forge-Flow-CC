@@ -15,6 +15,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const sliceCreateSchema: CommandSchema = {
 	name: "slice:create",
 	purpose: "Create a new slice in a milestone",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "title",

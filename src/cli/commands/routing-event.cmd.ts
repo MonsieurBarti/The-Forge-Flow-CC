@@ -10,6 +10,7 @@ const DEBUG_DEBOUNCE_MS = 60 * 1000;
 export const routingEventSchema: CommandSchema = {
 	name: "routing:event",
 	purpose: "Append a workflow event (e.g. debug) to routing.jsonl for Phase D feedback loop",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "kind",

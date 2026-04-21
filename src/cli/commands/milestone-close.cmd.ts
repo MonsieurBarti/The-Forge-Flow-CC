@@ -10,6 +10,7 @@ import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 export const milestoneCloseSchema: CommandSchema = {
 	name: "milestone:close",
 	purpose: "Close a milestone",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "milestone-id",

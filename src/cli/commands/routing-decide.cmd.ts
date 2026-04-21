@@ -12,6 +12,7 @@ export const routingDecideSchema: CommandSchema = {
 	name: "routing:decide",
 	purpose:
 		"Extract signals and produce per-agent tier decisions for a workflow (unified Phase C routing)",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "slice-id",

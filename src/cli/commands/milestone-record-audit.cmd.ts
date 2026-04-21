@@ -23,6 +23,7 @@ function hasForbiddenChars(s: string): boolean {
 export const milestoneRecordAuditSchema: CommandSchema = {
 	name: "milestone:record-audit",
 	purpose: "Record the result of a milestone audit",
+	mutates: true,
 	requiredFlags: [
 		{ name: "milestone-id", type: "string", description: "Milestone label or UUID" },
 		{ name: "verdict", type: "string", description: "Audit verdict", enum: ["ready", "not_ready"] },

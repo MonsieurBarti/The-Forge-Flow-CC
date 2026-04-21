@@ -15,6 +15,7 @@ import { resolveRoutingPaths } from "../utils/routing-paths.js";
 export const routingJudgeRecordSchema: CommandSchema = {
 	name: "routing:judge-record",
 	purpose: "Persist JudgeVerdicts emitted by the tff-outcome-judge agent as model-judge outcomes",
+	mutates: true,
 	requiredFlags: [{ name: "slice", type: "string", description: "Slice label (M##-S##) or UUID" }],
 	optionalFlags: [
 		{

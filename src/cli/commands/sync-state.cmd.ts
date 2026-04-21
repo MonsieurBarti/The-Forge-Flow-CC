@@ -8,6 +8,7 @@ import { withClosableSyncLock } from "../with-sync-lock.js";
 export const syncStateSchema: CommandSchema = {
 	name: "sync:state",
 	purpose: "Synchronize STATE.md for a milestone",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "milestone-id",

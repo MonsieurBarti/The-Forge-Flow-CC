@@ -13,6 +13,7 @@ import { resolveSliceId } from "../utils/resolve-id.js";
 export const worktreeCreateSchema: CommandSchema = {
 	name: "worktree:create",
 	purpose: "Create a git worktree for a slice",
+	mutates: true,
 	requiredFlags: [
 		{
 			name: "slice-id",
