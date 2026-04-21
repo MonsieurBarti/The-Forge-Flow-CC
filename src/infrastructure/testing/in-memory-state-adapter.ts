@@ -6,8 +6,10 @@ import type { Task } from "../../domain/entities/task.js";
 import { alreadyClaimedError } from "../../domain/errors/already-claimed.error.js";
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { createDomainError } from "../../domain/errors/domain-error.js";
+import { freshReviewerViolationError } from "../../domain/errors/fresh-reviewer-violation.error.js";
 import { hasOpenChildrenError } from "../../domain/errors/has-open-children.error.js";
 import { milestoneCompletenessViolationError } from "../../domain/errors/milestone-completeness-violation.error.js";
+import { shipCompletenessViolationError } from "../../domain/errors/ship-completeness-violation.error.js";
 import type { DomainEvent } from "../../domain/events/domain-event.js";
 import { milestoneBranchName } from "../../domain/helpers/branch-naming.js";
 import type { DatabaseInit } from "../../domain/ports/database-init.port.js";
@@ -244,6 +246,17 @@ export class InMemoryStateAdapter
 		if (!slice) {
 			return Err(createDomainError("NOT_FOUND", `Slice "${id}" not found`));
 		}
+		if (target === "closed" && slice.status === "completing") {
+			const approvedTypes = new Set(
+				this.reviews.filter((r) => r.sliceId === id && r.verdict === "approved").map((r) => r.type),
+			);
+			const missing: Array<"code" | "security"> = [];
+			if (!approvedTypes.has("code")) missing.push("code");
+			if (!approvedTypes.has("security")) missing.push("security");
+			if (missing.length > 0) {
+				return Err(shipCompletenessViolationError(id, missing));
+			}
+		}
 		const domainResult = transitionSlice(slice, target);
 		if (!domainResult.ok) return domainResult;
 		this.slices.set(id, domainResult.data.slice);
@@ -396,6 +409,11 @@ export class InMemoryStateAdapter
 
 	// ReviewStore
 	recordReview(review: ReviewRecord): Result<void, DomainError> {
+		const executorsResult = this.getExecutorsForSlice(review.sliceId);
+		if (!executorsResult.ok) return executorsResult;
+		if (executorsResult.data.includes(review.reviewer)) {
+			return Err(freshReviewerViolationError(review.sliceId, review.reviewer));
+		}
 		this.reviews.push(review);
 		return Ok(undefined);
 	}
