@@ -12,7 +12,7 @@
     "dev": "tsc -p tsconfig.build.json --watch",
     "test": "bun run build && vitest run",
     "test:watch": "vitest",
-    "test:coverage": "bun run build && vitest run --coverage",
+    "test:coverage": "bun run build && vitest run --coverage && node scripts/check-coverage-thresholds.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/ tests/",
     "lint:fix": "biome check --fix src/ tests/",
