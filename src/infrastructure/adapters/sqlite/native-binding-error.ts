@@ -33,10 +33,11 @@ export class NativeBindingError extends Error {
 		super(renderMessage(input));
 		this.name = "NativeBindingError";
 		this.details = details;
+		Object.setPrototypeOf(this, NativeBindingError.prototype);
 	}
 
 	toJSON(): {
-		code: typeof NativeBindingError.prototype.code;
+		code: "NATIVE_BINDING_FAILED";
 		message: string;
 		details: NativeBindingErrorDetails;
 	} {
