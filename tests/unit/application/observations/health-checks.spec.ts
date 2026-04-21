@@ -51,9 +51,27 @@ describe("checkLastObservation", () => {
 
 	it("swallows malformed JSONL into { ok: false, reason }", () => {
 		fs.mkdirSync(path.join(tmp, ".tff-cc/observations"), { recursive: true });
-		fs.writeFileSync(path.join(tmp, ".tff-cc/observations/sessions.jsonl"), "not-json\n");
+		fs.writeFileSync(
+			path.join(tmp, ".tff-cc/observations/sessions.jsonl"),
+			"nope\nbad\nstill-bad\nwrong\nno-good\n",
+		);
 		const r = checkLastObservation(tmp, new Date(), 14);
 		expect(r.ok).toBe(false);
+	});
+
+	it("walks back past a truncated last line", () => {
+		fs.mkdirSync(path.join(tmp, ".tff-cc/observations"), { recursive: true });
+		fs.writeFileSync(
+			path.join(tmp, ".tff-cc/observations/sessions.jsonl"),
+			`${JSON.stringify({ ts: "2026-04-14T00:00:00Z", tool: "Read" })}\n{"ts":"broken`,
+		);
+		const r = checkLastObservation(tmp, new Date("2026-04-21T00:00:00Z"), 14);
+		expect(r).toMatchObject({
+			ok: true,
+			present: true,
+			stale: false,
+			lastSeenAt: "2026-04-14T00:00:00Z",
+		});
 	});
 
 	it("returns present: false when sessions.jsonl is empty", () => {

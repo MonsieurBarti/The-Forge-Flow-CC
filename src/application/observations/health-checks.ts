@@ -8,11 +8,10 @@ const DEAD_LETTER = `${OBS_DIR}/dead-letter.jsonl`;
 const MUTATING_SENTINEL = `${OBS_DIR}/.mutating-cli-ran`;
 const SETTINGS = ".tff-cc/settings.yaml";
 
-// Reads whole file into memory; acceptable for health probes that run on demand.
-const readLastLine = (filepath: string): string | null => {
+const readRecentLines = (filepath: string, count: number): string[] => {
 	const content = fs.readFileSync(filepath, "utf8");
 	const lines = content.split("\n").filter((l) => l.length > 0);
-	return lines.length > 0 ? lines[lines.length - 1] : null;
+	return lines.slice(-count);
 };
 
 export interface LastObservationResult {
@@ -37,26 +36,27 @@ export const checkLastObservation = (
 		if (!fs.existsSync(filepath)) {
 			return { ok: true, present: false, lastSeenAt: null, stale: false };
 		}
-		const last = readLastLine(filepath);
-		if (last === null) {
+		const recent = readRecentLines(filepath, 5);
+		if (recent.length === 0) {
 			return { ok: true, present: false, lastSeenAt: null, stale: false };
 		}
-		const parsed = JSON.parse(last) as { ts?: string };
-		if (typeof parsed.ts !== "string") {
-			return { ok: false, reason: "last observation has no ts field" };
+		// Walk from newest backwards; tolerate truncated last line.
+		for (let i = recent.length - 1; i >= 0; i--) {
+			try {
+				const parsed = JSON.parse(recent[i]) as { ts?: string };
+				if (typeof parsed.ts !== "string") continue;
+				const lastTime = Date.parse(parsed.ts);
+				if (Number.isNaN(lastTime)) continue;
+				const ageDays = (now.getTime() - lastTime) / (1000 * 60 * 60 * 24);
+				return {
+					ok: true,
+					present: true,
+					lastSeenAt: parsed.ts,
+					stale: ageDays > staleAfterDays,
+				};
+			} catch {}
 		}
-		const lastTime = Date.parse(parsed.ts);
-		if (Number.isNaN(lastTime)) {
-			return { ok: false, reason: `unparseable ts: ${parsed.ts}` };
-		}
-		const ageDays = (now.getTime() - lastTime) / (1000 * 60 * 60 * 24);
-		return {
-			ok: true,
-			present: true,
-			lastSeenAt: parsed.ts,
-			// Strict >: observations exactly N days old are NOT stale.
-			stale: ageDays > staleAfterDays,
-		};
+		return { ok: false, reason: "no parseable observation in last 5 entries" };
 	} catch (err) {
 		return { ok: false, reason: `checkLastObservation failed: ${(err as Error).message}` };
 	}
