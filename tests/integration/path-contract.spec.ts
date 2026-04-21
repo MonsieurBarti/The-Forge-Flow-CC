@@ -37,15 +37,22 @@ describe("path contract: artifacts under .tff-cc/ only", () => {
 	});
 
 	const cli = (cmd: string) => {
-		// stdio piped; if stderr is non-empty the command wrote warnings/errors and
-		// we want them visible in test output rather than silently swallowed.
-		const result = execSync(`node ${CLI} ${cmd}`, {
-			cwd: tmpRepo,
-			env: { ...process.env, TFF_CC_HOME: tffCcHome },
-			stdio: ["ignore", "pipe", "pipe"],
-			encoding: "utf8",
-		});
-		return result;
+		try {
+			const result = execSync(`node ${CLI} ${cmd}`, {
+				cwd: tmpRepo,
+				env: { ...process.env, TFF_CC_HOME: tffCcHome },
+				stdio: ["ignore", "pipe", "pipe"],
+				encoding: "utf8",
+			});
+			return result;
+		} catch (err) {
+			// execSync swallows stdout/stderr into the error. Surface both so test
+			// output shows the actual CLI failure payload, not just "Command failed".
+			const e = err as { stdout?: string; stderr?: string; message: string };
+			throw new Error(
+				`CLI command failed: ${cmd}\n  tmpRepo: ${tmpRepo}\n  tffCcHome: ${tffCcHome}\n  stdout: ${e.stdout ?? "(empty)"}\n  stderr: ${e.stderr ?? "(empty)"}\n  ${e.message}`,
+			);
+		}
 	};
 
 	it("project:init creates .tff-cc/ symlink", () => {

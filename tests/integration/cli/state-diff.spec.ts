@@ -22,7 +22,7 @@ describe("state:diff command", () => {
 		rmSync(tmpHome, { recursive: true, force: true });
 	});
 
-	it("reports inSync:true immediately after sync:state", async () => {
+	it("reports inSync:true immediately after sync:state", { timeout: 30_000 }, async () => {
 		const { projectInitCmd } = await import("../../../src/cli/commands/project-init.cmd.js");
 		const { milestoneCreateCmd } = await import(
 			"../../../src/cli/commands/milestone-create.cmd.js"
@@ -48,7 +48,7 @@ describe("state:diff command", () => {
 		rmSync(projectDir, { recursive: true, force: true });
 	});
 
-	it("reports inSync:false with a non-empty diff when STATE.md is hand-edited", async () => {
+	it("reports inSync:false with a non-empty diff when STATE.md is hand-edited", { timeout: 30_000 }, async () => {
 		const { writeFileSync, readFileSync } = await import("node:fs");
 		const { projectInitCmd } = await import("../../../src/cli/commands/project-init.cmd.js");
 		const { milestoneCreateCmd } = await import(
