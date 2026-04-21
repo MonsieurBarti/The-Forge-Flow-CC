@@ -35,16 +35,16 @@ export const driftReport = async (input: {
 			rows.push({ id, error: `${relPath} missing` });
 			continue;
 		}
-		const current = fs.readFileSync(absPath, "utf8");
 		try {
+			const current = fs.readFileSync(absPath, "utf8");
 			const original = await input.git.show(baseline.originalCommitSha, relPath);
-			const { driftScore } = checkDrift(original, current, {
+			const { driftScore, overThreshold } = checkDrift(original, current, {
 				maxDrift: SEMANTIC_DRIFT_RATIO,
 			});
 			rows.push({
 				id,
 				ratio: driftScore,
-				overThreshold: driftScore > SEMANTIC_DRIFT_RATIO,
+				overThreshold,
 			});
 		} catch (err) {
 			rows.push({ id, error: (err as Error).message });
