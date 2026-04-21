@@ -26,6 +26,9 @@ export const readManifest = (root: string): Manifest => {
 	if (parsed.version !== 1) {
 		throw new Error(`unsupported skill-baselines.json version: ${parsed.version}`);
 	}
+	if (typeof parsed.skills !== "object" || parsed.skills === null || Array.isArray(parsed.skills)) {
+		throw new Error("skill-baselines.json: 'skills' must be an object");
+	}
 	return parsed;
 };
 

@@ -33,6 +33,24 @@ describe("baseline-registry I/O", () => {
 		expect(m).toEqual({ version: 1, skills: {} });
 	});
 
+	it("readManifest throws when 'skills' key is missing", () => {
+		fs.mkdirSync(path.join(tmp, "skills"), { recursive: true });
+		fs.writeFileSync(
+			path.join(tmp, "skills/skill-baselines.json"),
+			JSON.stringify({ version: 1 }),
+		);
+		expect(() => readManifest(tmp)).toThrow(/'skills' must be an object/);
+	});
+
+	it("readManifest throws when 'skills' is an array", () => {
+		fs.mkdirSync(path.join(tmp, "skills"), { recursive: true });
+		fs.writeFileSync(
+			path.join(tmp, "skills/skill-baselines.json"),
+			JSON.stringify({ version: 1, skills: [] }),
+		);
+		expect(() => readManifest(tmp)).toThrow(/'skills' must be an object/);
+	});
+
 	it("writeManifest round-trips with stable key order + trailing newline", () => {
 		writeManifest(tmp, {
 			version: 1,
