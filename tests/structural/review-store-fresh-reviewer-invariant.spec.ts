@@ -58,4 +58,17 @@ describe("fresh-reviewer invariant is wired on recordReview", () => {
 		expect(spy).toHaveBeenCalledWith(sliceId);
 		spy.mockRestore();
 	});
+
+	it("recordReview rejects when reviewer is in the executor list", () => {
+		const result = stores.reviewStore.recordReview({
+			sliceId,
+			reviewer: "agent-A", // seeded executor
+			verdict: "approved",
+			type: "code",
+			commitSha: "abc",
+			createdAt: new Date().toISOString(),
+		});
+		expect(result.ok).toBe(false);
+		if (!result.ok) expect(result.error.code).toBe("FRESH_REVIEWER_VIOLATION");
+	});
 });

@@ -61,4 +61,37 @@ describe("milestone-close completeness invariant is wired", () => {
 		listSlicesSpy.mockRestore();
 		listReviewsSpy.mockRestore();
 	});
+
+	it("closeMilestone rejects when a slice lacks an approved spec review", () => {
+		// Create a fresh milestone with one slice and NO spec review seeded.
+		stores.milestoneStore.createMilestone({ number: 2, name: "Milestone Two" });
+
+		const msResult = stores.milestoneStore.listMilestones();
+		if (!msResult.ok || msResult.data.length === 0) throw new Error("No milestones found");
+		const newMilestone = msResult.data.find((m) => m.name === "Milestone Two");
+		if (!newMilestone) throw new Error("Milestone Two not found");
+		const newMilestoneId = newMilestone.id;
+
+		const sliceResult = stores.sliceStore.createSlice({
+			milestoneId: newMilestoneId,
+			number: 1,
+			title: "Slice Without Spec",
+		});
+		if (!sliceResult.ok) throw new Error("Failed to create slice for Milestone Two");
+		const newSliceId = sliceResult.data.id;
+
+		const taskResult = stores.taskStore.createTask({
+			sliceId: newSliceId,
+			number: 1,
+			title: "Task One",
+		});
+		if (!taskResult.ok) throw new Error("Failed to create task");
+		const claimResult = stores.taskStore.claimTask(taskResult.data.id, "exec-C");
+		if (!claimResult.ok) throw new Error("Failed to claim task");
+
+		// No spec review seeded — close should be rejected.
+		const result = stores.milestoneStore.closeMilestone(newMilestoneId);
+		expect(result.ok).toBe(false);
+		if (!result.ok) expect(result.error.code).toBe("MILESTONE_COMPLETENESS_VIOLATION");
+	});
 });

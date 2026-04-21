@@ -107,4 +107,35 @@ describe("slice-close completeness invariant is wired", () => {
 		expect(spy).not.toHaveBeenCalledWith(slice2Id);
 		spy.mockRestore();
 	});
+
+	it("transitionSlice(..., 'closed') rejects when required reviews are missing", () => {
+		// Create a second slice with a claimed task, drive to completing, but do NOT seed reviews.
+		const msResult = stores.milestoneStore.listMilestones();
+		if (!msResult.ok || msResult.data.length === 0) throw new Error("No milestones found");
+		const milestoneId = msResult.data[0].id;
+
+		const slice2Result = stores.sliceStore.createSlice({
+			milestoneId,
+			number: 2,
+			title: "Slice Two",
+		});
+		if (!slice2Result.ok) throw new Error("Failed to create second slice");
+		const slice2Id = slice2Result.data.id;
+
+		const task2Result = stores.taskStore.createTask({
+			sliceId: slice2Id,
+			number: 1,
+			title: "Task Two",
+		});
+		if (!task2Result.ok) throw new Error("Failed to create task for second slice");
+		const claim2Result = stores.taskStore.claimTask(task2Result.data.id, "exec-B");
+		if (!claim2Result.ok) throw new Error("Failed to claim task for second slice");
+
+		// Drive to completing without seeding any reviews.
+		driveToCompleting(slice2Id);
+
+		const result = stores.sliceStore.transitionSlice(slice2Id, "closed");
+		expect(result.ok).toBe(false);
+		if (!result.ok) expect(result.error.code).toBe("SHIP_COMPLETENESS_VIOLATION");
+	});
 });
