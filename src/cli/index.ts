@@ -1,3 +1,4 @@
+import { realpathSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { handleStartupRecovery } from "../application/recovery/handle-startup-recovery.js";
@@ -466,7 +467,18 @@ const main = async () => {
 	console.log(output);
 };
 
-if (process.argv[1] && process.argv[1] === fileURLToPath(import.meta.url)) {
+// Compare via realpath to handle platforms where argv[1] and the canonical
+// module URL disagree on symlinks (e.g. macOS /var -> /private/var).
+const isEntryPoint = (): boolean => {
+	if (!process.argv[1]) return false;
+	try {
+		return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+	} catch {
+		return process.argv[1] === fileURLToPath(import.meta.url);
+	}
+};
+
+if (isEntryPoint()) {
 	main().catch((err) => {
 		if (err instanceof NativeBindingError) {
 			console.log(JSON.stringify({ ok: false, error: err.toJSON() }));
