@@ -8,7 +8,9 @@ import { isExempt, SKIPLIST } from "../../../helpers/transaction-discipline/skip
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 
 describe("transaction-wrap discipline (real codebase)", () => {
-	it("every mutating store call in src/cli/commands is inside withTransaction or explicitly exempt", () => {
+	// ts-morph loads the entire tsconfig project; under parallel suite execution
+	// this routinely exceeds the 5s default timeout. Bump per-test.
+	it("every mutating store call in src/cli/commands is inside withTransaction or explicitly exempt", { timeout: 30_000 }, () => {
 		const project = new Project({
 			tsConfigFilePath: `${REPO}/tsconfig.json`,
 			skipAddingFilesFromTsConfig: false,
