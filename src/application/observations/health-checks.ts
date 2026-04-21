@@ -8,8 +8,25 @@ const DEAD_LETTER = `${OBS_DIR}/dead-letter.jsonl`;
 const MUTATING_SENTINEL = `${OBS_DIR}/.mutating-cli-ran`;
 const SETTINGS = ".tff-cc/settings.yaml";
 
+const MAX_TAIL_BYTES = 64 * 1024;
+
+const readTail = (filepath: string, maxBytes: number): string => {
+	const stat = fs.statSync(filepath);
+	if (stat.size <= maxBytes) {
+		return fs.readFileSync(filepath, "utf8");
+	}
+	const fd = fs.openSync(filepath, "r");
+	try {
+		const buf = Buffer.alloc(maxBytes);
+		fs.readSync(fd, buf, 0, maxBytes, stat.size - maxBytes);
+		return buf.toString("utf8");
+	} finally {
+		fs.closeSync(fd);
+	}
+};
+
 const readRecentLines = (filepath: string, count: number): string[] => {
-	const content = fs.readFileSync(filepath, "utf8");
+	const content = readTail(filepath, MAX_TAIL_BYTES);
 	const lines = content.split("\n").filter((l) => l.length > 0);
 	return lines.slice(-count);
 };
@@ -95,6 +112,7 @@ export interface DeadLetterResult {
 	readonly ok: true;
 	readonly present: boolean;
 	readonly entryCount: number;
+	readonly entryCountTruncated: boolean;
 	readonly bytes: number;
 }
 
@@ -102,12 +120,21 @@ export const auditDeadLetter = (root: string): DeadLetterResult | ProbeFailure =
 	try {
 		const filepath = path.join(root, DEAD_LETTER);
 		if (!fs.existsSync(filepath)) {
-			return { ok: true, present: false, entryCount: 0, bytes: 0 };
+			return { ok: true, present: false, entryCount: 0, entryCountTruncated: false, bytes: 0 };
 		}
 		const stat = fs.statSync(filepath);
-		const content = fs.readFileSync(filepath, "utf8");
-		const entryCount = content.split("\n").filter((l) => l.length > 0).length;
-		return { ok: true, present: true, entryCount, bytes: stat.size };
+		// Avoid loading huge dead-letter into memory; sample the tail only.
+		const sample = readTail(filepath, MAX_TAIL_BYTES);
+		// If file is larger than sample, entryCount is a lower bound — prefix with ~.
+		const approxLines = sample.split("\n").filter((l) => l.length > 0).length;
+		const truncated = stat.size > MAX_TAIL_BYTES;
+		return {
+			ok: true,
+			present: true,
+			entryCount: approxLines,
+			entryCountTruncated: truncated,
+			bytes: stat.size,
+		};
 	} catch (err) {
 		return { ok: false, reason: `auditDeadLetter failed: ${(err as Error).message}` };
 	}

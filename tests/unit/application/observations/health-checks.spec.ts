@@ -161,7 +161,7 @@ describe("auditDeadLetter", () => {
 		const dl = path.join(tmp, ".tff-cc/observations/dead-letter.jsonl");
 		fs.writeFileSync(dl, "line-a\nline-b\nline-c\n");
 		const r = auditDeadLetter(tmp);
-		expect(r).toMatchObject({ ok: true, present: true, entryCount: 3 });
+		expect(r).toMatchObject({ ok: true, present: true, entryCount: 3, entryCountTruncated: false });
 		expect((r as { bytes: number }).bytes).toBeGreaterThan(0);
 	});
 });
