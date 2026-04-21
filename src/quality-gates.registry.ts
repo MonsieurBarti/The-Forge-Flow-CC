@@ -35,7 +35,7 @@ export const QUALITY_GATES: readonly QualityGate[] = [
 		mechanism: "chokepoint-wrapper",
 		enforcementSite: "src/cli/utils/with-mutating-command.ts",
 		metaTestPath: "tests/structural/branch-guard-chokepoint.spec.ts",
-		status: "pending",
+		status: "enforced",
 	},
 	{
 		id: "ship-completeness",
