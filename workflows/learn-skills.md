@@ -25,8 +25,9 @@ Pass maxDrift: `tff-tools skills:drift --max-drift 0.2`
    - approved →
      - archive to `.tff-cc/observations/skill-history/<name>.v<N>.md`
      - update `skills/<name>.md` with the approved refinement
-     - commit the content change (so the working tree is clean for the next step)
-     - run `tff-tools skills:approve --id <name> --reason "<refinement summary>"` to sync `skills/skill-baselines.json`
-     - stage the manifest update and amend it into the content commit (or create a second commit; the audit-trail requirement is that the reason is captured in a commit message)
+     - compute the content sha: `APPROVED_SHA=$(sha256sum skills/<name>/SKILL.md | cut -d' ' -f1)` (or `shasum -a 256` on macOS)
+     - commit the content change (so the working tree is clean and HEAD contains the approved bytes)
+     - run `tff-tools skills:approve --id <name> --reason "<refinement summary>" --approved-diff-sha $APPROVED_SHA --refinement-id <draft-id>` to sync `skills/skill-baselines.json` and append to the audit log
+     - stage the manifest update and create a separate commit (do NOT amend — global rule prefers new commits over amends)
    - rejected → record as intentional divergence (suppress future suggestions)
 7. NEXT: @references/next-steps.md
