@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
 	computeSha,
+	diffAgainstManifest,
 	readManifest,
 	writeManifest,
 } from "../../../../src/application/skills/baseline-registry.js";
@@ -35,10 +36,7 @@ describe("baseline-registry I/O", () => {
 
 	it("readManifest throws when 'skills' key is missing", () => {
 		fs.mkdirSync(path.join(tmp, "skills"), { recursive: true });
-		fs.writeFileSync(
-			path.join(tmp, "skills/skill-baselines.json"),
-			JSON.stringify({ version: 1 }),
-		);
+		fs.writeFileSync(path.join(tmp, "skills/skill-baselines.json"), JSON.stringify({ version: 1 }));
 		expect(() => readManifest(tmp)).toThrow(/'skills' must be an object/);
 	});
 
@@ -83,5 +81,96 @@ describe("baseline-registry I/O", () => {
 			appleBlock.indexOf('"refinementId"'),
 		);
 		expect(appleBlock.indexOf('"refinementId"')).toBeLessThan(appleBlock.indexOf('"sha256"'));
+	});
+});
+
+describe("diffAgainstManifest", () => {
+	let tmp: string;
+
+	beforeEach(() => {
+		tmp = fs.mkdtempSync(path.join(os.tmpdir(), "baseline-diff-"));
+		fs.mkdirSync(path.join(tmp, "skills", "alpha"), { recursive: true });
+		fs.writeFileSync(path.join(tmp, "skills/alpha/SKILL.md"), "alpha content\n");
+		fs.mkdirSync(path.join(tmp, "skills", "beta"), { recursive: true });
+		fs.writeFileSync(path.join(tmp, "skills/beta/SKILL.md"), "beta content\n");
+	});
+
+	afterEach(() => {
+		fs.rmSync(tmp, { recursive: true, force: true });
+	});
+
+	it("reports `missing` when a skill dir has no manifest row", () => {
+		const manifest = { version: 1 as const, skills: {} };
+		const report = diffAgainstManifest(tmp, manifest);
+		expect(report.missing.sort()).toEqual(["alpha", "beta"]);
+		expect(report.mismatched).toEqual([]);
+		expect(report.orphaned).toEqual([]);
+	});
+
+	it("reports `orphaned` when a manifest row has no skill dir", () => {
+		const manifest = {
+			version: 1 as const,
+			skills: {
+				ghost: {
+					sha256: "x".repeat(64),
+					originalCommitSha: "abc",
+					approvedAt: "t",
+					refinementId: null,
+				},
+			},
+		};
+		const report = diffAgainstManifest(tmp, manifest);
+		expect(report.orphaned).toContain("ghost");
+	});
+
+	it("reports `mismatched` with expected/actual when hash differs", () => {
+		const alphaActual = computeSha("alpha content\n");
+		const manifest = {
+			version: 1 as const,
+			skills: {
+				alpha: {
+					sha256: "0".repeat(64),
+					originalCommitSha: "abc",
+					approvedAt: "t",
+					refinementId: null,
+				},
+				beta: {
+					sha256: computeSha("beta content\n"),
+					originalCommitSha: "abc",
+					approvedAt: "t",
+					refinementId: null,
+				},
+			},
+		};
+		const report = diffAgainstManifest(tmp, manifest);
+		expect(report.mismatched).toEqual([
+			{ id: "alpha", expected: "0".repeat(64), actual: alphaActual },
+		]);
+		expect(report.missing).toEqual([]);
+		expect(report.orphaned).toEqual([]);
+	});
+
+	it("returns empty report when everything matches", () => {
+		const manifest = {
+			version: 1 as const,
+			skills: {
+				alpha: {
+					sha256: computeSha("alpha content\n"),
+					originalCommitSha: "abc",
+					approvedAt: "t",
+					refinementId: null,
+				},
+				beta: {
+					sha256: computeSha("beta content\n"),
+					originalCommitSha: "abc",
+					approvedAt: "t",
+					refinementId: null,
+				},
+			},
+		};
+		const report = diffAgainstManifest(tmp, manifest);
+		expect(report.missing).toEqual([]);
+		expect(report.mismatched).toEqual([]);
+		expect(report.orphaned).toEqual([]);
 	});
 });

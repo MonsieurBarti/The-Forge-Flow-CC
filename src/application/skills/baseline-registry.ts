@@ -52,3 +52,40 @@ export const writeManifest = (root: string, manifest: Manifest): void => {
 	fs.mkdirSync(path.dirname(p), { recursive: true });
 	fs.writeFileSync(p, sortedStringify(manifest), "utf8");
 };
+
+export interface DriftReport {
+	readonly missing: string[];
+	readonly mismatched: Array<{ id: string; expected: string; actual: string }>;
+	readonly orphaned: string[];
+}
+
+const listSkillDirs = (root: string): string[] => {
+	const skillsRoot = path.join(root, "skills");
+	if (!fs.existsSync(skillsRoot)) return [];
+	return fs
+		.readdirSync(skillsRoot, { withFileTypes: true })
+		.filter((e) => e.isDirectory())
+		.map((e) => e.name)
+		.filter((name) => fs.existsSync(path.join(skillsRoot, name, "SKILL.md")));
+};
+
+export const diffAgainstManifest = (root: string, manifest: Manifest): DriftReport => {
+	const skillDirs = new Set(listSkillDirs(root));
+	const manifestIds = new Set(Object.keys(manifest.skills));
+
+	const missing = [...skillDirs].filter((id) => !manifestIds.has(id)).sort();
+	const orphaned = [...manifestIds].filter((id) => !skillDirs.has(id)).sort();
+
+	const mismatched: Array<{ id: string; expected: string; actual: string }> = [];
+	for (const id of [...skillDirs].sort()) {
+		const row = manifest.skills[id];
+		if (!row) continue;
+		const content = fs.readFileSync(path.join(root, "skills", id, "SKILL.md"), "utf8");
+		const actual = computeSha(content);
+		if (actual !== row.sha256) {
+			mismatched.push({ id, expected: row.sha256, actual });
+		}
+	}
+
+	return { missing, mismatched, orphaned };
+};
