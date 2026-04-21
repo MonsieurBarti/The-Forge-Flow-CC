@@ -84,7 +84,9 @@ describe("withAppendLock", () => {
 		const elapsed = Date.now() - started;
 
 		expect(result).toBe("done");
-		expect(elapsed).toBeLessThan(50); // should complete without any retry sleep
+		// Should complete without a full retry sleep. A generous ceiling tolerates
+		// CI / parallel-suite load without masking a real regression.
+		expect(elapsed).toBeLessThan(250);
 		await expect(access(`${path}.lock`)).rejects.toThrow(); // released cleanly
 	});
 

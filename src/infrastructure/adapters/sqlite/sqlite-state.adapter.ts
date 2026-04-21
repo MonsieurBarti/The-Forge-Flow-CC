@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import Database from "better-sqlite3";
+import type Database from "better-sqlite3";
 import type { Milestone } from "../../../domain/entities/milestone.js";
 import type { Project } from "../../../domain/entities/project.js";
 import type { Slice } from "../../../domain/entities/slice.js";
@@ -43,7 +43,7 @@ import type { TaskProps } from "../../../domain/value-objects/task-props.js";
 import type { TaskUpdateProps } from "../../../domain/value-objects/task-update-props.js";
 import type { WorkflowSession } from "../../../domain/value-objects/workflow-session.js";
 import { getProjectHome, getProjectId } from "../../home-directory.js";
-import { getNativeBindingPath } from "./load-native-binding.js";
+import { openDatabase } from "./open-database.js";
 import { runMigrations } from "./schema.js";
 
 export class SQLiteStateAdapter
@@ -78,14 +78,12 @@ export class SQLiteStateAdapter
 	 * Used by tests and migrations.
 	 */
 	static createWithPath(dbPath: string): SQLiteStateAdapter {
-		const nativeBinding = getNativeBindingPath();
-		const db = new Database(dbPath, nativeBinding ? { nativeBinding } : undefined);
+		const db = openDatabase(dbPath);
 		return new SQLiteStateAdapter(db);
 	}
 
 	static createInMemory(): SQLiteStateAdapter {
-		const nativeBinding = getNativeBindingPath();
-		const db = new Database(":memory:", nativeBinding ? { nativeBinding } : undefined);
+		const db = openDatabase(":memory:");
 		return new SQLiteStateAdapter(db);
 	}
 

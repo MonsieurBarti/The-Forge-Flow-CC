@@ -1,5 +1,6 @@
 import { join } from "node:path";
-import { recoverOrphans } from "../application/recovery/recover-orphans.js";
+import { handleStartupRecovery } from "../application/recovery/handle-startup-recovery.js";
+import { NativeBindingError } from "../infrastructure/adapters/sqlite/native-binding-error.js";
 import { branchGuardCheckCmd } from "./commands/branch-guard-check.cmd.js";
 import { checkpointLoadCmd } from "./commands/checkpoint-load.cmd.js";
 import { checkpointSaveCmd } from "./commands/checkpoint-save.cmd.js";
@@ -43,6 +44,7 @@ import { syncStateCmd } from "./commands/sync-state.cmd.js";
 import { taskClaimCmd } from "./commands/task-claim.cmd.js";
 import { taskCloseCmd } from "./commands/task-close.cmd.js";
 import { taskReadyCmd } from "./commands/task-ready.cmd.js";
+import { versionCmd } from "./commands/version.cmd.js";
 import { wavesDetectCmd } from "./commands/waves-detect.cmd.js";
 import { workflowNextCmd } from "./commands/workflow-next.cmd.js";
 import { workflowShouldAutoCmd } from "./commands/workflow-should-auto.cmd.js";
@@ -107,6 +109,7 @@ const commands: Record<string, CommandFn> = {
 	"workflow:should-auto": workflowShouldAutoCmd,
 	"claim:check-stale": claimCheckStaleCmd,
 	"session:remind": sessionRemindCmd,
+	version: versionCmd,
 	schema: schemaCmd,
 };
 
@@ -200,19 +203,7 @@ function flagToJsonSchema(flag: {
 const main = async () => {
 	const [command, ...args] = process.argv.slice(2);
 
-	try {
-		const result = await recoverOrphans({
-			stagingDirs: [join(process.cwd(), ".tff-cc")],
-			lockPaths: [],
-		});
-		if (result.cleanedTmps + result.cleanedLocks > 0) {
-			console.error(
-				`recovered ${result.cleanedTmps} stale tmp files, ${result.cleanedLocks} stale locks`,
-			);
-		}
-	} catch {
-		// best-effort; do not block CLI on recovery failure.
-	}
+	await handleStartupRecovery({ homeDir: join(process.cwd(), ".tff-cc") });
 
 	if (!command || command === "--help" || command === "-h") {
 		console.log(
@@ -221,6 +212,11 @@ const main = async () => {
 				data: { name: "tff-tools", version: __TFF_VERSION__, commands: Object.keys(commands) },
 			}),
 		);
+		return;
+	}
+
+	if (command === "--version" || command === "-v") {
+		console.log(await versionCmd(args));
 		return;
 	}
 
@@ -277,11 +273,15 @@ const main = async () => {
 };
 
 main().catch((err) => {
-	console.log(
-		JSON.stringify({
-			ok: false,
-			error: { code: "INTERNAL_ERROR", message: String(err) },
-		}),
-	);
+	if (err instanceof NativeBindingError) {
+		console.log(JSON.stringify({ ok: false, error: err.toJSON() }));
+	} else {
+		console.log(
+			JSON.stringify({
+				ok: false,
+				error: { code: "INTERNAL_ERROR", message: String(err) },
+			}),
+		);
+	}
 	process.exit(1);
 });

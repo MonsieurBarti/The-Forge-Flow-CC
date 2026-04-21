@@ -41,6 +41,7 @@ import { syncStateSchema } from "./sync-state.cmd.js";
 import { taskClaimSchema } from "./task-claim.cmd.js";
 import { taskCloseSchema } from "./task-close.cmd.js";
 import { taskReadySchema } from "./task-ready.cmd.js";
+import { versionSchema } from "./version.cmd.js";
 import { wavesDetectSchema } from "./waves-detect.cmd.js";
 import { workflowNextSchema } from "./workflow-next.cmd.js";
 import { workflowShouldAutoSchema } from "./workflow-should-auto.cmd.js";
@@ -101,6 +102,7 @@ schemaRegistry.set("workflow:should-auto", workflowShouldAutoSchema);
 schemaRegistry.set("claim:check-stale", claimCheckStaleSchema);
 schemaRegistry.set("session:remind", sessionRemindSchema);
 schemaRegistry.set("branch-guard:check", branchGuardCheckSchema);
+schemaRegistry.set("version", versionSchema);
 
 /**
  * Get a command schema by name
