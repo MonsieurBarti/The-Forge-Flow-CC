@@ -1,47 +1,53 @@
 // tests/integration/cli-native-binding-failure.integration.spec.ts
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, renameSync, rmSync, symlinkSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-const CLI = join(process.cwd(), "dist/cli/index.js");
+// Use a COPY of dist/ per test. Previous versions renamed `.node` files in the
+// shared dist/ tree, which races with other integration tests running in
+// parallel — they inherited the stashed state and failed with
+// `__filename is not defined` from better-sqlite3's default resolver in the ESM
+// bundle. Copying keeps the real dist/ untouched for other tests.
+const DIST_SRC = join(process.cwd(), "dist");
 const PREBUILT = `better_sqlite3.${process.platform}-${process.arch}.node`;
-// Build emits the prebuilt next to every module that imports it, so both
-// copies must be stashed for the bundle to miss the prebuilt candidate.
-const PREBUILT_PATHS = [
-	join(process.cwd(), "dist/cli", PREBUILT),
-	join(process.cwd(), "dist/infrastructure/adapters/sqlite", PREBUILT),
+const PREBUILT_PATHS_IN_DIST = [
+	join(DIST_SRC, "cli", PREBUILT),
+	join(DIST_SRC, "infrastructure", "adapters", "sqlite", PREBUILT),
 ];
-const prebuiltExists = PREBUILT_PATHS.every((p) => existsSync(p));
+const prebuiltExists = PREBUILT_PATHS_IN_DIST.every((p) => existsSync(p));
 
 let repo: string;
-const moved: string[] = [];
+let distCopy: string;
+
+const copyDistWithoutPrebuilts = (dstBase: string): string => {
+	const dst = join(dstBase, "dist");
+	cpSync(DIST_SRC, dst, { recursive: true, dereference: false });
+	// Remove every copy of the platform-tagged prebuilt from the copy.
+	for (const relative of ["cli", "infrastructure/adapters/sqlite"]) {
+		const target = join(dst, relative, PREBUILT);
+		if (existsSync(target)) rmSync(target);
+	}
+	return join(dst, "cli", "index.js");
+};
 
 beforeEach(() => {
 	repo = mkdtempSync(join(tmpdir(), "tff-nbf-"));
+	distCopy = mkdtempSync(join(tmpdir(), "tff-nbf-dist-"));
 });
 afterEach(() => {
 	rmSync(repo, { recursive: true, force: true });
-	while (moved.length > 0) {
-		const stashed = moved.pop();
-		if (!stashed) continue;
-		const original = stashed.replace(/\.stashed-by-test$/, "");
-		renameSync(stashed, original);
-	}
+	rmSync(distCopy, { recursive: true, force: true });
 });
 
 describe("CLI emits structured JSON when native binding fails", () => {
 	it.skipIf(!prebuiltExists)(
 		"exits 1 with code NATIVE_BINDING_FAILED when no binding loads",
 		() => {
-			for (const p of PREBUILT_PATHS) {
-				const stashed = `${p}.stashed-by-test`;
-				renameSync(p, stashed);
-				moved.push(stashed);
-			}
+			const cliCopy = copyDistWithoutPrebuilts(distCopy);
 
-			const out = spawnSync("node", [CLI, "slice:list"], {
+			const out = spawnSync("node", [cliCopy, "slice:list"], {
 				cwd: repo,
 				env: { ...process.env, NODE_PATH: "" },
 				encoding: "utf-8",
@@ -62,15 +68,8 @@ describe("CLI emits structured JSON when native binding fails", () => {
 	it.skipIf(!prebuiltExists)(
 		"uses local node_modules fallback when prebuilt candidates are missing",
 		() => {
-			// Stash the dist prebuilts so the iterator skips the prebuilt candidate
-			// and falls through to the local node_modules candidate.
-			for (const p of PREBUILT_PATHS) {
-				if (existsSync(p)) {
-					const stashed = `${p}.stashed-by-test`;
-					renameSync(p, stashed);
-					moved.push(stashed);
-				}
-			}
+			const cliCopy = copyDistWithoutPrebuilts(distCopy);
+
 			// The local-fallback candidate resolves from `process.cwd()/node_modules/
 			// better-sqlite3/build/Release/better_sqlite3.node`. Symlink the real
 			// package into the tmp repo so the candidate iterator finds it.
@@ -79,12 +78,12 @@ describe("CLI emits structured JSON when native binding fails", () => {
 			mkdirSync(dstDir, { recursive: true });
 			symlinkSync(src, join(dstDir, "better-sqlite3"), "dir");
 
-			const out = spawnSync("node", [CLI, "slice:list"], {
+			const out = spawnSync("node", [cliCopy, "slice:list"], {
 				cwd: repo,
 				encoding: "utf-8",
 				timeout: 30_000,
 			});
-			// The key assertion is: exit 0 — the CLI opened the DB via the local fallback.
+			// Key assertion: exit 0 — the CLI opened the DB via the local fallback.
 			expect(out.status).toBe(0);
 			expect(JSON.parse(out.stdout).ok).toBe(true);
 		},
