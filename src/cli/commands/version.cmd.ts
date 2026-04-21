@@ -1,7 +1,6 @@
 // src/cli/commands/version.cmd.ts
 import { join } from "node:path";
 import { readRecoveryMarker } from "../../application/recovery/recovery-marker.js";
-import { NativeBindingError } from "../../infrastructure/adapters/sqlite/native-binding-error.js";
 import { openDatabaseWithTrace } from "../../infrastructure/adapters/sqlite/open-database.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
@@ -55,12 +54,10 @@ export const versionCmd = async (args: string[]): Promise<string> => {
 			source: traced.winningCandidate.source,
 		};
 		traced.db.close();
-	} catch (err) {
-		// Version surface must not fail on binding failure — NativeBindingError is
-		// handled elsewhere for real commands.
-		if (!(err instanceof NativeBindingError)) {
-			// fall through with binding: null for unexpected errors too
-		}
+	} catch {
+		// Version surface must not fail on binding failure. NativeBindingError is
+		// handled elsewhere for real commands; any other throw also degrades to
+		// binding: null so `--version --verbose` stays observable.
 		binding = null;
 	}
 
