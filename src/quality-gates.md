@@ -10,8 +10,8 @@ Canonical list of quality gates in `tff-cc`, the mechanism hardening each, and t
 | `branch-guard` | Branch-guard chokepoint on mutating CLI commands | III | chokepoint-wrapper | pending | `src/cli/utils/with-mutating-command.ts` | `tests/structural/branch-guard-chokepoint.spec.ts` |
 | `ship-completeness` | Slice-close requires approved code + security reviews | V | adapter-invariant | pending | `src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts` | `tests/structural/slice-close-completeness-invariant.spec.ts` |
 | `milestone-completeness` | Milestone-close requires approved spec review per slice | V | adapter-invariant | pending | `src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts` | `tests/structural/milestone-close-completeness-invariant.spec.ts` |
-| `coverage-in-ci` | Coverage threshold enforced on every PR | II | mirror-in-ci | pending | `.github/workflows/ci.yml` | `tests/structural/coverage-in-ci.spec.ts` |
-| `commitlint-in-ci` | Commitlint enforced on every PR | II | mirror-in-ci | pending | `.github/workflows/ci.yml` | `tests/structural/commitlint-in-ci.spec.ts` |
+| `coverage-in-ci` | Coverage threshold enforced on every PR | II | mirror-in-ci | enforced | `.github/workflows/ci.yml` | `tests/structural/coverage-in-ci.spec.ts` |
+| `commitlint-in-ci` | Commitlint enforced on every PR | II | mirror-in-ci | enforced | `.github/workflows/ci.yml` | `tests/structural/commitlint-in-ci.spec.ts` |
 | `value-object-invariants` | Every value-object exports a Zod schema or parse fn | III | value-object | pending | `src/domain/value-objects` | `tests/structural/value-object-invariants.spec.ts` |
 
 ## Classes

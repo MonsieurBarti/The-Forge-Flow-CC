@@ -62,7 +62,7 @@ export const QUALITY_GATES: readonly QualityGate[] = [
 		mechanism: "mirror-in-ci",
 		enforcementSite: ".github/workflows/ci.yml",
 		metaTestPath: "tests/structural/coverage-in-ci.spec.ts",
-		status: "pending",
+		status: "enforced",
 		concernRef: "CONCERNS.md#9",
 	},
 	{
@@ -72,7 +72,7 @@ export const QUALITY_GATES: readonly QualityGate[] = [
 		mechanism: "mirror-in-ci",
 		enforcementSite: ".github/workflows/ci.yml",
 		metaTestPath: "tests/structural/commitlint-in-ci.spec.ts",
-		status: "pending",
+		status: "enforced",
 	},
 	{
 		id: "value-object-invariants",
