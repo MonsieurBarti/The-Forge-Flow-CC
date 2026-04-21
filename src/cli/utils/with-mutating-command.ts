@@ -74,6 +74,9 @@ export const withMutatingCommand = (handler: Handler, deps?: WrapperDeps): Tagge
 			}
 		}
 
+		// Fire on attempt (after guards pass), not on handler success — the sentinel
+		// means "a mutating command reached the handler," which is what the first-
+		// observation probe needs.
 		touchMutatingSentinel(process.cwd());
 		return handler(args);
 	};
