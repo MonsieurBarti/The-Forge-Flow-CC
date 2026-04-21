@@ -160,6 +160,10 @@ tff-tools task:close <task-id> --reason "Completed"
 
 ## Tooling CLI
 
-All tooling calls: `node <plugin-path>/dist/cli/index.js <command> [args]`
+Canonical invocation: `tff-tools <command> [args]`.
+
+When the plugin is installed in Claude Code, `$PLUGIN_ROOT/bin` is automatically on `PATH`, so the bare `tff-tools` name resolves to the bundled CLI in every Claude-launched shell. **Do not** reach for `bunx tff-tools`, `npx tff-tools`, or `which tff-tools` — the CLI is not published under that name on npm; it's registered via the plugin's `bin/` directory.
+
+Fallback (hooks / scripts running outside an interactive shell, where PATH may differ): `node "$CLAUDE_PLUGIN_ROOT/dist/cli/index.js" <command> [args]`.
 
 Returns JSON: `{ "ok": true, "data": ... }` ∨ `{ "ok": false, "error": { "code": "...", "message": "..." } }`

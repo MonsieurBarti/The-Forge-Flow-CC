@@ -92,6 +92,10 @@ jobs:
         run: |
           set -e
           node dist/cli/index.js --help
+          # PATH-based smoke: bin/tff-tools shim is what Claude Code users hit
+          # when the plugin lands in $PLUGIN_ROOT/bin on PATH. This line fails
+          # fast if the shim regresses (missing shebang, wrong resolution, etc).
+          PATH="$GITHUB_WORKSPACE/bin:$PATH" tff-tools --help > /dev/null
           WORK=$(mktemp -d)
           cd "$WORK"
           git init --quiet
