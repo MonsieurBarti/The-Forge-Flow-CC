@@ -60,38 +60,4 @@ describe("YamlRoutingConfigReader — source_weights + model_judge", () => {
 			timeout_ms: 30000,
 		});
 	});
-
-	it("accepts implicit_weight alone (backcompat)", async () => {
-		writeSettings(
-			root,
-			`routing:
-  enabled: true
-  calibration:
-    implicit_weight: 0.3
-`,
-		);
-		const res = await new YamlRoutingConfigReader({ projectRoot: root }).readConfig();
-		if (!isOk(res)) throw new Error("not ok");
-		expect(res.data.calibration?.implicit_weight).toBe(0.3);
-		expect(res.data.calibration?.source_weights).toBeUndefined();
-	});
-
-	it("accepts both (caller handles precedence)", async () => {
-		writeSettings(
-			root,
-			`routing:
-  enabled: true
-  calibration:
-    implicit_weight: 0.3
-    source_weights:
-      manual: 1.0
-      debug-join: 0.5
-      model-judge: 1.0
-`,
-		);
-		const res = await new YamlRoutingConfigReader({ projectRoot: root }).readConfig();
-		if (!isOk(res)) throw new Error("not ok");
-		expect(res.data.calibration?.implicit_weight).toBe(0.3);
-		expect(res.data.calibration?.source_weights).toBeDefined();
-	});
 });

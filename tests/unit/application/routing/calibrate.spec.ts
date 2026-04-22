@@ -40,7 +40,7 @@ describe("calibrateUseCase", () => {
 			implicitSource: arraySource([]),
 			outcomesSource: arraySource([]),
 			writer: emptyWriter,
-			config: { n_min: 5, implicit_weight: 0.5 },
+			config: { n_min: 5 },
 			now: () => "2026-04-19T11:00:00.000Z",
 		});
 		expect(report.cells).toEqual([]);
@@ -53,7 +53,7 @@ describe("calibrateUseCase", () => {
 			implicitSource: arraySource([]),
 			outcomesSource: arraySource([manualTierTooLow]),
 			writer: emptyWriter,
-			config: { n_min: 5, implicit_weight: 0.5 },
+			config: { n_min: 5 },
 			now: () => "2026-04-19T11:00:00.000Z",
 		});
 		expect(report.cells).toHaveLength(0);
@@ -72,7 +72,7 @@ describe("calibrateUseCase", () => {
 			implicitSource: arraySource([]),
 			outcomesSource: arraySource(outcomes),
 			writer: emptyWriter,
-			config: { n_min: 5, implicit_weight: 0.5 },
+			config: { n_min: 5 },
 			now: () => "2026-04-19T11:00:00.000Z",
 		});
 		expect(report.recommendations.some((r) => r.rule_id === "tier-too-low-dominant")).toBe(true);
@@ -97,7 +97,7 @@ describe("calibrateUseCase", () => {
 			implicitSource: arraySource([debugJoin]),
 			outcomesSource: arraySource([]),
 			writer,
-			config: { n_min: 5, implicit_weight: 0.5 },
+			config: { n_min: 5 },
 			now: () => "2026-04-19T11:00:00.000Z",
 		});
 		expect(written).toContainEqual(debugJoin);

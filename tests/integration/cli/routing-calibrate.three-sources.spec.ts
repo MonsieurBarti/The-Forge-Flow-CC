@@ -79,26 +79,7 @@ describe("routing:calibrate — three sources", () => {
 		// effective_total on the reviewer agent cell:
 		// 1.0 (manual) + 0.5 (debug-join) + 1.0 (model-judge) = 2.5 ≥ n_min=2 → cell passes the gate
 		expect(md).not.toContain("reviewer) — insufficient evidence");
-		// source_weights only — no implicit_weight in settings → no deprecation footer
+		// source_weights only
 		expect(md).not.toContain("Deprecation");
-	});
-
-	it("emits a deprecation footer when only implicit_weight is configured", async () => {
-		mkdirSync(join(root, ".tff-cc", "logs"), { recursive: true });
-		writeFileSync(
-			join(root, ".tff-cc", "settings.yaml"),
-			`routing:
-  enabled: true
-  calibration:
-    n_min: 2
-    implicit_weight: 0.4
-`,
-		);
-		writeFileSync(join(root, ".tff-cc", "logs", "routing.jsonl"), "");
-		const out = await routingCalibrateCmd([]);
-		expect(JSON.parse(out).ok).toBe(true);
-		const md = readFileSync(join(root, ".tff-cc", "logs", "routing-calibration.md"), "utf8");
-		expect(md).toContain("Deprecation");
-		expect(md).toContain("implicit_weight");
 	});
 });

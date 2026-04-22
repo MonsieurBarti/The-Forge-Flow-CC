@@ -54,22 +54,6 @@ describe("calibrateUseCase — source_weights", () => {
 		expect(agentCell?.effective_total).toBeCloseTo(2.5);
 	});
 
-	it("records implicit_weight_deprecated=true when only implicit_weight is provided", async () => {
-		const report = await calibrateUseCase({
-			decisions: [decision],
-			implicitSource: emptySource,
-			outcomesSource,
-			writer,
-			config: {
-				n_min: 2,
-				implicit_weight: 0.3,
-			},
-			now: () => "2026-04-20T10:00:00.000Z",
-		});
-		expect(report.implicit_weight_deprecated).toBe(true);
-		expect(report.source_weights).toEqual({ manual: 1.0, "debug-join": 0.3, "model-judge": 1.0 });
-	});
-
 	it("merges partial source_weights over defaults instead of zeroing untouched sources", async () => {
 		const manualOutcome: RoutingOutcome = {
 			outcome_id: "00000000-0000-4000-8000-0000000000b1",
@@ -114,23 +98,5 @@ describe("calibrateUseCase — source_weights", () => {
 			"debug-join": 0.5, // from DEFAULT_WEIGHTS
 			"model-judge": 0.5, // overridden by user
 		});
-	});
-
-	it("prefers source_weights when both keys are provided", async () => {
-		const report = await calibrateUseCase({
-			decisions: [decision],
-			implicitSource: emptySource,
-			outcomesSource,
-			writer,
-			config: {
-				n_min: 2,
-				implicit_weight: 0.3,
-				source_weights: { manual: 1.0, "debug-join": 0.9, "model-judge": 1.0 },
-			},
-			now: () => "2026-04-20T10:00:00.000Z",
-		});
-		expect(report.source_weights?.["debug-join"]).toBe(0.9);
-		// implicit_weight_deprecated is still true because the *key* was present in config
-		expect(report.implicit_weight_deprecated).toBe(true);
 	});
 });

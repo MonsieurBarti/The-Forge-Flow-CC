@@ -14,10 +14,8 @@ import { computeImplicitOutcomesUseCase } from "./compute-outcomes.js";
 
 export interface CalibrateConfig {
 	n_min: number;
-	/** Preferred: explicit per-source weights. */
+	/** Per-source weights. Missing sources fall back to defaults (manual: 1.0, debug-join: 0.5, model-judge: 1.0). */
 	source_weights?: Record<string, number>;
-	/** Deprecated: single-dial debug-join weight. Used only if source_weights is absent. */
-	implicit_weight?: number;
 }
 
 export interface CalibrateDeps {
@@ -40,9 +38,6 @@ const resolveWeights = (config: CalibrateConfig): Record<string, number> => {
 		// Merge over defaults so partial maps don't silently zero out other sources.
 		return { ...DEFAULT_WEIGHTS, ...config.source_weights };
 	}
-	if (config.implicit_weight !== undefined) {
-		return { manual: 1.0, "debug-join": config.implicit_weight, "model-judge": 1.0 };
-	}
 	return DEFAULT_WEIGHTS;
 };
 
@@ -57,7 +52,6 @@ export const calibrateUseCase = async (deps: CalibrateDeps): Promise<Calibration
 	for await (const o of deps.outcomesSource.readOutcomes({})) outcomes.push(o);
 
 	const weights = resolveWeights(deps.config);
-	const implicitWeightDeprecated = deps.config.implicit_weight !== undefined;
 
 	const { byAgent, byTag } = groupOutcomes({
 		decisions: deps.decisions,
@@ -90,9 +84,7 @@ export const calibrateUseCase = async (deps: CalibrateDeps): Promise<Calibration
 	return {
 		generated_at: deps.now(),
 		n_min: deps.config.n_min,
-		implicit_weight: weights["debug-join"] ?? 0.5,
 		source_weights: weights,
-		implicit_weight_deprecated: implicitWeightDeprecated,
 		decisions_scanned: deps.decisions.length,
 		outcomes_scanned: outcomes.length,
 		cells,

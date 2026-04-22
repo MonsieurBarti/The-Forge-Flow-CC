@@ -5,7 +5,6 @@ import { renderCalibrationReport } from "../../../../../src/infrastructure/adapt
 const base: CalibrationReport = {
 	generated_at: "2026-04-19T10:00:00.000Z",
 	n_min: 5,
-	implicit_weight: 0.5,
 	decisions_scanned: 0,
 	outcomes_scanned: 0,
 	cells: [],
@@ -61,22 +60,5 @@ describe("renderCalibrationReport", () => {
 		const md1 = renderCalibrationReport(base);
 		const md2 = renderCalibrationReport(base);
 		expect(md1).toEqual(md2);
-	});
-
-	it("emits a deprecation footer when implicit_weight_deprecated is true", () => {
-		const md = renderCalibrationReport({
-			...base,
-			implicit_weight_deprecated: true,
-			source_weights: { manual: 1.0, "debug-join": 0.4, "model-judge": 1.0 },
-		});
-		expect(md).toContain("Deprecation");
-		expect(md).toContain("implicit_weight");
-		expect(md).toContain("source_weights");
-		expect(md).toContain("debug-join");
-	});
-
-	it("omits the deprecation footer when implicit_weight_deprecated is false/undefined", () => {
-		const md = renderCalibrationReport(base);
-		expect(md).not.toContain("Deprecation");
 	});
 });
