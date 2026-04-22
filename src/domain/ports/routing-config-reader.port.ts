@@ -21,11 +21,6 @@ export interface CalibrationConfig {
 
 export interface RoutingConfig {
 	enabled: boolean;
-	llm_enrichment: {
-		enabled: boolean;
-		model: string;
-		timeout_ms: number;
-	};
 	confidence_threshold: number;
 	logging: { path: string };
 	calibration?: CalibrationConfig;

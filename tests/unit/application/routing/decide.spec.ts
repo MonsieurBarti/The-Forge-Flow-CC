@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { decideUseCase } from "../../../../src/application/routing/decide.js";
 import { createDomainError } from "../../../../src/domain/errors/domain-error.js";
-import type { LlmEnricher } from "../../../../src/domain/ports/llm-enricher.port.js";
 import type {
 	RoutingConfig,
 	RoutingConfigReader,
@@ -33,7 +32,6 @@ const SIGNALS: Signals = {
 
 const CONFIG: RoutingConfig = {
 	enabled: true,
-	llm_enrichment: { enabled: false, model: "claude-haiku-4-5-20251001", timeout_ms: 5000 },
 	confidence_threshold: 0.5,
 	logging: { path: ".tff-cc/logs/routing.jsonl" },
 };
@@ -50,13 +48,10 @@ const mkDeps = () => {
 	const extractor: SignalExtractor = {
 		extract: vi.fn().mockResolvedValue(Ok(SIGNALS)),
 	};
-	const enricher: LlmEnricher = {
-		enrich: vi.fn(),
-	};
 	const logger: RoutingDecisionLogger = {
 		append: vi.fn().mockResolvedValue(Ok(undefined)),
 	};
-	return { configReader, tierConfigReader, extractor, enricher, logger };
+	return { configReader, tierConfigReader, extractor, logger };
 };
 
 describe("decideUseCase", () => {
@@ -192,36 +187,5 @@ describe("decideUseCase", () => {
 			deps,
 		);
 		expect(isOk(res)).toBe(false);
-	});
-
-	it("passes enriched flag through to each route decision log", async () => {
-		const deps = mkDeps();
-		const enriched: Signals = {
-			complexity: "high",
-			risk: { level: "high", tags: ["auth"] },
-		};
-		deps.configReader.readConfig = vi
-			.fn()
-			.mockResolvedValue(
-				Ok({ ...CONFIG, llm_enrichment: { ...CONFIG.llm_enrichment, enabled: true } }),
-			);
-		deps.extractor.extract = vi
-			.fn()
-			.mockResolvedValue(Ok({ complexity: "low", risk: { level: "low", tags: [] } }));
-		deps.enricher.enrich = vi.fn().mockResolvedValue(Ok(enriched));
-
-		await decideUseCase(
-			{
-				workflow_id: "tff:ship",
-				slice_id: "S",
-				extract_input: { slice_id: "S", description: "x", affected_files: [] },
-			},
-			deps,
-		);
-		const routeCalls = (deps.logger.append as ReturnType<typeof vi.fn>).mock.calls
-			.map((c) => c[0] as { kind: string; decision?: { enriched?: boolean } })
-			.filter((e) => e.kind === "route");
-		expect(routeCalls.length).toBeGreaterThan(0);
-		for (const c of routeCalls) expect(c.decision?.enriched).toBe(true);
 	});
 });

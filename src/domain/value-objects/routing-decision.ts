@@ -6,7 +6,6 @@ export const RoutingDecisionSchema = z.object({
 	confidence: z.number().min(0).max(1),
 	signals: SignalsSchema,
 	fallback_used: z.boolean(),
-	enriched: z.boolean(),
 	decision_id: z.string().uuid(),
 });
 export type RoutingDecision = z.infer<typeof RoutingDecisionSchema>;

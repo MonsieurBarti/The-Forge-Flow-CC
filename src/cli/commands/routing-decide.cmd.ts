@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { decideUseCase } from "../../application/routing/decide.js";
 import { isOk } from "../../domain/result.js";
-import { AnthropicLlmEnricher } from "../../infrastructure/adapters/anthropic/anthropic-llm-enricher.js";
 import { FilesystemSignalExtractor } from "../../infrastructure/adapters/filesystem/filesystem-signal-extractor.js";
 import { FilesystemTierConfigReader } from "../../infrastructure/adapters/filesystem/filesystem-tier-config-reader.js";
 import { YamlRoutingConfigReader } from "../../infrastructure/adapters/filesystem/yaml-routing-config-reader.js";
@@ -39,13 +38,6 @@ export const routingDecideSchema: CommandSchema = {
 	],
 };
 
-// Stub client; a real Anthropic-SDK-backed client is a follow-up task.
-const makeClient = () => ({
-	complete: async () => {
-		throw new Error("anthropic client not configured");
-	},
-});
-
 export const routingDecideCmd = async (args: string[]): Promise<string> => {
 	const parsed = parseFlags(args, routingDecideSchema);
 	if (!parsed.ok) {
@@ -74,11 +66,6 @@ export const routingDecideCmd = async (args: string[]): Promise<string> => {
 	}
 
 	const extractor = new FilesystemSignalExtractor();
-	const enricher = new AnthropicLlmEnricher({
-		client: makeClient(),
-		model: configRes.data.llm_enrichment.model,
-		timeout_ms: configRes.data.llm_enrichment.timeout_ms,
-	});
 	const tierConfigReader = new FilesystemTierConfigReader({
 		projectRoot,
 		agentsDir: join(projectRoot, "agents"),
@@ -95,7 +82,7 @@ export const routingDecideCmd = async (args: string[]): Promise<string> => {
 				affected_files: [],
 			},
 		},
-		{ configReader, tierConfigReader, extractor, enricher, logger },
+		{ configReader, tierConfigReader, extractor, logger },
 	);
 
 	if (!isOk(res)) {

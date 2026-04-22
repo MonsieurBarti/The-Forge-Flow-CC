@@ -35,13 +35,6 @@ const CalibrationConfigSchema = z.object({
 const RoutingConfigSchema = z
 	.object({
 		enabled: z.boolean().default(false),
-		llm_enrichment: z
-			.object({
-				enabled: z.boolean().default(false),
-				model: z.string().default("claude-haiku-4-5-20251001"),
-				timeout_ms: z.number().default(5000),
-			})
-			.default({ enabled: false, model: "claude-haiku-4-5-20251001", timeout_ms: 5000 }),
 		confidence_threshold: z.number().default(0.5),
 		logging: z
 			.object({ path: z.string().default(".tff-cc/logs/routing.jsonl") })
@@ -52,11 +45,6 @@ const RoutingConfigSchema = z
 
 const DISABLED_DEFAULT: RoutingConfig = {
 	enabled: false,
-	llm_enrichment: {
-		enabled: false,
-		model: "claude-haiku-4-5-20251001",
-		timeout_ms: 5000,
-	},
 	confidence_threshold: 0.5,
 	logging: { path: ".tff-cc/logs/routing.jsonl" },
 };
@@ -112,7 +100,6 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 
 		return Ok({
 			enabled: routing.enabled,
-			llm_enrichment: routing.llm_enrichment,
 			confidence_threshold: routing.confidence_threshold,
 			logging: routing.logging,
 			...(routing.calibration !== undefined && { calibration: routing.calibration }),

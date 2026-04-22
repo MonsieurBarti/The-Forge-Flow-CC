@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { scoreAgents } from "../../domain/helpers/routing-rubric.js";
-import type { LlmEnricher } from "../../domain/ports/llm-enricher.port.js";
 import type { RoutingConfigReader } from "../../domain/ports/routing-config-reader.port.js";
 import type { RoutingDecisionLogger } from "../../domain/ports/routing-decision-logger.port.js";
 import type { ExtractInput, SignalExtractor } from "../../domain/ports/signal-extractor.port.js";
@@ -24,7 +23,6 @@ export interface DecideDeps {
 	configReader: RoutingConfigReader;
 	tierConfigReader: TierConfigReader;
 	extractor: SignalExtractor;
-	enricher: LlmEnricher;
 	logger: RoutingDecisionLogger;
 }
 
@@ -43,7 +41,6 @@ export interface DecideOutcome {
 	workflow_id: string;
 	slice_id: string;
 	signals: Signals;
-	enriched: boolean;
 	decisions: AgentDecision[];
 }
 
@@ -55,13 +52,12 @@ export const decideUseCase = async (
 		{ workflow_id: input.workflow_id, input: input.extract_input },
 		{
 			extractor: deps.extractor,
-			enricher: deps.enricher,
 			configReader: deps.configReader,
 			logger: deps.logger,
 		},
 	);
 	if (!isOk(extractRes)) return extractRes;
-	const { signals, enriched, config } = extractRes.data;
+	const { signals, config } = extractRes.data;
 	const { confidence_threshold } = config;
 
 	const poolRes = await deps.configReader.readPool(input.workflow_id);
@@ -85,7 +81,6 @@ export const decideUseCase = async (
 			confidence,
 			signals,
 			fallback_used,
-			enriched,
 			decision_id: route_decision_id,
 		};
 		const routeLogRes = await deps.logger.append({
@@ -124,7 +119,6 @@ export const decideUseCase = async (
 		workflow_id: input.workflow_id,
 		slice_id: input.slice_id,
 		signals,
-		enriched,
 		decisions,
 	});
 };
