@@ -16,24 +16,14 @@ export const routingCalibrateSchema: CommandSchema = {
 	purpose: "Produce an advisory calibration report from routing decisions + outcomes",
 	mutates: true,
 	requiredFlags: [],
-	optionalFlags: [
-		{ name: "n-min", type: "number", description: "Minimum cell size (default 5)" },
-		{
-			name: "implicit-weight",
-			type: "number",
-			description: "Weight on debug-join outcomes (default 0.5)",
-		},
-	],
-	examples: ["routing:calibrate", "routing:calibrate --n-min 3 --implicit-weight 0.3"],
+	optionalFlags: [{ name: "n-min", type: "number", description: "Minimum cell size (default 5)" }],
+	examples: ["routing:calibrate", "routing:calibrate --n-min 3"],
 };
 
 export const routingCalibrateCmd = async (args: string[]): Promise<string> => {
 	const parsed = parseFlags(args, routingCalibrateSchema);
 	if (!parsed.ok) return JSON.stringify(parsed);
-	const { "n-min": nMinFlag, "implicit-weight": weightFlag } = parsed.data as {
-		"n-min"?: number;
-		"implicit-weight"?: number;
-	};
+	const { "n-min": nMinFlag } = parsed.data as { "n-min"?: number };
 
 	const projectRoot = process.cwd();
 	const configReader = new YamlRoutingConfigReader({ projectRoot });
@@ -53,10 +43,7 @@ export const routingCalibrateCmd = async (args: string[]): Promise<string> => {
 	);
 
 	const n_min = nMinFlag ?? configRes.data.calibration?.n_min ?? 5;
-	const implicitWeightFromSettings = configRes.data.calibration?.implicit_weight;
 	const sourceWeightsFromSettings = configRes.data.calibration?.source_weights;
-	// CLI flag override wins; if no flag, fall through to settings; if neither, leave undefined so calibrateUseCase defaults kick in.
-	const implicit_weight = weightFlag ?? implicitWeightFromSettings;
 
 	const decisionReader = new JsonlRoutingDecisionReader(routingPath);
 	const decisions = await decisionReader.readDecisions();
@@ -72,7 +59,6 @@ export const routingCalibrateCmd = async (args: string[]): Promise<string> => {
 		config: {
 			n_min,
 			...(sourceWeightsFromSettings ? { source_weights: sourceWeightsFromSettings } : {}),
-			...(implicit_weight !== undefined ? { implicit_weight } : {}),
 		},
 		now: () => new Date().toISOString(),
 	});

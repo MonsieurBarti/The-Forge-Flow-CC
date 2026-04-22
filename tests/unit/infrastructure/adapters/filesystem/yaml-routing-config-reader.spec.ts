@@ -234,19 +234,18 @@ describe("YamlRoutingConfigReader — calibration block", () => {
 		await rm(dir, { recursive: true, force: true });
 	});
 
-	it("parses routing.calibration.{n_min, implicit_weight, debug_join.enabled}", async () => {
+	it("parses routing.calibration.{n_min, debug_join.enabled}", async () => {
 		await writeFile(
-			join(dir, ".tff-cc", "settings.yaml"),
-			"routing:\n  enabled: true\n  logging:\n    path: .tff-cc/logs/routing.jsonl\n  calibration:\n    n_min: 3\n    implicit_weight: 0.25\n    debug_join:\n      enabled: false\n",
+			join(dir, ".tff-cc/settings.yaml"),
+			"routing:\n  enabled: true\n  logging:\n    path: .tff-cc/logs/routing.jsonl\n  calibration:\n    n_min: 3\n    debug_join:\n      enabled: false\n",
 			"utf8",
 		);
 		const reader = new YamlRoutingConfigReader({ projectRoot: dir });
 		const res = await reader.readConfig();
-		expect(res.ok).toBe(true);
-		if (!res.ok) throw new Error("not ok");
+		expect(isOk(res)).toBe(true);
+		if (!isOk(res)) return;
 		expect(res.data.calibration?.n_min).toBe(3);
-		expect(res.data.calibration?.implicit_weight).toBe(0.25);
-		expect(res.data.calibration?.debug_join?.enabled).toBe(false);
+		expect(res.data.calibration?.debug_join.enabled).toBe(false);
 	});
 
 	it("calibration block is optional — absence produces undefined", async () => {
@@ -259,22 +258,8 @@ describe("YamlRoutingConfigReader — calibration block", () => {
 		const res = await reader.readConfig();
 		expect(res.ok).toBe(true);
 		if (!res.ok) throw new Error("not ok");
-		const cal = res.data.calibration ?? { n_min: 5, implicit_weight: 0.5 };
+		const cal = res.data.calibration ?? { n_min: 5 };
 		expect(cal.n_min).toBe(5);
-		expect(cal.implicit_weight).toBe(0.5);
-	});
-
-	it("rejects calibration.implicit_weight outside [0, 1]", async () => {
-		await writeFile(
-			join(dir, ".tff-cc", "settings.yaml"),
-			"routing:\n  enabled: true\n  logging:\n    path: .tff-cc/logs/routing.jsonl\n  calibration:\n    implicit_weight: 2.0\n",
-			"utf8",
-		);
-		const reader = new YamlRoutingConfigReader({ projectRoot: dir });
-		const res = await reader.readConfig();
-		expect(res.ok).toBe(false);
-		if (res.ok) throw new Error("expected err");
-		expect(res.error.code).toBe("ROUTING_CONFIG");
 	});
 });
 

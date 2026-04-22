@@ -48,7 +48,6 @@ describe("CalibrationReportSchema", () => {
 		const report = {
 			generated_at: "2026-04-19T10:00:00.000Z",
 			n_min: 5,
-			implicit_weight: 0.5,
 			decisions_scanned: 0,
 			outcomes_scanned: 0,
 			cells: [],

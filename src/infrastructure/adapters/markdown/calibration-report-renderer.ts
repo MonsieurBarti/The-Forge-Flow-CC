@@ -11,7 +11,6 @@ const header = (r: CalibrationReport) =>
 		"",
 		`Generated at: ${r.generated_at}`,
 		`N_min: ${r.n_min}`,
-		`Implicit weight: ${r.implicit_weight}`,
 		`Decisions scanned: ${r.decisions_scanned}`,
 		`Outcomes scanned: ${r.outcomes_scanned}`,
 		"",
@@ -71,17 +70,6 @@ export const renderCalibrationReport = (report: CalibrationReport): string => {
 		recsSection(report.recommendations),
 		skippedSection(report.skipped_cells),
 	];
-
-	if (report.implicit_weight_deprecated) {
-		sections.push(
-			[
-				"---",
-				"",
-				`> **Deprecation:** \`routing.calibration.implicit_weight\` is deprecated. Migrate to \`routing.calibration.source_weights\`. The current run used weights: ${JSON.stringify(report.source_weights ?? {})}.`,
-				"",
-			].join("\n"),
-		);
-	}
 
 	return sections.join("\n");
 };
