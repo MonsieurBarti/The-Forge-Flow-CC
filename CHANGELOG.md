@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.10](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.9...tff-cc-v0.9.10) (2026-04-22)
+
+
+### Features
+
+* **cli:** register tff-tools as a path command via plugin bin shim ([#129](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/129)) ([3c1333b](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/3c1333bc9a6b7efd76165ee300bfdcfa4c93b013))
+* **quality-gates:** stage d — quality gate hardening (0.10.0) ([#130](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/130)) ([12d32cd](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/12d32cd01e12aec9c8e84991e6f7663f71a70485))
+* **quality-gates:** stage e — skill & observation integrity (0.11.0) ([#131](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/131)) ([40dac37](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/40dac372aa5c4227eaf5f18e3733f73a0c61caee))
+* **release:** stage c — release pipeline trust (0.10.0) ([#125](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/125)) ([d2a8f94](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/d2a8f94fe138f845a0a665d5d00806ec971bee46))
+* **startup:** stage b — startup reliability (0.10.0) ([#128](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/128)) ([8c2076b](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/8c2076b9b6f77e35284adb18298400da0e8660d0))
+* **state:** stage a — state integrity (0.10.0) ([#127](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/127)) ([3d040fd](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/3d040fd7144d53e2a388c5157f2be02c43c07fea))
+
 ## [0.9.9](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.8...tff-cc-v0.9.9) (2026-04-20)
 
 
