@@ -10,8 +10,6 @@ export interface SignalExtractionLogEntry {
 	workflow_id: string;
 	slice_id: string;
 	deterministic_signals: Signals;
-	enriched_signals?: Signals;
-	enrichment_error?: string;
 	duration_ms: number;
 }
 

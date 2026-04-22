@@ -31,10 +31,6 @@ describe("YamlRoutingConfigReader", () => {
 		await write(
 			`routing:
   enabled: true
-  llm_enrichment:
-    enabled: true
-    model: claude-haiku-4-5-20251001
-    timeout_ms: 5000
   confidence_threshold: 0.5
   logging:
     path: .tff-cc/logs/routing.jsonl
@@ -46,7 +42,7 @@ describe("YamlRoutingConfigReader", () => {
 		if (!isOk(res)) return;
 		expect(res.data.enabled).toBe(true);
 		expect(res.data.confidence_threshold).toBe(0.5);
-		expect(res.data.llm_enrichment.model).toBe("claude-haiku-4-5-20251001");
+		expect(res.data.logging.path).toBe(".tff-cc/logs/routing.jsonl");
 	});
 
 	it("returns disabled default when settings.yaml does not exist", async () => {
