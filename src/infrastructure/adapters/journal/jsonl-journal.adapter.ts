@@ -1,4 +1,11 @@
-import { appendFileSync, mkdirSync, readdirSync, readFileSync, unlinkSync } from "node:fs";
+import {
+	appendFileSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	statSync,
+	unlinkSync,
+} from "node:fs";
 import { join } from "node:path";
 import type { DomainError } from "../../../domain/errors/domain-error.js";
 import { createDomainError } from "../../../domain/errors/domain-error.js";
@@ -86,13 +93,21 @@ export class JsonlJournalAdapter implements JournalRepository {
 	}
 
 	reset(): void {
+		let files: string[];
 		try {
-			const files = readdirSync(this.basePath);
-			for (const file of files) {
-				if (file.endsWith(".jsonl")) unlinkSync(join(this.basePath, file));
-			}
+			files = readdirSync(this.basePath);
 		} catch {
-			/* basePath doesn't exist yet */
+			return; // basePath doesn't exist yet
+		}
+		for (const file of files) {
+			if (!file.endsWith(".jsonl")) continue;
+			const fullPath = join(this.basePath, file);
+			try {
+				if (!statSync(fullPath).isFile()) continue;
+				unlinkSync(fullPath);
+			} catch {
+				// Skip entries we can't remove (non-regular files, permission issues)
+			}
 		}
 	}
 }
