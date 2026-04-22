@@ -1,3 +1,4 @@
+import { realpathSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { handleStartupRecovery } from "../application/recovery/handle-startup-recovery.js";
@@ -20,6 +21,7 @@ import {
 	milestoneRecordAuditCmd,
 	milestoneRecordAuditSchema,
 } from "./commands/milestone-record-audit.cmd.js";
+import { observeHealthCmd, observeHealthSchema } from "./commands/observe-health.cmd.js";
 import { observeRecordCmd, observeRecordSchema } from "./commands/observe-record.cmd.js";
 import {
 	patternsAggregateCmd,
@@ -47,7 +49,12 @@ import {
 import { routingOutcomeCmd, routingOutcomeSchema } from "./commands/routing-outcome.cmd.js";
 import { schemaCmd, schemaCmdSchema } from "./commands/schema.cmd.js";
 import { sessionRemindCmd, sessionRemindSchema } from "./commands/session-remind.cmd.js";
+import { skillsApproveCmd, skillsApproveSchema } from "./commands/skills-approve.cmd.js";
 import { skillsDriftCmd, skillsDriftSchema } from "./commands/skills-drift.cmd.js";
+import {
+	skillsDriftReportCmd,
+	skillsDriftReportSchema,
+} from "./commands/skills-drift-report.cmd.js";
 import { skillsValidateCmd, skillsValidateSchema } from "./commands/skills-validate.cmd.js";
 import { sliceClassifyCmd, sliceClassifySchema } from "./commands/slice-classify.cmd.js";
 import { sliceCloseCmd, sliceCloseSchema } from "./commands/slice-close.cmd.js";
@@ -230,6 +237,10 @@ export const COMMAND_REGISTRY: Record<string, CommandEntry> = (() => {
 			schema: checkpointLoadSchema,
 			dispatcher: wrap(checkpointLoadCmd, checkpointLoadSchema),
 		},
+		"observe:health": {
+			schema: observeHealthSchema,
+			dispatcher: wrap(observeHealthCmd, observeHealthSchema),
+		},
 		"observe:record": {
 			schema: observeRecordSchema,
 			dispatcher: wrap(observeRecordCmd, observeRecordSchema),
@@ -250,9 +261,17 @@ export const COMMAND_REGISTRY: Record<string, CommandEntry> = (() => {
 			schema: composeDetectSchema,
 			dispatcher: wrap(composeDetectCmd, composeDetectSchema),
 		},
+		"skills:approve": {
+			schema: skillsApproveSchema,
+			dispatcher: wrap(skillsApproveCmd, skillsApproveSchema),
+		},
 		"skills:drift": {
 			schema: skillsDriftSchema,
 			dispatcher: wrap(skillsDriftCmd, skillsDriftSchema),
+		},
+		"skills:drift-report": {
+			schema: skillsDriftReportSchema,
+			dispatcher: wrap(skillsDriftReportCmd, skillsDriftReportSchema),
 		},
 		"skills:validate": {
 			schema: skillsValidateSchema,
@@ -448,7 +467,18 @@ const main = async () => {
 	console.log(output);
 };
 
-if (process.argv[1] && process.argv[1] === fileURLToPath(import.meta.url)) {
+// Compare via realpath to handle platforms where argv[1] and the canonical
+// module URL disagree on symlinks (e.g. macOS /var -> /private/var).
+const isEntryPoint = (): boolean => {
+	if (!process.argv[1]) return false;
+	try {
+		return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+	} catch {
+		return process.argv[1] === fileURLToPath(import.meta.url);
+	}
+};
+
+if (isEntryPoint()) {
 	main().catch((err) => {
 		if (err instanceof NativeBindingError) {
 			console.log(JSON.stringify({ ok: false, error: err.toJSON() }));

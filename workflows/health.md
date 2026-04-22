@@ -28,7 +28,24 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
      - re-run a throwaway CLI command: `node dist/cli/index.js schema --command slice:list 2>&1 >/dev/null` and capture stderr
      - stderr contains `tff: orphan recovery skipped` → row: `| Recovery | FAILING (see marker) |`; surface `timestamp` + `errorMessage` under the table; leave marker in place
      - stderr is clean → delete `.tff-cc/.recovery-marker` and row: `| Recovery | cleared |`
-7. REPORT:
+7. CHECK observation liveness: `tff-tools observe:health`
+   - Parse result:
+     - `data.lastObservation.present === false` → row: `| Last observation | MISSING |`
+     - `data.lastObservation.stale === true` → row: `| Last observation | STALE (<lastSeenAt>) |`
+     - else → row: `| Last observation | OK |`
+     - `data.firstObservationSentinel.shouldWarn === true` → row: `| Observe hook wiring | maybe-unwired — see README §Hook Setup |`
+     - else → row: `| Observe hook wiring | OK |`
+     - `data.deadLetter.entryCount > 0` → row: `| Observation dead-letter | <entryCount> entries (<bytes> bytes) |`
+     - else → row: `| Observation dead-letter | OK |`
+
+8. CHECK skill semantic drift: `tff-tools skills:drift-report`
+   - Parse `data.skills`:
+     - count rows where `overThreshold === true` → N
+     - N === 0 → row: `| Skill semantic drift | OK |`
+     - N > 0 → row: `| Skill semantic drift | <N> skills over 0.6 ratio |` and list offending skill ids under the table
+     - rows with `error` → informational only; surface under the table as `note: drift ratio unavailable for <id>: <error>`
+
+9. REPORT:
    ```
    | Check | Status |
    |---|---|
@@ -39,10 +56,14 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
    | Stale claims | OK/X stale |
    | Recovery | OK/FAILING/cleared |
    | Worktrees | OK/X orphans |
+   | Last observation | OK/STALE (date)/MISSING |
+   | Observe hook wiring | OK/maybe-unwired |
+   | Observation dead-letter | OK/N entries |
+   | Skill semantic drift | OK/N skills over 0.6 ratio |
    ```
    - Recovery marker present with residual `tff: orphan recovery skipped` warning → report `FAILING` and surface the marker's `timestamp` + `errorMessage` under the table; leave the marker in place for the next run.
    - Recovery marker present and stderr is clean → delete `.tff-cc/.recovery-marker` to acknowledge recovery and report `cleared`.
-8. stale slices found → ask user: "Close stale slices?" → yes → `tff-tools slice:close --slice-id <id> --reason "PR already merged"`
-9. other issues found → offer `/tff:sync` to reconcile
+10. stale slices found → ask user: "Close stale slices?" → yes → `tff-tools slice:close --slice-id <id> --reason "PR already merged"`
+11. other issues found → offer `/tff:sync` to reconcile
 
-10. NEXT: @references/next-steps.md
+12. NEXT: @references/next-steps.md
