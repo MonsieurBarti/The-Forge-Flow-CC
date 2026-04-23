@@ -3,6 +3,7 @@ import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import { detectDirectEdit } from "../../application/guard/detect-direct-edit.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { resolveRepoRoot } from "../../infrastructure/home-directory.js";
 import { SETTINGS_FILE, TFF_CC_DIR } from "../../shared/paths.js";
 import type { CommandSchema } from "../utils/flag-parser.js";
 
@@ -11,7 +12,8 @@ import type { CommandSchema } from "../utils/flag-parser.js";
  * Returns true if workflow.guards is explicitly false.
  */
 function areGuardsDisabled(): boolean {
-	const settingsPath = path.join(process.cwd(), SETTINGS_FILE);
+	const repoRoot = resolveRepoRoot(process.cwd());
+	const settingsPath = path.join(repoRoot, SETTINGS_FILE);
 	if (!existsSync(settingsPath)) {
 		return false; // Default to enabled if no settings file
 	}
@@ -29,7 +31,7 @@ function areGuardsDisabled(): boolean {
  * Check if the project is initialized (has .tff-cc directory).
  */
 function isProjectInitialized(): boolean {
-	const tffDir = path.join(process.cwd(), TFF_CC_DIR);
+	const tffDir = path.join(resolveRepoRoot(process.cwd()), TFF_CC_DIR);
 	return existsSync(tffDir);
 }
 
