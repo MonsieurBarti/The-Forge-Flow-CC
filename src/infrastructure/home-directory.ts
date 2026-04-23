@@ -47,6 +47,67 @@ function findPrimaryWorktreeRoot(repoRoot: string): string | null {
 	}
 }
 
+/**
+ * Resolve the git working-tree toplevel for `cwd`.
+ * Returns `cwd ?? process.cwd()` when:
+ *  - not inside a git repo
+ *  - `git` isn't installed / on PATH
+ *  - the repo is bare
+ *
+ * This is the single source of truth for where tff-cc state files
+ * (`.tff-project-id`, `.tff-cc` symlink) live relative to the working tree,
+ * so launching tff-cc from any sub-directory of a repo always finds the
+ * same toplevel.
+ */
+export function resolveRepoRoot(cwd?: string): string {
+	const start = cwd ?? process.cwd();
+	try {
+		const top = execFileSync("git", ["-C", start, "rev-parse", "--show-toplevel"], {
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim();
+		return top || start;
+	} catch {
+		return start;
+	}
+}
+
+let warnedStrayThisProcess = false;
+
+/**
+ * Emit a one-time stderr warning if the launch cwd holds a stray
+ * `.tff-project-id` or `.tff-cc` that isn't at the git toplevel.
+ * No-op when cwd === repoRoot, when no stray files exist, or after the
+ * first call in the current process.
+ */
+export function warnOnStrayTffFiles(cwd: string, repoRoot: string): void {
+	if (warnedStrayThisProcess) return;
+	if (cwd === repoRoot) return;
+	try {
+		const strayId = existsSync(join(cwd, ".tff-project-id"));
+		let straySym = false;
+		// Use lstatSync rather than existsSync: a dangling .tff-cc symlink
+		// (broken target) is exactly the stray state we want to warn about,
+		// and existsSync follows the link so it would miss that case.
+		try {
+			lstatSync(join(cwd, TFF_CC_DIR));
+			straySym = true;
+		} catch {
+			// Entry does not exist — expected path.
+		}
+		if (!strayId && !straySym) return;
+		warnedStrayThisProcess = true;
+		const names = [strayId ? ".tff-project-id" : null, straySym ? ".tff-cc" : null]
+			.filter((n): n is string => n !== null)
+			.join(" and ");
+		process.stderr.write(
+			`tff-cc: stray ${names} at ${cwd} — only the one(s) at ${repoRoot} are used. Safe to delete.\n`,
+		);
+	} catch {
+		// Never fail startup on a warning path.
+	}
+}
+
 /** Validate that a string is a valid UUID v4 format. */
 function isValidUuidV4(id: string): boolean {
 	return UUID_V4_REGEX.test(id);

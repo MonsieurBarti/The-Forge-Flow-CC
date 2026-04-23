@@ -8,6 +8,7 @@ import {
 import { isValidOperation } from "../../application/index.js";
 import { isOk } from "../../domain/result.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { resolveRepoRoot } from "../../infrastructure/home-directory.js";
 import { SETTINGS_FILE, TFF_CC_DIR } from "../../shared/paths.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { withSyncLock } from "../with-sync-lock.js";
@@ -16,8 +17,8 @@ import { withSyncLock } from "../with-sync-lock.js";
  * Check if pre-operation guards are disabled in settings.yaml.
  * Returns true if workflow.guards is explicitly false.
  */
-function areGuardsDisabled(): boolean {
-	const settingsPath = path.join(process.cwd(), SETTINGS_FILE);
+function areGuardsDisabled(repoRoot: string): boolean {
+	const settingsPath = path.join(repoRoot, SETTINGS_FILE);
 	if (!existsSync(settingsPath)) {
 		return false; // Default to enabled if no settings file
 	}
@@ -34,8 +35,8 @@ function areGuardsDisabled(): boolean {
 /**
  * Check if the project is initialized (has .tff-cc directory).
  */
-function isProjectInitialized(): boolean {
-	const tffDir = path.join(process.cwd(), TFF_CC_DIR);
+function isProjectInitialized(repoRoot: string): boolean {
+	const tffDir = path.join(repoRoot, TFF_CC_DIR);
 	return existsSync(tffDir);
 }
 
@@ -72,8 +73,10 @@ export const preOpGuardCmd = async (args: string[]): Promise<string> => {
 		operation: string;
 	};
 
+	const repoRoot = resolveRepoRoot(process.cwd());
+
 	// Fast path: check if guards are disabled
-	if (areGuardsDisabled()) {
+	if (areGuardsDisabled(repoRoot)) {
 		return JSON.stringify({
 			ok: true,
 			data: { blocked: false },
@@ -81,7 +84,7 @@ export const preOpGuardCmd = async (args: string[]): Promise<string> => {
 	}
 
 	// Check if project is initialized
-	if (!isProjectInitialized()) {
+	if (!isProjectInitialized(repoRoot)) {
 		return JSON.stringify({
 			ok: true,
 			data: { blocked: false },

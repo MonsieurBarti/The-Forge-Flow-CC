@@ -8,6 +8,7 @@ import {
 	type ClosableStateStores,
 	createClosableStateStoresUnchecked,
 } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { resolveRepoRoot } from "../../infrastructure/home-directory.js";
 
 export const WITH_MUTATING_COMMAND_TAG = Symbol("with-mutating-command");
 
@@ -77,7 +78,7 @@ export const withMutatingCommand = (handler: Handler, deps?: WrapperDeps): Tagge
 		// Fire on attempt (after guards pass), not on handler success — the sentinel
 		// means "a mutating command reached the handler," which is what the first-
 		// observation probe needs.
-		touchMutatingSentinel(process.cwd());
+		touchMutatingSentinel(resolveRepoRoot(process.cwd()));
 		return handler(args);
 	};
 
