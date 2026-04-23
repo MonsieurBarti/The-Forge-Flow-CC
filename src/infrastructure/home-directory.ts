@@ -86,6 +86,9 @@ export function warnOnStrayTffFiles(cwd: string, repoRoot: string): void {
 	try {
 		const strayId = existsSync(join(cwd, ".tff-project-id"));
 		let straySym = false;
+		// Use lstatSync rather than existsSync: a dangling .tff-cc symlink
+		// (broken target) is exactly the stray state we want to warn about,
+		// and existsSync follows the link so it would miss that case.
 		try {
 			lstatSync(join(cwd, TFF_CC_DIR));
 			straySym = true;
@@ -94,8 +97,11 @@ export function warnOnStrayTffFiles(cwd: string, repoRoot: string): void {
 		}
 		if (!strayId && !straySym) return;
 		warnedStrayThisProcess = true;
+		const names = [strayId ? ".tff-project-id" : null, straySym ? ".tff-cc" : null]
+			.filter((n): n is string => n !== null)
+			.join(" and ");
 		process.stderr.write(
-			`tff-cc: stray .tff-project-id at ${cwd} — only the one at ${repoRoot} is used. Safe to delete.\n`,
+			`tff-cc: stray ${names} at ${cwd} — only the one(s) at ${repoRoot} are used. Safe to delete.\n`,
 		);
 	} catch {
 		// Never fail startup on a warning path.

@@ -182,9 +182,7 @@ describe("T14: Home directory resolver module", () => {
 			mkdirSync(dir, { recursive: true });
 			writeFileSync(join(dir, ".tff-project-id"), "a1b2c3d4-e5f6-4000-8000-111111111111\n");
 
-			const { warnOnStrayTffFiles } = await import(
-				"../../../src/infrastructure/home-directory.js"
-			);
+			const { warnOnStrayTffFiles } = await import("../../../src/infrastructure/home-directory.js");
 			warnOnStrayTffFiles(dir, dir);
 
 			expect(stderrSpy).not.toHaveBeenCalled();
@@ -195,9 +193,7 @@ describe("T14: Home directory resolver module", () => {
 			const subDir = join(repoRoot, "apps", "api");
 			mkdirSync(subDir, { recursive: true });
 
-			const { warnOnStrayTffFiles } = await import(
-				"../../../src/infrastructure/home-directory.js"
-			);
+			const { warnOnStrayTffFiles } = await import("../../../src/infrastructure/home-directory.js");
 			warnOnStrayTffFiles(subDir, repoRoot);
 
 			expect(stderrSpy).not.toHaveBeenCalled();
@@ -209,9 +205,7 @@ describe("T14: Home directory resolver module", () => {
 			mkdirSync(subDir, { recursive: true });
 			writeFileSync(join(subDir, ".tff-project-id"), "a1b2c3d4-e5f6-4000-8000-222222222222\n");
 
-			const { warnOnStrayTffFiles } = await import(
-				"../../../src/infrastructure/home-directory.js"
-			);
+			const { warnOnStrayTffFiles } = await import("../../../src/infrastructure/home-directory.js");
 			warnOnStrayTffFiles(subDir, repoRoot);
 			warnOnStrayTffFiles(subDir, repoRoot); // second call must stay silent
 
@@ -229,12 +223,12 @@ describe("T14: Home directory resolver module", () => {
 			const { symlinkSync } = await import("node:fs");
 			symlinkSync(join(tempDir, "some-target"), join(subDir, ".tff-cc"));
 
-			const { warnOnStrayTffFiles } = await import(
-				"../../../src/infrastructure/home-directory.js"
-			);
+			const { warnOnStrayTffFiles } = await import("../../../src/infrastructure/home-directory.js");
 			warnOnStrayTffFiles(subDir, repoRoot);
 
 			expect(stderrSpy).toHaveBeenCalledTimes(1);
+			const line = stderrSpy.mock.calls[0][0] as string;
+			expect(line).toContain(".tff-cc");
 		});
 	});
 
