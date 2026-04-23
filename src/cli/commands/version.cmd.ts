@@ -2,6 +2,7 @@
 import { join } from "node:path";
 import { readRecoveryMarker } from "../../application/recovery/recovery-marker.js";
 import { openDatabaseWithTrace } from "../../infrastructure/adapters/sqlite/open-database.js";
+import { resolveRepoRoot } from "../../infrastructure/home-directory.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const versionSchema: CommandSchema = {
@@ -62,7 +63,7 @@ export const versionCmd = async (args: string[]): Promise<string> => {
 		binding = null;
 	}
 
-	const home = join(process.cwd(), ".tff-cc");
+	const home = join(resolveRepoRoot(process.cwd()), ".tff-cc");
 	const marker = await readRecoveryMarker(home);
 	const lastRecovery: LastRecovery = marker
 		? {
