@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.11](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.10...tff-cc-v0.9.11) (2026-04-23)
+
+
+### Features
+
+* resolve .tff-project-id and .tff-cc at git toplevel ([#134](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/134)) ([c830847](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/c8308478b5ae51495cf543b59231ba2283dd983b))
+
 ## [0.9.10](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.9...tff-cc-v0.9.10) (2026-04-22)
 
 
