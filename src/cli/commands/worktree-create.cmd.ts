@@ -5,6 +5,7 @@ import { createClosableStateStoresUnchecked } from "../../infrastructure/adapter
 import {
 	createTffCcSymlink,
 	getProjectId,
+	resolveRepoRoot,
 	writeProjectIdFile,
 } from "../../infrastructure/home-directory.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
@@ -40,6 +41,7 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
 
 	const cwd = process.cwd();
 	const gitOps = new GitCliAdapter(cwd);
+	const repoRoot = resolveRepoRoot(cwd);
 
 	const closableStores = createClosableStateStoresUnchecked();
 	const { sliceStore, milestoneStore } = closableStores;
@@ -76,7 +78,7 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
 			{ gitOps },
 		);
 		if (isOk(result)) {
-			const projectId = getProjectId(cwd);
+			const projectId = getProjectId(repoRoot);
 			const worktreePath = result.data.worktreePath;
 			createTffCcSymlink(worktreePath, projectId);
 			// Persist the project id in the new worktree so subsequent tff-tools commands
