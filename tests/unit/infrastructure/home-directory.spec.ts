@@ -13,7 +13,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("T14: Home directory resolver module", () => {
 	let tempDir: string;
@@ -161,6 +161,80 @@ describe("T14: Home directory resolver module", () => {
 
 			const { resolveRepoRoot } = await import("../../../src/infrastructure/home-directory.js");
 			expect(resolveRepoRoot(plainDir)).toBe(plainDir);
+		});
+	});
+
+	describe("warnOnStrayTffFiles", () => {
+		let stderrSpy: ReturnType<typeof vi.spyOn>;
+
+		beforeEach(() => {
+			stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+			// Reset the module-level guard so each test starts fresh
+			vi.resetModules();
+		});
+
+		afterEach(() => {
+			stderrSpy.mockRestore();
+		});
+
+		it("is a no-op when cwd === repoRoot", async () => {
+			const dir = join(tempDir, "stray-noop-same");
+			mkdirSync(dir, { recursive: true });
+			writeFileSync(join(dir, ".tff-project-id"), "a1b2c3d4-e5f6-4000-8000-111111111111\n");
+
+			const { warnOnStrayTffFiles } = await import(
+				"../../../src/infrastructure/home-directory.js"
+			);
+			warnOnStrayTffFiles(dir, dir);
+
+			expect(stderrSpy).not.toHaveBeenCalled();
+		});
+
+		it("is a no-op when no stray files exist", async () => {
+			const repoRoot = join(tempDir, "stray-noop-repo");
+			const subDir = join(repoRoot, "apps", "api");
+			mkdirSync(subDir, { recursive: true });
+
+			const { warnOnStrayTffFiles } = await import(
+				"../../../src/infrastructure/home-directory.js"
+			);
+			warnOnStrayTffFiles(subDir, repoRoot);
+
+			expect(stderrSpy).not.toHaveBeenCalled();
+		});
+
+		it("emits exactly one stderr line when a stray .tff-project-id exists below the root", async () => {
+			const repoRoot = join(tempDir, "stray-hit-repo");
+			const subDir = join(repoRoot, "apps", "api");
+			mkdirSync(subDir, { recursive: true });
+			writeFileSync(join(subDir, ".tff-project-id"), "a1b2c3d4-e5f6-4000-8000-222222222222\n");
+
+			const { warnOnStrayTffFiles } = await import(
+				"../../../src/infrastructure/home-directory.js"
+			);
+			warnOnStrayTffFiles(subDir, repoRoot);
+			warnOnStrayTffFiles(subDir, repoRoot); // second call must stay silent
+
+			expect(stderrSpy).toHaveBeenCalledTimes(1);
+			const line = stderrSpy.mock.calls[0][0] as string;
+			expect(line).toContain("stray");
+			expect(line).toContain(subDir);
+			expect(line).toContain(repoRoot);
+		});
+
+		it("also warns when only .tff-cc exists (no .tff-project-id)", async () => {
+			const repoRoot = join(tempDir, "stray-symlink-repo");
+			const subDir = join(repoRoot, "apps", "web");
+			mkdirSync(subDir, { recursive: true });
+			const { symlinkSync } = await import("node:fs");
+			symlinkSync(join(tempDir, "some-target"), join(subDir, ".tff-cc"));
+
+			const { warnOnStrayTffFiles } = await import(
+				"../../../src/infrastructure/home-directory.js"
+			);
+			warnOnStrayTffFiles(subDir, repoRoot);
+
+			expect(stderrSpy).toHaveBeenCalledTimes(1);
 		});
 	});
 

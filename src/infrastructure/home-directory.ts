@@ -72,6 +72,36 @@ export function resolveRepoRoot(cwd?: string): string {
 	}
 }
 
+let warnedStrayThisProcess = false;
+
+/**
+ * Emit a one-time stderr warning if the launch cwd holds a stray
+ * `.tff-project-id` or `.tff-cc` that isn't at the git toplevel.
+ * No-op when cwd === repoRoot, when no stray files exist, or after the
+ * first call in the current process.
+ */
+export function warnOnStrayTffFiles(cwd: string, repoRoot: string): void {
+	if (warnedStrayThisProcess) return;
+	if (cwd === repoRoot) return;
+	try {
+		const strayId = existsSync(join(cwd, ".tff-project-id"));
+		let straySym = false;
+		try {
+			lstatSync(join(cwd, TFF_CC_DIR));
+			straySym = true;
+		} catch {
+			// Entry does not exist — expected path.
+		}
+		if (!strayId && !straySym) return;
+		warnedStrayThisProcess = true;
+		process.stderr.write(
+			`tff-cc: stray .tff-project-id at ${cwd} — only the one at ${repoRoot} is used. Safe to delete.\n`,
+		);
+	} catch {
+		// Never fail startup on a warning path.
+	}
+}
+
 /** Validate that a string is a valid UUID v4 format. */
 function isValidUuidV4(id: string): boolean {
 	return UUID_V4_REGEX.test(id);
