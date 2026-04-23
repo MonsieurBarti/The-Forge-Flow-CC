@@ -11,7 +11,13 @@ import type { SliceDependencyStore } from "../../../domain/ports/slice-dependenc
 import type { SliceStore } from "../../../domain/ports/slice-store.port.js";
 import type { TaskStore } from "../../../domain/ports/task-store.port.js";
 import type { TransactionRunner } from "../../../domain/ports/transaction-runner.port.js";
-import { createTffCcSymlink, getProjectHome, getProjectId } from "../../home-directory.js";
+import {
+	createTffCcSymlink,
+	getProjectHome,
+	getProjectId,
+	resolveRepoRoot,
+	warnOnStrayTffFiles,
+} from "../../home-directory.js";
 import { JsonlJournalAdapter } from "../journal/jsonl-journal.adapter.js";
 import { SQLiteStateAdapter } from "./sqlite-state.adapter.js";
 
@@ -30,7 +36,9 @@ export interface StateStores {
 }
 
 function getDerivedPaths(): { dbPath: string; journalPath: string; projectId: string } {
-	const repoRoot = process.cwd();
+	const cwd = process.cwd();
+	const repoRoot = resolveRepoRoot(cwd);
+	warnOnStrayTffFiles(cwd, repoRoot);
 	const projectId = getProjectId(repoRoot);
 	const home = getProjectHome(projectId);
 
