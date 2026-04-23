@@ -11,8 +11,7 @@ import type { CommandSchema } from "../utils/flag-parser.js";
  * Check if direct-edit guards are disabled in settings.yaml.
  * Returns true if workflow.guards is explicitly false.
  */
-function areGuardsDisabled(): boolean {
-	const repoRoot = resolveRepoRoot(process.cwd());
+function areGuardsDisabled(repoRoot: string): boolean {
 	const settingsPath = path.join(repoRoot, SETTINGS_FILE);
 	if (!existsSync(settingsPath)) {
 		return false; // Default to enabled if no settings file
@@ -30,8 +29,8 @@ function areGuardsDisabled(): boolean {
 /**
  * Check if the project is initialized (has .tff-cc directory).
  */
-function isProjectInitialized(): boolean {
-	const tffDir = path.join(resolveRepoRoot(process.cwd()), TFF_CC_DIR);
+function isProjectInitialized(repoRoot: string): boolean {
+	const tffDir = path.join(repoRoot, TFF_CC_DIR);
 	return existsSync(tffDir);
 }
 
@@ -60,8 +59,10 @@ export const directEditGuardCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 
+	const repoRoot = resolveRepoRoot(process.cwd());
+
 	// Fast path: check if guards are disabled
-	if (areGuardsDisabled()) {
+	if (areGuardsDisabled(repoRoot)) {
 		return JSON.stringify({
 			ok: true,
 			data: { warning: null },
@@ -69,7 +70,7 @@ export const directEditGuardCmd = async (args: string[]): Promise<string> => {
 	}
 
 	// Check if project is initialized
-	if (!isProjectInitialized()) {
+	if (!isProjectInitialized(repoRoot)) {
 		return JSON.stringify({
 			ok: true,
 			data: { warning: null },

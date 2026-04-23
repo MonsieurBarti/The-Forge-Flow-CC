@@ -11,8 +11,7 @@ import type { CommandSchema } from "../utils/flag-parser.js";
  * Check if reminders are disabled in settings.yaml.
  * Returns true if workflow.reminders is explicitly false.
  */
-function areRemindersDisabled(): boolean {
-	const repoRoot = resolveRepoRoot(process.cwd());
+function areRemindersDisabled(repoRoot: string): boolean {
 	const settingsPath = path.join(repoRoot, SETTINGS_FILE);
 	if (!existsSync(settingsPath)) {
 		return false; // Default to enabled if no settings file
@@ -30,8 +29,8 @@ function areRemindersDisabled(): boolean {
 /**
  * Check if the project is initialized (has .tff-cc directory).
  */
-function isProjectInitialized(): boolean {
-	const tffDir = path.join(resolveRepoRoot(process.cwd()), TFF_CC_DIR);
+function isProjectInitialized(repoRoot: string): boolean {
+	const tffDir = path.join(repoRoot, TFF_CC_DIR);
 	return existsSync(tffDir);
 }
 
@@ -60,8 +59,10 @@ export const sessionRemindCmd = async (args: string[]): Promise<string> => {
 		});
 	}
 
+	const repoRoot = resolveRepoRoot(process.cwd());
+
 	// Fast path: check if reminders are disabled
-	if (areRemindersDisabled()) {
+	if (areRemindersDisabled(repoRoot)) {
 		return JSON.stringify({
 			ok: true,
 			data: { reminder: null },
@@ -69,7 +70,7 @@ export const sessionRemindCmd = async (args: string[]): Promise<string> => {
 	}
 
 	// Check if project is initialized
-	if (!isProjectInitialized()) {
+	if (!isProjectInitialized(repoRoot)) {
 		return JSON.stringify({
 			ok: true,
 			data: { reminder: null },
