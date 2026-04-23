@@ -47,6 +47,31 @@ function findPrimaryWorktreeRoot(repoRoot: string): string | null {
 	}
 }
 
+/**
+ * Resolve the git working-tree toplevel for `cwd`.
+ * Returns `cwd ?? process.cwd()` when:
+ *  - not inside a git repo
+ *  - `git` isn't installed / on PATH
+ *  - the repo is bare
+ *
+ * This is the single source of truth for where tff-cc state files
+ * (`.tff-project-id`, `.tff-cc` symlink) live relative to the working tree,
+ * so launching tff-cc from any sub-directory of a repo always finds the
+ * same toplevel.
+ */
+export function resolveRepoRoot(cwd?: string): string {
+	const start = cwd ?? process.cwd();
+	try {
+		const top = execFileSync("git", ["-C", start, "rev-parse", "--show-toplevel"], {
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim();
+		return top || start;
+	} catch {
+		return start;
+	}
+}
+
 /** Validate that a string is a valid UUID v4 format. */
 function isValidUuidV4(id: string): boolean {
 	return UUID_V4_REGEX.test(id);

@@ -133,6 +133,37 @@ describe("T14: Home directory resolver module", () => {
 		});
 	});
 
+	describe("resolveRepoRoot", () => {
+		it("returns the git toplevel when called from the repo root", async () => {
+			const repoDir = join(tempDir, "repo-root");
+			mkdirSync(repoDir, { recursive: true });
+			execFileSync("git", ["init", repoDir]);
+
+			const { resolveRepoRoot } = await import("../../../src/infrastructure/home-directory.js");
+			const expected = (await import("node:fs")).realpathSync(repoDir);
+			expect(resolveRepoRoot(repoDir)).toBe(expected);
+		});
+
+		it("returns the git toplevel when called from a sub-directory", async () => {
+			const repoDir = join(tempDir, "repo-subdir");
+			const subDir = join(repoDir, "apps", "api");
+			mkdirSync(subDir, { recursive: true });
+			execFileSync("git", ["init", repoDir]);
+
+			const { resolveRepoRoot } = await import("../../../src/infrastructure/home-directory.js");
+			const expected = (await import("node:fs")).realpathSync(repoDir);
+			expect(resolveRepoRoot(subDir)).toBe(expected);
+		});
+
+		it("falls back to the input cwd when not in a git repo", async () => {
+			const plainDir = join(tempDir, "not-a-git-repo-resolve");
+			mkdirSync(plainDir, { recursive: true });
+
+			const { resolveRepoRoot } = await import("../../../src/infrastructure/home-directory.js");
+			expect(resolveRepoRoot(plainDir)).toBe(plainDir);
+		});
+	});
+
 	describe("ensureProjectHomeDir", () => {
 		it("should create directory structure under TFF_CC_HOME", async () => {
 			process.env.TFF_CC_HOME = tempDir;
