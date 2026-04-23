@@ -45,15 +45,11 @@ describe("project:init from a sub-directory", () => {
 
 	it("writes .tff-project-id at the repo toplevel when launched from a sub-directory", () => {
 		const cliEntry = join(process.cwd(), "dist", "cli", "index.js");
-		execFileSync(
-			process.execPath,
-			[cliEntry, "project:init", "--name", "subdir-test"],
-			{
-				cwd: subDir,
-				env: { ...process.env, TFF_CC_HOME: join(tempDir, "tff-home") },
-				encoding: "utf-8",
-			},
-		);
+		execFileSync(process.execPath, [cliEntry, "project:init", "--name", "subdir-test"], {
+			cwd: subDir,
+			env: { ...process.env, TFF_CC_HOME: join(tempDir, "tff-home") },
+			encoding: "utf-8",
+		});
 
 		// .tff-project-id must be at the repo root, not in the sub-directory
 		expect(existsSync(join(repoRoot, ".tff-project-id"))).toBe(true);
