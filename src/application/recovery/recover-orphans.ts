@@ -1,4 +1,4 @@
-import { existsSync, lstatSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, lstatSync, readdirSync, realpathSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 export interface RecoverInput {
@@ -14,6 +14,10 @@ export interface RecoverResult {
 }
 
 const DEFAULT_THRESHOLD_MS = 5 * 60 * 1000;
+// Defensive ceiling — even without cycles, a runaway tree shouldn't consume
+// unbounded memory during startup recovery. 100k dirs is far beyond any real
+// project home and well below Node's default heap.
+const MAX_DIRS_VISITED = 100_000;
 
 export const recoverOrphans = async (input: RecoverInput): Promise<RecoverResult> => {
 	const nowMs = (input.now ?? Date.now)();
@@ -23,25 +27,7 @@ export const recoverOrphans = async (input: RecoverInput): Promise<RecoverResult
 
 	for (const dir of input.stagingDirs) {
 		if (!existsSync(dir)) continue;
-		// `{ recursive: true }` was backported to Node 18.17 and is stable on 20.x.
-		// Our engines.node floor (>=20) covers it; keep the floor intentional.
-		for (const entry of readdirSync(dir, { recursive: true }) as string[]) {
-			if (!entry.endsWith(".tmp")) continue;
-			const p = join(dir, entry);
-			try {
-				// Use lstat so we never follow symlinks out of the staging tree.
-				// Skip anything that isn't a plain file — symlinks, dirs, sockets,
-				// etc. are never considered orphan tmps for sweeping.
-				const st = lstatSync(p);
-				if (!st.isFile()) continue;
-				if (nowMs - st.mtimeMs > threshold) {
-					rmSync(p, { force: true });
-					cleanedTmps++;
-				}
-			} catch {
-				// skip unreadable entries
-			}
-		}
+		cleanedTmps += sweepStaleTmps(dir, nowMs, threshold);
 	}
 
 	for (const p of input.lockPaths) {
@@ -63,3 +49,66 @@ export const recoverOrphans = async (input: RecoverInput): Promise<RecoverResult
 
 	return { cleanedTmps, cleanedLocks };
 };
+
+function sweepStaleTmps(root: string, nowMs: number, thresholdMs: number): number {
+	let cleaned = 0;
+	const visited = new Set<string>();
+	try {
+		visited.add(realpathSync(root));
+	} catch {
+		return 0;
+	}
+
+	const stack: string[] = [root];
+
+	while (stack.length > 0) {
+		if (visited.size >= MAX_DIRS_VISITED) break;
+		const current = stack.pop();
+		if (current === undefined) break;
+
+		let entries: import("node:fs").Dirent[];
+		try {
+			entries = readdirSync(current, { withFileTypes: true });
+		} catch {
+			continue;
+		}
+
+		for (const entry of entries) {
+			const p = join(current, entry.name);
+
+			if (entry.isSymbolicLink()) {
+				// Never descend into symlinked entries. This is the cycle break.
+				continue;
+			}
+
+			if (entry.isDirectory()) {
+				let real: string;
+				try {
+					real = realpathSync(p);
+				} catch {
+					continue;
+				}
+				if (visited.has(real)) continue;
+				visited.add(real);
+				stack.push(p);
+				continue;
+			}
+
+			if (!entry.isFile()) continue;
+			if (!entry.name.endsWith(".tmp")) continue;
+
+			try {
+				const st = lstatSync(p);
+				if (!st.isFile()) continue;
+				if (nowMs - st.mtimeMs > thresholdMs) {
+					rmSync(p, { force: true });
+					cleaned++;
+				}
+			} catch {
+				// skip unreadable entries
+			}
+		}
+	}
+
+	return cleaned;
+}

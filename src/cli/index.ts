@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { handleStartupRecovery } from "../application/recovery/handle-startup-recovery.js";
 import { NativeBindingError } from "../infrastructure/adapters/sqlite/native-binding-error.js";
+import { getProjectHome, getProjectId, resolveRepoRoot } from "../infrastructure/home-directory.js";
 import { branchGuardCheckCmd, branchGuardCheckSchema } from "./commands/branch-guard-check.cmd.js";
 import { checkpointLoadCmd, checkpointLoadSchema } from "./commands/checkpoint-load.cmd.js";
 import { checkpointSaveCmd, checkpointSaveSchema } from "./commands/checkpoint-save.cmd.js";
@@ -391,10 +392,36 @@ function flagToJsonSchema(flag: {
 	return schema;
 }
 
+/**
+ * Resolve the directory that startup recovery should sweep.
+ *
+ * Preferred: the real project home (`~/.tff-cc/<projectId>/`), resolved via
+ * the project id persisted at the git toplevel. This avoids walking through
+ * the `cwd/.tff-cc` symlink, which — in multi-worktree setups — lives inside
+ * the same home directory and can create cyclic descents.
+ *
+ * Fallback: `cwd/.tff-cc` for repos that haven't run `project:init` yet.
+ * These are legitimately non-cyclic (they're either missing or a plain dir),
+ * so the legacy path remains safe.
+ */
+function resolveStartupHomeDir(): string {
+	const cwd = process.cwd();
+	try {
+		const repoRoot = resolveRepoRoot(cwd);
+		const projectId = getProjectId(repoRoot);
+		return getProjectHome(projectId);
+	} catch (err) {
+		process.stderr.write(
+			`tff-cc: could not resolve project home, falling back to cwd/.tff-cc — ${String(err)}\n`,
+		);
+		return join(cwd, ".tff-cc");
+	}
+}
+
 const main = async () => {
 	const [command, ...args] = process.argv.slice(2);
 
-	await handleStartupRecovery({ homeDir: join(process.cwd(), ".tff-cc") });
+	await handleStartupRecovery({ homeDir: resolveStartupHomeDir() });
 
 	if (!command || command === "--help" || command === "-h") {
 		console.log(
