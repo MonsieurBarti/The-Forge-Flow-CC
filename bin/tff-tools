@@ -18,6 +18,7 @@ while [ -L "$SOURCE" ]; do
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 PLUGIN_ROOT="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
+export TFF_PLUGIN_ROOT="$PLUGIN_ROOT"
 
 CLI="$PLUGIN_ROOT/dist/cli/index.js"
 if [ ! -f "$CLI" ]; then

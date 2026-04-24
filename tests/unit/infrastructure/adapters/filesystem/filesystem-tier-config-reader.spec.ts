@@ -120,3 +120,56 @@ describe("FilesystemTierConfigReader.readAgentMinTier", () => {
 		expect(res.data).toBe("haiku");
 	});
 });
+
+describe("FilesystemTierConfigReader — pluginRoot fallback", () => {
+	let project: string;
+	let plugin: string;
+
+	beforeEach(() => {
+		project = mkdtempSync(join(tmpdir(), "tff-tier-proj-"));
+		plugin = mkdtempSync(join(tmpdir(), "tff-tier-plugin-"));
+	});
+	afterEach(() => {
+		rmSync(project, { recursive: true, force: true });
+		rmSync(plugin, { recursive: true, force: true });
+	});
+
+	it("reads agent min_tier from pluginRoot when project has no agents/", async () => {
+		mkdirSync(join(plugin, "agents"), { recursive: true });
+		writeFileSync(
+			join(plugin, "agents", "tff-security-auditor.md"),
+			`---\nrouting:\n  min_tier: sonnet\n---\n`,
+		);
+		const reader = new FilesystemTierConfigReader({ projectRoot: project, pluginRoot: plugin });
+		const res = await reader.readAgentMinTier("tff-security-auditor");
+		expect(isOk(res)).toBe(true);
+		if (!isOk(res)) return;
+		expect(res.data).toBe("sonnet");
+	});
+
+	it("projectRoot agent wins over pluginRoot agent when both define min_tier", async () => {
+		mkdirSync(join(project, "agents"), { recursive: true });
+		mkdirSync(join(plugin, "agents"), { recursive: true });
+		writeFileSync(
+			join(project, "agents", "tff-spec-reviewer.md"),
+			`---\nrouting:\n  min_tier: opus\n---\n`,
+		);
+		writeFileSync(
+			join(plugin, "agents", "tff-spec-reviewer.md"),
+			`---\nrouting:\n  min_tier: haiku\n---\n`,
+		);
+		const reader = new FilesystemTierConfigReader({ projectRoot: project, pluginRoot: plugin });
+		const res = await reader.readAgentMinTier("tff-spec-reviewer");
+		expect(isOk(res)).toBe(true);
+		if (!isOk(res)) return;
+		expect(res.data).toBe("opus");
+	});
+
+	it("returns haiku default when agent is missing from both roots", async () => {
+		const reader = new FilesystemTierConfigReader({ projectRoot: project, pluginRoot: plugin });
+		const res = await reader.readAgentMinTier("ghost-agent");
+		expect(isOk(res)).toBe(true);
+		if (!isOk(res)) return;
+		expect(res.data).toBe("haiku");
+	});
+});

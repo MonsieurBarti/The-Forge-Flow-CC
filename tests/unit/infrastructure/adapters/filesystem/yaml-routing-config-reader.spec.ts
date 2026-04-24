@@ -116,6 +116,87 @@ describe("YamlRoutingConfigReader.readPool", () => {
 		expect(res.data.agents.map((a) => a.id)).toEqual(["tff-code-reviewer", "tff-security-auditor"]);
 	});
 
+	it("falls back to pluginRoot for command frontmatter when projectRoot has none", async () => {
+		const plugin = await mkProject();
+		try {
+			await writeAgent(plugin, "tff-spec-reviewer", ["standard_review"], 10);
+			await writeAgent(plugin, "tff-code-reviewer", ["code_quality"], 10);
+			await writeShipFrontmatter(plugin, ["tff-spec-reviewer", "tff-code-reviewer"]);
+			const reader = new YamlRoutingConfigReader({ projectRoot: tmp, pluginRoot: plugin });
+			const res = await reader.readPool("tff:ship");
+			expect(isOk(res)).toBe(true);
+			if (!isOk(res)) return;
+			expect(res.data.agents.map((a) => a.id)).toEqual(["tff-spec-reviewer", "tff-code-reviewer"]);
+		} finally {
+			await rm(plugin, { recursive: true, force: true });
+		}
+	});
+
+	it("projectRoot frontmatter wins over pluginRoot when both present", async () => {
+		const plugin = await mkProject();
+		try {
+			await writeAgent(plugin, "tff-spec-reviewer", ["x"]);
+			await writeAgent(plugin, "tff-code-reviewer", ["y"]);
+			await writeShipFrontmatter(plugin, ["tff-spec-reviewer", "tff-code-reviewer"]);
+			await writeAgent(tmp, "tff-security-auditor", ["risk"]);
+			await writeShipFrontmatter(tmp, ["tff-security-auditor"]);
+			const reader = new YamlRoutingConfigReader({ projectRoot: tmp, pluginRoot: plugin });
+			const res = await reader.readPool("tff:ship");
+			expect(isOk(res)).toBe(true);
+			if (!isOk(res)) return;
+			expect(res.data.agents.map((a) => a.id)).toEqual(["tff-security-auditor"]);
+		} finally {
+			await rm(plugin, { recursive: true, force: true });
+		}
+	});
+
+	it("falls back to pluginRoot for agent files when projectRoot lacks them", async () => {
+		const plugin = await mkProject();
+		try {
+			await writeShipFrontmatter(tmp, ["tff-spec-reviewer", "tff-code-reviewer"]);
+			await writeAgent(plugin, "tff-spec-reviewer", ["standard_review"], 10);
+			await writeAgent(plugin, "tff-code-reviewer", ["code_quality"], 10);
+			const reader = new YamlRoutingConfigReader({ projectRoot: tmp, pluginRoot: plugin });
+			const res = await reader.readPool("tff:ship");
+			expect(isOk(res)).toBe(true);
+			if (!isOk(res)) return;
+			expect(res.data.agents[0].handles).toEqual(["standard_review"]);
+			expect(res.data.agents[1].handles).toEqual(["code_quality"]);
+		} finally {
+			await rm(plugin, { recursive: true, force: true });
+		}
+	});
+
+	it("projectRoot agent file wins over pluginRoot when both present", async () => {
+		const plugin = await mkProject();
+		try {
+			await writeShipFrontmatter(tmp, ["tff-spec-reviewer"]);
+			await writeAgent(tmp, "tff-spec-reviewer", ["from_project"], 10);
+			await writeAgent(plugin, "tff-spec-reviewer", ["from_plugin"], 10);
+			const reader = new YamlRoutingConfigReader({ projectRoot: tmp, pluginRoot: plugin });
+			const res = await reader.readPool("tff:ship");
+			expect(isOk(res)).toBe(true);
+			if (!isOk(res)) return;
+			expect(res.data.agents[0].handles).toEqual(["from_project"]);
+		} finally {
+			await rm(plugin, { recursive: true, force: true });
+		}
+	});
+
+	it("returns the same no-pool-declared error when both roots lack frontmatter", async () => {
+		const plugin = await mkProject();
+		try {
+			const reader = new YamlRoutingConfigReader({ projectRoot: tmp, pluginRoot: plugin });
+			const res = await reader.readPool("tff:ship");
+			expect(isOk(res)).toBe(false);
+			if (isOk(res)) return;
+			expect(res.error.code).toBe("ROUTING_CONFIG");
+			expect(res.error.message).toMatch(/no pool declared/);
+		} finally {
+			await rm(plugin, { recursive: true, force: true });
+		}
+	});
+
 	it("returns ROUTING_CONFIG error for unknown agent id", async () => {
 		await writeShipFrontmatter(tmp, ["tff-ghost"]);
 		const reader = new YamlRoutingConfigReader({ projectRoot: tmp });

@@ -50,6 +50,13 @@ const DISABLED_DEFAULT: RoutingConfig = {
 
 export interface YamlRoutingConfigReaderOpts {
 	projectRoot: string;
+	/**
+	 * Fallback root for bundled `commands/` and `agents/`. When the project
+	 * root does not contain the requested file, the reader tries this root
+	 * next so fresh installs work without hand-rolled settings.
+	 * null/undefined = project-only lookup (preserves pre-fallback behavior).
+	 */
+	pluginRoot?: string | null;
 }
 
 export class YamlRoutingConfigReader implements RoutingConfigReader {
@@ -242,14 +249,21 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 				}),
 			);
 		}
-		const commandPath = join(this.opts.projectRoot, "commands", ns, `${name}.md`);
+		const roots = [this.opts.projectRoot, this.opts.pluginRoot].filter(
+			(r): r is string => typeof r === "string" && r.length > 0,
+		);
 
-		let raw: string;
-		try {
-			raw = await readFile(commandPath, "utf8");
-		} catch {
-			return Ok(undefined);
+		let raw: string | undefined;
+		for (const root of roots) {
+			const candidate = join(root, "commands", ns, `${name}.md`);
+			try {
+				raw = await readFile(candidate, "utf8");
+				break;
+			} catch {
+				// try next root
+			}
 		}
+		if (raw === undefined) return Ok(undefined);
 		if (raw.length > MAX_YAML_FILE_SIZE) return Ok(undefined);
 
 		const match = raw.match(/^---\n([\s\S]*?)\n---/);
@@ -284,12 +298,21 @@ export class YamlRoutingConfigReader implements RoutingConfigReader {
 	}
 
 	private async hydrateAgentCapability(id: string): Promise<Result<AgentCapability, DomainError>> {
-		const agentPath = join(this.opts.projectRoot, "agents", `${id}.md`);
+		const roots = [this.opts.projectRoot, this.opts.pluginRoot].filter(
+			(r): r is string => typeof r === "string" && r.length > 0,
+		);
 
-		let raw: string;
-		try {
-			raw = await readFile(agentPath, "utf8");
-		} catch {
+		let raw: string | undefined;
+		for (const root of roots) {
+			const candidate = join(root, "agents", `${id}.md`);
+			try {
+				raw = await readFile(candidate, "utf8");
+				break;
+			} catch {
+				// try next root
+			}
+		}
+		if (raw === undefined) {
 			return Err(createDomainError("ROUTING_CONFIG", `agent file not found: ${id}`, { id }));
 		}
 		if (raw.length > MAX_YAML_FILE_SIZE) {

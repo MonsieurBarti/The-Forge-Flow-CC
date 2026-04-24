@@ -8,6 +8,7 @@ import { isOk } from "../../domain/result.js";
 import { YamlRoutingConfigReader } from "../../infrastructure/adapters/filesystem/yaml-routing-config-reader.js";
 import { JsonlRoutingDecisionReader } from "../../infrastructure/adapters/jsonl/jsonl-routing-decision-reader.js";
 import { JsonlRoutingOutcomeWriter } from "../../infrastructure/adapters/jsonl/routing-outcome-jsonl-writer.js";
+import { resolvePluginRoot } from "../../infrastructure/plugin-root.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { resolveRoutingPaths } from "../utils/routing-paths.js";
 
@@ -57,7 +58,8 @@ export const routingOutcomeCmd = async (args: string[]): Promise<string> => {
 	};
 
 	const projectRoot = process.cwd();
-	const configReader = new YamlRoutingConfigReader({ projectRoot });
+	const pluginRoot = resolvePluginRoot();
+	const configReader = new YamlRoutingConfigReader({ projectRoot, pluginRoot });
 	const configRes = await configReader.readConfig();
 	if (!isOk(configRes)) return JSON.stringify({ ok: false, error: configRes.error });
 

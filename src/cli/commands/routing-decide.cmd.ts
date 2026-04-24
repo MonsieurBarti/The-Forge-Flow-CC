@@ -1,10 +1,10 @@
-import { join } from "node:path";
 import { decideUseCase } from "../../application/routing/decide.js";
 import { isOk } from "../../domain/result.js";
 import { FilesystemSignalExtractor } from "../../infrastructure/adapters/filesystem/filesystem-signal-extractor.js";
 import { FilesystemTierConfigReader } from "../../infrastructure/adapters/filesystem/filesystem-tier-config-reader.js";
 import { YamlRoutingConfigReader } from "../../infrastructure/adapters/filesystem/yaml-routing-config-reader.js";
 import { JsonlRoutingDecisionLogger } from "../../infrastructure/adapters/jsonl/jsonl-routing-decision-logger.js";
+import { resolvePluginRoot } from "../../infrastructure/plugin-root.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
 export const routingDecideSchema: CommandSchema = {
@@ -54,7 +54,8 @@ export const routingDecideCmd = async (args: string[]): Promise<string> => {
 	};
 
 	const projectRoot = process.cwd();
-	const configReader = new YamlRoutingConfigReader({ projectRoot });
+	const pluginRoot = resolvePluginRoot();
+	const configReader = new YamlRoutingConfigReader({ projectRoot, pluginRoot });
 	const configRes = await configReader.readConfig();
 	if (!isOk(configRes)) {
 		process.stderr.write(`routing: config error — ${JSON.stringify(configRes.error)}\n`);
@@ -68,7 +69,7 @@ export const routingDecideCmd = async (args: string[]): Promise<string> => {
 	const extractor = new FilesystemSignalExtractor();
 	const tierConfigReader = new FilesystemTierConfigReader({
 		projectRoot,
-		agentsDir: join(projectRoot, "agents"),
+		pluginRoot,
 	});
 	const logger = new JsonlRoutingDecisionLogger(configRes.data.logging.path);
 

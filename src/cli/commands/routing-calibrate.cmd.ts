@@ -8,6 +8,7 @@ import { JsonlRoutingDecisionReader } from "../../infrastructure/adapters/jsonl/
 import { JsonlRoutingOutcomeReader } from "../../infrastructure/adapters/jsonl/routing-outcome-jsonl-reader.js";
 import { JsonlRoutingOutcomeWriter } from "../../infrastructure/adapters/jsonl/routing-outcome-jsonl-writer.js";
 import { renderCalibrationReport } from "../../infrastructure/adapters/markdown/calibration-report-renderer.js";
+import { resolvePluginRoot } from "../../infrastructure/plugin-root.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { resolveRoutingPaths } from "../utils/routing-paths.js";
 
@@ -26,7 +27,8 @@ export const routingCalibrateCmd = async (args: string[]): Promise<string> => {
 	const { "n-min": nMinFlag } = parsed.data as { "n-min"?: number };
 
 	const projectRoot = process.cwd();
-	const configReader = new YamlRoutingConfigReader({ projectRoot });
+	const pluginRoot = resolvePluginRoot();
+	const configReader = new YamlRoutingConfigReader({ projectRoot, pluginRoot });
 	const configRes = await configReader.readConfig();
 	if (!isOk(configRes)) return JSON.stringify({ ok: false, error: configRes.error });
 
