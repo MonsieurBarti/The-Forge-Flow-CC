@@ -62,7 +62,7 @@ function sweepStaleTmps(root: string, nowMs: number, thresholdMs: number): numbe
 	const stack: string[] = [root];
 
 	while (stack.length > 0) {
-		if (visited.size > MAX_DIRS_VISITED) break;
+		if (visited.size >= MAX_DIRS_VISITED) break;
 		const current = stack.pop();
 		if (current === undefined) break;
 
