@@ -13,6 +13,7 @@ import { GitSliceMergeLookup } from "../../infrastructure/adapters/git/git-slice
 import { JsonlRoutingDecisionReader } from "../../infrastructure/adapters/jsonl/jsonl-routing-decision-reader.js";
 import { JsonlRoutingOutcomeReader } from "../../infrastructure/adapters/jsonl/routing-outcome-jsonl-reader.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
+import { resolvePluginRoot } from "../../infrastructure/plugin-root.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 import { resolveSliceId } from "../utils/resolve-id.js";
 import { resolveRoutingPaths } from "../utils/routing-paths.js";
@@ -59,8 +60,9 @@ export const routingJudgePrepareCmd = async (
 	};
 
 	const projectRoot = process.cwd();
+	const pluginRoot = resolvePluginRoot();
 
-	const configReader = new YamlRoutingConfigReader({ projectRoot });
+	const configReader = new YamlRoutingConfigReader({ projectRoot, pluginRoot });
 	const configRes = await configReader.readConfig();
 	if (!isOk(configRes)) return JSON.stringify({ ok: false, error: configRes.error });
 	if (!configRes.data.enabled) {
