@@ -15,6 +15,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 let repo: string;
 let home: string;
 const CLI = join(process.cwd(), "dist/cli/index.js");
+const PROJECT_ID = "5580e1f9-2c81-423c-a041-5e8d4089e1fb";
 
 beforeEach(() => {
 	repo = mkdtempSync(join(tmpdir(), "tff-cycle-repo-"));
@@ -25,10 +26,9 @@ beforeEach(() => {
 	execFileSync("git", ["config", "user.name", "t"], { cwd: repo });
 	execFileSync("git", ["commit", "--allow-empty", "-m", "init"], { cwd: repo });
 
-	const projectId = "5580e1f9-2c81-423c-a041-5e8d4089e1fb";
-	writeFileSync(join(repo, ".tff-project-id"), `${projectId}\n`);
+	writeFileSync(join(repo, ".tff-project-id"), `${PROJECT_ID}\n`);
 
-	const projectHome = join(home, projectId);
+	const projectHome = join(home, PROJECT_ID);
 	mkdirSync(join(projectHome, "milestones"), { recursive: true });
 	mkdirSync(join(projectHome, "worktrees", "M01-S01"), { recursive: true });
 	symlinkSync(projectHome, join(projectHome, "worktrees", "M01-S01", ".tff-cc"));
@@ -56,7 +56,7 @@ describe("CLI startup against a cyclic project home", () => {
 		const elapsed = Date.now() - start;
 		expect(elapsed).toBeLessThan(10_000);
 
-		const stale = join(home, "5580e1f9-2c81-423c-a041-5e8d4089e1fb", "milestones", "STATE.md.tmp");
+		const stale = join(home, PROJECT_ID, "milestones", "STATE.md.tmp");
 		expect(existsSync(stale)).toBe(false);
 	});
 });

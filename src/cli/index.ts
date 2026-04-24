@@ -410,7 +410,10 @@ function resolveStartupHomeDir(): string {
 		const repoRoot = resolveRepoRoot(cwd);
 		const projectId = getProjectId(repoRoot);
 		return getProjectHome(projectId);
-	} catch {
+	} catch (err) {
+		process.stderr.write(
+			`tff-cc: could not resolve project home, falling back to cwd/.tff-cc — ${String(err)}\n`,
+		);
 		return join(cwd, ".tff-cc");
 	}
 }
