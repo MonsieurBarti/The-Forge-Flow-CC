@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.13](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.12...tff-cc-v0.9.13) (2026-04-24)
+
+
+### Bug Fixes
+
+* **routing:** fall back to plugin root for commands and agents lookup ([#139](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/139)) ([b4b6403](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/b4b640335f02863bb33d892bb5e65851442ed4f7))
+
 ## [0.9.12](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.11...tff-cc-v0.9.12) (2026-04-24)
 
 
