@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.15](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.14...tff-cc-v0.9.15) (2026-04-25)
+
+
+### Features
+
+* **routing:** capture slice merge sha at merge time ([#143](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/143)) ([a0f3aa0](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/a0f3aa0a71f0fbf77929e838895a330087ecc155))
+
 ## [0.9.14](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.13...tff-cc-v0.9.14) (2026-04-25)
 
 
