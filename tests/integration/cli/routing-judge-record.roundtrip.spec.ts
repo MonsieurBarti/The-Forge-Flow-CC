@@ -75,6 +75,39 @@ describe("routing:judge-record — roundtrip", () => {
 		expect(outcome.reason).toBe("looks good");
 	});
 
+	it("clears pending judgment marker on success", async () => {
+		seed(root);
+		const verdictsPath = join(root, "verdicts.json");
+		writeFileSync(
+			verdictsPath,
+			JSON.stringify({
+				verdicts: [{ decision_id: D1, dimension: "agent", verdict: "ok", reason: "looks good" }],
+			}),
+		);
+		const cleared: string[] = [];
+		const out = await routingJudgeRecordCmd(["--slice", SLICE, "--verdicts-path", verdictsPath], {
+			sliceStatusLookup: async () => "closed",
+			sliceLabelLookup: async () => SLICE,
+			clearPendingJudgment: (id) => cleared.push(id),
+		});
+		expect(JSON.parse(out).ok).toBe(true);
+		expect(cleared).toEqual([SLICE]);
+	});
+
+	it("does not clear pending judgment marker on failure", async () => {
+		seed(root);
+		const verdictsPath = join(root, "bad.json");
+		writeFileSync(verdictsPath, JSON.stringify({ notVerdicts: [] }));
+		const cleared: string[] = [];
+		const out = await routingJudgeRecordCmd(["--slice", SLICE, "--verdicts-path", verdictsPath], {
+			sliceStatusLookup: async () => "closed",
+			sliceLabelLookup: async () => SLICE,
+			clearPendingJudgment: (id) => cleared.push(id),
+		});
+		expect(JSON.parse(out).ok).toBe(false);
+		expect(cleared).toEqual([]);
+	});
+
 	it("invalid verdicts envelope (missing verdicts key) → PRECONDITION_VIOLATION", async () => {
 		seed(root);
 		const verdictsPath = join(root, "bad-verdicts.json");

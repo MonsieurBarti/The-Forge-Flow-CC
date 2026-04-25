@@ -41,6 +41,7 @@ export const routingJudgeRecordSchema: CommandSchema = {
 export interface RoutingJudgeRecordFactoryOverrides {
 	sliceStatusLookup?: (sliceId: string) => Promise<string>;
 	sliceLabelLookup?: (sliceId: string) => Promise<string>;
+	clearPendingJudgment?: (sliceId: string) => void;
 }
 
 export const routingJudgeRecordCmd = async (
@@ -149,36 +150,54 @@ export const routingJudgeRecordCmd = async (
 	let sliceId: string;
 	let sliceLabel: string;
 	let sliceStatus: string;
+	let clearPending: ((sliceId: string) => void) | null = overrides.clearPendingJudgment ?? null;
 
 	if (overrides.sliceLabelLookup && overrides.sliceStatusLookup) {
 		sliceId = flags.slice;
 		sliceLabel = await overrides.sliceLabelLookup(sliceId);
 		sliceStatus = await overrides.sliceStatusLookup(sliceId);
 	} else {
-		const { sliceStore, milestoneStore } = createClosableStateStoresUnchecked();
-		const resolvedRes = resolveSliceId(flags.slice, sliceStore);
-		if (!resolvedRes.ok) return JSON.stringify({ ok: false, error: resolvedRes.error });
-		sliceId = resolvedRes.data;
-		const sliceEntity = sliceStore.getSlice(sliceId);
-		if (!sliceEntity.ok || !sliceEntity.data) {
-			return JSON.stringify({
-				ok: false,
-				error: preconditionViolationError([
-					{ code: "slice.exists", expected: "known slice", actual: "not found" },
-				]),
-			});
+		const stores = createClosableStateStoresUnchecked();
+		const { sliceStore, milestoneStore } = stores;
+		try {
+			const resolvedRes = resolveSliceId(flags.slice, sliceStore);
+			if (!resolvedRes.ok) return JSON.stringify({ ok: false, error: resolvedRes.error });
+			sliceId = resolvedRes.data;
+			const sliceEntity = sliceStore.getSlice(sliceId);
+			if (!sliceEntity.ok || !sliceEntity.data) {
+				return JSON.stringify({
+					ok: false,
+					error: preconditionViolationError([
+						{ code: "slice.exists", expected: "known slice", actual: "not found" },
+					]),
+				});
+			}
+			const milestoneRes = milestoneStore.getMilestone(sliceEntity.data.milestoneId);
+			if (!milestoneRes.ok || !milestoneRes.data) {
+				return JSON.stringify({
+					ok: false,
+					error: preconditionViolationError([
+						{ code: "milestone.exists", expected: "parent milestone", actual: "not found" },
+					]),
+				});
+			}
+			sliceLabel = `M${String(milestoneRes.data.number).padStart(2, "0")}-S${String(sliceEntity.data.number).padStart(2, "0")}`;
+			sliceStatus = sliceEntity.data.status;
+		} finally {
+			stores.close();
 		}
-		const milestoneRes = milestoneStore.getMilestone(sliceEntity.data.milestoneId);
-		if (!milestoneRes.ok || !milestoneRes.data) {
-			return JSON.stringify({
-				ok: false,
-				error: preconditionViolationError([
-					{ code: "milestone.exists", expected: "parent milestone", actual: "not found" },
-				]),
-			});
+		// Drain the pending-judgment marker after a successful append by
+		// re-opening a store. Best-effort — recording is already durable.
+		if (!clearPending) {
+			clearPending = (id: string) => {
+				const s = createClosableStateStoresUnchecked();
+				try {
+					s.pendingJudgmentStore.clearPending(id);
+				} finally {
+					s.close();
+				}
+			};
 		}
-		sliceLabel = `M${String(milestoneRes.data.number).padStart(2, "0")}-S${String(sliceEntity.data.number).padStart(2, "0")}`;
-		sliceStatus = sliceEntity.data.status;
 	}
 
 	const decisionReader = new JsonlRoutingDecisionReader(routingPath);
@@ -211,6 +230,13 @@ export const routingJudgeRecordCmd = async (
 		},
 	);
 	if (!isOk(res)) return JSON.stringify({ ok: false, error: res.error });
+	if (clearPending) {
+		try {
+			clearPending(sliceId);
+		} catch {
+			// Best-effort: outcomes are already persisted.
+		}
+	}
 	return JSON.stringify({
 		ok: true,
 		data: { ...res.data, slice_label: sliceLabel },

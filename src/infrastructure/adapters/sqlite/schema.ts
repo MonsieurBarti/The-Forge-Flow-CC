@@ -4,6 +4,7 @@ import { v2Migration } from "./migrations/v2.js";
 import { v3Migration } from "./migrations/v3.js";
 import { v4Migration } from "./migrations/v4.js";
 import { v5Migration } from "./migrations/v5.js";
+import { v6Migration } from "./migrations/v6.js";
 
 const migrations: Array<{ version: number; sql: string }> = [
 	{ version: 1, sql: v1Migration },
@@ -11,6 +12,7 @@ const migrations: Array<{ version: number; sql: string }> = [
 	{ version: 3, sql: v3Migration },
 	{ version: 4, sql: v4Migration },
 	{ version: 5, sql: v5Migration },
+	{ version: 6, sql: v6Migration },
 ];
 
 export const getCurrentVersion = (db: Database.Database): number => {

@@ -23,6 +23,10 @@ import type {
 	MilestoneAuditStore,
 } from "../../../domain/ports/milestone-audit-store.port.js";
 import type { MilestoneStore } from "../../../domain/ports/milestone-store.port.js";
+import type {
+	PendingJudgmentRecord,
+	PendingJudgmentStore,
+} from "../../../domain/ports/pending-judgment-store.port.js";
 import type { ProjectStore } from "../../../domain/ports/project-store.port.js";
 import type { ReviewStore } from "../../../domain/ports/review-store.port.js";
 import type { SessionStore } from "../../../domain/ports/session-store.port.js";
@@ -61,7 +65,8 @@ export class SQLiteStateAdapter
 		SliceDependencyStore,
 		SessionStore,
 		ReviewStore,
-		MilestoneAuditStore
+		MilestoneAuditStore,
+		PendingJudgmentStore
 {
 	constructor(private db: Database.Database) {}
 
@@ -465,6 +470,16 @@ export class SQLiteStateAdapter
 				this.db
 					.prepare("UPDATE slice SET status = ?, updated_at = datetime('now') WHERE id = ?")
 					.run(target, id);
+				// Queue a routing judgment when a slice closes so post-merge grading
+				// can be drained before the milestone is allowed to close.
+				if (target === "closed") {
+					this.db
+						.prepare(
+							`INSERT INTO pending_judgments(slice_id) VALUES (?)
+               ON CONFLICT(slice_id) DO NOTHING`,
+						)
+						.run(id);
+				}
 				return Ok(domainResult.data.events);
 			} catch (e) {
 				return Err(createDomainError("WRITE_FAILURE", `Failed to transition slice: ${e}`));
@@ -899,6 +914,63 @@ export class SQLiteStateAdapter
 			return Ok(undefined);
 		} catch (e) {
 			return Err(createDomainError("WRITE_FAILURE", `Failed to upsert audit: ${e}`));
+		}
+	}
+
+	// PendingJudgmentStore
+	insertPending(sliceId: string): Result<void, DomainError> {
+		try {
+			this.db
+				.prepare(
+					`INSERT INTO pending_judgments(slice_id) VALUES (?)
+           ON CONFLICT(slice_id) DO NOTHING`,
+				)
+				.run(sliceId);
+			return Ok(undefined);
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to insert pending judgment: ${e}`));
+		}
+	}
+
+	clearPending(sliceId: string): Result<void, DomainError> {
+		try {
+			this.db.prepare("DELETE FROM pending_judgments WHERE slice_id = ?").run(sliceId);
+			return Ok(undefined);
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to clear pending judgment: ${e}`));
+		}
+	}
+
+	listPending(): Result<PendingJudgmentRecord[], DomainError> {
+		try {
+			const rows = this.db
+				.prepare(
+					`SELECT slice_id as sliceId, created_at as createdAt
+           FROM pending_judgments ORDER BY created_at ASC`,
+				)
+				.all() as Array<{ sliceId: string; createdAt: string }>;
+			return Ok(rows.map((r) => ({ sliceId: r.sliceId, createdAt: r.createdAt })));
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to list pending judgments: ${e}`));
+		}
+	}
+
+	listPendingForMilestone(milestoneId: string): Result<PendingJudgmentRecord[], DomainError> {
+		try {
+			const rows = this.db
+				.prepare(
+					`SELECT pj.slice_id as sliceId, pj.created_at as createdAt
+           FROM pending_judgments pj
+           JOIN slice s ON s.id = pj.slice_id
+           WHERE s.milestone_id = ?
+           ORDER BY pj.created_at ASC`,
+				)
+				.all(milestoneId) as Array<{ sliceId: string; createdAt: string }>;
+			return Ok(rows.map((r) => ({ sliceId: r.sliceId, createdAt: r.createdAt })));
+		} catch (e) {
+			return Err(
+				createDomainError("WRITE_FAILURE", `Failed to list pending judgments for milestone: ${e}`),
+			);
 		}
 	}
 

@@ -44,6 +44,13 @@ LOAD @skills/finishing-work/SKILL.md
 7. CLOSE + CLEANUP:
    - `tff-tools worktree:delete --slice-id <slice-id>` (if worktree ∃)
    - `tff-tools slice:close --slice-id <slice-id> --reason "Slice PR merged"`
+     (this enqueues a routing judgment in `pending_judgments`)
+   - DRAIN routing judgment (run inline, before branch deletion):
+     a. `tff-tools routing:judge-prepare --slice <slice-id>` → parse JSON
+     b. IF `data.evidence == null` → `tff-tools judge:pending:clear --slice-id <slice-id>` (already judged) ∧ skip c–d
+     c. ELSE: write `data.evidence` to a temp file, SPAWN tff-outcome-judge with `{evidence_path, verdicts_path}`, await completion
+     d. `tff-tools routing:judge-record --slice <slice-id> --verdicts-path <verdicts-path>` (record clears the pending row)
+     - On any error in this DRAIN block: surface the error, leave the pending row, stop the cleanup. The user can retry via `/tff:judge --slice-id <slice-id>` later.
    - `git push origin --delete slice/<slice-id>` (delete remote slice branch)
    - `git branch -d slice/<slice-id>` (delete local slice branch, if ∃)
    - `git fetch origin milestone/<milestone> && git rebase origin/milestone/<milestone>` (keep milestone branch up to date)
