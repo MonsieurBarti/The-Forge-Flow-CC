@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.14](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.13...tff-cc-v0.9.14) (2026-04-25)
+
+
+### Features
+
+* **routing:** auto-judge slices on close and gate milestone close on pending judgments ([#141](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/141)) ([d9bf090](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/d9bf09081051179f2abd6d4fe6e81d008e9f0eeb))
+
 ## [0.9.13](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.12...tff-cc-v0.9.13) (2026-04-24)
 
 
