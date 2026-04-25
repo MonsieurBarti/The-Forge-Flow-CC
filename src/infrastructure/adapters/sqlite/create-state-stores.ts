@@ -4,6 +4,7 @@ import type { DependencyStore } from "../../../domain/ports/dependency-store.por
 import type { JournalRepository } from "../../../domain/ports/journal-repository.port.js";
 import type { MilestoneAuditStore } from "../../../domain/ports/milestone-audit-store.port.js";
 import type { MilestoneStore } from "../../../domain/ports/milestone-store.port.js";
+import type { PendingJudgmentStore } from "../../../domain/ports/pending-judgment-store.port.js";
 import type { ProjectStore } from "../../../domain/ports/project-store.port.js";
 import type { ReviewStore } from "../../../domain/ports/review-store.port.js";
 import type { SessionStore } from "../../../domain/ports/session-store.port.js";
@@ -32,6 +33,7 @@ export interface StateStores {
 	sessionStore: SessionStore;
 	reviewStore: ReviewStore;
 	milestoneAuditStore: MilestoneAuditStore;
+	pendingJudgmentStore: PendingJudgmentStore;
 	journalRepository: JournalRepository;
 }
 
@@ -75,6 +77,7 @@ export function createStateStoresUnchecked(dbPath?: string): StateStores {
 		sessionStore: adapter,
 		reviewStore: adapter,
 		milestoneAuditStore: adapter, // adapter implements MilestoneAuditStore
+		pendingJudgmentStore: adapter, // adapter implements PendingJudgmentStore
 		journalRepository,
 	};
 }
@@ -112,6 +115,7 @@ export function createClosableStateStoresUnchecked(dbPath?: string): ClosableSta
 		sessionStore: adapter,
 		reviewStore: adapter,
 		milestoneAuditStore: adapter, // adapter implements MilestoneAuditStore
+		pendingJudgmentStore: adapter, // adapter implements PendingJudgmentStore
 		journalRepository,
 		close: () => adapter.close(),
 		checkpoint: () => adapter.checkpoint(),

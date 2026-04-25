@@ -12,6 +12,11 @@ import { composeDetectCmd, composeDetectSchema } from "./commands/compose-detect
 import { depAddCmd, depAddSchema } from "./commands/dep-add.cmd.js";
 import { directEditGuardCmd, directEditGuardSchema } from "./commands/direct-edit-guard.cmd.js";
 import {
+	judgePendingClearCmd,
+	judgePendingClearSchema,
+} from "./commands/judge-pending-clear.cmd.js";
+import { judgePendingListCmd, judgePendingListSchema } from "./commands/judge-pending-list.cmd.js";
+import {
 	milestoneAuditStatusCmd,
 	milestoneAuditStatusSchema,
 } from "./commands/milestone-audit-status.cmd.js";
@@ -229,6 +234,14 @@ export const COMMAND_REGISTRY: Record<string, CommandEntry> = (() => {
 		"routing:judge-record": {
 			schema: routingJudgeRecordSchema,
 			dispatcher: wrap(routingJudgeRecordCmd, routingJudgeRecordSchema),
+		},
+		"judge:pending:list": {
+			schema: judgePendingListSchema,
+			dispatcher: wrap(judgePendingListCmd, judgePendingListSchema),
+		},
+		"judge:pending:clear": {
+			schema: judgePendingClearSchema,
+			dispatcher: wrap(judgePendingClearCmd, judgePendingClearSchema),
 		},
 		"checkpoint:save": {
 			schema: checkpointSaveSchema,

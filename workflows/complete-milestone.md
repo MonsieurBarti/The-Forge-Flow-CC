@@ -18,7 +18,15 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 1. CLOSE SLICES: `tff-tools slice:list` → filter for non-closed slices under this milestone:
    - verify its PR is merged: `gh pr list --state merged --head slice/<slice-id>`
    - if merged → `tff-tools slice:close --slice-id <id> --reason "Slice PR merged"`
+     then DRAIN routing judgment for that slice (same dance as ship-slice.md step 7):
+     a. `tff-tools routing:judge-prepare --slice <id>` → parse JSON
+     b. IF `data.evidence == null` → `tff-tools judge:pending:clear --slice-id <id>` ∧ skip c–d
+     c. ELSE: write evidence to temp file, SPAWN tff-outcome-judge with evidence + verdicts paths, await
+     d. `tff-tools routing:judge-record --slice <id> --verdicts-path <verdicts-path>`
+     - any error → surface, leave pending row, abort milestone close (user drains later via `/tff:judge`)
    - if ¬ merged → warn user, block milestone completion
+1a. PRE-CLOSE GATE: `tff-tools judge:pending:list --milestone-id <id>` must return `count: 0`.
+    If non-zero, drain each via `/tff:judge --slice-id <slice-id>` before continuing — `milestone:close` will refuse otherwise (`PENDING_JUDGMENTS`).
 2. PR: `gh pr create` milestone/<milestone> → main — **ALWAYS show PR URL**
 3. SPAWN tff-security-auditor: milestone-level review
 4. HANDLE: approved → inform ready to merge | changes → fix ∧ re-review

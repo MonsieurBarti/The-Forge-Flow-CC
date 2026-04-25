@@ -19,13 +19,13 @@ describe("schema", () => {
 
 	it("runs migrations on fresh db", () => {
 		runMigrations(db);
-		expect(getCurrentVersion(db)).toBe(5);
+		expect(getCurrentVersion(db)).toBe(6);
 	});
 
 	it("is idempotent", () => {
 		runMigrations(db);
 		runMigrations(db);
-		expect(getCurrentVersion(db)).toBe(5);
+		expect(getCurrentVersion(db)).toBe(6);
 	});
 
 	it("enables WAL mode", () => {
@@ -79,6 +79,7 @@ describe("schema", () => {
 		expect(tableNames).toContain("dependency");
 		expect(tableNames).toContain("slice_dependency");
 		expect(tableNames).toContain("milestone_audit");
+		expect(tableNames).toContain("pending_judgments");
 		expect(tableNames).toContain("workflow_session");
 		expect(tableNames).toContain("schema_version");
 	});
