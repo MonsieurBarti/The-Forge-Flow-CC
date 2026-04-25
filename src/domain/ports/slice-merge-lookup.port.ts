@@ -3,12 +3,12 @@ import type { Result } from "../result.js";
 
 export interface SliceMergeLookup {
 	/**
-	 * Find the commit on the default branch that landed this slice's work.
-	 * `sliceLabel` is the "M##-S##" coordinate. Implementations typically do
-	 * `git log --grep=<sliceLabel> --format=%H <default-branch>` and return the
-	 * first match. `--merges` is NOT recommended: squash-merges produce regular
-	 * commits (not merge commits) with the label in the subject line, and
-	 * filtering to `--merges` would miss them.
+	 * Find the commit that landed this slice's work, searching the supplied
+	 * branches in order and returning the first hit. `sliceLabel` is the
+	 * "M##-S##" coordinate; implementations grep commit subjects on each branch
+	 * for that label as a standalone token. `--merges` is NOT recommended:
+	 * squash-merges produce regular commits (not merge commits) with the label
+	 * in the subject line, and filtering to `--merges` would miss them.
 	 */
-	findMergeCommit(sliceLabel: string): Promise<Result<string, DomainError>>;
+	findMergeCommit(sliceLabel: string, branches: string[]): Promise<Result<string, DomainError>>;
 }

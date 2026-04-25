@@ -35,6 +35,8 @@ export interface PrepareJudgeEvidenceDeps {
 	debugEvents: JudgeDebugEvent[];
 	outcomesSource: OutcomeSource;
 	mergeLookup: SliceMergeLookup;
+	mergeBranches: string[];
+	pendingMergeSha?: string;
 	diffReader: DiffReader;
 	specReader: SliceSpecReader;
 	maxPatchBytes: number;
@@ -96,9 +98,14 @@ export const prepareJudgeEvidenceUseCase = async (
 		});
 	}
 
-	const mergeRes = await deps.mergeLookup.findMergeCommit(deps.sliceLabel);
-	if (!isOk(mergeRes)) return mergeRes;
-	const mergeSha = mergeRes.data;
+	let mergeSha: string;
+	if (deps.pendingMergeSha) {
+		mergeSha = deps.pendingMergeSha;
+	} else {
+		const mergeRes = await deps.mergeLookup.findMergeCommit(deps.sliceLabel, deps.mergeBranches);
+		if (!isOk(mergeRes)) return mergeRes;
+		mergeSha = mergeRes.data;
+	}
 
 	const diffRes = await deps.diffReader.readMergeDiff(mergeSha, deps.maxPatchBytes);
 	if (!isOk(diffRes)) return diffRes;

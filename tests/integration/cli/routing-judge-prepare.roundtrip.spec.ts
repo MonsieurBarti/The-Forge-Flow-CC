@@ -65,7 +65,10 @@ const stubSpecReader = {
 	}),
 };
 const stubMergeLookup = {
-	findMergeCommit: async () => ({ ok: true as const, data: "abc1234567890" }),
+	findMergeCommit: async (_label: string, _branches: string[]) => ({
+		ok: true as const,
+		data: "abc1234567890",
+	}),
 };
 
 describe("routing:judge-prepare — roundtrip", () => {

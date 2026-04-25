@@ -66,6 +66,7 @@ import { sliceClassifyCmd, sliceClassifySchema } from "./commands/slice-classify
 import { sliceCloseCmd, sliceCloseSchema } from "./commands/slice-close.cmd.js";
 import { sliceCreateCmd, sliceCreateSchema } from "./commands/slice-create.cmd.js";
 import { sliceListCmd, sliceListSchema } from "./commands/slice-list.cmd.js";
+import { sliceRecordMergeCmd, sliceRecordMergeSchema } from "./commands/slice-record-merge.cmd.js";
 import { sliceTransitionCmd, sliceTransitionSchema } from "./commands/slice-transition.cmd.js";
 import { specEditGuardCmd, specEditGuardSchema } from "./commands/spec-edit-guard.cmd.js";
 import { stateDiffCmd, stateDiffSchema } from "./commands/state-diff.cmd.js";
@@ -146,6 +147,10 @@ export const COMMAND_REGISTRY: Record<string, CommandEntry> = (() => {
 		"slice:close": {
 			schema: sliceCloseSchema,
 			dispatcher: wrap(sliceCloseCmd, sliceCloseSchema),
+		},
+		"slice:record-merge": {
+			schema: sliceRecordMergeSchema,
+			dispatcher: wrap(sliceRecordMergeCmd, sliceRecordMergeSchema),
 		},
 		"slice:classify": {
 			schema: sliceClassifySchema,

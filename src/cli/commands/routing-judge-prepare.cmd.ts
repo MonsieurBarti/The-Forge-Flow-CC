@@ -41,11 +41,15 @@ export const routingJudgePrepareSchema: CommandSchema = {
 };
 
 export interface RoutingJudgePrepareFactoryOverrides {
-	mergeLookupFactory?: (opts: { cwd: string; defaultBranch: string }) => SliceMergeLookup;
+	mergeLookupFactory?: (opts: { cwd: string }) => SliceMergeLookup;
 	diffReaderFactory?: (opts: { cwd: string }) => DiffReader;
 	specReaderFactory?: (opts: { projectRoot: string }) => SliceSpecReader;
 	sliceStatusLookup?: (sliceId: string) => Promise<string>;
 	sliceLabelLookup?: (sliceId: string) => Promise<string>;
+	sliceContextLookup?: (sliceId: string) => Promise<{
+		mergeBranches: string[];
+		pendingMergeSha?: string;
+	}>;
 }
 
 export const routingJudgePrepareCmd = async (
@@ -92,13 +96,21 @@ export const routingJudgePrepareCmd = async (
 	let sliceId: string;
 	let sliceLabel: string;
 	let sliceStatus: string;
+	let mergeBranches: string[] = ["main"];
+	let pendingMergeSha: string | undefined;
 
 	if (overrides.sliceLabelLookup && overrides.sliceStatusLookup) {
 		sliceId = flags.slice;
 		sliceLabel = await overrides.sliceLabelLookup(sliceId);
 		sliceStatus = await overrides.sliceStatusLookup(sliceId);
+		if (overrides.sliceContextLookup) {
+			const ctx = await overrides.sliceContextLookup(sliceId);
+			mergeBranches = ctx.mergeBranches;
+			pendingMergeSha = ctx.pendingMergeSha;
+		}
 	} else {
-		const { sliceStore, milestoneStore } = createClosableStateStoresUnchecked();
+		const { sliceStore, milestoneStore, pendingJudgmentStore } =
+			createClosableStateStoresUnchecked();
 		const resolvedRes = resolveSliceId(flags.slice, sliceStore);
 		if (!resolvedRes.ok) return JSON.stringify({ ok: false, error: resolvedRes.error });
 		sliceId = resolvedRes.data;
@@ -122,6 +134,12 @@ export const routingJudgePrepareCmd = async (
 		}
 		sliceLabel = `M${String(milestoneRes.data.number).padStart(2, "0")}-S${String(sliceEntity.data.number).padStart(2, "0")}`;
 		sliceStatus = sliceEntity.data.status;
+		mergeBranches = [milestoneRes.data.branch, "main"];
+
+		const pendingRes = pendingJudgmentStore.getPending(sliceId);
+		if (pendingRes.ok && pendingRes.data?.mergeSha) {
+			pendingMergeSha = pendingRes.data.mergeSha;
+		}
 	}
 
 	const decisionReader = new JsonlRoutingDecisionReader(routingPath);
@@ -148,8 +166,8 @@ export const routingJudgePrepareCmd = async (
 	const maxSpecBytes = modelJudgeCfg?.max_spec_bytes ?? 16384;
 
 	const mergeLookup: SliceMergeLookup = overrides.mergeLookupFactory
-		? overrides.mergeLookupFactory({ cwd: projectRoot, defaultBranch: "main" })
-		: new GitSliceMergeLookup({ run: runGit, cwd: projectRoot, defaultBranch: "main" });
+		? overrides.mergeLookupFactory({ cwd: projectRoot })
+		: new GitSliceMergeLookup({ run: runGit, cwd: projectRoot });
 	const diffReader: DiffReader = overrides.diffReaderFactory
 		? overrides.diffReaderFactory({ cwd: projectRoot })
 		: new GitDiffReader({ run: runGit, cwd: projectRoot });
@@ -166,6 +184,8 @@ export const routingJudgePrepareCmd = async (
 			debugEvents,
 			outcomesSource,
 			mergeLookup,
+			mergeBranches,
+			pendingMergeSha,
 			diffReader,
 			specReader,
 			maxPatchBytes,
