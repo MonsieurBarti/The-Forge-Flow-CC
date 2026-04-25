@@ -38,6 +38,7 @@ import { sliceClassifySchema } from "./slice-classify.cmd.js";
 import { sliceCloseSchema } from "./slice-close.cmd.js";
 import { sliceCreateSchema } from "./slice-create.cmd.js";
 import { sliceListSchema } from "./slice-list.cmd.js";
+import { sliceRecordMergeSchema } from "./slice-record-merge.cmd.js";
 // Import all command schemas
 import { sliceTransitionSchema } from "./slice-transition.cmd.js";
 import { specEditGuardSchema } from "./spec-edit-guard.cmd.js";
@@ -64,6 +65,7 @@ schemaRegistry.set("slice:transition", sliceTransitionSchema);
 schemaRegistry.set("slice:create", sliceCreateSchema);
 schemaRegistry.set("slice:list", sliceListSchema);
 schemaRegistry.set("slice:close", sliceCloseSchema);
+schemaRegistry.set("slice:record-merge", sliceRecordMergeSchema);
 schemaRegistry.set("slice:classify", sliceClassifySchema);
 schemaRegistry.set("project:init", projectInitSchema);
 schemaRegistry.set("project:get", projectGetSchema);

@@ -19,13 +19,13 @@ describe("schema", () => {
 
 	it("runs migrations on fresh db", () => {
 		runMigrations(db);
-		expect(getCurrentVersion(db)).toBe(6);
+		expect(getCurrentVersion(db)).toBe(7);
 	});
 
 	it("is idempotent", () => {
 		runMigrations(db);
 		runMigrations(db);
-		expect(getCurrentVersion(db)).toBe(6);
+		expect(getCurrentVersion(db)).toBe(7);
 	});
 
 	it("enables WAL mode", () => {

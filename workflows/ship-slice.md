@@ -45,6 +45,12 @@ LOAD @skills/finishing-work/SKILL.md
    - `tff-tools worktree:delete --slice-id <slice-id>` (if worktree ∃)
    - `tff-tools slice:close --slice-id <slice-id> --reason "Slice PR merged"`
      (this enqueues a routing judgment in `pending_judgments`)
+   - CAPTURE merge identity (deterministic; survives branch deletion + commit-message rewrites):
+     `tff-tools slice:record-merge --slice-id <slice-id> --pr <pr-number>`
+     (resolves `mergeCommit.oid` + `baseRefName` via `gh pr view` and stores them on the
+     pending row so judge-prepare can skip the brittle `git log --grep` lookup)
+     - On error: surface but continue — the legacy multi-branch grep fallback in
+       judge-prepare can still find it once the milestone hits main.
    - DRAIN routing judgment (run inline, before branch deletion):
      a. `tff-tools routing:judge-prepare --slice <slice-id>` → parse JSON
      b. IF `data.evidence == null` → `tff-tools judge:pending:clear --slice-id <slice-id>` (already judged) ∧ skip c–d

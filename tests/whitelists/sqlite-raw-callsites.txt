@@ -8,10 +8,10 @@ src/infrastructure/adapters/git/git-diff-reader.ts:19
 src/infrastructure/adapters/git/git-diff-reader.ts:20
 src/infrastructure/adapters/git/git-diff-reader.ts:47
 src/infrastructure/adapters/git/git-diff-reader.ts:50
-src/infrastructure/adapters/git/git-slice-merge-lookup.ts:36
-src/infrastructure/adapters/sqlite/schema.ts:20
-src/infrastructure/adapters/sqlite/schema.ts:49
-src/infrastructure/adapters/sqlite/schema.ts:50
+src/infrastructure/adapters/git/git-slice-merge-lookup.ts:48
+src/infrastructure/adapters/sqlite/schema.ts:22
+src/infrastructure/adapters/sqlite/schema.ts:51
+src/infrastructure/adapters/sqlite/schema.ts:52
 src/infrastructure/adapters/sqlite/sqlite-salvage.ts:166
 src/infrastructure/adapters/sqlite/sqlite-salvage.ts:227
 src/infrastructure/adapters/sqlite/sqlite-salvage.ts:300
@@ -78,5 +78,8 @@ src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:924
 src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:928
 src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:937
 src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:947
-src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:961
-src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:980
+src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:974
+src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:1006
+src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:1034
+src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:1040
+src/infrastructure/adapters/sqlite/sqlite-state.adapter.ts:1050

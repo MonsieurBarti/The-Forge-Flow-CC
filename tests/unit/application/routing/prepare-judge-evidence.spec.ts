@@ -79,6 +79,7 @@ const makeDeps = (
 			debugEvents: overrides.debugEvents ?? [],
 			outcomesSource,
 			mergeLookup,
+			mergeBranches: ["main"],
 			diffReader,
 			specReader,
 			maxPatchBytes: 32768,
@@ -160,6 +161,26 @@ describe("prepareJudgeEvidenceUseCase", () => {
 		const { deps } = makeDeps({ mergeResult: "missing" });
 		const res = await prepareJudgeEvidenceUseCase({ slice_id: SLICE_ID }, deps);
 		expect(isErr(res)).toBe(true);
+	});
+
+	it("uses pendingMergeSha and skips mergeLookup when stored", async () => {
+		const { deps } = makeDeps({ mergeResult: "missing" });
+		let lookupCalls = 0;
+		deps.mergeLookup = {
+			findMergeCommit: async () => {
+				lookupCalls++;
+				return Err({
+					code: "PRECONDITION_VIOLATION",
+					message: "should not be called",
+				} as DomainError);
+			},
+		};
+		(deps as unknown as { pendingMergeSha: string }).pendingMergeSha = "stored-sha";
+		const res = await prepareJudgeEvidenceUseCase({ slice_id: SLICE_ID }, deps);
+		expect(isOk(res)).toBe(true);
+		if (!isOk(res)) throw new Error("not ok");
+		expect(res.data.evidence?.merge_commit).toBe("stored-sha");
+		expect(lookupCalls).toBe(0);
 	});
 
 	it("surfaces spec_missing flag when SPEC.md is absent", async () => {

@@ -55,6 +55,55 @@ describe("pending_judgments table (v6 migration)", () => {
 		expect(r.ok).toBe(true);
 	});
 
+	it("recordMerge populates merge_sha + base_ref and getPending exposes them", () => {
+		const r = stores.pendingJudgmentStore.recordMerge(sliceId, "abc1234", "milestone/x");
+		expect(r.ok).toBe(true);
+		const got = stores.pendingJudgmentStore.getPending(sliceId);
+		expect(got.ok).toBe(true);
+		if (!got.ok || !got.data) throw new Error("expected pending record");
+		expect(got.data.mergeSha).toBe("abc1234");
+		expect(got.data.baseRef).toBe("milestone/x");
+	});
+
+	it("recordMerge upserts: subsequent calls overwrite merge_sha + base_ref", () => {
+		stores.pendingJudgmentStore.recordMerge(sliceId, "old", "milestone/x");
+		stores.pendingJudgmentStore.recordMerge(sliceId, "new", "main");
+		const got = stores.pendingJudgmentStore.getPending(sliceId);
+		if (!got.ok || !got.data) throw new Error("expected pending record");
+		expect(got.data.mergeSha).toBe("new");
+		expect(got.data.baseRef).toBe("main");
+	});
+
+	it("insertPending after recordMerge preserves merge fields (ON CONFLICT DO NOTHING)", () => {
+		stores.pendingJudgmentStore.recordMerge(sliceId, "abc1234", "milestone/x");
+		stores.pendingJudgmentStore.insertPending(sliceId);
+		const got = stores.pendingJudgmentStore.getPending(sliceId);
+		if (!got.ok || !got.data) throw new Error("expected pending record");
+		expect(got.data.mergeSha).toBe("abc1234");
+		expect(got.data.baseRef).toBe("milestone/x");
+	});
+
+	it("getPending returns null for absent rows", () => {
+		const got = stores.pendingJudgmentStore.getPending(sliceId);
+		expect(got.ok).toBe(true);
+		if (!got.ok) return;
+		expect(got.data).toBeNull();
+	});
+
+	it("listPending exposes merge fields when present, omits when absent", () => {
+		stores.pendingJudgmentStore.insertPending(sliceId);
+		let list = stores.pendingJudgmentStore.listPending();
+		if (!list.ok) throw new Error("listPending failed");
+		expect(list.data[0].mergeSha).toBeUndefined();
+		expect(list.data[0].baseRef).toBeUndefined();
+
+		stores.pendingJudgmentStore.recordMerge(sliceId, "deadbeef", "milestone/x");
+		list = stores.pendingJudgmentStore.listPending();
+		if (!list.ok) throw new Error("listPending failed");
+		expect(list.data[0].mergeSha).toBe("deadbeef");
+		expect(list.data[0].baseRef).toBe("milestone/x");
+	});
+
 	it("listPendingForMilestone scopes results to that milestone", () => {
 		stores.milestoneStore.createMilestone({ number: 2, name: "Milestone Two" });
 		const ms = stores.milestoneStore.listMilestones();

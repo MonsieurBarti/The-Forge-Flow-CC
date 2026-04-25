@@ -16,9 +16,13 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
        > Last audit verdict was `not_ready`. Re-run `/tff:audit-milestone` to produce a passing verdict.
        Abort this workflow.
 1. CLOSE SLICES: `tff-tools slice:list` → filter for non-closed slices under this milestone:
-   - verify its PR is merged: `gh pr list --state merged --head slice/<slice-id>`
+   - verify its PR is merged: `gh pr list --state merged --head slice/<slice-id>` → capture PR number
    - if merged → `tff-tools slice:close --slice-id <id> --reason "Slice PR merged"`
-     then DRAIN routing judgment for that slice (same dance as ship-slice.md step 7):
+     then `tff-tools slice:record-merge --slice-id <id> --pr <pr-number>` (captures
+     mergeCommit.oid + baseRefName onto the pending row; deterministic, survives milestone
+     branch deletion). On error → surface but continue; the multi-branch grep fallback in
+     judge-prepare still works once the milestone is on main.
+     Then DRAIN routing judgment (same dance as ship-slice.md step 7):
      a. `tff-tools routing:judge-prepare --slice <id>` → parse JSON
      b. IF `data.evidence == null` → `tff-tools judge:pending:clear --slice-id <id>` ∧ skip c–d
      c. ELSE: write evidence to temp file, SPAWN tff-outcome-judge with evidence + verdicts paths, await

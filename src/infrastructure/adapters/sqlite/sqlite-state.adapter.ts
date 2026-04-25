@@ -945,11 +945,24 @@ export class SQLiteStateAdapter
 		try {
 			const rows = this.db
 				.prepare(
-					`SELECT slice_id as sliceId, created_at as createdAt
+					`SELECT slice_id as sliceId, created_at as createdAt,
+                  merge_sha as mergeSha, base_ref as baseRef
            FROM pending_judgments ORDER BY created_at ASC`,
 				)
-				.all() as Array<{ sliceId: string; createdAt: string }>;
-			return Ok(rows.map((r) => ({ sliceId: r.sliceId, createdAt: r.createdAt })));
+				.all() as Array<{
+				sliceId: string;
+				createdAt: string;
+				mergeSha: string | null;
+				baseRef: string | null;
+			}>;
+			return Ok(
+				rows.map((r) => ({
+					sliceId: r.sliceId,
+					createdAt: r.createdAt,
+					...(r.mergeSha != null ? { mergeSha: r.mergeSha } : {}),
+					...(r.baseRef != null ? { baseRef: r.baseRef } : {}),
+				})),
+			);
 		} catch (e) {
 			return Err(createDomainError("WRITE_FAILURE", `Failed to list pending judgments: ${e}`));
 		}
@@ -959,18 +972,75 @@ export class SQLiteStateAdapter
 		try {
 			const rows = this.db
 				.prepare(
-					`SELECT pj.slice_id as sliceId, pj.created_at as createdAt
+					`SELECT pj.slice_id as sliceId, pj.created_at as createdAt,
+                  pj.merge_sha as mergeSha, pj.base_ref as baseRef
            FROM pending_judgments pj
            JOIN slice s ON s.id = pj.slice_id
            WHERE s.milestone_id = ?
            ORDER BY pj.created_at ASC`,
 				)
-				.all(milestoneId) as Array<{ sliceId: string; createdAt: string }>;
-			return Ok(rows.map((r) => ({ sliceId: r.sliceId, createdAt: r.createdAt })));
+				.all(milestoneId) as Array<{
+				sliceId: string;
+				createdAt: string;
+				mergeSha: string | null;
+				baseRef: string | null;
+			}>;
+			return Ok(
+				rows.map((r) => ({
+					sliceId: r.sliceId,
+					createdAt: r.createdAt,
+					...(r.mergeSha != null ? { mergeSha: r.mergeSha } : {}),
+					...(r.baseRef != null ? { baseRef: r.baseRef } : {}),
+				})),
+			);
 		} catch (e) {
 			return Err(
 				createDomainError("WRITE_FAILURE", `Failed to list pending judgments for milestone: ${e}`),
 			);
+		}
+	}
+
+	getPending(sliceId: string): Result<PendingJudgmentRecord | null, DomainError> {
+		try {
+			const row = this.db
+				.prepare(
+					`SELECT slice_id as sliceId, created_at as createdAt,
+                  merge_sha as mergeSha, base_ref as baseRef
+           FROM pending_judgments WHERE slice_id = ?`,
+				)
+				.get(sliceId) as
+				| {
+						sliceId: string;
+						createdAt: string;
+						mergeSha: string | null;
+						baseRef: string | null;
+				  }
+				| undefined;
+			if (!row) return Ok(null);
+			return Ok({
+				sliceId: row.sliceId,
+				createdAt: row.createdAt,
+				...(row.mergeSha != null ? { mergeSha: row.mergeSha } : {}),
+				...(row.baseRef != null ? { baseRef: row.baseRef } : {}),
+			});
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to get pending judgment: ${e}`));
+		}
+	}
+
+	recordMerge(sliceId: string, mergeSha: string, baseRef: string): Result<void, DomainError> {
+		try {
+			this.db
+				.prepare(
+					`INSERT INTO pending_judgments(slice_id, merge_sha, base_ref) VALUES (?, ?, ?)
+           ON CONFLICT(slice_id) DO UPDATE SET
+             merge_sha = excluded.merge_sha,
+             base_ref = excluded.base_ref`,
+				)
+				.run(sliceId, mergeSha, baseRef);
+			return Ok(undefined);
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to record merge context: ${e}`));
 		}
 	}
 
