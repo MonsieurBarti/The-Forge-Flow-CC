@@ -95,7 +95,7 @@ export interface CommandEntry {
 }
 
 const wrap = (handler: CommandFn, schema: CommandSchema): CommandFn =>
-	schema.mutates === true ? withMutatingCommand(handler) : handler;
+	schema.mutates === true ? withMutatingCommand(handler, { commandName: schema.name }) : handler;
 
 export const COMMAND_REGISTRY: Record<string, CommandEntry> = (() => {
 	const branchGuardCheckHandler = branchGuardCheckCmd();
