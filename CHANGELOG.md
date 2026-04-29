@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.16](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.15...tff-cc-v0.9.16) (2026-04-29)
+
+
+### Features
+
+* grill-me/ultra-compress skill patterns + worktree-from-milestone fix ([#145](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/145)) ([402b09c](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/402b09c65ea6e44940e44c0f7f74bcc3e6af8fc3))
+
 ## [0.9.15](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.14...tff-cc-v0.9.15) (2026-04-25)
 
 
