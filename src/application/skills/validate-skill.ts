@@ -1,12 +1,15 @@
 import { createDomainError, type DomainError } from "../../domain/errors/domain-error.js";
 import { Err, Ok, type Result } from "../../domain/result.js";
 
+export type CompressionLevel = "off" | "lite" | "standard" | "ultra" | "symbolic";
+
 export interface SkillInput {
 	name: string;
 	description: string;
 	content?: string;
 	existingSkillNames?: string[];
 	maxSize?: number;
+	compression?: CompressionLevel;
 }
 
 interface ValidationResult {
@@ -15,6 +18,14 @@ interface ValidationResult {
 }
 
 const NAME_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
+const COMPRESSION_LEVELS: readonly CompressionLevel[] = [
+	"off",
+	"lite",
+	"standard",
+	"ultra",
+	"symbolic",
+];
+const SYMBOLIC_NOTATION_REGEX = /[∀∃∈∉∧∨¬⟺⊂⊃∪∩∅→]/;
 
 export const validateSkill = (input: SkillInput): Result<ValidationResult, DomainError> => {
 	const warnings: string[] = [];
@@ -47,6 +58,21 @@ export const validateSkill = (input: SkillInput): Result<ValidationResult, Domai
 	// Description quality
 	if (!input.description.toLowerCase().startsWith("use when")) {
 		warnings.push('Description should start with "Use when"');
+	}
+
+	// Description must not be compressed — loader matches literal substrings
+	if (SYMBOLIC_NOTATION_REGEX.test(input.description)) {
+		warnings.push("Description contains symbolic notation — loader reads literal, keep prose");
+	}
+
+	// Compression level — body-only contract; runtime application lives in ultra-compress
+	if (input.compression !== undefined && !COMPRESSION_LEVELS.includes(input.compression)) {
+		return Err(
+			createDomainError(
+				"VALIDATION_ERROR",
+				`Invalid compression level "${input.compression}" — must be one of: ${COMPRESSION_LEVELS.join(", ")}`,
+			),
+		);
 	}
 
 	// Name collision check

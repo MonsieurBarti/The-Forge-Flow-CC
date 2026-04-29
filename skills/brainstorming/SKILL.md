@@ -20,12 +20,15 @@ Do NOT invoke any implementation skill, write any code, ∨ take any implementat
 3. Assess scope first: multi-subsystem -> decompose before detailing
 4. ∀ assumption: surface explicitly, ¬proceed on implicit agreement
 5. Propose 2-3 approaches w/ trade-offs before committing
+6. ∃ question answerable by codebase exploration -> explore, ¬ ask
+7. APPROACH ∧ DESIGN questions: ship recommended answer (user confirms ∨ overrides). FRAME questions: open, ¬ recommendation (avoid biasing problem framing)
+8. Walk decision-tree: resolve dependent decisions before independent ones; ∀ branch -> exhaust before next
 
 ## Flow
 
-1. FRAME: Define problem, constraints, scope (2-4 questions)
+1. FRAME: Define problem, constraints, scope (2-4 open questions, ¬ recommendations)
 2. APPROACH: Propose 2-3, recommend one, user picks
-3. DESIGN: Section-by-section, user approves each inline
+3. DESIGN: Branch-traversal — ∀ decision: state question + recommended answer + dependencies; user confirms ∨ overrides; resolve children before siblings
    - standard: problem, approach, acceptance criteria, non-goals (~1 page)
    - complex: + constraints, architecture, error handling, testing strategy (~3 pages)
 4. WRITE: `project spec document (e.g., docs/specs/SPEC.md)`
@@ -52,6 +55,9 @@ Dispatch via Agent tool (subagent_type: general-purpose). Checks: completeness, 
 - Implementing before design approved
 - Skipping the FRAME phase (defining problem before solving)
 - Rubber-stamping spec review iterations
+- Asking the user something a `grep` ∨ `read` could resolve
+- Recommending answers in FRAME phase (biases problem definition)
+- Linear question dump, ¬ following dependency edges of the decision-tree
 
 ## Rules
 

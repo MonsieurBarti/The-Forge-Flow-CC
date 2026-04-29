@@ -136,4 +136,36 @@ describe("validateSkill", () => {
 			expect(result.data.warnings.some((w) => w.includes("injection"))).toBe(false);
 		}
 	});
+
+	it("should accept valid compression levels", () => {
+		for (const level of ["off", "lite", "standard", "ultra", "symbolic"] as const) {
+			const result = validateSkill({
+				name: "compressed-skill",
+				description: "Use when compression matters",
+				compression: level,
+			});
+			expect(isOk(result)).toBe(true);
+		}
+	});
+
+	it("should reject invalid compression level", () => {
+		const result = validateSkill({
+			name: "compressed-skill",
+			description: "Use when compression matters",
+			// @ts-expect-error — exercising runtime validation
+			compression: "extreme",
+		});
+		expect(isErr(result)).toBe(true);
+	});
+
+	it("should warn when description contains symbolic notation", () => {
+		const result = validateSkill({
+			name: "compressed-skill",
+			description: "Use when ∀ x ∈ skills ∧ ¬ documented",
+		});
+		expect(isOk(result)).toBe(true);
+		if (isOk(result)) {
+			expect(result.data.warnings.some((w) => w.includes("symbolic"))).toBe(true);
+		}
+	});
 });
