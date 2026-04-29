@@ -32,7 +32,13 @@ interface TaggedHandler extends Handler {
 
 interface WrapperDeps {
 	gitFactory?: () => GitOps;
+	commandName?: string;
 }
+
+// Bootstrap/teardown commands that MUST run on a milestone branch — the
+// milestone-branch-guard's "switch to slice worktree" remediation is impossible
+// here because these commands are how you create/destroy that worktree.
+const MILESTONE_GUARD_EXEMPT = new Set<string>(["worktree:create", "worktree:delete"]);
 
 // Module-level cache: migrations and DB init run once per process.
 let _cachedStores: ClosableStateStores | null = null;
@@ -62,7 +68,9 @@ export const withMutatingCommand = (handler: Handler, deps?: WrapperDeps): Tagge
 			return JSON.stringify({ ok: false, error: defaultGuard.error });
 		}
 
-		if (process.env.TFF_ALLOW_MILESTONE_COMMIT !== "1") {
+		const isMilestoneGuardExempt =
+			deps?.commandName !== undefined && MILESTONE_GUARD_EXEMPT.has(deps.commandName);
+		if (process.env.TFF_ALLOW_MILESTONE_COMMIT !== "1" && !isMilestoneGuardExempt) {
 			const stores = getStores();
 			const milestoneGuard = await assertNotOnMilestoneBranch(
 				git,

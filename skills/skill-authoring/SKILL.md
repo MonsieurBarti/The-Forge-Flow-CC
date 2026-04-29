@@ -22,6 +22,45 @@ description: "Use when <trigger>"
 ---
 ```
 
+## Description Contract
+
+Description = the only field the loader sees when picking skills. Treat as API.
+
+- ≤ 1024 chars
+- Third person, ¬ first
+- Sentence 1: capability (what it does)
+- Sentence 2: `Use when <triggers>` — concrete keywords ∨ contexts ∨ file types
+- ¬ symbolic notation, ¬ compression — loader matches literal substrings
+
+Good: `Extract text and tables from PDFs, fill forms, merge documents. Use when working with PDF files or user mentions PDFs, forms, extraction.`
+Bad: `Helps with documents.`
+
+## Progressive Disclosure
+
+```
+skill-name/
+├── SKILL.md           # ≤100 lines, required
+├── REFERENCE.md       # detailed docs, optional
+├── EXAMPLES.md        # worked examples, optional
+└── scripts/           # deterministic helpers, optional
+```
+
+Split when:
+- SKILL.md > 100 lines
+- ∃ distinct domains in body (split per domain)
+- ∃ rarely-used advanced features (move out of SKILL.md)
+
+Linking: SKILL.md -> REFERENCE.md only (one level deep). ¬ chains.
+
+## Scripts
+
+Add scripts when:
+- Operation deterministic (validation, formatting, parsing)
+- Same code would be regenerated turn after turn
+- Errors need explicit handling, ¬ best-effort
+
+Scripts > generated code: fewer tokens, fewer regressions.
+
 ## Required Sections
 
 1. **When to Use**: Trigger condition (∀ X workflow: load this skill)
@@ -31,10 +70,23 @@ description: "Use when <trigger>"
 5. **Anti-Patterns**: Common mistakes (>=3)
 6. **Rules**: Concise constraints using ∀/∃/¬ notation
 
-## Compression Rules (roxabi)
+## Compression Contract
 
-Use formal notation: ∀ (all), ∃ (∃), ∈ (member), ∧ (∧), ∨ (∨), ¬ (¬), -> (then)
-Target: ~62% token reduction vs prose
+Skill body uses formal notation: ∀ (all), ∃ (exists), ∈ (member), ∧ (and), ∨ (or), ¬ (not), -> (then). Target ~62% token reduction vs prose.
+
+Default level: `ultra` for body. `off` for frontmatter ∧ description (loader parses literal).
+
+### Π — protected zones (¬ compress, ∀ level)
+
+frontmatter · description field · fenced code · inline code · URLs · file paths · CLI commands · headings (count + order) · tool names · numeric versions · quoted error strings · table structure · bullet nesting depth.
+
+### Ω — Auto-Clarity fallback (drop notation -> prose)
+
+section ∈ { security warning, destructive op, irreversible action, ordered multi-step where fragment order risks misread } -> prose, resume notation next section.
+
+### Level dial
+
+Skill MAY declare body compression level via frontmatter `compression: <off|lite|standard|ultra|symbolic>`. Default `ultra`. `symbolic` reserved for skills the model alone reads (¬ user-facing checklists).
 
 ## Evidence Requirements
 
@@ -92,10 +144,28 @@ LOAD @skills/code-review-protocol/SKILL.md
 - Skills that describe rather than prescribe (skills are workflows, ¬documentation)
 - Over-broad trigger conditions ("use always" = never triggered correctly)
 - Skills without anti-patterns section (that's where the real value is)
+- Compressing the description field (loader reads literal — symbolic notation breaks matching)
+- Single-file skills > 100 lines (split into REFERENCE.md / EXAMPLES.md)
+- Generating deterministic logic inline turn-after-turn instead of shipping a script
 
 ## Validation
 
 Run skill validation before deployment.
+
+## Pre-Promotion Checklist
+
+∀ draft -> verify before promoting from drafts/:
+
+- [ ] Description ≤ 1024 chars, 3rd person, includes `Use when <trigger>`, ¬ compressed
+- [ ] SKILL.md ≤ 100 lines (∨ split into REFERENCE.md / EXAMPLES.md)
+- [ ] Frontmatter ∧ description ∧ code blocks ∈ Π (uncompressed)
+- [ ] Anti-Patterns section: ≥ 3 entries
+- [ ] Evidence table: ≥ 3 sessions
+- [ ] ¬ time-sensitive content (dates, "recent", "currently")
+- [ ] Concrete examples, ¬ abstract description only
+- [ ] References one level deep (SKILL.md -> REFERENCE.md, ¬ chains)
+- [ ] Name ∈ `[a-z0-9-]{1,64}`, ¬ leading/trailing/consecutive hyphens
+- [ ] ¬ dangerous_cmds (rm -rf, sudo, curl|bash)
 
 ## Rules
 

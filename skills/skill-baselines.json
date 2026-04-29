@@ -20,10 +20,10 @@
       "sha256": "00a4cfddfead9a3d8695057be11f7377b659940e695f1eee12a31ddae4cc5c19"
     },
     "brainstorming": {
-      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "approvedAt": "2026-04-29T00:00:00.000Z",
       "originalCommitSha": "12d32cd",
       "refinementId": null,
-      "sha256": "ff4cda1cfad792de9399ad2aac67a4d6f888801a3b0770a6f2d41f5a0c87c0c2"
+      "sha256": "1baca3b47ce1cb2aa4bcf7bbfa9f473ce2585805198bb5edade9dd1ccf23d3b0"
     },
     "code-review-protocol": {
       "approvedAt": "2026-04-21T21:40:30.878Z",
@@ -73,11 +73,17 @@
       "refinementId": null,
       "sha256": "cd5b04850ebf0f944bc7776e2b369f6dafcd83d8ca5640f6df9bb657de389ba8"
     },
+    "report-issue": {
+      "approvedAt": "2026-04-29T00:00:00.000Z",
+      "originalCommitSha": "29c3fe2",
+      "refinementId": null,
+      "sha256": "21699f5b6010940ccb1a048ad5fe152703d3d4873416d45c6770912b97b11457"
+    },
     "skill-authoring": {
-      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "approvedAt": "2026-04-29T00:00:00.000Z",
       "originalCommitSha": "12d32cd",
       "refinementId": null,
-      "sha256": "c9d8e0ad9b527fba117adccf5610d2b1bd41165ee52dce39ab40d8c3936157d2"
+      "sha256": "7fb5b0dec0bee13909c991b2a57cc55bc669809c1d3708862afc497a31175b30"
     },
     "stress-testing-specs": {
       "approvedAt": "2026-04-21T21:40:30.878Z",
