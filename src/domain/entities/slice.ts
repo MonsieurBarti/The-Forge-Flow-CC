@@ -26,6 +26,7 @@ export const SliceSchema = z.object({
 	baseBranch: z.string().min(1).optional(),
 	branchName: z.string().min(1).optional(),
 	createdAt: z.date(),
+	archivedAt: z.date().optional(),
 });
 
 export type Slice = z.infer<typeof SliceSchema>;

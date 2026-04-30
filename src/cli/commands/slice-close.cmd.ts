@@ -1,6 +1,8 @@
+import { archiveSliceFs } from "../../application/archive/archive-fs.js";
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { preconditionViolationError } from "../../domain/errors/precondition-violation.error.js";
 import { checkTasksClosed } from "../../domain/state-machine/preconditions.js";
+import { tffWarn } from "../../infrastructure/adapters/logging/warn.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
 import { withTransaction } from "../../infrastructure/persistence/with-transaction.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
@@ -14,8 +16,9 @@ export const sliceCloseSchema: CommandSchema = {
 		{
 			name: "slice-id",
 			type: "string",
-			description: "Slice ID to close",
-			pattern: "^M\\d+-S\\d+$",
+			description: "Slice ID (M##-S##, Q-##, D-##, or UUID)",
+			pattern:
+				"^(M\\d+-S\\d+|Q-\\d+|D-\\d+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
 		},
 	],
 	optionalFlags: [
@@ -63,6 +66,14 @@ export const sliceCloseCmd = async (args: string[]): Promise<string> => {
 			});
 		}
 
+		// Read slice once before tx so we have its kind for the post-close
+		// archive hook (kind is immutable, so this is safe to capture early).
+		const currentSliceResult = sliceStore.getSlice(sliceId);
+		if (!currentSliceResult.ok) {
+			return JSON.stringify({ ok: false, error: currentSliceResult.error });
+		}
+		const currentSlice = currentSliceResult.data;
+
 		// Transition to closed via the normal transition path.
 		let businessError: DomainError | null = null;
 		const txResult = await withTransaction(db, () => {
@@ -72,6 +83,22 @@ export const sliceCloseCmd = async (args: string[]): Promise<string> => {
 		});
 		if (!txResult.ok) return JSON.stringify({ ok: false, error: txResult.error });
 		if (businessError) return JSON.stringify({ ok: false, error: businessError });
+
+		// Post-close: if the slice is ad-hoc (kind=quick|debug), archive it.
+		// Milestone-bound slices are archived as part of the parent milestone's
+		// cascade close, so they are skipped here.
+		if (currentSlice && (currentSlice.kind === "quick" || currentSlice.kind === "debug")) {
+			const archiveDbResult = sliceStore.archiveSlice(sliceId);
+			if (archiveDbResult.ok) {
+				const fsResult = archiveSliceFs(currentSlice, process.cwd());
+				if (!fsResult.ok) {
+					tffWarn(`slice ${sliceId} archived in DB but FS rename failed: ${fsResult.reason}`);
+				}
+			} else {
+				tffWarn(`slice ${sliceId} DB archive failed: ${archiveDbResult.error.message}`);
+			}
+		}
+
 		return JSON.stringify({ ok: true, data: { status: "closed", reason } });
 	} finally {
 		closableStores.close();

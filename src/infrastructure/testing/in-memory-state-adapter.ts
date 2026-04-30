@@ -147,8 +147,10 @@ export class InMemoryStateAdapter
 		return Ok(found);
 	}
 
-	listMilestones(): Result<Milestone[], DomainError> {
-		return Ok([...this.milestones.values()]);
+	listMilestones(options?: { includeArchived?: boolean }): Result<Milestone[], DomainError> {
+		const all = [...this.milestones.values()];
+		if (options?.includeArchived === true) return Ok(all);
+		return Ok(all.filter((m) => m.archivedAt === undefined));
 	}
 
 	updateMilestone(id: string, updates: MilestoneUpdateProps): Result<void, DomainError> {
@@ -158,6 +160,27 @@ export class InMemoryStateAdapter
 		if (updates.status !== undefined) ms.status = updates.status;
 		this.milestones.set(id, ms);
 		return Ok(undefined);
+	}
+
+	archiveMilestoneCascade(id: string): Result<{ slicesArchived: number }, DomainError> {
+		return this.transaction(() => {
+			const ms = this.milestones.get(id);
+			if (!ms) return Ok({ slicesArchived: 0 });
+			const now = new Date();
+			let slicesArchived = 0;
+			for (const slice of this.slices.values()) {
+				if (slice.milestoneId === id && slice.archivedAt === undefined) {
+					slice.archivedAt = now;
+					this.slices.set(slice.id, slice);
+					slicesArchived += 1;
+				}
+			}
+			if (ms.archivedAt === undefined) {
+				ms.archivedAt = now;
+				this.milestones.set(id, ms);
+			}
+			return Ok({ slicesArchived });
+		});
 	}
 
 	closeMilestone(id: string, reason?: string): Result<void, DomainError> {
@@ -239,16 +262,29 @@ export class InMemoryStateAdapter
 		return Ok(slice);
 	}
 
-	listSlices(milestoneId?: string): Result<Slice[], DomainError> {
-		const all = [...this.slices.values()];
-		if (milestoneId) {
-			return Ok(all.filter((s) => s.milestoneId === milestoneId));
+	listSlices(
+		milestoneIdOrOptions?: string | { milestoneId?: string; includeArchived?: boolean },
+	): Result<Slice[], DomainError> {
+		const opts =
+			typeof milestoneIdOrOptions === "string"
+				? { milestoneId: milestoneIdOrOptions, includeArchived: false }
+				: (milestoneIdOrOptions ?? {});
+		const includeArchived = opts.includeArchived === true;
+		let all = [...this.slices.values()];
+		if (!includeArchived) all = all.filter((s) => s.archivedAt === undefined);
+		if (opts.milestoneId) {
+			return Ok(all.filter((s) => s.milestoneId === opts.milestoneId));
 		}
 		return Ok(all);
 	}
 
-	listSlicesByKind(kind: Slice["kind"]): Result<Slice[], DomainError> {
-		const all = [...this.slices.values()];
+	listSlicesByKind(
+		kind: Slice["kind"],
+		options?: { includeArchived?: boolean },
+	): Result<Slice[], DomainError> {
+		const includeArchived = options?.includeArchived === true;
+		let all = [...this.slices.values()];
+		if (!includeArchived) all = all.filter((s) => s.archivedAt === undefined);
 		return Ok(all.filter((s) => s.kind === kind));
 	}
 
@@ -281,6 +317,15 @@ export class InMemoryStateAdapter
 		if (!domainResult.ok) return domainResult;
 		this.slices.set(id, domainResult.data.slice);
 		return Ok(domainResult.data.events);
+	}
+
+	archiveSlice(id: string): Result<void, DomainError> {
+		const slice = this.slices.get(id);
+		if (!slice) return Ok(undefined);
+		if (slice.archivedAt !== undefined) return Ok(undefined);
+		slice.archivedAt = new Date();
+		this.slices.set(id, slice);
+		return Ok(undefined);
 	}
 
 	// TaskStore
