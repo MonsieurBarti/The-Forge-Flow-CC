@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "skills": {
+    "acceptance-criteria-validation": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "f4039699bd3bc1bd1a40740ac112086525af37084cf864bc88b56a1f3d039d5a"
+    },
+    "agent-authoring": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "20dda80fff4eb229bdb9761651c25a6a8228419e5ceefac2fe7ebed13e7d5001"
+    },
+    "architecture-review": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "00a4cfddfead9a3d8695057be11f7377b659940e695f1eee12a31ddae4cc5c19"
+    },
+    "brainstorming": {
+      "approvedAt": "2026-04-29T00:00:00.000Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "1baca3b47ce1cb2aa4bcf7bbfa9f473ce2585805198bb5edade9dd1ccf23d3b0"
+    },
+    "code-review-protocol": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "6ca58eaef3faf6503c8799ef465e9f9789587cf4ae13e10b342717a245f635da"
+    },
+    "codebase-documentation": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "c1720f0c6a706896dc2f6b0a10776cf05df73b551aee40383fcb578de64354a0"
+    },
+    "commit-conventions": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "12da5515dfe91329066e060d5e5be993e4c2e43cb5e267fdb702dea026de28f1"
+    },
+    "executing-plans": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "2133874446aff829c18b2fec8d3410edb92f73d1a0ae41c788b388666a5a8b8e"
+    },
+    "finishing-work": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "74b017499c4adcabc8bd15d90ca5bee1d701c354aaa9a86eacafd0aec550bd66"
+    },
+    "hexagonal-architecture": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "3c94e0a6ca401a07f3deca43eb632580cc4a9a1a1aefb539ea91d36df729a281"
+    },
+    "plannotator-usage": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "e363e1a8d43aa22a8cc41fa165e53f53128a6ca0f147e198cea600e1556ba600"
+    },
+    "receiving-code-review": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "cd5b04850ebf0f944bc7776e2b369f6dafcd83d8ca5640f6df9bb657de389ba8"
+    },
+    "report-issue": {
+      "approvedAt": "2026-04-29T00:00:00.000Z",
+      "originalCommitSha": "29c3fe2",
+      "refinementId": null,
+      "sha256": "21699f5b6010940ccb1a048ad5fe152703d3d4873416d45c6770912b97b11457"
+    },
+    "skill-authoring": {
+      "approvedAt": "2026-04-29T00:00:00.000Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "7fb5b0dec0bee13909c991b2a57cc55bc669809c1d3708862afc497a31175b30"
+    },
+    "stress-testing-specs": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "7f816b7e934c78b1955b16ca8bee998bff4d895a97617703c4925b836aa82c8e"
+    },
+    "systematic-debugging": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "a47a2b28a79fb1937d207e5446bf1c186581b191202085714fed6cb29bc7eb94"
+    },
+    "test-driven-development": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "09b3e39536e04b94a7b980d976cb110b21d507accdf8c07cc18753181ef4f525"
+    },
+    "verification-before-completion": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "48240516c6fafe07f1f7b08ec2082245253ce2d647ad2074033e179c53de6403"
+    },
+    "writing-plans": {
+      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "originalCommitSha": "12d32cd",
+      "refinementId": null,
+      "sha256": "ae2c1cbb1e15c5550b46a6d8fc779be453ba2178f27d2226bb77f06362e9828e"
+    }
+  }
+}
