@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.20](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.19...tff-cc-v0.9.20) (2026-04-30)
+
+
+### Bug Fixes
+
+* **migrations:** disable foreign_keys during schema upgrades ([#160](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/160)) ([2fb91f7](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/2fb91f75819a89d6e8ca44f1f117b1dd18b78067)), closes [#159](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/159)
+
 ## [0.9.19](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.18...tff-cc-v0.9.19) (2026-04-30)
 
 
