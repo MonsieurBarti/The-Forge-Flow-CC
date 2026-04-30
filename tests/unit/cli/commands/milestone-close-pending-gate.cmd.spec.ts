@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -91,6 +92,31 @@ describe("milestone:close — pending-judgment gate", () => {
 		// Note: the underlying milestone-completeness check (spec approvals on
 		// each slice) still applies, so this asserts the gate's verdict, not
 		// downstream success. We assert the error is NOT PENDING_JUDGMENTS.
+		const out = JSON.parse(await milestoneCloseCmd(["--milestone-id", "M01"]));
+		expect(out.error?.code).not.toBe("PENDING_JUDGMENTS");
+	});
+
+	it("ignores ad-hoc (quick/debug) pendings when checking the milestone gate", async () => {
+		// Set up a real git repo so slice:create --kind quick can autodetect HEAD.
+		execSync("git init --initial-branch=main --quiet", { cwd: tmpDir });
+		execSync(
+			'git -c user.email=t@t.invalid -c user.name=t commit --allow-empty -m "init" --quiet',
+			{ cwd: tmpDir },
+		);
+
+		// Create an ad-hoc quick slice and seed a pending judgment for it.
+		await sliceCreateCmd(["--title", "Quick fix", "--kind", "quick", "--base-branch", "main"]);
+		const stores = createClosableStateStores();
+		const list = stores.sliceStore.listSlicesByKind("quick");
+		if (!list.ok) throw new Error("listSlicesByKind failed");
+		const quick = list.data[0];
+		stores.pendingJudgmentStore.insertPending(quick.id);
+		// Milestone slice has NO pending → gate should be satisfied for the milestone.
+		stores.close();
+
+		// milestone:close should NOT be blocked by the ad-hoc pending. Since
+		// downstream completeness checks (spec approval / open slices) still
+		// apply, we only assert the verdict is NOT PENDING_JUDGMENTS.
 		const out = JSON.parse(await milestoneCloseCmd(["--milestone-id", "M01"]));
 		expect(out.error?.code).not.toBe("PENDING_JUDGMENTS");
 	});

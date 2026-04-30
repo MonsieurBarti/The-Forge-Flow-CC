@@ -247,6 +247,11 @@ export class InMemoryStateAdapter
 		return Ok(all);
 	}
 
+	listSlicesByKind(kind: Slice["kind"]): Result<Slice[], DomainError> {
+		const all = [...this.slices.values()];
+		return Ok(all.filter((s) => s.kind === kind));
+	}
+
 	updateSlice(id: string, updates: SliceUpdateProps): Result<void, DomainError> {
 		const slice = this.slices.get(id);
 		if (!slice) return Ok(undefined);

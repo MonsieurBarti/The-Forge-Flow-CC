@@ -445,6 +445,28 @@ export class SQLiteStateAdapter
 		}
 	}
 
+	listSlicesByKind(kind: Slice["kind"]): Result<Slice[], DomainError> {
+		try {
+			const rows = this.db
+				.prepare("SELECT * FROM slice WHERE kind = ? ORDER BY number")
+				.all(kind) as Array<{
+				id: string;
+				milestone_id: string | null;
+				kind: string;
+				number: number;
+				title: string;
+				status: string;
+				tier: string | null;
+				base_branch: string | null;
+				branch_name: string | null;
+				created_at: string;
+			}>;
+			return Ok(rows.map((r) => this.rowToSlice(r)));
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to list slices by kind: ${e}`));
+		}
+	}
+
 	updateSlice(id: string, updates: SliceUpdateProps): Result<void, DomainError> {
 		try {
 			const sets: string[] = [];

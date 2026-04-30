@@ -1,4 +1,6 @@
 import { createWorktreeUseCase } from "../../application/worktree/create-worktree.js";
+import type { Milestone } from "../../domain/entities/milestone.js";
+import { resolveBaseBranch, resolveBranchName } from "../../domain/helpers/slice-resolvers.js";
 import { isOk } from "../../domain/result.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
 import { createClosableStateStoresUnchecked } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
@@ -62,37 +64,32 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
 		}
 		const slice = sliceResult.data;
 
-		if (!slice.milestoneId) {
-			return JSON.stringify({
-				ok: false,
-				error: {
-					code: "NOT_FOUND",
-					message: `Slice ${sliceId} has no milestone (kind=${slice.kind}); ad-hoc worktree creation lands in a follow-up slice`,
-				},
-			});
+		let milestone: Milestone | undefined;
+		if (slice.milestoneId) {
+			const milestoneResult = milestoneStore.getMilestone(slice.milestoneId);
+			if (!isOk(milestoneResult) || !milestoneResult.data) {
+				return JSON.stringify({
+					ok: false,
+					error: { code: "NOT_FOUND", message: `Milestone ${slice.milestoneId} not found` },
+				});
+			}
+			milestone = milestoneResult.data;
 		}
-		const milestoneResult = milestoneStore.getMilestone(slice.milestoneId);
-		if (!isOk(milestoneResult) || !milestoneResult.data) {
-			return JSON.stringify({
-				ok: false,
-				error: { code: "NOT_FOUND", message: `Milestone ${slice.milestoneId} not found` },
-			});
-		}
-		const milestone = milestoneResult.data;
 
-		if (!milestone.branch) {
+		let startPoint: string;
+		let branchName: string;
+		try {
+			startPoint = resolveBaseBranch(slice, milestone);
+			branchName = resolveBranchName(slice);
+		} catch (e) {
 			return JSON.stringify({
 				ok: false,
-				error: {
-					code: "NOT_FOUND",
-					message: `Milestone ${slice.milestoneId} has no branch — cannot derive worktree start point`,
-				},
+				error: { code: "PRECONDITION_VIOLATION", message: (e as Error).message },
 			});
 		}
-		const startPoint = milestone.branch;
 
 		const result = await createWorktreeUseCase(
-			{ slice, milestoneNumber: milestone.number, startPoint },
+			{ slice, milestone, startPoint, branchName },
 			{ gitOps },
 		);
 		if (isOk(result)) {
