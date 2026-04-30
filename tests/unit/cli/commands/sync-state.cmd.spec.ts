@@ -36,6 +36,21 @@ describe("syncStateSchema — flag parsing", () => {
 		expect(result.ok).toBe(false);
 		if (!result.ok) expect(result.error.code).toBe("PATTERN_MISMATCH");
 	});
+
+	it("accepts --kind quick", () => {
+		const result = parseFlags(["--kind", "quick"], syncStateSchema);
+		expect(result.ok).toBe(true);
+	});
+
+	it("accepts --kind debug", () => {
+		const result = parseFlags(["--kind", "debug"], syncStateSchema);
+		expect(result.ok).toBe(true);
+	});
+
+	it("rejects --kind milestone (not allowed)", () => {
+		const result = parseFlags(["--kind", "milestone"], syncStateSchema);
+		expect(result.ok).toBe(false);
+	});
 });
 
 describe("syncStateCmd — behavior", () => {
@@ -129,9 +144,36 @@ describe("syncStateCmd — behavior", () => {
 		expect(result.error.code).toBe("NOT_FOUND");
 	});
 
-	it("returns error JSON when required --milestone-id flag is missing", async () => {
+	it("returns VALIDATION_ERROR when neither --milestone-id nor --kind is provided", async () => {
 		const result = JSON.parse(await syncStateCmd([]));
 		expect(result.ok).toBe(false);
+		expect(result.error.code).toBe("VALIDATION_ERROR");
+	});
+
+	it("returns VALIDATION_ERROR when both --milestone-id and --kind are provided", async () => {
+		const result = JSON.parse(await syncStateCmd(["--milestone-id", "M01", "--kind", "quick"]));
+		expect(result.ok).toBe(false);
+		expect(result.error.code).toBe("VALIDATION_ERROR");
+	});
+
+	it("calls generateState with kind scope when --kind quick is provided", async () => {
+		vi.mocked(generateState).mockResolvedValue({ ok: true, data: undefined } as never);
+		const result = JSON.parse(await syncStateCmd(["--kind", "quick"]));
+		expect(result.ok).toBe(true);
+		expect(vi.mocked(generateState)).toHaveBeenCalledWith(
+			{ scope: "kind", kind: "quick" },
+			expect.objectContaining({ milestoneStore: expect.anything() }),
+		);
+	});
+
+	it("calls generateState with kind scope when --kind debug is provided", async () => {
+		vi.mocked(generateState).mockResolvedValue({ ok: true, data: undefined } as never);
+		const result = JSON.parse(await syncStateCmd(["--kind", "debug"]));
+		expect(result.ok).toBe(true);
+		expect(vi.mocked(generateState)).toHaveBeenCalledWith(
+			{ scope: "kind", kind: "debug" },
+			expect.objectContaining({ milestoneStore: expect.anything() }),
+		);
 	});
 
 	it("returns error JSON when generateState fails", async () => {

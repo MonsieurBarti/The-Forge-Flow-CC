@@ -5,9 +5,7 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
 Diagnose first (¬ slice), fix second (converges on standard pipeline).
 
 ## Prerequisites
-active milestone ∃ — if ∄ milestone:
-- Phase 1 (diagnose) proceeds without one (¬ slice needed)
-- Phase 2 requires milestone → prompt user to run `/tff:new-milestone` before fixing
+git repo ∃
 
 ## Phase 1: Diagnose (orchestrator-driven, ¬ slice)
 
@@ -29,15 +27,19 @@ exploration, spawn Explore subagents ∧ reason about their findings.
 
 ## Phase 2: Fix (converges on standard pipeline)
 
-6. CREATE slice:
-   - Create slice via `tff-tools`
-   - Create worktree: `tff-tools worktree:create --slice-id <slice-id>` → worktree at `.tff-cc/worktrees/<slice-id>/`
+6. CREATE ad-hoc debug slice:
+   - DETECT base branch from current HEAD: `git rev-parse --abbrev-ref HEAD` → <base-branch>
+   - PROMPT user inline for branch name with default `fix/<slugified-title-from-diagnosis>`
+     (orchestrator drives prompt; tff-tools does ¬ prompt)
+   - CREATE slice: `tff-tools slice:create --kind debug --base-branch <base-branch> --branch <name> --title <title>`
+     → response includes slice_id
+   - CREATE worktree: `tff-tools worktree:create --slice-id <slice-id>` → `.tff-cc/worktrees/D-##/`
 7. CLASSIFY: ask user → user picks tier (S / SS / SSS)
    - Default suggestion based on diagnosis: single-file root cause → S, multi-file → SS
 8. PLAN: write fix strategy + implicated files ∈ PLAN.md
-   - Write to `.tff-cc/milestones/<milestone>/slices/<id>/PLAN.md`
+   - Write to `.tff-cc/debug/<D-label>/PLAN.md`
 9. HAND OFF to standard pipeline:
    - invoke plan-slice workflow from step 8 (Plannotator Review) onward
    - then: execute-slice → verify-slice → ship-slice (standard workflows)
 
-Debug Phase 2 is an entry point, ¬ a parallel pipeline.
+Debug Phase 2 is an entry point, ¬ a parallel pipeline. Always standalone (kind=debug).

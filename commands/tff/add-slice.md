@@ -11,7 +11,11 @@ Add new slice to end of current milestone's slice list.
 
 <execution_context>
 1. Determine current milestone from state
-2. Create new slice as child of milestone
-3. Assign next available slice number
-4. Ask user for slice description
+2. Ask user for slice title (description)
+3. PROMPT user inline for branch name with default `feat/<slugified-title>`
+   (orchestrator drives prompt; tff-tools does ¬ prompt)
+4. Create slice as child of milestone:
+   `tff-tools slice:create --milestone-id <id> --title <title> --branch <name>`
+   (kind defaults to milestone)
+5. Slice number is auto-assigned by tff-tools
 </execution_context>
