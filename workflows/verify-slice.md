@@ -9,7 +9,14 @@ LOAD @skills/verification-before-completion/SKILL.md
 ## Steps
 1. LOAD @skills/acceptance-criteria-validation/SKILL.md → SPAWN subagent: {acceptance_criteria from PLAN.md}
    - Verify each criterion against implementation
-2. FINDINGS → invoke Skill `plannotator-annotate` with arg `.tff-cc/milestones/<milestone>/slices/<slice-id>/VERIFICATION.md`
+2. Plannotator Review (REQUIRED gate)
+   **REQUIRED — do NOT proceed past this step until annotations are resolved.**
+   This is a hard dependency per `skills/plannotator-usage/SKILL.md` (no terminal fallback).
+
+   FINDINGS → invoke Skill `plannotator-annotate` with arg `.tff-cc/milestones/<milestone>/slices/<slice-id>/VERIFICATION.md`
+   - feedback → revise the artifact, re-invoke
+   - approved (no annotations ∨ all resolved) → continue
+   - skipping this step is ¬ allowed; if plannotator is unavailable, surface to user ∧ pause
 3. VERDICT:
    - PASS → `tff-tools slice:transition --slice-id <id> --status reviewing`
      CHECK: `ok` = true → suggest `/tff:ship` | `ok` = false → warn user, offer retry ∨ abort

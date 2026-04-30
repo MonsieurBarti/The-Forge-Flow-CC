@@ -24,6 +24,8 @@ git repo ∃
    - Write to `.tff-cc/quick/<Q-label>/PLAN.md`
 4. HAND OFF to standard pipeline:
    - invoke plan-slice workflow from step 8 (Plannotator Review) onward
+   - **step 8 is a REQUIRED gate** per `skills/plannotator-usage/SKILL.md` — do NOT skip,
+     even for S-tier quick fixes; if plannotator is unavailable, surface to user ∧ pause
    - then: execute-slice → verify-slice → ship-slice (standard workflows)
 
 Quick is an entry point, ¬ a parallel pipeline. Always standalone (kind=quick).

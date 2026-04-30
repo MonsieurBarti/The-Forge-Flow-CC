@@ -73,9 +73,14 @@ Issues → revise plan
 DISPATCH anonymous reviewer via Agent tool (prompt: @skills/brainstorming/SKILL.md § Plan Document Reviewer)
 Issues → fix, re-dispatch (max 3)
 
-### 8. Plannotator Review
+### 8. Plannotator Review (REQUIRED gate)
+**REQUIRED — do NOT proceed past this step until annotations are resolved.**
+This is a hard dependency per `skills/plannotator-usage/SKILL.md` (no terminal fallback).
+
 invoke Skill `plannotator-annotate` with arg `.tff-cc/milestones/<milestone>/slices/<id>/PLAN.md`
-feedback → revise ∨ approved → continue
+- feedback → revise the artifact, re-invoke
+- approved (no annotations ∨ all resolved) → continue
+- skipping this step is ¬ allowed; if plannotator is unavailable, surface to user ∧ pause
 
 ### 9. Worktree + Transition
 `tff-tools worktree:create --slice-id <id>`
@@ -90,6 +95,6 @@ After completing all steps above:
 1. READ `.tff-cc/settings.yaml` → check `autonomy.mode`
 2. IF `plan-to-pr`:
    - Non-gate steps: IMMEDIATELY invoke the next workflow — do NOT ask user
-   - Human gates (plan approval, spec approval, completion): pause ∧ ask
+   - Human gates (plan approval, spec approval, completion, **plannotator review**): pause ∧ ask
 3. IF `guided`: suggest next step with `/tff:<command>`, wait for user
 4. Log: `[tff] <slice-id>: planning → executing`

@@ -40,6 +40,8 @@ exploration, spawn Explore subagents ∧ reason about their findings.
    - Write to `.tff-cc/debug/<D-label>/PLAN.md`
 9. HAND OFF to standard pipeline:
    - invoke plan-slice workflow from step 8 (Plannotator Review) onward
+   - **step 8 is a REQUIRED gate** per `skills/plannotator-usage/SKILL.md` — do NOT skip,
+     even for S-tier debug fixes; if plannotator is unavailable, surface to user ∧ pause
    - then: execute-slice → verify-slice → ship-slice (standard workflows)
 
 Debug Phase 2 is an entry point, ¬ a parallel pipeline. Always standalone (kind=debug).
