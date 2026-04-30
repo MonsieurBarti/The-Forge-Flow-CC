@@ -21,6 +21,11 @@ export const sliceListSchema: CommandSchema = {
 			description: "Filter by slice kind: milestone, quick, or debug",
 			enum: ["milestone", "quick", "debug"],
 		},
+		{
+			name: "include-archived",
+			type: "boolean",
+			description: "Include archived slices (default: hidden)",
+		},
 	],
 	examples: [
 		"slice:list",
@@ -29,6 +34,7 @@ export const sliceListSchema: CommandSchema = {
 		"slice:list --kind quick",
 		"slice:list --kind debug",
 		"slice:list --kind milestone",
+		"slice:list --include-archived",
 	],
 };
 
@@ -38,9 +44,14 @@ export const sliceListCmd = async (args: string[]): Promise<string> => {
 		return JSON.stringify(parsed);
 	}
 
-	const { "milestone-id": rawMilestoneId, kind } = parsed.data as {
+	const {
+		"milestone-id": rawMilestoneId,
+		kind,
+		"include-archived": includeArchived,
+	} = parsed.data as {
 		"milestone-id"?: string;
 		kind?: "milestone" | "quick" | "debug";
+		"include-archived"?: boolean;
 	};
 
 	if (rawMilestoneId && kind && kind !== "milestone") {
@@ -64,7 +75,9 @@ export const sliceListCmd = async (args: string[]): Promise<string> => {
 		milestoneId = resolved.data;
 	}
 
-	const result = kind ? sliceStore.listSlicesByKind(kind) : sliceStore.listSlices(milestoneId);
+	const result = kind
+		? sliceStore.listSlicesByKind(kind, { includeArchived: includeArchived === true })
+		: sliceStore.listSlices({ milestoneId, includeArchived: includeArchived === true });
 
 	await reconcileOnRead(process.cwd(), { milestoneStore, sliceStore, taskStore });
 

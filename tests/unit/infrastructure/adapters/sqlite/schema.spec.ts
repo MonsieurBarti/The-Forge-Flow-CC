@@ -20,13 +20,13 @@ describe("schema", () => {
 
 	it("runs migrations on fresh db", () => {
 		runMigrations(db);
-		expect(getCurrentVersion(db)).toBe(8);
+		expect(getCurrentVersion(db)).toBe(9);
 	});
 
 	it("is idempotent", () => {
 		runMigrations(db);
 		runMigrations(db);
-		expect(getCurrentVersion(db)).toBe(8);
+		expect(getCurrentVersion(db)).toBe(9);
 	});
 
 	it("enables WAL mode", () => {
@@ -144,6 +144,35 @@ describe("schema", () => {
 				"INSERT INTO slice (id, milestone_id, kind, number, title) VALUES ('X01', NULL, 'foo', 1, 'bad')",
 			).run();
 		}).toThrow();
+	});
+
+	it("adds archived_at columns to slice and milestone", () => {
+		runMigrations(db);
+		const sliceCols = db.prepare("PRAGMA table_info(slice)").all() as Array<{
+			name: string;
+			notnull: number;
+		}>;
+		const milestoneCols = db.prepare("PRAGMA table_info(milestone)").all() as Array<{
+			name: string;
+			notnull: number;
+		}>;
+		const sliceArchived = sliceCols.find((c) => c.name === "archived_at");
+		const milestoneArchived = milestoneCols.find((c) => c.name === "archived_at");
+		expect(sliceArchived).toBeDefined();
+		expect(milestoneArchived).toBeDefined();
+		// nullable: notnull = 0
+		expect(sliceArchived?.notnull).toBe(0);
+		expect(milestoneArchived?.notnull).toBe(0);
+	});
+
+	it("creates archived indexes", () => {
+		runMigrations(db);
+		const indexes = db
+			.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE 'idx_%_archived'")
+			.all() as Array<{ name: string }>;
+		const names = indexes.map((i) => i.name);
+		expect(names).toContain("idx_slice_archived");
+		expect(names).toContain("idx_milestone_archived");
 	});
 
 	it("backfills existing slices with kind=milestone", () => {

@@ -16,6 +16,7 @@ export const MilestoneSchema = z.object({
 	branch: z.string().min(1),
 	closeReason: z.string().optional(),
 	createdAt: z.date(),
+	archivedAt: z.date().optional(),
 });
 
 export type Milestone = z.infer<typeof MilestoneSchema>;

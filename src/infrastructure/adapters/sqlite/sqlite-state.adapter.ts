@@ -53,6 +53,32 @@ import { getProjectHome, getProjectId } from "../../home-directory.js";
 import { openDatabase } from "./open-database.js";
 import { runMigrations } from "./schema.js";
 
+interface SliceRow {
+	id: string;
+	milestone_id: string | null;
+	kind: string;
+	number: number;
+	title: string;
+	status: string;
+	tier: string | null;
+	base_branch: string | null;
+	branch_name: string | null;
+	created_at: string;
+	archived_at: string | null;
+}
+
+interface MilestoneRow {
+	id: string;
+	project_id: string;
+	number: number;
+	name: string;
+	status: string;
+	branch: string;
+	close_reason: string | null;
+	created_at: string;
+	archived_at: string | null;
+}
+
 export class SQLiteStateAdapter
 	implements
 		DatabaseInit,
@@ -196,16 +222,7 @@ export class SQLiteStateAdapter
 	getMilestone(id: string): Result<Milestone | null, DomainError> {
 		try {
 			const row = this.db.prepare("SELECT * FROM milestone WHERE id = ?").get(id) as
-				| {
-						id: string;
-						project_id: string;
-						number: number;
-						name: string;
-						status: string;
-						branch: string;
-						close_reason: string | null;
-						created_at: string;
-				  }
+				| MilestoneRow
 				| undefined;
 			if (!row) return Ok(null);
 			return Ok(this.rowToMilestone(row));
@@ -217,16 +234,7 @@ export class SQLiteStateAdapter
 	getMilestoneByNumber(number: number): Result<Milestone | null, DomainError> {
 		try {
 			const row = this.db.prepare("SELECT * FROM milestone WHERE number = ?").get(number) as
-				| {
-						id: string;
-						project_id: string;
-						number: number;
-						name: string;
-						status: string;
-						branch: string;
-						close_reason: string | null;
-						created_at: string;
-				  }
+				| MilestoneRow
 				| undefined;
 			if (!row) return Ok(null);
 			return Ok(this.rowToMilestone(row));
@@ -235,18 +243,13 @@ export class SQLiteStateAdapter
 		}
 	}
 
-	listMilestones(): Result<Milestone[], DomainError> {
+	listMilestones(options?: { includeArchived?: boolean }): Result<Milestone[], DomainError> {
 		try {
-			const rows = this.db.prepare("SELECT * FROM milestone ORDER BY number").all() as Array<{
-				id: string;
-				project_id: string;
-				number: number;
-				name: string;
-				status: string;
-				branch: string;
-				close_reason: string | null;
-				created_at: string;
-			}>;
+			const includeArchived = options?.includeArchived === true;
+			const sql = includeArchived
+				? "SELECT * FROM milestone ORDER BY number"
+				: "SELECT * FROM milestone WHERE archived_at IS NULL ORDER BY number";
+			const rows = this.db.prepare(sql).all() as Array<MilestoneRow>;
 			return Ok(rows.map((r) => this.rowToMilestone(r)));
 		} catch (e) {
 			return Err(createDomainError("WRITE_FAILURE", `Failed to list milestones: ${e}`));
@@ -273,6 +276,28 @@ export class SQLiteStateAdapter
 		} catch (e) {
 			return Err(createDomainError("WRITE_FAILURE", `Failed to update milestone: ${e}`));
 		}
+	}
+
+	archiveMilestoneCascade(id: string): Result<{ slicesArchived: number }, DomainError> {
+		return this.db.transaction((): Result<{ slicesArchived: number }, DomainError> => {
+			try {
+				// Idempotent slice archive: only update slices that are not yet archived,
+				// so the returned count reflects work actually done in this call.
+				const sliceInfo = this.db
+					.prepare(
+						"UPDATE slice SET archived_at = datetime('now'), updated_at = datetime('now') WHERE milestone_id = ? AND archived_at IS NULL",
+					)
+					.run(id);
+				this.db
+					.prepare(
+						"UPDATE milestone SET archived_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND archived_at IS NULL",
+					)
+					.run(id);
+				return Ok({ slicesArchived: sliceInfo.changes });
+			} catch (e) {
+				return Err(createDomainError("WRITE_FAILURE", `Failed to archive milestone cascade: ${e}`));
+			}
+		})();
 	}
 
 	closeMilestone(id: string, reason?: string): Result<void, DomainError> {
@@ -358,18 +383,7 @@ export class SQLiteStateAdapter
 	getSlice(id: string): Result<Slice | null, DomainError> {
 		try {
 			const row = this.db.prepare("SELECT * FROM slice WHERE id = ?").get(id) as
-				| {
-						id: string;
-						milestone_id: string | null;
-						kind: string;
-						number: number;
-						title: string;
-						status: string;
-						tier: string | null;
-						base_branch: string | null;
-						branch_name: string | null;
-						created_at: string;
-				  }
+				| SliceRow
 				| undefined;
 			if (!row) return Ok(null);
 			return Ok(this.rowToSlice(row));
@@ -389,20 +403,7 @@ export class SQLiteStateAdapter
            JOIN milestone m ON s.milestone_id = m.id
            WHERE m.number = ? AND s.number = ?`,
 				)
-				.get(milestoneNumber, sliceNumber) as
-				| {
-						id: string;
-						milestone_id: string | null;
-						kind: string;
-						number: number;
-						title: string;
-						status: string;
-						tier: string | null;
-						base_branch: string | null;
-						branch_name: string | null;
-						created_at: string;
-				  }
-				| undefined;
+				.get(milestoneNumber, sliceNumber) as SliceRow | undefined;
 			if (!row) return Ok(null);
 			return Ok(this.rowToSlice(row));
 		} catch (e) {
@@ -410,57 +411,40 @@ export class SQLiteStateAdapter
 		}
 	}
 
-	listSlices(milestoneId?: string): Result<Slice[], DomainError> {
+	listSlices(
+		milestoneIdOrOptions?: string | { milestoneId?: string; includeArchived?: boolean },
+	): Result<Slice[], DomainError> {
 		try {
-			const rows = milestoneId
+			const opts =
+				typeof milestoneIdOrOptions === "string"
+					? { milestoneId: milestoneIdOrOptions, includeArchived: false }
+					: (milestoneIdOrOptions ?? {});
+			const includeArchived = opts.includeArchived === true;
+			const archivedClause = includeArchived ? "" : " AND archived_at IS NULL";
+			const archivedClauseStandalone = includeArchived ? "" : " WHERE archived_at IS NULL";
+			const rows = opts.milestoneId
 				? (this.db
-						.prepare("SELECT * FROM slice WHERE milestone_id = ? ORDER BY number")
-						.all(milestoneId) as Array<{
-						id: string;
-						milestone_id: string | null;
-						kind: string;
-						number: number;
-						title: string;
-						status: string;
-						tier: string | null;
-						base_branch: string | null;
-						branch_name: string | null;
-						created_at: string;
-					}>)
-				: (this.db.prepare("SELECT * FROM slice ORDER BY milestone_id, number").all() as Array<{
-						id: string;
-						milestone_id: string | null;
-						kind: string;
-						number: number;
-						title: string;
-						status: string;
-						tier: string | null;
-						base_branch: string | null;
-						branch_name: string | null;
-						created_at: string;
-					}>);
+						.prepare(`SELECT * FROM slice WHERE milestone_id = ?${archivedClause} ORDER BY number`)
+						.all(opts.milestoneId) as Array<SliceRow>)
+				: (this.db
+						.prepare(`SELECT * FROM slice${archivedClauseStandalone} ORDER BY milestone_id, number`)
+						.all() as Array<SliceRow>);
 			return Ok(rows.map((r) => this.rowToSlice(r)));
 		} catch (e) {
 			return Err(createDomainError("WRITE_FAILURE", `Failed to list slices: ${e}`));
 		}
 	}
 
-	listSlicesByKind(kind: Slice["kind"]): Result<Slice[], DomainError> {
+	listSlicesByKind(
+		kind: Slice["kind"],
+		options?: { includeArchived?: boolean },
+	): Result<Slice[], DomainError> {
 		try {
-			const rows = this.db
-				.prepare("SELECT * FROM slice WHERE kind = ? ORDER BY number")
-				.all(kind) as Array<{
-				id: string;
-				milestone_id: string | null;
-				kind: string;
-				number: number;
-				title: string;
-				status: string;
-				tier: string | null;
-				base_branch: string | null;
-				branch_name: string | null;
-				created_at: string;
-			}>;
+			const includeArchived = options?.includeArchived === true;
+			const sql = includeArchived
+				? "SELECT * FROM slice WHERE kind = ? ORDER BY number"
+				: "SELECT * FROM slice WHERE kind = ? AND archived_at IS NULL ORDER BY number";
+			const rows = this.db.prepare(sql).all(kind) as Array<SliceRow>;
 			return Ok(rows.map((r) => this.rowToSlice(r)));
 		} catch (e) {
 			return Err(createDomainError("WRITE_FAILURE", `Failed to list slices by kind: ${e}`));
@@ -534,6 +518,19 @@ export class SQLiteStateAdapter
 				return Err(createDomainError("WRITE_FAILURE", `Failed to transition slice: ${e}`));
 			}
 		})();
+	}
+
+	archiveSlice(id: string): Result<void, DomainError> {
+		try {
+			this.db
+				.prepare(
+					"UPDATE slice SET archived_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND archived_at IS NULL",
+				)
+				.run(id);
+			return Ok(undefined);
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to archive slice: ${e}`));
+		}
 	}
 
 	// TaskStore
@@ -1116,18 +1113,7 @@ export class SQLiteStateAdapter
 	}
 
 	// Helpers
-	private rowToSlice(row: {
-		id: string;
-		milestone_id: string | null;
-		kind: string;
-		number: number;
-		title: string;
-		status: string;
-		tier: string | null;
-		base_branch: string | null;
-		branch_name: string | null;
-		created_at: string;
-	}): Slice {
+	private rowToSlice(row: SliceRow): Slice {
 		return {
 			id: row.id,
 			milestoneId: row.milestone_id ?? undefined,
@@ -1139,6 +1125,7 @@ export class SQLiteStateAdapter
 			baseBranch: row.base_branch ?? undefined,
 			branchName: row.branch_name ?? undefined,
 			createdAt: new Date(row.created_at),
+			archivedAt: row.archived_at ? new Date(row.archived_at) : undefined,
 		};
 	}
 
@@ -1170,16 +1157,7 @@ export class SQLiteStateAdapter
 		};
 	}
 
-	private rowToMilestone(row: {
-		id: string;
-		project_id: string;
-		number: number;
-		name: string;
-		status: string;
-		branch: string;
-		close_reason: string | null;
-		created_at: string;
-	}): Milestone {
+	private rowToMilestone(row: MilestoneRow): Milestone {
 		return {
 			id: row.id,
 			projectId: row.project_id,
@@ -1189,6 +1167,7 @@ export class SQLiteStateAdapter
 			branch: row.branch,
 			closeReason: row.close_reason ?? undefined,
 			createdAt: new Date(row.created_at),
+			archivedAt: row.archived_at ? new Date(row.archived_at) : undefined,
 		};
 	}
 
