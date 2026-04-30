@@ -33,13 +33,10 @@ export const getCurrentVersion = (db: Database.Database): number => {
 };
 
 export const runMigrations = (db: Database.Database): void => {
-	// Enable WAL mode and foreign keys (must be outside transaction)
 	db.pragma("journal_mode = WAL");
-	db.pragma("foreign_keys = ON");
 
 	const currentVersion = getCurrentVersion(db);
 
-	// Version check: if DB is ahead of code, throw
 	const maxCodeVersion = migrations[migrations.length - 1]?.version ?? 0;
 	if (currentVersion > maxCodeVersion) {
 		throw new Error(
@@ -47,13 +44,27 @@ export const runMigrations = (db: Database.Database): void => {
 		);
 	}
 
-	// Run pending migrations in a transaction
-	for (const migration of migrations) {
-		if (migration.version <= currentVersion) continue;
+	// Per SQLite's "Making Other Kinds Of Table Schema Changes" recipe (§7),
+	// table-rebuild migrations (CREATE _new + INSERT + DROP + RENAME) require
+	// foreign_keys=OFF *before* the transaction; setting it inside is a no-op.
+	// Without this, dependent rows (task, slice_dependency, …) trip the
+	// deferred FK check at COMMIT and abort the migration. See issue #159.
+	db.pragma("foreign_keys = OFF");
+	try {
+		for (const migration of migrations) {
+			if (migration.version <= currentVersion) continue;
 
-		db.transaction(() => {
-			db.exec(migration.sql);
-			db.prepare("INSERT INTO schema_version (version) VALUES (?)").run(migration.version);
-		})();
+			db.transaction(() => {
+				db.exec(migration.sql);
+				db.prepare("INSERT INTO schema_version (version) VALUES (?)").run(migration.version);
+			})();
+		}
+
+		const violations = db.pragma("foreign_key_check") as unknown[];
+		if (Array.isArray(violations) && violations.length > 0) {
+			throw new Error(`Migration failed: foreign_key_check: ${JSON.stringify(violations)}`);
+		}
+	} finally {
+		db.pragma("foreign_keys = ON");
 	}
 };

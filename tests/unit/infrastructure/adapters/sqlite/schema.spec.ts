@@ -175,6 +175,31 @@ describe("schema", () => {
 		expect(names).toContain("idx_milestone_archived");
 	});
 
+	it("upgrades a pre-v8 db with FK-dependent rows referencing slice", () => {
+		// Repro for issue #159: v8 recreates the slice table; if the upgrade
+		// runs with foreign_keys=ON and there are rows in task/slice_dependency/etc.
+		// referencing slice, the deferred FK check at COMMIT aborts the migration.
+		db.exec(v1Migration);
+		db.prepare("INSERT INTO schema_version (version) VALUES (1)").run();
+		db.prepare("INSERT INTO project (id, name) VALUES ('singleton', 'P')").run();
+		db.prepare(
+			"INSERT INTO milestone (id, project_id, number, name) VALUES ('M01', 'singleton', 1, 'M')",
+		).run();
+		db.prepare(
+			"INSERT INTO slice (id, milestone_id, number, title) VALUES ('M01-S01', 'M01', 1, 't')",
+		).run();
+		db.prepare(
+			"INSERT INTO task (id, slice_id, number, title) VALUES ('t1', 'M01-S01', 1, 'T1')",
+		).run();
+
+		expect(() => runMigrations(db)).not.toThrow();
+		expect(getCurrentVersion(db)).toBe(9);
+		const task = db.prepare("SELECT slice_id FROM task WHERE id = 't1'").get() as {
+			slice_id: string;
+		};
+		expect(task.slice_id).toBe("M01-S01");
+	});
+
 	it("backfills existing slices with kind=milestone", () => {
 		// Manually load v1 schema, insert a pre-v8 slice row, then run all migrations.
 		db.exec(v1Migration);
