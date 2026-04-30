@@ -43,10 +43,7 @@ export interface TransitionSliceDeps {
 	stores: ClosableStateStores;
 }
 
-const sliceLabelFromSlice = (
-	slice: { number: number; milestoneId: string },
-	milestoneNumber: number,
-): string => {
+const sliceLabelFromSlice = (slice: { number: number }, milestoneNumber: number): string => {
 	const ms = String(milestoneNumber).padStart(2, "0");
 	const sn = String(slice.number).padStart(2, "0");
 	return `M${ms}-S${sn}`;
@@ -112,12 +109,22 @@ export const transitionSliceOrchestrator = async (
 		return { ok: false, error: validation.error };
 	}
 
-	const milestoneResult = milestoneStore.getMilestone(currentSlice.milestoneId);
+	if (!currentSlice.milestoneId) {
+		return {
+			ok: false,
+			error: createDomainError(
+				"NOT_FOUND",
+				`Slice "${sliceId}" has no milestone (kind=${currentSlice.kind}); transition not yet supported for ad-hoc slices`,
+			),
+		};
+	}
+	const milestoneId = currentSlice.milestoneId;
+	const milestoneResult = milestoneStore.getMilestone(milestoneId);
 	if (!milestoneResult.ok) return { ok: false, error: milestoneResult.error };
 	if (!milestoneResult.data) {
 		return {
 			ok: false,
-			error: createDomainError("NOT_FOUND", `Milestone "${currentSlice.milestoneId}" not found`),
+			error: createDomainError("NOT_FOUND", `Milestone "${milestoneId}" not found`),
 		};
 	}
 	const milestoneNumber = milestoneResult.data.number;
@@ -128,7 +135,7 @@ export const transitionSliceOrchestrator = async (
 	// renderer is pure so this is safe.
 	const projectedSlice: Slice = { ...currentSlice, status: targetStatus };
 	const stateContent = renderStateMd(
-		{ milestoneId: currentSlice.milestoneId },
+		{ milestoneId },
 		{
 			milestoneStore,
 			sliceStore: {

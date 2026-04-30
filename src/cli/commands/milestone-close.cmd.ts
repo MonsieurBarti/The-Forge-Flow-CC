@@ -81,6 +81,7 @@ export const milestoneCloseCmd = async (args: string[]): Promise<string> => {
 			const labels = pendingRes.data.map((p) => {
 				const s = sliceStore.getSlice(p.sliceId);
 				if (!s.ok || !s.data) return p.sliceId;
+				if (!s.data.milestoneId) return p.sliceId;
 				const milestone = milestoneStore.getMilestone(s.data.milestoneId);
 				if (!milestone.ok || !milestone.data) return p.sliceId;
 				return `M${String(milestone.data.number).padStart(2, "0")}-S${String(s.data.number).padStart(2, "0")}`;

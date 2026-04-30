@@ -123,6 +123,18 @@ export const routingJudgePrepareCmd = async (
 				]),
 			});
 		}
+		if (!sliceEntity.data.milestoneId) {
+			return JSON.stringify({
+				ok: false,
+				error: preconditionViolationError([
+					{
+						code: "slice.has_milestone",
+						expected: "milestone-bound slice",
+						actual: `kind=${sliceEntity.data.kind}, milestoneId=null`,
+					},
+				]),
+			});
+		}
 		const milestoneRes = milestoneStore.getMilestone(sliceEntity.data.milestoneId);
 		if (!milestoneRes.ok || !milestoneRes.data) {
 			return JSON.stringify({
@@ -134,7 +146,7 @@ export const routingJudgePrepareCmd = async (
 		}
 		sliceLabel = `M${String(milestoneRes.data.number).padStart(2, "0")}-S${String(sliceEntity.data.number).padStart(2, "0")}`;
 		sliceStatus = sliceEntity.data.status;
-		mergeBranches = [milestoneRes.data.branch, "main"];
+		mergeBranches = [milestoneRes.data.branch ?? "main", "main"];
 
 		const pendingRes = pendingJudgmentStore.getPending(sliceId);
 		if (pendingRes.ok && pendingRes.data?.mergeSha) {

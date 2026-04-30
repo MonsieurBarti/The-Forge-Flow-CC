@@ -62,6 +62,15 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
 		}
 		const slice = sliceResult.data;
 
+		if (!slice.milestoneId) {
+			return JSON.stringify({
+				ok: false,
+				error: {
+					code: "NOT_FOUND",
+					message: `Slice ${sliceId} has no milestone (kind=${slice.kind}); ad-hoc worktree creation lands in a follow-up slice`,
+				},
+			});
+		}
 		const milestoneResult = milestoneStore.getMilestone(slice.milestoneId);
 		if (!isOk(milestoneResult) || !milestoneResult.data) {
 			return JSON.stringify({
@@ -71,6 +80,15 @@ export const worktreeCreateCmd = async (args: string[]): Promise<string> => {
 		}
 		const milestone = milestoneResult.data;
 
+		if (!milestone.branch) {
+			return JSON.stringify({
+				ok: false,
+				error: {
+					code: "NOT_FOUND",
+					message: `Milestone ${slice.milestoneId} has no branch — cannot derive worktree start point`,
+				},
+			});
+		}
 		const startPoint = milestone.branch;
 
 		const result = await createWorktreeUseCase(

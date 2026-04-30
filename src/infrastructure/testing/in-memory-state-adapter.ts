@@ -192,19 +192,30 @@ export class InMemoryStateAdapter
 
 	// SliceStore
 	createSlice(props: SliceProps): Result<Slice, DomainError> {
-		const milestone = this.milestones.get(props.milestoneId);
-		if (!milestone) {
-			return Err(createDomainError("NOT_FOUND", `Milestone "${props.milestoneId}" not found`));
+		const kind = props.kind ?? "milestone";
+		if (kind === "milestone") {
+			if (!props.milestoneId) {
+				return Err(
+					createDomainError("VALIDATION_ERROR", "milestoneId is required for milestone slices"),
+				);
+			}
+			const milestone = this.milestones.get(props.milestoneId);
+			if (!milestone) {
+				return Err(createDomainError("NOT_FOUND", `Milestone "${props.milestoneId}" not found`));
+			}
 		}
 		// Use provided id or generate a new UUID
 		const id = props.id ?? crypto.randomUUID();
 		const slice: Slice = {
 			id,
 			milestoneId: props.milestoneId,
+			kind,
 			number: props.number,
 			title: props.title,
 			status: "discussing",
 			tier: props.tier,
+			baseBranch: props.baseBranch,
+			branchName: props.branchName,
 			createdAt: new Date(),
 		};
 		this.slices.set(id, slice);

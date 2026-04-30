@@ -172,6 +172,18 @@ export const routingJudgeRecordCmd = async (
 					]),
 				});
 			}
+			if (!sliceEntity.data.milestoneId) {
+				return JSON.stringify({
+					ok: false,
+					error: preconditionViolationError([
+						{
+							code: "slice.has_milestone",
+							expected: "milestone-bound slice",
+							actual: `kind=${sliceEntity.data.kind}, milestoneId=null`,
+						},
+					]),
+				});
+			}
 			const milestoneRes = milestoneStore.getMilestone(sliceEntity.data.milestoneId);
 			if (!milestoneRes.ok || !milestoneRes.data) {
 				return JSON.stringify({

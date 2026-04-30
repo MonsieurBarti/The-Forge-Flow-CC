@@ -50,6 +50,7 @@ export const judgePendingListCmd = async (args: string[]): Promise<string> => {
 		for (const p of pendingRes.data) {
 			const slice = sliceStore.getSlice(p.sliceId);
 			if (!slice.ok || !slice.data) continue;
+			if (!slice.data.milestoneId) continue;
 			const milestone = milestoneStore.getMilestone(slice.data.milestoneId);
 			if (!milestone.ok || !milestone.data) continue;
 			const milestoneLabel = `M${String(milestone.data.number).padStart(2, "0")}`;

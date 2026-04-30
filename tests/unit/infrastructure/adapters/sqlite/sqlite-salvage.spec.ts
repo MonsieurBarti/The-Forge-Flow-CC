@@ -467,16 +467,18 @@ describe("SQLiteSalvage", () => {
 				"INSERT INTO milestone VALUES ('M02', 'singleton', NULL, NULL, 'open', NULL, ?)",
 			).run(now); // Missing name and number
 
-			// Insert slices with some missing required fields
+			// Insert slices with some missing required fields. Note: milestone_id is
+			// nullable post-v8 (ad-hoc kind=quick|debug slices), so a NULL milestone_id
+			// alone is no longer salvage-corruption. A NULL primary key id still is.
 			db.prepare(
 				"INSERT INTO slice VALUES ('M01-S01', 'M01', 1, 'Valid Slice', 'discussing', NULL, ?)",
 			).run(now);
 			db.prepare(
-				"INSERT INTO slice VALUES ('M01-S02', NULL, 1, 'Missing Milestone', 'discussing', NULL, ?)",
-			).run(now); // Missing milestone_id
+				"INSERT INTO slice VALUES ('Q-01', NULL, 1, 'Ad-hoc Slice', 'discussing', NULL, ?)",
+			).run(now); // Nullable milestone_id is now valid (ad-hoc kind)
 			db.prepare(
 				"INSERT INTO slice VALUES (NULL, 'M01', 2, 'Missing ID', 'discussing', NULL, ?)",
-			).run(now); // Null ID - use empty string since NULL is special in SQLite
+			).run(now); // Null ID - structural corruption
 
 			db.close();
 
@@ -495,14 +497,14 @@ describe("SQLiteSalvage", () => {
 			expect(snapshot!.milestones).toHaveLength(1);
 			expect(snapshot!.milestones[0].id).toBe("M01");
 
-			// Only valid slice should be salvaged (M01-S01)
-			expect(snapshot!.slices).toHaveLength(1);
-			expect(snapshot!.slices[0].id).toBe("M01-S01");
+			// Both M01-S01 (milestone-bound) and Q-01 (ad-hoc, NULL milestone) are
+			// salvageable; only the row with NULL id is dropped.
+			expect(snapshot!.slices).toHaveLength(2);
+			const sliceIds = snapshot!.slices.map((s) => s.id).sort();
+			expect(sliceIds).toEqual(["M01-S01", "Q-01"]);
 
 			// Should have corruption notes for invalid rows
 			expect(metadata.corruptionNotes.some((n) => n.includes("M02"))).toBe(true);
-			// M01-S02 has missing milestone_id - check for slice id in notes
-			expect(metadata.corruptionNotes.some((n) => n.includes("M01-S02"))).toBe(true);
 		});
 	});
 

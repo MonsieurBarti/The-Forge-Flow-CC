@@ -12,13 +12,19 @@ import {
 	SliceStatusSchema,
 } from "../value-objects/slice-status.js";
 
+export const SliceKindSchema = z.enum(["milestone", "quick", "debug"]);
+export type SliceKind = z.infer<typeof SliceKindSchema>;
+
 export const SliceSchema = z.object({
 	id: z.string().min(1),
-	milestoneId: z.string().min(1),
+	milestoneId: z.string().min(1).optional(),
+	kind: SliceKindSchema,
 	number: z.number().int().min(1),
 	title: z.string().min(1),
 	status: SliceStatusSchema,
 	tier: ComplexityTierSchema.optional(),
+	baseBranch: z.string().min(1).optional(),
+	branchName: z.string().min(1).optional(),
 	createdAt: z.date(),
 });
 
@@ -32,17 +38,23 @@ const generateUuid = (): string => {
 };
 
 export const createSlice = (input: {
-	milestoneId: string;
+	milestoneId?: string;
 	title: string;
-	milestoneNumber: number;
+	milestoneNumber?: number;
 	sliceNumber: number;
+	kind?: SliceKind;
+	baseBranch?: string;
+	branchName?: string;
 }): Slice => {
 	const slice = {
 		id: generateUuid(),
 		milestoneId: input.milestoneId,
+		kind: input.kind ?? ("milestone" as const),
 		number: input.sliceNumber,
 		title: input.title,
 		status: "discussing" as const,
+		baseBranch: input.baseBranch,
+		branchName: input.branchName,
 		createdAt: new Date(),
 	};
 	return SliceSchema.parse(slice);
