@@ -4,6 +4,7 @@ import { resolveMilestoneId } from "../../application/milestone/resolve-mileston
 import { buildMilestoneScorecard } from "../../application/routing/build-milestone-scorecard.js";
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { preconditionViolationError } from "../../domain/errors/precondition-violation.error.js";
+import { sliceLabelFor } from "../../domain/helpers/branch-naming.js";
 import { isOk } from "../../domain/result.js";
 import { checkMilestoneActive } from "../../domain/state-machine/preconditions.js";
 import { YamlRoutingConfigReader } from "../../infrastructure/adapters/filesystem/yaml-routing-config-reader.js";
@@ -81,9 +82,15 @@ export const milestoneCloseCmd = async (args: string[]): Promise<string> => {
 			const labels = pendingRes.data.map((p) => {
 				const s = sliceStore.getSlice(p.sliceId);
 				if (!s.ok || !s.data) return p.sliceId;
-				const milestone = milestoneStore.getMilestone(s.data.milestoneId);
-				if (!milestone.ok || !milestone.data) return p.sliceId;
-				return `M${String(milestone.data.number).padStart(2, "0")}-S${String(s.data.number).padStart(2, "0")}`;
+				const milestone = s.data.milestoneId
+					? milestoneStore.getMilestone(s.data.milestoneId)
+					: null;
+				const milestoneData = milestone?.ok ? (milestone.data ?? undefined) : undefined;
+				try {
+					return sliceLabelFor(s.data, milestoneData ?? undefined);
+				} catch {
+					return p.sliceId;
+				}
 			});
 			return JSON.stringify({
 				ok: false,

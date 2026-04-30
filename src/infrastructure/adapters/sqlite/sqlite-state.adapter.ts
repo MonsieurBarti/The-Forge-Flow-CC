@@ -319,20 +319,35 @@ export class SQLiteStateAdapter
 		try {
 			// Use provided id or generate a new UUID
 			const id = props.id ?? crypto.randomUUID();
+			const kind = props.kind ?? "milestone";
 			const now = new Date().toISOString();
 			this.db
 				.prepare(
-					`INSERT INTO slice (id, milestone_id, number, title, status, tier, created_at, updated_at)
-           VALUES (?, ?, ?, ?, 'discussing', ?, ?, ?)`,
+					`INSERT INTO slice (id, milestone_id, kind, number, title, status, tier, base_branch, branch_name, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, 'discussing', ?, ?, ?, ?, ?)`,
 				)
-				.run(id, props.milestoneId, props.number, props.title, props.tier ?? null, now, now);
+				.run(
+					id,
+					props.milestoneId ?? null,
+					kind,
+					props.number,
+					props.title,
+					props.tier ?? null,
+					props.baseBranch ?? null,
+					props.branchName ?? null,
+					now,
+					now,
+				);
 			return Ok({
 				id,
 				milestoneId: props.milestoneId,
+				kind,
 				number: props.number,
 				title: props.title,
 				status: "discussing" as const,
 				tier: props.tier,
+				baseBranch: props.baseBranch,
+				branchName: props.branchName,
 				createdAt: new Date(now),
 			});
 		} catch (e) {
@@ -345,11 +360,14 @@ export class SQLiteStateAdapter
 			const row = this.db.prepare("SELECT * FROM slice WHERE id = ?").get(id) as
 				| {
 						id: string;
-						milestone_id: string;
+						milestone_id: string | null;
+						kind: string;
 						number: number;
 						title: string;
 						status: string;
 						tier: string | null;
+						base_branch: string | null;
+						branch_name: string | null;
 						created_at: string;
 				  }
 				| undefined;
@@ -374,11 +392,14 @@ export class SQLiteStateAdapter
 				.get(milestoneNumber, sliceNumber) as
 				| {
 						id: string;
-						milestone_id: string;
+						milestone_id: string | null;
+						kind: string;
 						number: number;
 						title: string;
 						status: string;
 						tier: string | null;
+						base_branch: string | null;
+						branch_name: string | null;
 						created_at: string;
 				  }
 				| undefined;
@@ -396,25 +417,53 @@ export class SQLiteStateAdapter
 						.prepare("SELECT * FROM slice WHERE milestone_id = ? ORDER BY number")
 						.all(milestoneId) as Array<{
 						id: string;
-						milestone_id: string;
+						milestone_id: string | null;
+						kind: string;
 						number: number;
 						title: string;
 						status: string;
 						tier: string | null;
+						base_branch: string | null;
+						branch_name: string | null;
 						created_at: string;
 					}>)
 				: (this.db.prepare("SELECT * FROM slice ORDER BY milestone_id, number").all() as Array<{
 						id: string;
-						milestone_id: string;
+						milestone_id: string | null;
+						kind: string;
 						number: number;
 						title: string;
 						status: string;
 						tier: string | null;
+						base_branch: string | null;
+						branch_name: string | null;
 						created_at: string;
 					}>);
 			return Ok(rows.map((r) => this.rowToSlice(r)));
 		} catch (e) {
 			return Err(createDomainError("WRITE_FAILURE", `Failed to list slices: ${e}`));
+		}
+	}
+
+	listSlicesByKind(kind: Slice["kind"]): Result<Slice[], DomainError> {
+		try {
+			const rows = this.db
+				.prepare("SELECT * FROM slice WHERE kind = ? ORDER BY number")
+				.all(kind) as Array<{
+				id: string;
+				milestone_id: string | null;
+				kind: string;
+				number: number;
+				title: string;
+				status: string;
+				tier: string | null;
+				base_branch: string | null;
+				branch_name: string | null;
+				created_at: string;
+			}>;
+			return Ok(rows.map((r) => this.rowToSlice(r)));
+		} catch (e) {
+			return Err(createDomainError("WRITE_FAILURE", `Failed to list slices by kind: ${e}`));
 		}
 	}
 
@@ -1069,20 +1118,26 @@ export class SQLiteStateAdapter
 	// Helpers
 	private rowToSlice(row: {
 		id: string;
-		milestone_id: string;
+		milestone_id: string | null;
+		kind: string;
 		number: number;
 		title: string;
 		status: string;
 		tier: string | null;
+		base_branch: string | null;
+		branch_name: string | null;
 		created_at: string;
 	}): Slice {
 		return {
 			id: row.id,
-			milestoneId: row.milestone_id,
+			milestoneId: row.milestone_id ?? undefined,
+			kind: row.kind as Slice["kind"],
 			number: row.number,
 			title: row.title,
 			status: row.status as Slice["status"],
 			tier: (row.tier ?? undefined) as Slice["tier"],
+			baseBranch: row.base_branch ?? undefined,
+			branchName: row.branch_name ?? undefined,
 			createdAt: new Date(row.created_at),
 		};
 	}

@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { v1Migration } from "../../../../../src/infrastructure/adapters/sqlite/migrations/v1.js";
 import {
 	getCurrentVersion,
 	runMigrations,
@@ -19,13 +20,13 @@ describe("schema", () => {
 
 	it("runs migrations on fresh db", () => {
 		runMigrations(db);
-		expect(getCurrentVersion(db)).toBe(7);
+		expect(getCurrentVersion(db)).toBe(8);
 	});
 
 	it("is idempotent", () => {
 		runMigrations(db);
 		runMigrations(db);
-		expect(getCurrentVersion(db)).toBe(7);
+		expect(getCurrentVersion(db)).toBe(8);
 	});
 
 	it("enables WAL mode", () => {
@@ -119,5 +120,51 @@ describe("schema", () => {
 		expect(() => {
 			db.prepare("DELETE FROM milestone WHERE id = 'M01'").run();
 		}).toThrow();
+	});
+
+	it("allows null milestone_id on slice for kind quick/debug", () => {
+		runMigrations(db);
+		db.prepare("INSERT INTO project (id, name) VALUES ('singleton', 'P')").run();
+		expect(() => {
+			db.prepare(
+				"INSERT INTO slice (id, milestone_id, kind, number, title) VALUES ('Q01', NULL, 'quick', 1, 'quick fix')",
+			).run();
+		}).not.toThrow();
+		expect(() => {
+			db.prepare(
+				"INSERT INTO slice (id, milestone_id, kind, number, title) VALUES ('D01', NULL, 'debug', 1, 'debug it')",
+			).run();
+		}).not.toThrow();
+	});
+
+	it("rejects unknown kind values", () => {
+		runMigrations(db);
+		expect(() => {
+			db.prepare(
+				"INSERT INTO slice (id, milestone_id, kind, number, title) VALUES ('X01', NULL, 'foo', 1, 'bad')",
+			).run();
+		}).toThrow();
+	});
+
+	it("backfills existing slices with kind=milestone", () => {
+		// Manually load v1 schema, insert a pre-v8 slice row, then run all migrations.
+		db.exec(v1Migration);
+		db.prepare("INSERT INTO schema_version (version) VALUES (1)").run();
+		db.prepare("INSERT INTO project (id, name) VALUES ('singleton', 'P')").run();
+		db.prepare(
+			"INSERT INTO milestone (id, project_id, number, name) VALUES ('M01', 'singleton', 1, 'M')",
+		).run();
+		db.prepare(
+			"INSERT INTO slice (id, milestone_id, number, title) VALUES ('s1', 'M01', 1, 't')",
+		).run();
+
+		runMigrations(db);
+
+		const row = db.prepare("SELECT kind, milestone_id FROM slice WHERE id = 's1'").get() as {
+			kind: string;
+			milestone_id: string;
+		};
+		expect(row.kind).toBe("milestone");
+		expect(row.milestone_id).toBe("M01");
 	});
 });

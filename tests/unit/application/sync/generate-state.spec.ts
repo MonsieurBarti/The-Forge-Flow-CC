@@ -102,3 +102,89 @@ describe("renderStateMd", () => {
 		expect(isOk(result)).toBe(false);
 	});
 });
+
+describe("generateState — kind scope", () => {
+	let adapter: InMemoryStateAdapter;
+	let artifactStore: InMemoryArtifactStore;
+
+	beforeEach(() => {
+		adapter = new InMemoryStateAdapter();
+		artifactStore = new InMemoryArtifactStore();
+		adapter.saveProject({ name: "Test", vision: "v" });
+	});
+
+	it("renders quick STATE with no slices and writes to .tff-cc/quick/STATE.md", async () => {
+		const result = await generateState(
+			{ scope: "kind", kind: "quick" },
+			{ milestoneStore: adapter, sliceStore: adapter, taskStore: adapter, artifactStore },
+		);
+		expect(isOk(result)).toBe(true);
+		const content = await artifactStore.read(".tff-cc/quick/STATE.md");
+		expect(isOk(content)).toBe(true);
+		if (isOk(content)) {
+			expect(content.data).toContain("# State — Quick Slices");
+			expect(content.data).toContain("Slices: 0/0 completed");
+		}
+	});
+
+	it("renders debug STATE and writes to .tff-cc/debug/STATE.md", async () => {
+		const result = await generateState(
+			{ scope: "kind", kind: "debug" },
+			{ milestoneStore: adapter, sliceStore: adapter, taskStore: adapter, artifactStore },
+		);
+		expect(isOk(result)).toBe(true);
+		const content = await artifactStore.read(".tff-cc/debug/STATE.md");
+		expect(isOk(content)).toBe(true);
+		if (isOk(content)) {
+			expect(content.data).toContain("# State — Debug Slices");
+		}
+	});
+
+	it("renders quick STATE with mixed-status slices using Q-## labels", async () => {
+		const q1 = adapter.createSlice({ kind: "quick", number: 1, title: "Quick One" });
+		const q2 = adapter.createSlice({ kind: "quick", number: 2, title: "Quick Two" });
+		const q1Id = isOk(q1) ? q1.data.id : "";
+		const q2Id = isOk(q2) ? q2.data.id : "";
+
+		// q1 → completing (closed requires approved reviews — completing exercises mixed-status path)
+		adapter.transitionSlice(q1Id, "researching");
+		adapter.transitionSlice(q1Id, "planning");
+		adapter.transitionSlice(q1Id, "executing");
+		adapter.transitionSlice(q1Id, "verifying");
+		adapter.transitionSlice(q1Id, "reviewing");
+		adapter.transitionSlice(q1Id, "completing");
+		// q2 → executing
+		adapter.transitionSlice(q2Id, "researching");
+		adapter.transitionSlice(q2Id, "planning");
+		adapter.transitionSlice(q2Id, "executing");
+
+		adapter.createTask({ sliceId: q1Id, number: 1, title: "T1", wave: 1 });
+		adapter.closeTask(`${q1Id}-T01`);
+		adapter.createTask({ sliceId: q2Id, number: 1, title: "T1", wave: 1 });
+
+		const result = await generateState(
+			{ scope: "kind", kind: "quick" },
+			{ milestoneStore: adapter, sliceStore: adapter, taskStore: adapter, artifactStore },
+		);
+		expect(isOk(result)).toBe(true);
+		const content = await artifactStore.read(".tff-cc/quick/STATE.md");
+		expect(isOk(content)).toBe(true);
+		if (isOk(content)) {
+			expect(content.data).toContain("Q-01");
+			expect(content.data).toContain("Q-02");
+			expect(content.data).toContain("Quick One");
+			expect(content.data).toContain("Quick Two");
+			expect(content.data).toContain("completing");
+			expect(content.data).toContain("executing");
+		}
+	});
+
+	it("does not write to milestone STATE_FILE when scope is kind", async () => {
+		await generateState(
+			{ scope: "kind", kind: "quick" },
+			{ milestoneStore: adapter, sliceStore: adapter, taskStore: adapter, artifactStore },
+		);
+		const milestoneState = await artifactStore.read(".tff-cc/STATE.md");
+		expect(isOk(milestoneState)).toBe(false);
+	});
+});

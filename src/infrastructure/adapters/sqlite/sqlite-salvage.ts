@@ -299,11 +299,14 @@ export class SQLiteSalvage {
 		try {
 			const rows = db.prepare("SELECT * FROM slice ORDER BY milestone_id, number").all() as Array<{
 				id: string;
-				milestone_id: string;
+				milestone_id: string | null;
+				kind: string | null;
 				number: number;
 				title: string;
 				status: string;
 				tier: string | null;
+				base_branch: string | null;
+				branch_name: string | null;
 				created_at: string;
 			}>;
 
@@ -317,11 +320,6 @@ export class SQLiteSalvage {
 
 					if (!row.title || typeof row.title !== "string") {
 						metadata.corruptionNotes.push(`Slice ${row.id}: Missing or invalid title`);
-						continue;
-					}
-
-					if (!row.milestone_id || typeof row.milestone_id !== "string") {
-						metadata.corruptionNotes.push(`Slice ${row.id}: Missing or invalid milestone_id`);
 						continue;
 					}
 
@@ -343,11 +341,14 @@ export class SQLiteSalvage {
 
 					slices.push({
 						id: row.id,
-						milestoneId: row.milestone_id,
+						milestoneId: row.milestone_id ?? undefined,
+						kind: (row.kind as Slice["kind"]) ?? "milestone",
 						number: row.number,
 						title: row.title,
 						status: (row.status as Slice["status"]) ?? "discussing",
 						tier: (row.tier as Slice["tier"]) ?? undefined,
+						baseBranch: row.base_branch ?? undefined,
+						branchName: row.branch_name ?? undefined,
 						createdAt,
 					});
 				} catch (rowError) {

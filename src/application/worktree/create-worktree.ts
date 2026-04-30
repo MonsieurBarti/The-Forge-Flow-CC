@@ -1,14 +1,16 @@
+import type { Milestone } from "../../domain/entities/milestone.js";
 import type { Slice } from "../../domain/entities/slice.js";
 import type { DomainError } from "../../domain/errors/domain-error.js";
-import { sliceBranchName, sliceLabel } from "../../domain/helpers/branch-naming.js";
+import { sliceLabelFor } from "../../domain/helpers/branch-naming.js";
 import type { GitOps } from "../../domain/ports/git-ops.port.js";
 import { isOk, Ok, type Result } from "../../domain/result.js";
 import { worktreeDir } from "../../shared/paths.js";
 
 interface CreateWorktreeInput {
 	slice: Slice;
-	milestoneNumber: number;
-	startPoint?: string;
+	milestone?: Milestone;
+	startPoint: string;
+	branchName: string;
 }
 interface CreateWorktreeDeps {
 	gitOps: GitOps;
@@ -22,14 +24,13 @@ export const createWorktreeUseCase = async (
 	input: CreateWorktreeInput,
 	deps: CreateWorktreeDeps,
 ): Promise<Result<CreateWorktreeOutput, DomainError>> => {
-	// Branch name uses 8-char UUID prefix from slice.id
-	const branchName = sliceBranchName(input.slice.id);
+	const { slice, milestone, startPoint, branchName } = input;
 
-	// Worktree path uses human-readable label format
-	const label = sliceLabel(input.milestoneNumber, input.slice.number);
+	// Worktree path uses human-readable label format (M##-S## | Q-## | D-##).
+	const label = sliceLabelFor(slice, milestone);
 	const worktreePath = worktreeDir(label);
 
-	const result = await deps.gitOps.createWorktree(worktreePath, branchName, input.startPoint);
+	const result = await deps.gitOps.createWorktree(worktreePath, branchName, startPoint);
 	if (!isOk(result)) return result;
 
 	return Ok({ worktreePath, branchName });

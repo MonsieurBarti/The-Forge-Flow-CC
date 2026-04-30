@@ -2,6 +2,8 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { prepareJudgeEvidenceUseCase } from "../../application/routing/prepare-judge-evidence.js";
 import { preconditionViolationError } from "../../domain/errors/precondition-violation.error.js";
+import { sliceLabelFor } from "../../domain/helpers/branch-naming.js";
+import { resolveBaseBranch } from "../../domain/helpers/slice-resolvers.js";
 import type { DiffReader } from "../../domain/ports/diff-reader.port.js";
 import type { SliceMergeLookup } from "../../domain/ports/slice-merge-lookup.port.js";
 import type { SliceSpecReader } from "../../domain/ports/slice-spec-reader.port.js";
@@ -123,18 +125,33 @@ export const routingJudgePrepareCmd = async (
 				]),
 			});
 		}
-		const milestoneRes = milestoneStore.getMilestone(sliceEntity.data.milestoneId);
-		if (!milestoneRes.ok || !milestoneRes.data) {
-			return JSON.stringify({
-				ok: false,
-				error: preconditionViolationError([
-					{ code: "milestone.exists", expected: "parent milestone", actual: "not found" },
-				]),
-			});
+		let milestone: { id: string; number: number; branch?: string } | undefined;
+		if (sliceEntity.data.milestoneId) {
+			const milestoneRes = milestoneStore.getMilestone(sliceEntity.data.milestoneId);
+			if (!milestoneRes.ok || !milestoneRes.data) {
+				return JSON.stringify({
+					ok: false,
+					error: preconditionViolationError([
+						{ code: "milestone.exists", expected: "parent milestone", actual: "not found" },
+					]),
+				});
+			}
+			milestone = milestoneRes.data;
 		}
-		sliceLabel = `M${String(milestoneRes.data.number).padStart(2, "0")}-S${String(sliceEntity.data.number).padStart(2, "0")}`;
+
+		// Resolve merge branches: slice's resolved base branch, plus default branch.
+		// TODO: detect default from `git symbolic-ref refs/remotes/origin/HEAD`.
+		const defaultBranch = "main";
+		let baseBranch: string;
+		try {
+			baseBranch = resolveBaseBranch(sliceEntity.data, milestone);
+		} catch {
+			baseBranch = defaultBranch;
+		}
+		mergeBranches = [...new Set([baseBranch, defaultBranch])];
+
+		sliceLabel = sliceLabelFor(sliceEntity.data, milestone);
 		sliceStatus = sliceEntity.data.status;
-		mergeBranches = [milestoneRes.data.branch, "main"];
 
 		const pendingRes = pendingJudgmentStore.getPending(sliceId);
 		if (pendingRes.ok && pendingRes.data?.mergeSha) {

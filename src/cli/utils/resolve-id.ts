@@ -7,6 +7,7 @@ import { Err, Ok, type Result } from "../../domain/result.js";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MILESTONE_LABEL_RE = /^M(\d+)$/;
 const SLICE_LABEL_RE = /^M(\d+)-S(\d+)$/;
+const ADHOC_SLICE_LABEL_RE = /^([QD])-(\d+)$/;
 
 export function resolveMilestoneId(
 	label: string,
@@ -30,6 +31,19 @@ export function resolveMilestoneId(
 
 export function resolveSliceId(label: string, sliceStore: SliceStore): Result<string, DomainError> {
 	if (UUID_RE.test(label)) return Ok(label);
+
+	const adhoc = ADHOC_SLICE_LABEL_RE.exec(label);
+	if (adhoc) {
+		const kind = adhoc[1] === "Q" ? "quick" : "debug";
+		const number = parseInt(adhoc[2], 10);
+		const list = sliceStore.listSlicesByKind(kind);
+		if (!list.ok) return list;
+		const found = list.data.find((s) => s.number === number);
+		if (!found) {
+			return Err(createDomainError("NOT_FOUND", `Slice not found: '${label}'`));
+		}
+		return Ok(found.id);
+	}
 
 	const m = SLICE_LABEL_RE.exec(label);
 	if (!m) {

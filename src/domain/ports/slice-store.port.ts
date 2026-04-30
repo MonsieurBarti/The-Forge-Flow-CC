@@ -1,4 +1,4 @@
-import type { Slice } from "../entities/slice.js";
+import type { Slice, SliceKind } from "../entities/slice.js";
 import type { DomainError } from "../errors/domain-error.js";
 import type { DomainEvent } from "../events/domain-event.js";
 import type { Result } from "../result.js";
@@ -14,6 +14,7 @@ export interface SliceStore {
 		sliceNumber: number,
 	): Result<Slice | null, DomainError>;
 	listSlices(milestoneId?: string): Result<Slice[], DomainError>;
+	listSlicesByKind(kind: SliceKind): Result<Slice[], DomainError>;
 	updateSlice(id: string, updates: SliceUpdateProps): Result<void, DomainError>;
 	transitionSlice(id: string, target: SliceStatus): Result<DomainEvent[], DomainError>;
 }

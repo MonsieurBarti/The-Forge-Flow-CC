@@ -37,3 +37,28 @@ export const sliceBranchName = (id: string): string => {
 	const prefix = id.slice(0, 8);
 	return `slice/${prefix}`;
 };
+
+/**
+ * Format an ad-hoc slice label as Q-## (quick) or D-## (debug).
+ */
+export const adhocSliceLabel = (kind: "quick" | "debug", number: number): string => {
+	const prefix = kind === "quick" ? "Q" : "D";
+	return `${prefix}-${number.toString().padStart(2, "0")}`;
+};
+
+/**
+ * Resolve a slice label given the slice and (optionally) its parent milestone.
+ * Centralizes the milestone-bound vs ad-hoc dispatch so callers don't repeat it.
+ */
+export const sliceLabelFor = (
+	slice: { kind: "milestone" | "quick" | "debug"; number: number },
+	milestone?: { number: number },
+): string => {
+	if (slice.kind === "milestone") {
+		if (!milestone) {
+			throw new Error("sliceLabelFor: milestone required when slice.kind === 'milestone'");
+		}
+		return sliceLabel(milestone.number, slice.number);
+	}
+	return adhocSliceLabel(slice.kind, slice.number);
+};
