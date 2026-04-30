@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.18](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.17...tff-cc-v0.9.18) (2026-04-30)
+
+
+### Features
+
+* **archive:** auto-archive completed milestones and ad-hoc slices ([#151](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/151)) ([bb1707e](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/bb1707e689f2b726cbfd34de577c870d19ed5b40))
+* **routing:** detect default branch via symbolic-ref ([#149](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/149)) ([a7c2992](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/a7c29923a41802871ccc147da7a6799a9636c8ba))
+
+
+### Bug Fixes
+
+* **workflows:** add plannotator gate for spec.md in discuss-slice ([#155](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/155)) ([165b19b](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/165b19b75263a5e6b7d4749716104a5b2009d623))
+* **workflows:** make plannotator gate explicit and unskippable ([#153](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/153)) ([3c0e66c](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/3c0e66cc14aab1c223e0d2a5a716296c92482874))
+
 ## [0.9.17](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.16...tff-cc-v0.9.17) (2026-04-30)
 
 
