@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.19](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.18...tff-cc-v0.9.19) (2026-04-30)
+
+
+### Bug Fixes
+
+* **workflows:** add manual dispatch to recover from missed release sync ([#157](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/157)) ([83bf046](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/83bf04675087d1204e6d931c62d371db59a00681))
+
 ## [0.9.18](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.17...tff-cc-v0.9.18) (2026-04-30)
 
 
