@@ -79,6 +79,12 @@
       "refinementId": null,
       "sha256": "21699f5b6010940ccb1a048ad5fe152703d3d4873416d45c6770912b97b11457"
     },
+    "security-review": {
+      "approvedAt": "2026-04-30T13:45:00.000Z",
+      "originalCommitSha": "3c0e66c",
+      "refinementId": null,
+      "sha256": "3f401ce4f35c2cff634c730260fbdf605adb7e5dc23b5d68d20d498f285cc9db"
+    },
     "skill-authoring": {
       "approvedAt": "2026-04-29T00:00:00.000Z",
       "originalCommitSha": "12d32cd",

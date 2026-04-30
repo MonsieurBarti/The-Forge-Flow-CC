@@ -24,6 +24,7 @@ All code inspection is performed under the provided worktree path.
 Security review ∀PR — blocks on critical ∧ high findings.
 
 ## Skills Loaded
+- @skills/security-review/SKILL.md
 - @references/security-baseline.md
 
 ## Fresh-Reviewer Rule
