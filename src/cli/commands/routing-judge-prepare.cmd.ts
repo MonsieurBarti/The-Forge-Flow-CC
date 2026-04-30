@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import { prepareJudgeEvidenceUseCase } from "../../application/routing/prepare-judge-evidence.js";
 import { preconditionViolationError } from "../../domain/errors/precondition-violation.error.js";
 import { sliceLabelFor } from "../../domain/helpers/branch-naming.js";
+import { detectDefaultBranch } from "../../domain/helpers/default-branch.js";
 import { resolveBaseBranch } from "../../domain/helpers/slice-resolvers.js";
 import type { DiffReader } from "../../domain/ports/diff-reader.port.js";
 import type { SliceMergeLookup } from "../../domain/ports/slice-merge-lookup.port.js";
@@ -140,8 +141,7 @@ export const routingJudgePrepareCmd = async (
 		}
 
 		// Resolve merge branches: slice's resolved base branch, plus default branch.
-		// TODO: detect default from `git symbolic-ref refs/remotes/origin/HEAD`.
-		const defaultBranch = "main";
+		const defaultBranch = await detectDefaultBranch(runGit, { cwd: projectRoot });
 		let baseBranch: string;
 		try {
 			baseBranch = resolveBaseBranch(sliceEntity.data, milestone);
