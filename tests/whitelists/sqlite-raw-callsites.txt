@@ -11,8 +11,8 @@ src/infrastructure/adapters/git/git-diff-reader.ts:47
 src/infrastructure/adapters/git/git-diff-reader.ts:50
 src/infrastructure/adapters/git/git-slice-merge-lookup.ts:48
 src/infrastructure/adapters/sqlite/schema.ts:26
-src/infrastructure/adapters/sqlite/schema.ts:55
-src/infrastructure/adapters/sqlite/schema.ts:56
+src/infrastructure/adapters/sqlite/schema.ts:58
+src/infrastructure/adapters/sqlite/schema.ts:59
 src/infrastructure/adapters/sqlite/sqlite-salvage.ts:166
 src/infrastructure/adapters/sqlite/sqlite-salvage.ts:227
 src/infrastructure/adapters/sqlite/sqlite-salvage.ts:300
