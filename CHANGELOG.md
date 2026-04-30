@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.17](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.16...tff-cc-v0.9.17) (2026-04-30)
+
+
+### Features
+
+* decouple tff:quick and tff:debug from milestones ([#147](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/147)) ([4a20513](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/4a20513559a526da955d30b984b221e33f1387b3))
+
 ## [0.9.16](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.15...tff-cc-v0.9.16) (2026-04-29)
 
 
