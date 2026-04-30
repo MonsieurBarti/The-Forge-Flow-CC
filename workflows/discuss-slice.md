@@ -34,7 +34,7 @@ LOAD @skills/brainstorming/SKILL.md
 ### 3. Write Spec
 WRITE `.tff-cc/milestones/<milestone>/slices/<id>/SPEC.md` w/ validated design
 
-### 4. Challenge Spec (SSS only — determined ∈ step 8)
+### 4. Challenge Spec (SSS only — determined ∈ step 9)
 LOAD @skills/stress-testing-specs/SKILL.md → SPAWN subagent: {spec_content}
 REVISE → critical issues → loop Phase 3 (max 2) ∨ escalate
 APPROVE → note concerns ∈ spec, proceed
@@ -47,10 +47,19 @@ LOAD @skills/acceptance-criteria-validation/SKILL.md → SPAWN subagent: {spec_c
 DISPATCH anonymous reviewer via Agent tool (prompt: @skills/brainstorming/SKILL.md)
 Issues → fix, re-dispatch (max 3)
 
-### 7. User Gate
+### 7. Plannotator Review (REQUIRED gate)
+**REQUIRED — do NOT proceed past this step until annotations are resolved.**
+This is a hard dependency per `skills/plannotator-usage/SKILL.md` (no terminal fallback).
+
+invoke Skill `plannotator-annotate` with arg `.tff-cc/milestones/<milestone>/slices/<id>/SPEC.md`
+- feedback → revise the artifact, re-invoke
+- approved (no annotations ∨ all resolved) → continue
+- skipping this step is ¬ allowed; if plannotator is unavailable, surface to user ∧ pause
+
+### 8. User Gate
 Ask user: "Spec at `.tff-cc/milestones/<milestone>/slices/<id>/SPEC.md`. Approve?"
 
-### 8. Classify Complexity
+### 9. Classify Complexity
 Based on what was learned during discuss, build `ComplexitySignals`:
 - `estimatedFilesAffected`, `newFilesCreated`, `modulesAffected`
 - `requiresInvestigation`, `architectureImpact`, `hasExternalIntegrations`
@@ -65,7 +74,7 @@ PRESENT result to user, asking inline:
 User confirms → `tff-tools slice:classify` records tier.
 If SSS confirmed → run step 4 (Challenge Spec) now if ¬ already done.
 
-### 9. Transition
+### 10. Transition
 tier = S → `tff-tools slice:transition --slice-id <id> --status planning` (skip research)
 tier = SS ∨ SSS → `tff-tools slice:transition --slice-id <id> --status researching`
 CHECK: `ok` = true → continue | `ok` = false → warn user, offer retry ∨ abort

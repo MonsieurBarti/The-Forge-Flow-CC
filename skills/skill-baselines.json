@@ -62,10 +62,10 @@
       "sha256": "3c94e0a6ca401a07f3deca43eb632580cc4a9a1a1aefb539ea91d36df729a281"
     },
     "plannotator-usage": {
-      "approvedAt": "2026-04-21T21:40:30.878Z",
+      "approvedAt": "2026-04-30T13:30:00.000Z",
       "originalCommitSha": "12d32cd",
       "refinementId": null,
-      "sha256": "e363e1a8d43aa22a8cc41fa165e53f53128a6ca0f147e198cea600e1556ba600"
+      "sha256": "b485a3974ab2a21f759faaefc09664215a1ceedea8f6901ceb3d27b388ec6fdf"
     },
     "receiving-code-review": {
       "approvedAt": "2026-04-21T21:40:30.878Z",
