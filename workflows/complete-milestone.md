@@ -31,7 +31,13 @@ Context: @references/orchestrator-pattern.md ∧ @references/conventions.md
    - if ¬ merged → warn user, block milestone completion
 1a. PRE-CLOSE GATE: `tff-tools judge:pending:list --milestone-id <id>` must return `count: 0`.
     If non-zero, drain each via `/tff:judge --slice-id <slice-id>` before continuing — `milestone:close` will refuse otherwise (`PENDING_JUDGMENTS`).
-2. PR: `gh pr create` milestone/<milestone> → main — **ALWAYS show PR URL**
+2. PR: `gh pr create --title "<type>(M<NN>): <milestone-name>"` milestone/<milestone> → main
+   Title format = squash- *or* merge-commit message → MUST be conventional-commit.
+   - `<type>` = `feat` for capability-bearing milestones (the common case), else infer.
+   - When merging the milestone PR into main, **squash-merge** (not merge-commit) so the
+     conventional-commit title becomes the commit message on main. A merge-commit title
+     (`Merge pull request #N from …`) is unparseable by release-please.
+   **ALWAYS show PR URL**
 3. SPAWN tff-security-auditor: milestone-level review
 4. HANDLE: approved → inform ready to merge | changes → fix ∧ re-review
 

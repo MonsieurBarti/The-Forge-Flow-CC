@@ -33,7 +33,13 @@ LOAD @skills/finishing-work/SKILL.md
      model = <routing-decisions-json>[agent=tff-security-auditor].tier (fallback: no model param)
      inputs: {diff, @references/security-baseline.md}
    critical ∨ high → blocks PR → SPAWN tff-fixer → re-audit
-5. PR: `gh pr create` — `slice/<slice-id>` → `milestone/<milestone>`
+5. PR: `gh pr create --title "<type>(<scope>): <summary>"` — `slice/<slice-id>` → `milestone/<milestone>`
+   Title format = squash-merge commit message → MUST be conventional-commit so
+   release-please / changelog tooling can parse it once the milestone lands on main.
+   - `<type>` ∈ {feat, fix, refactor, docs, test, chore} — the dominant type of the slice's
+     work. Read it from SPEC.md if labeled; else infer from commit history of the slice.
+   - `<scope>` = `S<NN>` (e.g. `S05`). Anti-pattern: `M01-S05: …` — release-please rejects.
+   - Example: `docs(S05): document hot reload, per-user rules, doctor; add user-rules e2e`
    **Show PR URL to user**
 
 **tff NEVER merges — only creates PR.**
