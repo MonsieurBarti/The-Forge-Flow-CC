@@ -31,6 +31,18 @@ revert(auth/login): undo broken migration
 chore: update dependencies
 ```
 
+## PR Titles
+
+PR titles become the squash-merge commit on `main` — same conventional-commit rules apply:
+
+| Kind | Format | Example |
+|---|---|---|
+| Slice PR | `<type>(S<NN>): <summary>` | `feat(S03): /pi-rules doctor diagnostic CLI` |
+| Milestone PR | `<type>(M<NN>): <name>` | `feat(M01): rule discovery expansion` |
+
+Always squash-merge — never merge-commit. Merge-commit messages
+(`Merge pull request #N from …`) are non-conventional and break release tooling.
+
 ## Rules
 
 1. Atomic: 1 logical change/commit

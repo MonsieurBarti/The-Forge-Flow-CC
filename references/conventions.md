@@ -68,6 +68,18 @@ Special formats:
 - Artifact: `docs(S01): <summary>`
 - Rollback: `revert(S01/T03): <summary>`
 
+## PR Title Format
+
+PR titles become commit messages on `main` (via squash-merge). They MUST be conventional-commit
+so downstream automation (release-please, changelog generation) can parse them.
+
+- **Slice PR:** `<type>(S<NN>): <summary>` — e.g. `docs(S05): add e2e + README updates`.
+- **Milestone PR:** `<type>(M<NN>): <milestone-name>` — e.g. `feat(M01): rule discovery expansion`.
+- **Merge style:** ALWAYS squash-merge slice and milestone PRs. Merge-commit messages
+  (`Merge pull request #N from …`) are unparseable.
+
+Anti-pattern: `M01-S05: <summary>` (no `<type>`, no scope parentheses) — release-please skips it.
+
 ## Branch Discipline
 
 Agents and humans work on **slice branches only** while a milestone has open slices. Two guards enforce this:
