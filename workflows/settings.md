@@ -15,12 +15,14 @@ tff project ∃
 3. DISPLAY all settings grouped by section:
    - Model Profiles: quality/balanced/budget with current models
    - Autonomy: current mode with explanation of alternatives
-   - Auto-Learn: weights, guardrails, clustering thresholds
-     - Note: "these fields are forward-looking — modifying them has ¬ runtime effect yet"
+   - Workflow: reminders, guards
+   - Routing: enabled, confidence_threshold, tier_policy, logging.path,
+     calibration (n_min, debug_join, model_judge), pools (if any)
 4. ASK: which section to modify? (∨ "done" to exit)
 5. ACCEPT changes per section:
    - Model profiles: quality/balanced/budget model selection
    - Autonomy: mode selection with explanation of guided vs plan-to-pr
-   - Auto-learn: weights, guardrails, clustering values
+   - Workflow: toggle reminders/guards
+   - Routing: enable/disable, tier policy, calibration toggles, model_judge enable
 6. WRITE updated `.tff-cc/settings.yaml` (preserve comments where possible)
 7. NEXT: @references/next-steps.md

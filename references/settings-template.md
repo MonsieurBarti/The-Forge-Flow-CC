@@ -32,30 +32,6 @@ model-profiles:
 #                recommended once comfortable with the workflow
 autonomy:
   mode: guided
-  max-retries: 2   # max review/verify retry cycles before escalation
-
-# ── Auto-Learn ────────────────────────────────────────────────
-# Skill detection and refinement from observed execution patterns.
-# Note: these fields are forward-looking. Modifying them currently
-# has no runtime effect — runtime uses hardcoded defaults until
-# auto-learn consumer is implemented.
-auto-learn:
-  # Weights for pattern ranking (should sum to ~1.0)
-  weights:
-    frequency: 0.25    # how often pattern appears
-    breadth: 0.30      # how many projects contain it
-    recency: 0.25      # how recently observed (14-day half-life)
-    consistency: 0.20   # fraction of sessions containing it
-  # Safety constraints for skill evolution
-  guardrails:
-    min-corrections: 3  # min deviations before proposing refinement
-    cooldown-days: 7    # days to wait between refinements
-    max-drift-pct: 20   # max % change per refinement (60% cumulative)
-  # Pattern clustering thresholds
-  clustering:
-    min-sessions: 3     # min sessions to establish pattern
-    min-patterns: 2     # min similar patterns to form cluster
-    jaccard-threshold: 0.3  # max Jaccard distance for cluster membership
 
 # ── Workflow ──────────────────────────────────────────────────
 # Session reminders and graduated enforcement for workflow adherence
@@ -88,4 +64,59 @@ workflow:
   # - true:  All guard hooks enabled (default, safe default per D002)
   # - false: All guard hooks disabled
   guards: true
+
+# ── Routing ───────────────────────────────────────────────────
+# Per-workflow agent selection and model-tier policy.
+# Disabled by default; opt in by setting `enabled: true`.
+routing:
+  # Master switch. When false, /tff:ship and friends use static
+  # frontmatter pools without routing logs or tier decisions.
+  enabled: false
+
+  # Minimum signal confidence required to act on a routing decision.
+  # Below this threshold the orchestrator falls back to the pool default.
+  confidence_threshold: 0.5
+
+  # Risk-level → model-tier mapping used by the layered router.
+  # Tiers: haiku (fastest), sonnet (balanced), opus (most capable).
+  tier_policy:
+    low: haiku
+    medium: sonnet
+    high: opus
+
+  # JSONL log of every routing decision. Path is resolved relative to
+  # the project root and must remain inside it.
+  logging:
+    path: .tff-cc/logs/routing.jsonl
+
+  # Calibration: aggregates routing outcomes per signal cell to flag
+  # systematically over/under-tiered decisions.
+  calibration:
+    # Minimum samples per cell before calibration emits a suggestion.
+    n_min: 5
+    # Include join-debug fields in calibration output.
+    debug_join:
+      enabled: true
+    # Optional per-source weight overrides for outcome aggregation.
+    # source_weights:
+    #   product-lead: 1.0
+    #   code-reviewer: 1.0
+    #   model-judge: 0.5
+
+    # Model-judge: grades closed-slice routing decisions via a sub-agent.
+    # Disabled by default — opt in to enable `/tff:judge`.
+    model_judge:
+      enabled: false
+      model: claude-haiku-4-5-20251001
+      temperature: 0
+      max_patch_bytes: 32768
+      max_spec_bytes: 16384
+      timeout_ms: 30000
+
+  # Optional per-workflow pool override. When omitted, the pool is
+  # read from the workflow command's frontmatter.
+  # pools:
+  #   tff:ship:
+  #     - tff-code-reviewer
+  #     - tff-security-auditor
 ```

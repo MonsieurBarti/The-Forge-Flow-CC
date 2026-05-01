@@ -14,11 +14,6 @@ describe("ProjectSettingsSchema", () => {
 				budget: { model: "sonnet" },
 			},
 			autonomy: { mode: "plan-to-pr" },
-			"auto-learn": {
-				weights: { frequency: 0.25, breadth: 0.3, recency: 0.25, consistency: 0.2 },
-				guardrails: { "min-corrections": 3, "cooldown-days": 7, "max-drift-pct": 20 },
-				clustering: { "min-sessions": 3, "min-patterns": 2 },
-			},
 		};
 		const result = ProjectSettingsSchema.safeParse(input);
 		expect(result.success).toBe(true);
@@ -44,9 +39,8 @@ describe("parseProjectSettings", () => {
 		expect(settings["model-profiles"].quality.model).toBe("opus");
 		expect(settings["model-profiles"].balanced.model).toBe("sonnet");
 		expect(settings["model-profiles"].budget.model).toBe("sonnet");
-		expect(settings["auto-learn"].weights.frequency).toBe(0.25);
-		expect(settings["auto-learn"].guardrails["min-corrections"]).toBe(3);
-		expect(settings["auto-learn"].clustering["min-sessions"]).toBe(3);
+		expect(settings.workflow.reminders).toBe(true);
+		expect(settings.workflow.guards).toBe(true);
 	});
 
 	it("should return all defaults for null input", () => {
@@ -68,7 +62,6 @@ describe("parseProjectSettings", () => {
 		const settings = parseProjectSettings({ autonomy: { mode: "plan-to-pr" } });
 		expect(settings.autonomy.mode).toBe("plan-to-pr");
 		expect(settings["model-profiles"].quality.model).toBe("opus");
-		expect(settings["auto-learn"].weights.breadth).toBe(0.3);
 	});
 
 	it("should fall back invalid fields to defaults while preserving valid siblings", () => {
@@ -84,25 +77,12 @@ describe("parseProjectSettings", () => {
 		expect(settings["model-profiles"].quality.model).toBe("haiku");
 	});
 
-	it("should handle partial auto-learn with defaults for missing fields", () => {
+	it("should preserve unknown top-level sections (e.g. routing) via passthrough", () => {
 		const settings = parseProjectSettings({
-			"auto-learn": { weights: { frequency: 0.5 } },
-		});
-		expect(settings["auto-learn"].weights.frequency).toBe(0.5);
-		expect(settings["auto-learn"].weights.breadth).toBe(0.3);
-		expect(settings["auto-learn"].guardrails["min-corrections"]).toBe(3);
-	});
-});
-
-describe("ProjectSettings - new keys", () => {
-	it("should parse autonomy.max-retries with default 2", () => {
-		const settings = parseProjectSettings({});
-		expect(settings.autonomy["max-retries"]).toBe(2);
-	});
-
-	it("should parse auto-learn.clustering.jaccard-threshold with default 0.3", () => {
-		const settings = parseProjectSettings({});
-		expect(settings["auto-learn"].clustering["jaccard-threshold"]).toBe(0.3);
+			routing: { enabled: true, confidence_threshold: 0.7 },
+		}) as unknown as { routing?: { enabled: boolean; confidence_threshold: number } };
+		expect(settings.routing?.enabled).toBe(true);
+		expect(settings.routing?.confidence_threshold).toBe(0.7);
 	});
 });
 
