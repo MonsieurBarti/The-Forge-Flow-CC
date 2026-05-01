@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.22](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.21...tff-cc-v0.9.22) (2026-05-01)
+
+
+### Bug Fixes
+
+* **routing:** pin outcome-judge verdict schema and lock orchestrator prompt ([#166](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/166)) ([#167](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/167)) ([4b7ffae](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/4b7ffae4282fb8ed53bed4cb7260d422a02d9df2))
+
 ## [0.9.21](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.20...tff-cc-v0.9.21) (2026-05-01)
 
 
