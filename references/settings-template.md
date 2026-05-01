@@ -104,9 +104,9 @@ routing:
     #   model-judge: 0.5
 
     # Model-judge: grades closed-slice routing decisions via a sub-agent.
-    # Disabled by default — opt in to enable `/tff:judge`.
+    # Enabled by default; set `enabled: false` to disable `/tff:judge`.
     model_judge:
-      enabled: false
+      enabled: true
       model: claude-haiku-4-5-20251001
       temperature: 0
       max_patch_bytes: 32768
