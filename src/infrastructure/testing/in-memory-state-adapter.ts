@@ -143,7 +143,13 @@ export class InMemoryStateAdapter
 	}
 
 	getMilestoneByNumber(number: number): Result<Milestone | null, DomainError> {
-		const found = [...this.milestones.values()].find((m) => m.number === number) ?? null;
+		const matches = [...this.milestones.values()].filter(
+			(m) => m.number === number && m.archivedAt === undefined,
+		);
+		if (matches.length === 0) return Ok(null);
+		const found = matches.reduce((latest, m) =>
+			m.createdAt.getTime() > latest.createdAt.getTime() ? m : latest,
+		);
 		return Ok(found);
 	}
 
@@ -253,12 +259,18 @@ export class InMemoryStateAdapter
 		milestoneNumber: number,
 		sliceNumber: number,
 	): Result<Slice | null, DomainError> {
-		const milestone = [...this.milestones.values()].find((m) => m.number === milestoneNumber);
+		const milestone = [...this.milestones.values()].find(
+			(m) => m.number === milestoneNumber && m.archivedAt === undefined,
+		);
 		if (!milestone) return Ok(null);
-		const slice =
-			[...this.slices.values()].find(
-				(s) => s.milestoneId === milestone.id && s.number === sliceNumber,
-			) ?? null;
+		const matches = [...this.slices.values()].filter(
+			(s) =>
+				s.milestoneId === milestone.id && s.number === sliceNumber && s.archivedAt === undefined,
+		);
+		if (matches.length === 0) return Ok(null);
+		const slice = matches.reduce((latest, s) =>
+			s.createdAt.getTime() > latest.createdAt.getTime() ? s : latest,
+		);
 		return Ok(slice);
 	}
 

@@ -13,8 +13,9 @@ export const reviewRecordSchema: CommandSchema = {
 		{
 			name: "slice-id",
 			type: "string",
-			description: "Slice ID",
-			pattern: "^M\\d+-S\\d+$",
+			description: "Slice ID (M##-S##, Q-##, D-##, or UUID)",
+			pattern:
+				"^(M\\d+-S\\d+|Q-\\d+|D-\\d+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
 		},
 		{
 			name: "agent",

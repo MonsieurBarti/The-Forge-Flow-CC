@@ -233,9 +233,14 @@ export class SQLiteStateAdapter
 
 	getMilestoneByNumber(number: number): Result<Milestone | null, DomainError> {
 		try {
-			const row = this.db.prepare("SELECT * FROM milestone WHERE number = ?").get(number) as
-				| MilestoneRow
-				| undefined;
+			// Prefer the live (non-archived) milestone when label numbers collide
+			// with prior archived ones — milestone numbers are not unique across
+			// archived rows, so a bare lookup can return a stale match.
+			const row = this.db
+				.prepare(
+					"SELECT * FROM milestone WHERE number = ? AND archived_at IS NULL ORDER BY created_at DESC LIMIT 1",
+				)
+				.get(number) as MilestoneRow | undefined;
 			if (!row) return Ok(null);
 			return Ok(this.rowToMilestone(row));
 		} catch (e) {
@@ -397,11 +402,19 @@ export class SQLiteStateAdapter
 		sliceNumber: number,
 	): Result<Slice | null, DomainError> {
 		try {
+			// Restrict to non-archived rows on both sides so a label like M01-S01
+			// resolves to the live slice in the active milestone, not a stale one
+			// from a prior closed/archived milestone that happens to share the
+			// same number. Without this scope, label resolution silently picks
+			// the first matching row (often the prior archived one) and reviews
+			// get attached to the wrong slice — see issue #162.
 			const row = this.db
 				.prepare(
 					`SELECT s.* FROM slice s
            JOIN milestone m ON s.milestone_id = m.id
-           WHERE m.number = ? AND s.number = ?`,
+           WHERE m.number = ? AND s.number = ?
+             AND s.archived_at IS NULL AND m.archived_at IS NULL
+           ORDER BY s.created_at DESC LIMIT 1`,
 				)
 				.get(milestoneNumber, sliceNumber) as SliceRow | undefined;
 			if (!row) return Ok(null);

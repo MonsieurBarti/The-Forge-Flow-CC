@@ -73,6 +73,30 @@ describe("review:record label resolution", () => {
 		expect(result).toEqual({ ok: true, data: null });
 	});
 
+	it("(a2) records a review when given a slice UUID directly (issue #162)", async () => {
+		const adapter = getAdapter();
+		if (!adapter) throw new Error("adapter not seeded");
+		const slices = adapter.listSlices();
+		if (!slices.ok || slices.data.length === 0) throw new Error("no slices seeded");
+		const sliceId = slices.data[0].id;
+		const { reviewRecordCmd } = await import("../../src/cli/commands/review-record.cmd.js");
+		const result = JSON.parse(
+			await reviewRecordCmd([
+				"--slice-id",
+				sliceId,
+				"--agent",
+				"reviewer",
+				"--verdict",
+				"approved",
+				"--type",
+				"code",
+				"--commit-sha",
+				"abc1234",
+			]),
+		);
+		expect(result).toEqual({ ok: true, data: null });
+	});
+
 	it("(b) returns NOT_FOUND for unknown label M99-S99", async () => {
 		const { reviewRecordCmd } = await import("../../src/cli/commands/review-record.cmd.js");
 		const result = JSON.parse(
