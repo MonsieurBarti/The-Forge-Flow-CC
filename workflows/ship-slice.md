@@ -54,7 +54,16 @@ LOAD @skills/finishing-work/SKILL.md
    - DRAIN routing judgment (run inline, before branch deletion):
      a. `tff-tools routing:judge-prepare --slice <slice-id>` → parse JSON
      b. IF `data.evidence == null` → `tff-tools judge:pending:clear --slice-id <slice-id>` (already judged) ∧ skip c–d
-     c. ELSE: write `data.evidence` to a temp file, SPAWN tff-outcome-judge with `{evidence_path, verdicts_path}`, await completion
+     c. ELSE: write `data.evidence` to `<evidence-path>` (a temp file). Pick a `<verdicts-path>` (also a temp file). SPAWN `tff-cc:tff-outcome-judge` with `subagent_type: "tff-outcome-judge"` and this prompt verbatim — do NOT inline a schema; the agent's own definition is authoritative:
+
+        ```
+        Evidence path: <evidence-path>
+        Verdicts path: <verdicts-path>
+
+        Read the evidence JSON, grade each decision per your agent instructions, and write the verdicts JSON to the Verdicts path. Return a short confirmation when complete.
+        ```
+
+        Await completion, then verify `<verdicts-path>` exists and is non-empty.
      d. `tff-tools routing:judge-record --slice <slice-id> --verdicts-path <verdicts-path>` (record clears the pending row)
      - On any error in this DRAIN block: surface the error, leave the pending row, stop the cleanup. The user can retry via `/tff:judge --slice-id <slice-id>` later.
    - `git push origin --delete slice/<slice-id>` (delete remote slice branch)
