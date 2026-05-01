@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.21](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.20...tff-cc-v0.9.21) (2026-05-01)
+
+
+### Bug Fixes
+
+* **cli:** scope slice/milestone label resolution to live rows ([#162](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/162)) ([#163](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/163)) ([7f2ca14](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/7f2ca148e3bf2a1d6a540b26d4ec645342c657bb))
+
 ## [0.9.20](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.19...tff-cc-v0.9.20) (2026-04-30)
 
 
