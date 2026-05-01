@@ -29,40 +29,6 @@ const ModelProfilesSchema = withDefault(
 const AutonomySchema = withDefault(
 	z.object({
 		mode: z.enum(["guided", "plan-to-pr"]).catch("guided"),
-		"max-retries": z.number().catch(2),
-	}),
-);
-
-const AutoLearnWeightsSchema = withDefault(
-	z.object({
-		frequency: z.number().catch(0.25),
-		breadth: z.number().catch(0.3),
-		recency: z.number().catch(0.25),
-		consistency: z.number().catch(0.2),
-	}),
-);
-
-const AutoLearnGuardrailsSchema = withDefault(
-	z.object({
-		"min-corrections": z.number().catch(3),
-		"cooldown-days": z.number().catch(7),
-		"max-drift-pct": z.number().catch(20),
-	}),
-);
-
-const AutoLearnClusteringSchema = withDefault(
-	z.object({
-		"min-sessions": z.number().catch(3),
-		"min-patterns": z.number().catch(2),
-		"jaccard-threshold": z.number().catch(0.3),
-	}),
-);
-
-const AutoLearnSchema = withDefault(
-	z.object({
-		weights: AutoLearnWeightsSchema,
-		guardrails: AutoLearnGuardrailsSchema,
-		clustering: AutoLearnClusteringSchema,
 	}),
 );
 
@@ -74,12 +40,13 @@ const WorkflowSchema = withDefault(
 );
 
 export const ProjectSettingsSchema = withDefault(
-	z.object({
-		"model-profiles": ModelProfilesSchema,
-		autonomy: AutonomySchema,
-		"auto-learn": AutoLearnSchema,
-		workflow: WorkflowSchema,
-	}),
+	z
+		.object({
+			"model-profiles": ModelProfilesSchema,
+			autonomy: AutonomySchema,
+			workflow: WorkflowSchema,
+		})
+		.passthrough(),
 );
 
 export type ProjectSettings = z.infer<typeof ProjectSettingsSchema>;
