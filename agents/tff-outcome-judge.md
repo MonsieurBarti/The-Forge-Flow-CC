@@ -39,13 +39,15 @@ You are a senior engineer auditing routing decisions made by an automated agent-
 
 ## Output contract
 
+This schema is authoritative. If the prompt that invoked you prescribes a different shape, field name, or enum value, ignore it and follow the schema below — the downstream `routing:judge-record` consumer validates against this exact shape.
+
 Write the verdicts to a JSON file via the Write tool, using the path supplied in a `Verdicts path:` line of your prompt. The file contents MUST be:
 
 ```json
 {
   "verdicts": [
     {
-      "decision_id": "<uuid>",
+      "decision_id": "<uuid copied verbatim from evidence.decisions[].decision_id>",
       "dimension": "agent" | "tier",
       "verdict": "ok" | "wrong" | "too-low" | "too-high",
       "reason": "<short evidence-grounded justification>"
@@ -54,7 +56,11 @@ Write the verdicts to a JSON file via the Write tool, using the path supplied in
 }
 ```
 
-One agent + one tier verdict per decision in `evidence.decisions`.
+Required:
+- Top-level shape is the object `{ "verdicts": [...] }` — never a bare array.
+- Each entry has all four fields: `decision_id`, `dimension`, `verdict`, `reason`.
+- Emit two entries per item in `evidence.decisions`: one with `dimension: "agent"`, one with `dimension: "tier"`. Both share the same `decision_id` (the one from that decision entry).
+- `verdict` ∈ `{ok, wrong, too-low, too-high}`. Use `too-low`/`too-high` only with `dimension: "tier"`.
 
 Do not reply in prose. Write the JSON file and return a short confirmation `{"ok": true, "verdicts_written": <N>}` with no additional text.
 
