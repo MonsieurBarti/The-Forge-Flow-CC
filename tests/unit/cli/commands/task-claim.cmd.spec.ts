@@ -102,7 +102,7 @@ describe("task:claim — journal integration", () => {
 
 	it("writes task-started journal entry before claiming task", async () => {
 		// Read project ID for journal path
-		const projectIdPath = path.join(tmpDir, ".tff-project-id");
+		const projectIdPath = path.join(homeDir, ".tff-project-id");
 		const projectId = readFileSync(projectIdPath, "utf-8").trim();
 		// Journal filename uses slice UUID, not label
 		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);
@@ -135,7 +135,7 @@ describe("task:claim — journal integration", () => {
 
 	it("uses anonymous agent identity when not specified", async () => {
 		// Read project ID for journal path
-		const projectIdPath = path.join(tmpDir, ".tff-project-id");
+		const projectIdPath = path.join(homeDir, ".tff-project-id");
 		const projectId = readFileSync(projectIdPath, "utf-8").trim();
 		// Journal filename uses slice UUID, not label
 		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);
@@ -179,7 +179,7 @@ describe("task:claim — journal integration", () => {
 		expect(taskResult.ok).toBe(true);
 
 		// Read project ID for journal path
-		const projectIdPath = path.join(tmpDir, ".tff-project-id");
+		const projectIdPath = path.join(homeDir, ".tff-project-id");
 		const projectId = readFileSync(projectIdPath, "utf-8").trim();
 		// Journal filename uses slice UUID, not label
 		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);

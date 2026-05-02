@@ -53,11 +53,6 @@ function findPrimaryWorktreeRoot(repoRoot: string): string | null {
  *  - not inside a git repo
  *  - `git` isn't installed / on PATH
  *  - the repo is bare
- *
- * This is the single source of truth for where tff-cc state files
- * (`.tff-project-id`, `.tff-cc` symlink) live relative to the working tree,
- * so launching tff-cc from any sub-directory of a repo always finds the
- * same toplevel.
  */
 export function resolveRepoRoot(cwd?: string): string {
 	const start = cwd ?? process.cwd();
@@ -70,6 +65,23 @@ export function resolveRepoRoot(cwd?: string): string {
 	} catch {
 		return start;
 	}
+}
+
+/**
+ * Resolve the directory that owns tff-cc state files (`.tff-project-id`,
+ * `.tff-cc` symlink, mutating-cli sentinel).
+ *
+ * - If `TFF_CC_HOME` is set, returns it. The override is the canonical store;
+ *   the symlink/id-file/sentinel live there and cwd is never touched. This
+ *   keeps test sandboxes from leaking into the surrounding worktree.
+ * - Otherwise returns the git toplevel (or `cwd` when not in a repo).
+ *
+ * Single source of truth for where tff-cc writes its on-disk state.
+ */
+export function resolveProjectRoot(cwd?: string): string {
+	const override = process.env.TFF_CC_HOME;
+	if (override) return override;
+	return resolveRepoRoot(cwd);
 }
 
 let warnedStrayThisProcess = false;
@@ -153,8 +165,14 @@ export function readProjectIdFile(repoRoot: string): string | null {
 
 /**
  * Write project ID to .tff-project-id file.
+ *
+ * Ensures the parent directory exists — when `repoRoot` resolves to
+ * `TFF_CC_HOME`, the directory may not have been created yet on first init.
  */
 export function writeProjectIdFile(repoRoot: string, projectId: string): void {
+	if (!existsSync(repoRoot)) {
+		mkdirSync(repoRoot, { recursive: true, mode: 0o700 });
+	}
 	const idPath = join(repoRoot, ".tff-project-id");
 	writeFileSync(idPath, `${projectId}\n`, "utf-8");
 }

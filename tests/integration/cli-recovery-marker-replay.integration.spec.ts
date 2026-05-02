@@ -20,7 +20,8 @@ beforeEach(() => {
 	execFileSync("git", ["config", "user.name", "t"], { cwd: repo });
 	execFileSync("git", ["commit", "--allow-empty", "-m", "init"], { cwd: repo });
 
-	writeFileSync(join(repo, ".tff-project-id"), `${projectId}\n`);
+	// Issue #172: when TFF_CC_HOME is set, the id-file lives at home/.tff-project-id.
+	writeFileSync(join(home, ".tff-project-id"), `${projectId}\n`);
 	mkdirSync(join(home, projectId), { recursive: true });
 });
 afterEach(() => {

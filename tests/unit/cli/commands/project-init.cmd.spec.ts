@@ -30,7 +30,8 @@ describe("project:init — .tff-cc/ auto-creation", () => {
 		rmSync(homeDir, { recursive: true, force: true });
 	});
 
-	it("creates .tff-cc/ directory before opening database", async () => {
+	it("creates .tff-cc/ symlink and project-id under TFF_CC_HOME (cwd untouched)", async () => {
+		expect(existsSync(path.join(homeDir, ".tff-cc"))).toBe(false);
 		expect(existsSync(path.join(tmpDir, ".tff-cc"))).toBe(false);
 
 		const result = JSON.parse(
@@ -38,14 +39,15 @@ describe("project:init — .tff-cc/ auto-creation", () => {
 		);
 
 		expect(result.ok).toBe(true);
-		// .tff-cc/ is created for artifacts
-		expect(existsSync(path.join(tmpDir, ".tff-cc"))).toBe(true);
-		// Project ID file is created
-		expect(existsSync(path.join(tmpDir, ".tff-project-id"))).toBe(true);
+		// When TFF_CC_HOME is set, the symlink + id-file live under TFF_CC_HOME
+		// (issue #172: cwd must not be polluted by isolated test sandboxes).
+		expect(existsSync(path.join(homeDir, ".tff-cc"))).toBe(true);
+		expect(existsSync(path.join(homeDir, ".tff-project-id"))).toBe(true);
+		expect(existsSync(path.join(tmpDir, ".tff-cc"))).toBe(false);
+		expect(existsSync(path.join(tmpDir, ".tff-project-id"))).toBe(false);
 
-		// Read project ID to find home directory
-		const projectId = readFileSync(path.join(tmpDir, ".tff-project-id"), "utf-8").trim();
-		// Database is in home directory
+		// Database lives at the project home keyed by id.
+		const projectId = readFileSync(path.join(homeDir, ".tff-project-id"), "utf-8").trim();
 		expect(existsSync(path.join(homeDir, projectId, "state.db"))).toBe(true);
 	});
 

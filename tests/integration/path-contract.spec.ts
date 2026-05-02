@@ -55,12 +55,18 @@ describe("path contract: artifacts under .tff-cc/ only", () => {
 		}
 	};
 
-	it("project:init creates .tff-cc/ symlink", () => {
+	it("project:init creates .tff-cc/ symlink under TFF_CC_HOME (not in cwd)", () => {
 		cli('project:init --name "TestProject"');
 
-		const symlinkPath = join(tmpRepo, ".tff-cc");
+		// When TFF_CC_HOME is set, the symlink lives under TFF_CC_HOME — never
+		// in the surrounding worktree (issue #172).
+		const symlinkPath = join(tffCcHome, ".tff-cc");
 		expect(existsSync(symlinkPath)).toBe(true);
 		expect(lstatSync(symlinkPath).isSymbolicLink()).toBe(true);
+
+		// And cwd stays untouched.
+		expect(existsSync(join(tmpRepo, ".tff-cc"))).toBe(false);
+		expect(existsSync(join(tmpRepo, ".tff-project-id"))).toBe(false);
 	});
 
 	it("after milestone + slice + sync, state lands under .tff-cc/", () => {
@@ -74,7 +80,7 @@ describe("path contract: artifacts under .tff-cc/ only", () => {
 		cli('slice:create --title "S1"');
 		cli(`sync:state --milestone-id ${milestoneShortId}`);
 
-		const symlinkPath = join(tmpRepo, ".tff-cc");
+		const symlinkPath = join(tffCcHome, ".tff-cc");
 		expect(existsSync(symlinkPath)).toBe(true);
 		expect(lstatSync(symlinkPath).isSymbolicLink()).toBe(true);
 	});
