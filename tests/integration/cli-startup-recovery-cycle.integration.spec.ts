@@ -26,13 +26,16 @@ beforeEach(() => {
 	execFileSync("git", ["config", "user.name", "t"], { cwd: repo });
 	execFileSync("git", ["commit", "--allow-empty", "-m", "init"], { cwd: repo });
 
-	writeFileSync(join(repo, ".tff-project-id"), `${PROJECT_ID}\n`);
+	// Issue #172: id-file is now at home/.tff-project-id when TFF_CC_HOME is set.
+	writeFileSync(join(home, ".tff-project-id"), `${PROJECT_ID}\n`);
 
 	const projectHome = join(home, PROJECT_ID);
 	mkdirSync(join(projectHome, "milestones"), { recursive: true });
 	mkdirSync(join(projectHome, "worktrees", "M01-S01"), { recursive: true });
 	symlinkSync(projectHome, join(projectHome, "worktrees", "M01-S01", ".tff-cc"));
-	symlinkSync(projectHome, join(repo, ".tff-cc"));
+	// Recreate the home-side symlink that project:init would have produced;
+	// recovery walks from `home/.tff-cc/...` so the cycle still gets exercised.
+	symlinkSync(projectHome, join(home, ".tff-cc"));
 
 	const stale = join(projectHome, "milestones", "STATE.md.tmp");
 	writeFileSync(stale, "stale");

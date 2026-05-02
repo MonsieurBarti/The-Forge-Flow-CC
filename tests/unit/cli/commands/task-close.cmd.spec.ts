@@ -112,7 +112,7 @@ describe("task:close — journal integration", () => {
 	it("writes task-completed journal entry before closing task", async () => {
 		// Journal is now in home directory under project ID
 		// Read project ID from .tff-project-id
-		const projectIdPath = path.join(tmpDir, ".tff-project-id");
+		const projectIdPath = path.join(homeDir, ".tff-project-id");
 		const projectId = readFileSync(projectIdPath, "utf-8").trim();
 		// Journal filename uses slice UUID, not label
 		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);
@@ -199,7 +199,7 @@ describe("task:close — journal integration", () => {
 		expect(claimResult.ok).toBe(true);
 
 		// Read project ID for journal path
-		const projectIdPath = path.join(tmpDir, ".tff-project-id");
+		const projectIdPath = path.join(homeDir, ".tff-project-id");
 		const projectId = readFileSync(projectIdPath, "utf-8").trim();
 		// Journal filename uses slice UUID, not label
 		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);
@@ -222,7 +222,7 @@ describe("task:close — journal integration", () => {
 
 	it("increments sequence number for each journal entry", async () => {
 		// Read project ID for journal path
-		const projectIdPath = path.join(tmpDir, ".tff-project-id");
+		const projectIdPath = path.join(homeDir, ".tff-project-id");
 		const projectId = readFileSync(projectIdPath, "utf-8").trim();
 		// Journal filename uses slice UUID, not label
 		const journalPath = path.join(homeDir, projectId, "journal", `${sliceId}.jsonl`);

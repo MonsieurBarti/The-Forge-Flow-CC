@@ -3,7 +3,11 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { handleStartupRecovery } from "../application/recovery/handle-startup-recovery.js";
 import { NativeBindingError } from "../infrastructure/adapters/sqlite/native-binding-error.js";
-import { getProjectHome, getProjectId, resolveRepoRoot } from "../infrastructure/home-directory.js";
+import {
+	getProjectHome,
+	getProjectId,
+	resolveProjectRoot,
+} from "../infrastructure/home-directory.js";
 import { branchGuardCheckCmd, branchGuardCheckSchema } from "./commands/branch-guard-check.cmd.js";
 import { checkpointLoadCmd, checkpointLoadSchema } from "./commands/checkpoint-load.cmd.js";
 import { checkpointSaveCmd, checkpointSaveSchema } from "./commands/checkpoint-save.cmd.js";
@@ -425,8 +429,11 @@ function flagToJsonSchema(flag: {
 function resolveStartupHomeDir(): string {
 	const cwd = process.cwd();
 	try {
-		const repoRoot = resolveRepoRoot(cwd);
-		const projectId = getProjectId(repoRoot);
+		// resolveProjectRoot honors TFF_CC_HOME: when set, the id-file lives
+		// under TFF_CC_HOME and not in cwd, keeping isolated test sandboxes
+		// from leaking `.tff-project-id` into the surrounding worktree.
+		const projectRoot = resolveProjectRoot(cwd);
+		const projectId = getProjectId(projectRoot);
 		return getProjectHome(projectId);
 	} catch (err) {
 		process.stderr.write(

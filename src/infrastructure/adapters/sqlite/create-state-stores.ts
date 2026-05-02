@@ -16,6 +16,7 @@ import {
 	createTffCcSymlink,
 	getProjectHome,
 	getProjectId,
+	resolveProjectRoot,
 	resolveRepoRoot,
 	warnOnStrayTffFiles,
 } from "../../home-directory.js";
@@ -41,10 +42,15 @@ function getDerivedPaths(): { dbPath: string; journalPath: string; projectId: st
 	const cwd = process.cwd();
 	const repoRoot = resolveRepoRoot(cwd);
 	warnOnStrayTffFiles(cwd, repoRoot);
-	const projectId = getProjectId(repoRoot);
+	// State files (`.tff-project-id`, `.tff-cc` symlink) live at TFF_CC_HOME
+	// when set, otherwise at the repo toplevel. Routing through
+	// resolveProjectRoot keeps tests with TFF_CC_HOME=<tmp> from leaking the
+	// symlink and id-file into the surrounding worktree.
+	const projectRoot = resolveProjectRoot(cwd);
+	const projectId = getProjectId(projectRoot);
 	const home = getProjectHome(projectId);
 
-	createTffCcSymlink(repoRoot, projectId);
+	createTffCcSymlink(projectRoot, projectId);
 
 	return {
 		dbPath: path.join(home, "state.db"),

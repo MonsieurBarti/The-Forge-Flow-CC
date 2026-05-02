@@ -3,7 +3,7 @@ import { isOk } from "../../domain/result.js";
 import { MarkdownArtifactAdapter } from "../../infrastructure/adapters/filesystem/markdown-artifact.adapter.js";
 import { GitCliAdapter } from "../../infrastructure/adapters/git/git-cli.adapter.js";
 import { createStateStores } from "../../infrastructure/adapters/sqlite/create-state-stores.js";
-import { resolveRepoRoot } from "../../infrastructure/home-directory.js";
+import { resolveProjectRoot, resolveRepoRoot } from "../../infrastructure/home-directory.js";
 import { installPostCheckoutHook } from "../../infrastructure/hooks/install-post-checkout.js";
 import { type CommandSchema, parseFlags } from "../utils/flag-parser.js";
 
@@ -40,18 +40,24 @@ export const projectInitCmd = async (args: string[]): Promise<string> => {
 	const { name, vision } = parsed.data as { name: string; vision?: string };
 	const finalVision = vision || name;
 
-	const cwd = resolveRepoRoot(process.cwd());
+	const repoRoot = resolveRepoRoot(process.cwd());
+	const projectRoot = resolveProjectRoot(process.cwd());
 	// Note: .tff-cc/ symlink is created by getProjectId() called from createStateStores()
 	const { projectStore } = createStateStores();
-	const artifactStore = new MarkdownArtifactAdapter(cwd);
-	const _gitOps = new GitCliAdapter(cwd);
+	const artifactStore = new MarkdownArtifactAdapter(projectRoot);
+	const _gitOps = new GitCliAdapter(repoRoot);
 
 	const result = await initProject({ name, vision: finalVision }, { projectStore, artifactStore });
 	if (isOk(result)) {
-		try {
-			installPostCheckoutHook(cwd);
-		} catch {
-			// Hook installation is best-effort
+		// Skip writing into the surrounding worktree's `.git/hooks/` when
+		// running against an isolated TFF_CC_HOME sandbox — the hook is a
+		// real-repo concern and would leak into cwd otherwise.
+		if (!process.env.TFF_CC_HOME) {
+			try {
+				installPostCheckoutHook(repoRoot);
+			} catch {
+				// Hook installation is best-effort
+			}
 		}
 		return JSON.stringify({ ok: true, data: result.data });
 	}

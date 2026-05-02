@@ -58,6 +58,7 @@ vi.mock("../../src/infrastructure/home-directory.js", () => ({
 	createTffCcSymlink: vi.fn(),
 	getProjectId: vi.fn(() => "test-project-id"),
 	resolveRepoRoot: vi.fn((cwd: string) => cwd),
+	resolveProjectRoot: vi.fn((cwd: string) => cwd),
 	writeProjectIdFile: vi.fn(),
 }));
 

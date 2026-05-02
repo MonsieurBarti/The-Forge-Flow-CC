@@ -46,7 +46,26 @@ export const initProject = async (
 	return Ok({ project: saveResult.data });
 };
 
-const REQUIRED_GITIGNORE_ENTRIES = [`${TFF_CC_DIR}/`, "build/"];
+// Root-anchored, no trailing slash: matches the toplevel `.tff-cc` whether it
+// is the canonical symlink, a real dir, or a regular file. The trailing-slash
+// form (`/.tff-cc/`) only matches directories, so it would silently fail to
+// ignore the symlink that `project:init` creates. Anchoring with `/` ensures
+// a stray `<some-dir>/.tff-cc/` (e.g., test pollution in a subdir) is NOT
+// hidden — it surfaces in `git status` instead of being masked.
+const REQUIRED_GITIGNORE_ENTRIES = [`/${TFF_CC_DIR}`, "build/"];
+
+function gitignoreLineSatisfies(line: string, entry: string): boolean {
+	const trimmed = line.trim();
+	if (trimmed === "" || trimmed.startsWith("#")) return false;
+	// Accept any of: `entry`, no-trailing-slash, no-leading-slash, both stripped.
+	const stripped = entry.replace(/^\//, "").replace(/\/$/, "");
+	return (
+		trimmed === entry ||
+		trimmed === entry.replace(/\/$/, "") ||
+		trimmed === stripped ||
+		trimmed === `${stripped}/`
+	);
+}
 
 async function ensureGitignored(artifactStore: ArtifactStore): Promise<void> {
 	const gitignorePath = ".gitignore";
@@ -59,8 +78,7 @@ async function ensureGitignored(artifactStore: ArtifactStore): Promise<void> {
 
 	const lines = existing.split("\n");
 	const missing = REQUIRED_GITIGNORE_ENTRIES.filter(
-		(entry) =>
-			!lines.some((line) => line.trim() === entry || line.trim() === entry.replace(/\/$/, "")),
+		(entry) => !lines.some((line) => gitignoreLineSatisfies(line, entry)),
 	);
 
 	if (missing.length === 0) return;
