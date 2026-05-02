@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.24](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.23...tff-cc-v0.9.24) (2026-05-02)
+
+
+### Bug Fixes
+
+* **cli:** isolate tff_cc_home sandbox from cwd ([#172](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/172)) ([#173](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/173)) ([eee4361](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/eee4361bfa5cd9e4338a5f64b38c98f77ef97b68))
+
 ## [0.9.23](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.22...tff-cc-v0.9.23) (2026-05-01)
 
 
