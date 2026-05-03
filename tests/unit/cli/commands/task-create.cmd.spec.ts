@@ -103,14 +103,7 @@ describe("task:create — persists tasks + regenerates STATE.md", () => {
 		expect(before).toContain("- Tasks: 0/0 completed");
 
 		const r1 = JSON.parse(
-			await taskCreateCmd([
-				"--slice-id",
-				"M01-S01",
-				"--number",
-				"1",
-				"--title",
-				"First task",
-			]),
+			await taskCreateCmd(["--slice-id", "M01-S01", "--number", "1", "--title", "First task"]),
 		);
 		expect(r1.ok).toBe(true);
 
@@ -140,14 +133,7 @@ describe("task:create — persists tasks + regenerates STATE.md", () => {
 
 	it("accepts the slice UUID directly", async () => {
 		const result = JSON.parse(
-			await taskCreateCmd([
-				"--slice-id",
-				sliceId,
-				"--number",
-				"1",
-				"--title",
-				"By UUID",
-			]),
+			await taskCreateCmd(["--slice-id", sliceId, "--number", "1", "--title", "By UUID"]),
 		);
 		expect(result.ok).toBe(true);
 		expect(result.data.task.id).toBe(`${sliceId}-T01`);
@@ -155,23 +141,14 @@ describe("task:create — persists tasks + regenerates STATE.md", () => {
 
 	it("fails fast with NOT_FOUND for an unknown slice label", async () => {
 		const result = JSON.parse(
-			await taskCreateCmd([
-				"--slice-id",
-				"M99-S99",
-				"--number",
-				"1",
-				"--title",
-				"Orphan",
-			]),
+			await taskCreateCmd(["--slice-id", "M99-S99", "--number", "1", "--title", "Orphan"]),
 		);
 		expect(result.ok).toBe(false);
 		expect(result.error.code).toBe("NOT_FOUND");
 	});
 
 	it("fails fast with MISSING_REQUIRED_FLAG when title is omitted", async () => {
-		const result = JSON.parse(
-			await taskCreateCmd(["--slice-id", "M01-S01", "--number", "1"]),
-		);
+		const result = JSON.parse(await taskCreateCmd(["--slice-id", "M01-S01", "--number", "1"]));
 		expect(result.ok).toBe(false);
 		expect(result.error.code).toBe("MISSING_REQUIRED_FLAG");
 	});
