@@ -77,6 +77,7 @@ import { stateDiffCmd, stateDiffSchema } from "./commands/state-diff.cmd.js";
 import { syncStateCmd, syncStateSchema } from "./commands/sync-state.cmd.js";
 import { taskClaimCmd, taskClaimSchema } from "./commands/task-claim.cmd.js";
 import { taskCloseCmd, taskCloseSchema } from "./commands/task-close.cmd.js";
+import { taskCreateCmd, taskCreateSchema } from "./commands/task-create.cmd.js";
 import { taskReadyCmd, taskReadySchema } from "./commands/task-ready.cmd.js";
 import { versionCmd, versionSchema } from "./commands/version.cmd.js";
 import { wavesDetectCmd, wavesDetectSchema } from "./commands/waves-detect.cmd.js";
@@ -159,6 +160,10 @@ export const COMMAND_REGISTRY: Record<string, CommandEntry> = (() => {
 		"slice:classify": {
 			schema: sliceClassifySchema,
 			dispatcher: wrap(sliceClassifyCmd, sliceClassifySchema),
+		},
+		"task:create": {
+			schema: taskCreateSchema,
+			dispatcher: wrap(taskCreateCmd, taskCreateSchema),
 		},
 		"task:claim": {
 			schema: taskClaimSchema,
