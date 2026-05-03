@@ -62,7 +62,10 @@ WRITE `.tff-cc/milestones/<milestone>/slices/<id>/PLAN.md`:
 ```
 
 ### 5. Create Tasks + Detect Waves
-CREATE tasks: `tff-tools` ∀ task w/ deps
+CREATE ∀ task in PLAN.md → persist to DB:
+`tff-tools task:create --slice-id <id> --number <N> --title <title> [--description <desc>] [--wave <W>]`
+(repeat per task; STATE.md `Tasks: N/M` is regenerated on each insert)
+ADD ∀ dep: `tff-tools dep:add --from-id <id>-T<N> --to-id <id>-T<M>` (T<N> blocked by T<M>)
 DETECT: `tff-tools waves:detect --tasks '[{"id":"T01","dependsOn":[]},{"id":"T02","dependsOn":["T01"]}]'` → show user
 
 ### 6. Architecture Review (SS ∧ SSS)
