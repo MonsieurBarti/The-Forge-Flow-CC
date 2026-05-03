@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.25](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.24...tff-cc-v0.9.25) (2026-05-03)
+
+
+### Bug Fixes
+
+* **cli:** persist tasks via task:create so STATE.md tasks counter is accurate ([#175](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/175)) ([56c755d](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/56c755dcccd526b06ba3a69a3ead119606f32308))
+* **routing:** unbreak spec.md lookup and feed real signals to routing:decide ([#176](https://github.com/MonsieurBarti/The-Forge-Flow-CC/issues/176)) ([8b77049](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/8b77049ca162fb99b40dd553a21745b720a925d1))
+
 ## [0.9.24](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.23...tff-cc-v0.9.24) (2026-05-02)
 
 
