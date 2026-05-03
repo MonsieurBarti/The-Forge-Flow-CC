@@ -3,7 +3,9 @@ src/cli/utils/resolve-id.ts:35
 src/cli/utils/resolve-id.ts:48
 src/application/milestone/resolve-milestone-id.ts:30
 src/application/guards/milestone-branch-guard.ts:19
-src/infrastructure/adapters/filesystem/slice-spec-fs-reader.ts:23
+src/cli/utils/build-routing-extract-input.ts:57
+src/infrastructure/adapters/filesystem/slice-spec-fs-reader.ts:20
+src/infrastructure/adapters/filesystem/slice-spec-fs-reader.ts:25
 src/infrastructure/adapters/sqlite/schema.ts:26
 src/infrastructure/adapters/sqlite/schema.ts:58
 src/infrastructure/adapters/sqlite/schema.ts:59

@@ -1,4 +1,4 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createDomainError, type DomainError } from "../../../domain/errors/domain-error.js";
 import type {
@@ -6,8 +6,29 @@ import type {
 	SliceSpecResult,
 } from "../../../domain/ports/slice-spec-reader.port.js";
 import { Err, Ok, type Result } from "../../../domain/result.js";
+import { debugSliceDir, quickSliceDir, sliceDir } from "../../../shared/paths.js";
 
-const SLICE_LABEL_RE = /^M(\d+)-S(\d+)$/;
+const MILESTONE_SLICE_RE = /^M(\d+)-S\d+$/;
+const ADHOC_SLICE_RE = /^([QD])-\d+$/;
+
+/**
+ * Resolve `<projectRoot>/<sliceDir>/SPEC.md` from a slice label. Path is
+ * deterministic — mirrors the layout written by slice:create. Falls back to
+ * `missing: true` if the file is absent at the expected location.
+ */
+const specPathFor = (projectRoot: string, sliceLabel: string): string | null => {
+	const milestone = MILESTONE_SLICE_RE.exec(sliceLabel);
+	if (milestone) {
+		const milestoneLabel = `M${milestone[1].padStart(2, "0")}`;
+		return join(projectRoot, sliceDir(milestoneLabel, sliceLabel), "SPEC.md");
+	}
+	const adhoc = ADHOC_SLICE_RE.exec(sliceLabel);
+	if (adhoc) {
+		const dir = adhoc[1] === "Q" ? quickSliceDir(sliceLabel) : debugSliceDir(sliceLabel);
+		return join(projectRoot, dir, "SPEC.md");
+	}
+	return null;
+};
 
 export interface SliceSpecFsReaderOpts {
 	projectRoot: string;
@@ -20,30 +41,13 @@ export class SliceSpecFsReader implements SliceSpecReader {
 		sliceLabel: string,
 		maxBytes: number,
 	): Promise<Result<SliceSpecResult, DomainError>> {
-		const m = SLICE_LABEL_RE.exec(sliceLabel);
-		if (!m) {
+		const specPath = specPathFor(this.opts.projectRoot, sliceLabel);
+		if (specPath === null) {
 			return Err(
 				createDomainError("VALIDATION_ERROR", `invalid slice label: ${sliceLabel}`, { sliceLabel }),
 			);
 		}
-		const mNum = m[1].padStart(2, "0");
-		const sNum = m[2].padStart(2, "0");
-		const milestoneDir = join(this.opts.projectRoot, ".tff-cc", "milestones", `M${mNum}`);
 
-		let entries: string[];
-		try {
-			entries = await readdir(milestoneDir);
-		} catch {
-			return Ok({ text: "", truncated: false, missing: true });
-		}
-
-		const prefix = `S${sNum}-`;
-		const sliceDirName = entries.find((e) => e.startsWith(prefix));
-		if (!sliceDirName) {
-			return Ok({ text: "", truncated: false, missing: true });
-		}
-
-		const specPath = join(milestoneDir, sliceDirName, "SPEC.md");
 		let raw: string;
 		try {
 			raw = await readFile(specPath, "utf8");
