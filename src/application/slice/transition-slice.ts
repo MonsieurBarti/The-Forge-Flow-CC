@@ -5,6 +5,7 @@ import { transitionSlice as transitionSliceDomain } from "../../domain/entities/
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import { createDomainError } from "../../domain/errors/domain-error.js";
 import { preconditionViolationError } from "../../domain/errors/precondition-violation.error.js";
+import { sliceLabelFor } from "../../domain/helpers/branch-naming.js";
 import type { Slice } from "../../domain/index.js";
 import { checkSliceStatus } from "../../domain/state-machine/preconditions.js";
 import {
@@ -42,12 +43,6 @@ export type TransitionSliceResponse = TransitionSliceSuccess | TransitionSliceFa
 export interface TransitionSliceDeps {
 	stores: ClosableStateStores;
 }
-
-const sliceLabelFromSlice = (slice: { number: number }, milestoneNumber: number): string => {
-	const ms = String(milestoneNumber).padStart(2, "0");
-	const sn = String(slice.number).padStart(2, "0");
-	return `M${ms}-S${sn}`;
-};
 
 /**
  * Orchestrates a slice status transition end-to-end:
@@ -109,47 +104,60 @@ export const transitionSliceOrchestrator = async (
 		return { ok: false, error: validation.error };
 	}
 
-	if (!currentSlice.milestoneId) {
-		return {
-			ok: false,
-			error: createDomainError(
-				"NOT_FOUND",
-				`Slice "${sliceId}" has no milestone (kind=${currentSlice.kind}); transition not yet supported for ad-hoc slices`,
-			),
-		};
+	let displaySliceLabel: string;
+	let stateContentInput: { milestoneId: string } | { scope: "kind"; kind: "quick" | "debug" };
+	let milestoneNumber: number | undefined;
+
+	if (currentSlice.kind === "milestone") {
+		const milestoneId = currentSlice.milestoneId;
+		if (!milestoneId) {
+			return {
+				ok: false,
+				error: createDomainError(
+					"NOT_FOUND",
+					`Milestone-bound slice "${sliceId}" is missing its milestoneId`,
+				),
+			};
+		}
+		const milestoneResult = milestoneStore.getMilestone(milestoneId);
+		if (!milestoneResult.ok) return { ok: false, error: milestoneResult.error };
+		if (!milestoneResult.data) {
+			return {
+				ok: false,
+				error: createDomainError("NOT_FOUND", `Milestone "${milestoneId}" not found`),
+			};
+		}
+		milestoneNumber = milestoneResult.data.number;
+		displaySliceLabel = sliceLabelFor(currentSlice, milestoneResult.data);
+		stateContentInput = { milestoneId };
+	} else {
+		displaySliceLabel = sliceLabelFor(currentSlice);
+		stateContentInput = { scope: "kind", kind: currentSlice.kind };
 	}
-	const milestoneId = currentSlice.milestoneId;
-	const milestoneResult = milestoneStore.getMilestone(milestoneId);
-	if (!milestoneResult.ok) return { ok: false, error: milestoneResult.error };
-	if (!milestoneResult.data) {
-		return {
-			ok: false,
-			error: createDomainError("NOT_FOUND", `Milestone "${milestoneId}" not found`),
-		};
-	}
-	const milestoneNumber = milestoneResult.data.number;
-	const displaySliceLabel = sliceLabelFromSlice(currentSlice, milestoneNumber);
 
 	// Render STATE.md content (reflecting the post-transition state).
 	// We patch the slice status in-memory to simulate post-commit state; the
 	// renderer is pure so this is safe.
 	const projectedSlice: Slice = { ...currentSlice, status: targetStatus };
-	const stateContent = renderStateMd(
-		{ milestoneId },
-		{
-			milestoneStore,
-			sliceStore: {
-				...sliceStore,
-				listSlices: (mid?: string) => {
-					const base = sliceStore.listSlices(mid);
-					if (!base.ok) return base;
-					const swapped = base.data.map((s) => (s.id === projectedSlice.id ? projectedSlice : s));
-					return { ok: true as const, data: swapped };
-				},
+	const stateContent = renderStateMd(stateContentInput, {
+		milestoneStore,
+		sliceStore: {
+			...sliceStore,
+			listSlices: (mid?: string) => {
+				const base = sliceStore.listSlices(mid);
+				if (!base.ok) return base;
+				const swapped = base.data.map((s) => (s.id === projectedSlice.id ? projectedSlice : s));
+				return { ok: true as const, data: swapped };
 			},
-			taskStore,
+			listSlicesByKind: (kind: "quick" | "debug") => {
+				const base = sliceStore.listSlicesByKind(kind);
+				if (!base.ok) return base;
+				const swapped = base.data.map((s) => (s.id === projectedSlice.id ? projectedSlice : s));
+				return { ok: true as const, data: swapped };
+			},
 		},
-	);
+		taskStore,
+	});
 	if (!stateContent.ok) return { ok: false, error: stateContent.error };
 
 	// Pre-tx staging: STATE.md + CHECKPOINT.md to *.tmp.
@@ -159,14 +167,25 @@ export const transitionSliceOrchestrator = async (
 	const { stateFinalAbs, stateTmpAbs } = stageStateMdTmp(cwd, stagedTmps, stagedDirs);
 	writeFileSync(stateTmpAbs, stateContent.data, "utf8");
 
-	const checkpoint = renderCheckpoint({
-		sliceId: displaySliceLabel,
-		baseCommit: "",
-		currentWave: 0,
-		completedWaves: [],
-		completedTasks: [],
-		executorLog: [],
-	});
+	const checkpoint = renderCheckpoint(
+		{
+			sliceId: displaySliceLabel,
+			baseCommit: "",
+			currentWave: 0,
+			completedWaves: [],
+			completedTasks: [],
+			executorLog: [],
+		},
+		currentSlice.kind === "milestone"
+			? {
+					kind: "milestone",
+					milestoneLabel:
+						milestoneNumber !== undefined
+							? `M${String(milestoneNumber).padStart(2, "0")}`
+							: undefined,
+				}
+			: { kind: currentSlice.kind },
+	);
 	const ckptDirAbs = resolve(cwd, checkpoint.dir);
 	const ckptFinalAbs = resolve(cwd, checkpoint.path);
 	const ckptTmpAbs = `${ckptFinalAbs}.tmp`;

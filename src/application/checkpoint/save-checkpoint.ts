@@ -1,7 +1,7 @@
 import type { DomainError } from "../../domain/errors/domain-error.js";
 import type { ArtifactStore } from "../../domain/ports/artifact-store.port.js";
 import { isOk, Ok, type Result } from "../../domain/result.js";
-import { sliceDir } from "../../shared/paths.js";
+import { sliceDirFor } from "../../shared/paths.js";
 
 export interface CheckpointData {
 	sliceId: string;
@@ -27,6 +27,7 @@ interface SaveCheckpointDeps {
  */
 export const renderCheckpoint = (
 	data: CheckpointData,
+	options?: { kind?: "milestone" | "quick" | "debug"; milestoneLabel?: string },
 ): { dir: string; path: string; content: string } => {
 	const lines: string[] = [
 		`# Checkpoint — ${data.sliceId}`,
@@ -39,8 +40,12 @@ export const renderCheckpoint = (
 		`<!-- checkpoint-json: ${JSON.stringify(data)} -->`,
 		"",
 	];
-	const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? "M01";
-	const dir = sliceDir(milestoneId, data.sliceId);
+	const milestoneId = data.sliceId.match(/^(M\d+)/)?.[1] ?? options?.milestoneLabel ?? "M01";
+	const dir = sliceDirFor(
+		{ kind: options?.kind ?? "milestone" },
+		(options?.kind ?? "milestone") === "milestone" ? milestoneId : undefined,
+		data.sliceId,
+	);
 	const path = `${dir}/CHECKPOINT.md`;
 	return { dir, path, content: lines.join("\n") };
 };
