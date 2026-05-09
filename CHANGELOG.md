@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.26](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.25...tff-cc-v0.9.26) (2026-05-09)
+
+
+### Bug Fixes
+
+* **slice:** allow transitions for quick/debug ad-hoc slices ([6d5edb7](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/6d5edb746b14a4f273db94bd9701da4dda676216))
+* **slice:** allow transitions for quick/debug ad-hoc slices ([7de4d0d](https://github.com/MonsieurBarti/The-Forge-Flow-CC/commit/7de4d0d613b1de5111d84a1535a65a9a167bfe74))
+
 ## [0.9.25](https://github.com/MonsieurBarti/The-Forge-Flow-CC/compare/tff-cc-v0.9.24...tff-cc-v0.9.25) (2026-05-03)
 
 
