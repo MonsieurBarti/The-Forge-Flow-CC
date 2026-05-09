@@ -71,6 +71,7 @@ beforeEach(() => {
 	const mockSlice = {
 		id: "test-slice-uuid",
 		milestoneId: "m01",
+		kind: "milestone" as const,
 		number: 1,
 		status: "discussing" as const,
 		title: "Test Slice",
@@ -83,6 +84,7 @@ beforeEach(() => {
 			.fn()
 			.mockImplementation((_id: string, _status: string) => ({ ok: true, data: [] })),
 		getSliceByNumbers: vi.fn().mockReturnValue({ ok: true, data: mockSlice }),
+		listSlicesByKind: vi.fn().mockReturnValue({ ok: true, data: [mockSlice] }),
 	});
 	Object.assign(mockMilestoneStore, {
 		getMilestone: vi
@@ -131,6 +133,7 @@ describe("slice-transition integration", () => {
 		const executingSlice = {
 			id: "test-slice-uuid",
 			milestoneId: "m01",
+			kind: "milestone" as const,
 			number: 1,
 			status: "executing" as const,
 			title: "Test Slice",
@@ -141,6 +144,7 @@ describe("slice-transition integration", () => {
 			listSlices: vi.fn().mockReturnValue({ ok: true, data: [executingSlice] }),
 			transitionSlice: vi.fn().mockImplementation(() => ({ ok: true, data: [] })),
 			getSliceByNumbers: vi.fn().mockReturnValue({ ok: true, data: executingSlice }),
+			listSlicesByKind: vi.fn().mockReturnValue({ ok: true, data: [] }),
 		});
 
 		// executing -> reviewing is invalid (must go executing -> verifying -> reviewing).
@@ -152,5 +156,32 @@ describe("slice-transition integration", () => {
 		expect(result.error.code).toBe("INVALID_TRANSITION");
 		expect(result.error.validPredecessors).toEqual(["verifying"]);
 		expect(result.error.recoveryHint).toContain("verifying");
+	});
+
+	it("transitions a quick slice from discussing to researching", async () => {
+		const quickSlice = {
+			id: "quick-slice-uuid",
+			kind: "quick" as const,
+			number: 1,
+			status: "discussing" as const,
+			title: "Quick Slice",
+			createdAt: new Date(),
+		};
+		Object.assign(mockSliceStore, {
+			getSlice: vi.fn().mockReturnValue({ ok: true, data: quickSlice }),
+			listSlices: vi.fn().mockReturnValue({ ok: true, data: [] }),
+			listSlicesByKind: vi.fn().mockReturnValue({ ok: true, data: [quickSlice] }),
+			transitionSlice: vi
+				.fn()
+				.mockImplementation((_id: string, _status: string) => ({ ok: true, data: [] })),
+			getSliceByNumbers: vi.fn().mockReturnValue({ ok: true, data: null }),
+		});
+
+		const result = JSON.parse(
+			await sliceTransitionCmd(["--slice-id", "Q-01", "--status", "researching"]),
+		);
+
+		expect(mockSliceStore.transitionSlice).toHaveBeenCalled();
+		expect(result.ok).toBe(true);
 	});
 });

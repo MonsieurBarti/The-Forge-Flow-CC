@@ -13,7 +13,7 @@ export const sliceTransitionSchema: CommandSchema = {
 			type: "string",
 			description: "Slice ID (display label e.g. M01-S01 or UUID)",
 			pattern:
-				"^(M\\d+-S\\d+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
+				"^(M\\d+-S\\d+|Q-\\d+|D-\\d+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
 		},
 		{
 			name: "status",
