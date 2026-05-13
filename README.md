@@ -1,6 +1,7 @@
 <p align="center">
   <img src="assets/forge-banner.png" alt="The Forge Flow" width="800" />
 </p>
+> **DEPRECATED** — This repository has moved to [`MonsieurBarti/tff-mono`](https://github.com/MonsieurBarti/tff-mono). All future development, releases, and issues are handled in the monorepo. This repo will soon be archived and become read-only.
 
 <h1 align="center">The Forge Flow</h1>
 
@@ -39,41 +40,13 @@ The Forge Flow (`tff-cc`) is a Claude Code plugin that orchestrates AI agents th
 
 ## Setup Guide
 
-The Forge Flow requires **Node.js 20+** and **Git**. Optionally install **plannotator** for interactive review UI.
-
-### Step 1: Install plannotator
-
-Plannotator is a Claude Code plugin that provides an interactive browser UI for reviewing plans and code.
-
-```bash
-# Add the plannotator marketplace
-claude /plugin marketplace add backnotprop/plannotator
-
-# Install the plugin
-claude /plugin install plannotator@plannotator
-```
-
-Verify: Run `/plannotator-annotate README.md` in Claude Code -- it should open a browser window.
-
-### Step 2: Install The Forge Flow
-
-```bash
-# Add the marketplace
-claude /plugin marketplace add MonsieurBarti/The-Forge-Flow-CC
-
-# Install the plugin
-claude /plugin install tff-cc@the-forge-flow
-```
-
-Verify: Run `/tff:help` in Claude Code to see the command reference.
-
-The plugin is pulled from the repo's `release` branch, which ships a pre-built `dist/` and resolved plugin tree — no manual `bun install` or `bun run build` is required on the consumer side. Contributors cloning `main` for development still need `bun install && bun run build` to produce `dist/` locally.
-
-### Verification
-
-Run `/tff:health` to check state consistency and plannotator availability.
-
----
+> This standalone repo is deprecated. Please install from the monorepo:
+>
+> ```bash
+> claude install github MonsieurBarti/tff-mono/apps/tff-cc
+> ```
+>
+> See [`tff-mono/README.md`](https://github.com/MonsieurBarti/tff-mono/blob/main/README.md) for full documentation.
 
 ## Full Workflow Example
 
